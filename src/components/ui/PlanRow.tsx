@@ -16,17 +16,35 @@ const statusLabel: Record<PlanDayStatus, { text: string; className: string } | n
   futuro: null,
 };
 
-export function PlanRow({ dia, titulo, estado, nota }: { dia: string; titulo: string; estado: PlanDayStatus; nota?: string }) {
+export function PlanRow({
+  dia,
+  titulo,
+  estado,
+  nota,
+  dense,
+}: {
+  dia: string;
+  titulo: string;
+  estado: PlanDayStatus;
+  nota?: string;
+  dense?: boolean;
+}) {
   const label = nota ? { text: nota, className: statusLabel[estado]?.className ?? "text-tinta-suave" } : statusLabel[estado];
   return (
-    <div className={`grid grid-cols-[78px_1fr] gap-3 items-center px-4 py-3.5 rounded-2xl ${statusBg[estado]}`}>
-      <span className={`text-[14px] font-bold ${estado === "futuro" ? "text-tinta-tenue" : "text-verde-profundo"}`}>{dia}</span>
-      <span className={`text-[16px] ${estado === "futuro" ? "text-tinta-suave" : ""}`}>
+    <div
+      className={`grid items-center ${statusBg[estado]} ${
+        dense ? "grid-cols-[46px_1fr] gap-2 px-3 py-2 rounded-xl" : "grid-cols-[78px_1fr] gap-3 px-4 py-3.5 rounded-2xl"
+      }`}
+    >
+      <span className={`font-bold ${dense ? "text-[9.5px]" : "text-[14px]"} ${estado === "futuro" ? "text-tinta-tenue" : "text-verde-profundo"}`}>
+        {dia}
+      </span>
+      <span className={`${dense ? "text-[10.5px] leading-snug" : "text-[16px]"} ${estado === "futuro" ? "text-tinta-suave" : ""}`}>
         {titulo}
         {label && (
           <>
             <br />
-            <span className={`text-[14px] ${label.className}`}>{label.text}</span>
+            <span className={`${dense ? "text-[9px]" : "text-[14px]"} ${label.className}`}>{label.text}</span>
           </>
         )}
       </span>
