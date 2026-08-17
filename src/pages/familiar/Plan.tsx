@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
-import { weeklyPlan, type PlanDayStatus, type PlanTask } from "../../lib/mockData";
+import { useAppStore } from "../../lib/store";
+import type { PlanDayStatus, PlanTask } from "../../lib/mockData";
 
 const tipoLabel: Record<PlanTask["tipo"], string> = {
   video: "Video",
@@ -12,6 +13,7 @@ const tipoLabel: Record<PlanTask["tipo"], string> = {
 const estadoBadge: Record<PlanDayStatus, { text: string; className: string } | null> = {
   realizado: { text: "✓ Realizado", className: "bg-fila-fria text-[#4c7a4c]" },
   parcial: { text: "En parte", className: "bg-fila-calida text-semaforo-amarillo-texto" },
+  no: { text: "No se realizó", className: "bg-campo text-tinta-tenue" },
   pendiente: { text: "Pendiente", className: "bg-[#edf4f4] text-verde-profundo" },
   futuro: null,
 };
@@ -53,6 +55,7 @@ function TaskDetail({ task }: { task: PlanTask }) {
 }
 
 export function Plan() {
+  const plan = useAppStore((s) => s.plan);
   const [view, setView] = useState<"lista" | "calendario">("lista");
   const [openTask, setOpenTask] = useState<PlanTask | null>(null);
 
@@ -80,7 +83,7 @@ export function Plan() {
 
       {view === "lista" ? (
         <div className="grid gap-5">
-          {weeklyPlan.map((day) => (
+          {plan.map((day) => (
             <div key={day.dia}>
               <div className="flex items-center gap-2.5 mb-2.5">
                 <span className={`text-[14px] font-bold ${day.isToday ? "text-verde-profundo" : "text-tinta-tenue"}`}>{day.dia}</span>
@@ -101,7 +104,7 @@ export function Plan() {
       ) : (
         <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
           <div className="grid grid-cols-7 gap-2.5 min-w-[820px] lg:min-w-0">
-            {weeklyPlan.map((day) => (
+            {plan.map((day) => (
               <div
                 key={day.dia}
                 className={`rounded-2xl p-2.5 min-h-[220px] ${day.isToday ? "bg-[#f5f9f9] border-[1.5px] border-verde-serenidad" : "bg-campo border border-[#efeada]"}`}

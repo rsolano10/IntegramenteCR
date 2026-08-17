@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
+import { useAppStore } from "../../lib/store";
+import { computeProfiles } from "../../lib/clinicalEngine";
 import { libraryItems, type ActivityCategory } from "../../lib/mockData";
 
 const categories: ActivityCategory[] = ["Movimiento", "Cognitiva", "Social", "Relajación", "Música"];
 
 export function Actividades() {
+  const onboarding2 = useAppStore((s) => s.onboarding2);
   const [search, setSearch] = useState("");
   const [activeCategories, setActiveCategories] = useState<ActivityCategory[]>([]);
   const [onlyApt, setOnlyApt] = useState(true);
@@ -12,15 +15,30 @@ export function Actividades() {
     setActiveCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   }
 
+  // "Ejercicio de pie con desplazamiento" reacts to the real movement
+  // profile instead of a hardcoded flag — a concrete example of content
+  // actually respecting what onboarding recorded, not just displaying it.
+  const items = useMemo(() => {
+    const { movimiento } = computeProfiles(onboarding2);
+    const blocked = movimiento === "rojo" || onboarding2.movimiento_caidas === "dos_mas";
+    return libraryItems.map((item) =>
+      item.titulo === "Ejercicio de pie con desplazamiento"
+        ? blocked
+          ? item
+          : { ...item, disponible: true, detalle: "10 min · con apoyo firme", motivoBloqueo: undefined }
+        : item,
+    );
+  }, [onboarding2]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return libraryItems.filter((item) => {
+    return items.filter((item) => {
       if (onlyApt && !item.disponible) return false;
       if (activeCategories.length && !activeCategories.includes(item.categoria)) return false;
       if (q && !item.titulo.toLowerCase().includes(q) && !item.detalle.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [search, activeCategories, onlyApt]);
+  }, [items, search, activeCategories, onlyApt]);
 
   return (
     <div>

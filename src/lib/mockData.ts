@@ -61,17 +61,10 @@ export const planTiers: PlanTier[] = [
   },
 ];
 
-export const participant = {
-  nombre: "Rosa Jiménez",
-  edad: 79,
-  modalidad: "Orientado",
-  familiar: "Marcela",
-};
-
-export const caregiver = {
-  nombre: "Marcela",
-  rol: "administrador" as const,
-};
+// Rosa's name/edad/intereses/modalidad now live in the store (onboarding2 +
+// modalidad), so every view reads the same record — see src/lib/patient.ts.
+// "Marcela" (the familiar administrador account holder) stays a fixed literal
+// across the app; only the participant's own identity is data-driven.
 
 export const professional = {
   nombre: "Dra. Guiselle Solano",
@@ -92,7 +85,10 @@ export const emergencyContacts = [
   },
 ];
 
-export type PlanDayStatus = "realizado" | "parcial" | "pendiente" | "futuro";
+// "no" is distinct from "pendiente": a task that was registered as not done
+// today, versus one that simply hasn't come up yet. Never styled as a
+// failure (Handoff rule: nadie tiene que justificar un día difícil).
+export type PlanDayStatus = "realizado" | "parcial" | "no" | "pendiente" | "futuro";
 
 // Handoff §2 · PlanItem — dia, contenidoId, duracionMin, consignas[], precauciones[], estado.
 // A day can carry more than one task, at the same or different hours.
@@ -105,6 +101,8 @@ export interface PlanTask {
   duracion?: string;
   detalle?: string;
   precaucion?: string;
+  pasos?: string[];
+  porQue?: string;
 }
 
 export interface PlanDay {
@@ -165,6 +163,13 @@ export const weeklyPlan: PlanDay[] = [
         duracion: "15 min",
         detalle: "Cocina · una instrucción por vez.",
         precaucion: "Nada caliente sin supervisión. Si se frustra, terminá la actividad sin corregir.",
+        pasos: [
+          "Poné sobre la mesa solo lo que se va a usar.",
+          "Pedí una acción por vez y esperá sin apurar.",
+          "Dejá que elija el pan o la fruta: la decisión es parte del ejercicio.",
+        ],
+        porQue:
+          "Cocinar aparece entre sus intereses, mantiene secuencia de pasos y se hace de pie con apoyo en la mesa, compatible con su movilidad.",
       },
     ],
   },
@@ -216,38 +221,6 @@ export const weeklyPlan: PlanDay[] = [
       },
     ],
   },
-];
-
-export const todayActivity = {
-  titulo: "Preparar una merienda con Rosa",
-  duracion: "15 minutos",
-  lugar: "cocina",
-  consigna: "una instrucción por vez",
-  precaucion: "Nada caliente sin supervisión. Si se frustra, terminá la actividad sin corregir.",
-  pasos: [
-    "Poné sobre la mesa solo lo que se va a usar.",
-    "Pedí una acción por vez y esperá sin apurar.",
-    "Dejá que elija el pan o la fruta: la decisión es parte del ejercicio.",
-  ],
-  porQue:
-    "Cocinar aparece entre sus intereses, mantiene secuencia de pasos y se hace de pie con apoyo en la mesa, compatible con su movilidad.",
-};
-
-export const participantSteps = [
-  "Lavate las manos.",
-  "Poné el pan en el plato.",
-  "Servite el café con Marcela.",
-];
-
-export const interestOptions = [
-  "Cocinar",
-  "Música y baile",
-  "Plantas y jardín",
-  "Fotos de familia",
-  "Costura",
-  "Caminar",
-  "Iglesia",
-  "Radio y noticias",
 ];
 
 export type ActivityCategory = "Movimiento" | "Cognitiva" | "Social" | "Relajación" | "Música";
@@ -329,19 +302,6 @@ export const clinicPatients: ClinicPatient[] = [
   { nombre: "Elena Vargas", edad: 83, familiar: "Jorge", modalidad: "Orientado", semaforo: "amarillo", adherencia: "2 de 5", destino: "rechazo" },
   { nombre: "Marta Solís", edad: 88, familiar: "Laura", modalidad: "Clínico", semaforo: "rojo", adherencia: "1 de 5", destino: "alerta" },
   { nombre: "Óscar Brenes", edad: 76, familiar: "Sofía", modalidad: "Autoguiado", semaforo: "verde", adherencia: "5 de 5", destino: "ficha" },
-];
-
-export const planEditorRows = [
-  { dia: "Lunes", titulo: "Movilidad sentada · 12 min" },
-  { dia: "Martes", titulo: "Ordenar fotos · una consigna", nota: "Dificultad reducida automáticamente" },
-  { dia: "Jueves", titulo: "Regar las plantas juntas" },
-  { dia: "Sábado", titulo: "Canciones de su época · 10 min" },
-];
-
-export const planRestrictions = [
-  { color: "amarillo" as const, texto: "Sin ejercicios de pie sin apoyo (una caída registrada)" },
-  { color: "verde" as const, texto: "Una instrucción por vez" },
-  { color: "verde" as const, texto: "Sin actividades de cálculo (rechazo declarado)" },
 ];
 
 export const planHistory = [

@@ -1,20 +1,27 @@
 import { useNavigate } from "react-router-dom";
+import { useAppStore } from "../../lib/store";
+import { getInterestLabels } from "../../lib/patient";
 
 export function Gustos() {
   const navigate = useNavigate();
+  const onboarding2 = useAppStore((s) => s.onboarding2);
+  const options = getInterestLabels(onboarding2).slice(0, 3);
+
   return (
     <>
       <p className="m-0 text-2xl leading-snug">¿Cuál de estas cosas le gusta más?</p>
       <div className="grid gap-3">
-        <button type="button" className="min-h-19 rounded-2xl border-2 border-verde-serenidad bg-[#edf4f4] font-sans text-[22px] font-semibold cursor-pointer">
-          Cocinar
-        </button>
-        <button type="button" className="min-h-19 rounded-2xl border-2 border-borde bg-white font-sans text-[22px] font-semibold cursor-pointer">
-          La música
-        </button>
-        <button type="button" className="min-h-19 rounded-2xl border-2 border-borde bg-white font-sans text-[22px] font-semibold cursor-pointer">
-          Las plantas
-        </button>
+        {options.map((label, i) => (
+          <button
+            key={label}
+            type="button"
+            className={`min-h-19 rounded-2xl border-2 font-sans text-[22px] font-semibold cursor-pointer ${
+              i === 0 ? "border-verde-serenidad bg-[#edf4f4]" : "border-borde bg-white"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       <button
         type="button"

@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { computeProfiles, overallTier } from "../../lib/clinicalEngine";
+import { getPatientName, getPatientAge, computeAdherencia } from "../../lib/patient";
 import { ClinicalRow } from "../../components/ui/ClinicalRow";
 import { Button } from "../../components/ui/Button";
-import { clinicPatients, professional } from "../../lib/mockData";
+import { clinicPatients, planTiers, professional } from "../../lib/mockData";
 
 const destinoRoute: Record<"ficha" | "alerta" | "rechazo", string> = {
   ficha: "/app/profesional/ficha",
@@ -14,7 +15,11 @@ const destinoRoute: Record<"ficha" | "alerta" | "rechazo", string> = {
 export function Panel() {
   const navigate = useNavigate();
   const onboarding2 = useAppStore((s) => s.onboarding2);
+  const modalidad = useAppStore((s) => s.modalidad);
+  const plan = useAppStore((s) => s.plan);
   const rosaSem = overallTier(computeProfiles(onboarding2));
+  const rosaModalidad = planTiers.find((t) => t.id === modalidad)?.nombre ?? "Orientado";
+  const { done, total } = computeAdherencia(plan);
 
   return (
     <div className="im-in max-w-[1360px] mx-auto px-5 py-8 pb-14 sm:px-8 lg:px-8 lg:py-10 lg:pb-20">
@@ -66,11 +71,11 @@ export function Panel() {
               <span>Plan</span>
             </div>
             <ClinicalRow
-              nombre="Rosa Jiménez"
-              meta="79 · Familiar: Marcela"
-              modalidad="Orientado"
+              nombre={getPatientName(onboarding2)}
+              meta={`${getPatientAge(onboarding2)} · Familiar: Marcela`}
+              modalidad={rosaModalidad}
               semaforo={rosaSem}
-              adherencia="4 de 5"
+              adherencia={`${done} de ${total}`}
               cta="Revisar"
               onClick={() => navigate("/app/profesional/ficha")}
             />
@@ -111,7 +116,7 @@ export function Panel() {
               <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Antes de la sesión · Rosa</p>
               <div className="border border-borde bg-white rounded-2xl p-5 grid gap-3 text-[16px] leading-relaxed text-tinta-suave">
                 <span>
-                  <strong className="text-tinta">Adherencia:</strong> 4 de 5.
+                  <strong className="text-tinta">Adherencia:</strong> {done} de {total}.
                 </span>
                 <span>
                   <strong className="text-tinta">Respuesta:</strong> disfrutó lo de las fotos; rechazó la tarea de dos pasos.

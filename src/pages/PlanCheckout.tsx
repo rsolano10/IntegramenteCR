@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
+import { useAppStore } from "../lib/store";
 import { planTiers } from "../lib/mockData";
 
 export function PlanCheckout() {
   const { plan } = useParams();
   const navigate = useNavigate();
+  const setModalidad = useAppStore((s) => s.setModalidad);
   const tier = planTiers.find((t) => t.id === plan);
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -80,7 +82,14 @@ export function PlanCheckout() {
                   className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
                 />
               </label>
-              <Button variant="ink" fullWidth onClick={() => navigate("/app/login")}>
+              <Button
+                variant="ink"
+                fullWidth
+                onClick={() => {
+                  setModalidad(tier.id);
+                  navigate("/app/login");
+                }}
+              >
                 Crear mi cuenta y continuar
               </Button>
               <p className="m-0 text-xs leading-relaxed text-tinta-tenue text-center">

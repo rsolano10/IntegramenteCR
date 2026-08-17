@@ -1,13 +1,18 @@
+import { useAppStore } from "../../lib/store";
+import { computeAdherencia } from "../../lib/patient";
 import { Metric } from "../../components/ui/Metric";
 import { Button } from "../../components/ui/Button";
 
 export function Resumen() {
+  const plan = useAppStore((s) => s.plan);
+  const { done, total } = computeAdherencia(plan);
+
   return (
     <div>
       <p className="m-0 mb-1.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Resumen</p>
       <h3 className="font-serif font-normal text-[23px] m-0 mb-4.5">Cómo fue la semana</h3>
       <div className="grid grid-cols-2 gap-3 mb-4.5">
-        <Metric value="4/5" label="actividades registradas" />
+        <Metric value={`${done}/${total}`} label="actividades registradas" />
         <Metric value="3" label="veces la disfrutó" tone="amarillo" />
       </div>
       <div className="grid gap-3 mb-5">
