@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+
+  /* Brand */
+  --color-verde-serenidad: #6a969c;
+  --color-verde-profundo: #3f6a70;
+  --color-beige-serenidad: #ebe6ce;
+  --color-mostaza-vital: #f4d096;
+  --color-tinta: #1f3338;
+  --color-tinta-suave: #4a5b5f;
+  --color-tinta-tenue: #7a8b8e;
+  --color-fondo-papel: #f7f4e9;
+  --color-borde: #e4dfc7;
+
+  /* Semaforo */
+  --color-semaforo-verde: #6a969c;
+  --color-semaforo-verde-claro: #a8d5a2;
+  --color-semaforo-amarillo: #e8b857;
+  --color-semaforo-amarillo-texto: #8a6a2a;
+  --color-semaforo-rojo: #c0664f;
+  --color-semaforo-rojo-texto: #8c3f2a;
+
+  /* Soft surfaces */
+  --color-campo: #fcfbf5;
+  --color-fila-fria: #f2f6f6;
+  --color-fila-calida: #fbf7ea;
+  --color-aviso: #fbf1dc;
+  --color-aviso-texto: #8a6a2a;
+  --color-alerta: #fbefeb;
+  --color-alerta-borde: #e3b7aa;
+  --color-alerta-texto: #8c3f2a;
+  --color-riesgo: #fbf7ea;
+  --color-riesgo-borde: #ead9af;
+  --color-riesgo-texto: #6b5726;
+
+  --shadow-elevada: 0 24px 60px -40px rgba(31, 51, 56, 0.55);
+  --shadow-marco: 0 30px 70px -50px rgba(31, 51, 56, 0.65);
+}
+
+body {
+  margin: 0;
+  background: var(--color-fondo-papel);
+  color: var(--color-tinta);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+a {
+  color: var(--color-verde-profundo);
+}
+
+input:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 3px solid var(--color-tinta);
+  outline-offset: 2px;
+}
+
+/* Opacity-only on purpose: animating transform here would make this element
+   establish a containing block for any fixed-position descendant (the mobile
+   bottom nav, modals) for the animation's fill duration, detaching them from
+   the viewport. */
+@keyframes im-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .im-in {
+    animation: im-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+.im-placeholder {
+  background-image: repeating-linear-gradient(135deg, #e7efef 0 10px, #dce8e8 10px 20px);
+}
