@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { roleHome } from "../../lib/useSession";
-import { useAppStore } from "../../lib/store";
 import { Button } from "../ui/Button";
 
 // Shared by CompletarCuenta (first login after a clinic invite) and
@@ -11,7 +10,6 @@ import { Button } from "../ui/Button";
 // thing left to do is have the person choose a password and continue in.
 export function SetPasswordForm({ title, subtitle, cta }: { title: string; subtitle: string; cta: string }) {
   const navigate = useNavigate();
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -43,8 +41,7 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
       navigate("/app/login");
       return;
     }
-    if (profile.role === "familiar") navigate(onboardingComplete ? "/app/hoy" : "/app/consent");
-    else navigate(roleHome(profile.role));
+    navigate(roleHome(profile.role));
   }
 
   return (

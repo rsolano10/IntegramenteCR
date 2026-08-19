@@ -11,7 +11,6 @@ export function Login() {
   const authError = useAppStore((s) => s.authError);
   const setEmail = useAppStore((s) => s.setEmail);
   const setAuthError = useAppStore((s) => s.setAuthError);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,8 +33,7 @@ export function Login() {
       setAuthError("No pudimos cargar tu cuenta. Intentá de nuevo.");
       return;
     }
-    if (profile.role === "familiar") navigate(onboardingComplete ? "/app/hoy" : "/app/consent");
-    else navigate(roleHome(profile.role));
+    navigate(roleHome(profile.role));
   }
 
   return (

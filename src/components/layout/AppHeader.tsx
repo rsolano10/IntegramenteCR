@@ -3,32 +3,31 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
-import { getPatientName } from "../../lib/patient";
+import { useMyPatient } from "../../lib/useMyPatient";
 import { professional } from "../../lib/mockData";
 import { AccountMenu } from "../ui/AccountMenu";
 import { Modal } from "../ui/Modal";
-import { EditBasicInfoModal } from "../ui/EditBasicInfoModal";
 import { SettingsModal } from "../ui/SettingsModal";
 import { EmergencyContactsModal } from "../ui/EmergencyContactsModal";
 
 const crumbs: [string, string][] = [
   ["/app/login", "Ingreso"],
   ["/app/consent", "Consentimiento"],
-  ["/app/perfil/resumen", "Marcela · Tu cuestionario"],
+  ["/app/perfil/resumen", "Tu cuestionario"],
   ["/app/perfil", "Perfil funcional"],
-  ["/app/mensajes", "Marcela · Mensajes"],
-  ["/app/emergencia", "Marcela · Emergencia"],
-  ["/app/hoy/actividad", "Marcela · Actividad"],
-  ["/app/hoy", "Marcela · Hoy"],
-  ["/app/plan", "Marcela · Plan"],
-  ["/app/actividades", "Marcela · Actividades"],
-  ["/app/asistente", "Marcela · Dudas"],
-  ["/app/revision", "Marcela · Revisión"],
-  ["/app/resumen", "Marcela · Resumen"],
-  ["/app/participante/gustos", "Rosa · Sus gustos"],
-  ["/app/participante/hoy", "Rosa · Hoy"],
-  ["/app/participante/pasos", "Rosa · Paso a paso"],
-  ["/app/participante/ayuda", "Rosa · Pidió ayuda"],
+  ["/app/mensajes", "Mensajes"],
+  ["/app/emergencia", "Emergencia"],
+  ["/app/hoy/actividad", "Actividad"],
+  ["/app/hoy", "Hoy"],
+  ["/app/plan", "Plan"],
+  ["/app/actividades", "Actividades"],
+  ["/app/asistente", "Dudas"],
+  ["/app/revision", "Revisión"],
+  ["/app/resumen", "Resumen"],
+  ["/app/participante/gustos", "Sus gustos"],
+  ["/app/participante/hoy", "Hoy"],
+  ["/app/participante/pasos", "Paso a paso"],
+  ["/app/participante/ayuda", "Pidió ayuda"],
   ["/app/profesional/panel", "Dra. Solano · Panel"],
   ["/app/profesional/usuarios", "Dra. Solano · Usuarios"],
   ["/app/profesional/biblioteca", "Dra. Solano · Biblioteca"],
@@ -50,7 +49,7 @@ function crumbFor(pathname: string): string {
   return hit ? hit[1] : "";
 }
 
-type OpenModal = "mi-perfil" | "editar-rosa" | "configuraciones" | "emergencia" | "auditoria" | null;
+type OpenModal = "mi-perfil" | "configuraciones" | "emergencia" | "auditoria" | null;
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -58,8 +57,9 @@ export function AppHeader() {
   const session = useSession();
   const role = session.status === "authed" ? session.profile.role : null;
   const email = session.status === "authed" ? session.session.user.email ?? "" : "";
+  const nombre = session.status === "authed" ? session.profile.nombre : "";
+  const { data: myPatient } = useMyPatient();
   const resetSessionState = useAppStore((s) => s.resetSessionState);
-  const onboarding2 = useAppStore((s) => s.onboarding2);
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
 
@@ -89,12 +89,18 @@ export function AppHeader() {
 
       {role === "familiar" && (
         <AccountMenu
-          initials="M"
-          name="Marcela"
-          subtitle={`Familiar de ${getPatientName(onboarding2)}`}
+          initials={
+            nombre
+              .split(" ")
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase() || "F"
+          }
+          name={nombre}
+          subtitle={myPatient ? `Familiar de ${myPatient.nombre}` : "Completá el perfil de tu familiar"}
           items={[
             { label: "Mi perfil", onClick: () => setModal("mi-perfil") },
-            { label: `Editar datos básicos de ${getPatientName(onboarding2).split(" ")[0]}`, onClick: () => setModal("editar-rosa") },
             { label: "Ver el cuestionario completo", onClick: () => navigate("/app/perfil/resumen") },
             { label: "Mensajes de tu profesional", onClick: () => navigate("/app/mensajes") },
             { label: "Configuraciones", onClick: () => setModal("configuraciones") },
@@ -130,19 +136,19 @@ export function AppHeader() {
       {modal === "mi-perfil" && role === "familiar" && (
         <Modal onClose={() => setModal(null)}>
           <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Mi perfil</h2>
-          <p className="m-0 mb-5 text-sm text-tinta-tenue">Datos de tu cuenta como familiar administradora.</p>
+          <p className="m-0 mb-5 text-sm text-tinta-tenue">Datos de tu cuenta como familiar administrador.</p>
           <div className="grid gap-3">
             <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Nombre</strong>
-              Marcela Jiménez
+              {nombre}
             </div>
             <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Correo</strong>
-              {email || "familiar@test.com"}
+              {email}
             </div>
             <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Rol</strong>
-              Familiar administradora de {getPatientName(onboarding2)}
+              Familiar administrador{myPatient ? ` de ${myPatient.nombre}` : ""}
             </div>
           </div>
         </Modal>
@@ -169,7 +175,6 @@ export function AppHeader() {
         </Modal>
       )}
 
-      {modal === "editar-rosa" && <EditBasicInfoModal onClose={() => setModal(null)} />}
       {modal === "configuraciones" && <SettingsModal onClose={() => setModal(null)} />}
       {modal === "emergencia" && <EmergencyContactsModal onClose={() => setModal(null)} />}
 

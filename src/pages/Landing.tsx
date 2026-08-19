@@ -155,7 +155,6 @@ export function Landing() {
   const setEmail = useAppStore((s) => s.setEmail);
   const authError = useAppStore((s) => s.authError);
   const setAuthError = useAppStore((s) => s.setAuthError);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const [mode, setMode] = useState<"login" | "register">("login");
   const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
@@ -226,8 +225,7 @@ export function Landing() {
       setAuthError("No pudimos cargar tu cuenta. Intentá de nuevo.");
       return;
     }
-    if (profile.role === "familiar") navigate(onboardingComplete ? "/app/hoy" : "/app/consent");
-    else navigate(roleHome(profile.role));
+    navigate(roleHome(profile.role));
   }
 
   async function resendSignup() {

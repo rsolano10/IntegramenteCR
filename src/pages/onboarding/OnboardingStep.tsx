@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
+import { supabase } from "../../lib/supabase";
+import { useSession } from "../../lib/useSession";
+import { useMyPatient } from "../../lib/useMyPatient";
 import { applicableQuestions, questions, resolveOptions } from "../../lib/onboardingSchema";
 import { Button } from "../../components/ui/Button";
 import { CheckRow } from "../../components/ui/CheckRow";
@@ -20,6 +24,11 @@ export function OnboardingStep() {
   const endModuleEdit = useAppStore((s) => s.endModuleEdit);
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
   const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const session = useSession();
+  const { data: myPatient } = useMyPatient();
+  const queryClient = useQueryClient();
 
   const applicable = applicableQuestions(answers);
   const idx = applicable.findIndex((q) => q.id === stepId);
@@ -46,22 +55,56 @@ export function OnboardingStep() {
     if (id) navigate(`/app/perfil/${id}`);
     else navigate(fallback);
   }
-  function goNext() {
+  async function goNext() {
     if (editQuestions) {
       const next = editQuestions[editIdx + 1];
-      if (next) navigate(`/app/perfil/${next.id}`);
-      else {
-        endModuleEdit();
-        navigate("/app/perfil/resumen");
+      if (next) {
+        navigate(`/app/perfil/${next.id}`);
+        return;
       }
+      // Last question of an edit session on an already-real patient — push
+      // the correction back to Supabase (onboarding_answers: familiar
+      // update already allows this), not just the local copy.
+      if (myPatient) {
+        setSubmitError("");
+        setSubmitting(true);
+        const { error } = await supabase.from("onboarding_answers").update({ answers }).eq("patient_id", myPatient.id);
+        setSubmitting(false);
+        if (error) {
+          setSubmitError("No pudimos guardar el cambio. Probá de nuevo.");
+          return;
+        }
+      }
+      endModuleEdit();
+      navigate("/app/perfil/resumen");
       return;
     }
     const next = applicable[idx + 1]?.id;
-    if (next) navigate(`/app/perfil/${next}`);
-    else {
-      completeOnboarding();
-      navigate("/app/hoy");
+    if (next) {
+      navigate(`/app/perfil/${next}`);
+      return;
     }
+    // Last question of the wizard — this is the first time this account's
+    // answers become a real patient. Never fall back to the "Rosa Jiménez"
+    // demo default here — an empty name blocks submission instead.
+    const nombre = typeof answers.persona_nombre === "string" ? answers.persona_nombre.trim() : "";
+    if (!nombre) {
+      setSubmitError("Falta el nombre de tu familiar — volvé y completalo antes de continuar.");
+      return;
+    }
+    if (session.status !== "authed") return;
+    setSubmitError("");
+    setSubmitting(true);
+    const edad = typeof answers.persona_edad === "string" ? answers.persona_edad.trim() : "";
+    const { error } = await supabase.rpc("self_onboard", { p_nombre: nombre, p_edad: edad || null, p_answers: answers });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError("No pudimos guardar tu perfil. Probá de nuevo.");
+      return;
+    }
+    completeOnboarding();
+    queryClient.invalidateQueries({ queryKey: ["my-patient", session.session.user.id] });
+    navigate("/app/hoy");
   }
   function goBack() {
     if (editQuestions) {
@@ -179,12 +222,20 @@ export function OnboardingStep() {
         </div>
       )}
 
+      {submitError && <p className="m-0 mt-4 text-[14px] text-alerta-texto">{submitError}</p>}
+
       <div className="flex items-center justify-between gap-4 mt-10 pt-6 border-t border-borde">
-        <Button variant="secondary" onClick={goBack}>
+        <Button variant="secondary" onClick={goBack} disabled={submitting}>
           Atrás
         </Button>
-        <Button variant="ink" onClick={goNext} disabled={!canContinue}>
-          {editQuestions && editIdx >= editQuestions.length - 1 ? "Guardar y volver" : "Continuar"}
+        <Button variant="ink" onClick={goNext} disabled={!canContinue || submitting}>
+          {submitting
+            ? "Guardando…"
+            : editQuestions && editIdx >= editQuestions.length - 1
+              ? "Guardar y volver"
+              : !editQuestions && !applicable[idx + 1]
+                ? "Finalizar"
+                : "Continuar"}
         </Button>
       </div>
     </div>

@@ -120,7 +120,17 @@ interface AppState {
   // Persisted to localStorage (see `persist` wrapper below) — once someone
   // finishes the questionnaire, they shouldn't have to redo it on every
   // login. Only cleared by deleting the browser's local storage by hand.
+  // NOTE: no longer the source of truth for routing (RouteGuard reads the
+  // real patient_links row via useMyPatient()) — kept so in-progress local
+  // edits aren't lost, and reset per-account below.
   onboardingComplete: boolean;
+  // Last Supabase user id seen in this browser. RouteGuard compares this to
+  // the current session on every login and, on a mismatch, wipes
+  // onboarding2/modalidad/onboardingComplete — otherwise a second real
+  // account signing in on the same browser would inherit whatever the
+  // first account's demo/onboarding state was (this was the actual bug:
+  // Marcela/Rosa's local state leaking into a brand new signup).
+  lastUserId: string | null;
   // Also persisted. "pendiente" blocks the familiar/participante shells down
   // to a single waiting screen; the clinic flips it to "asignado" and that
   // takes effect on the family's next read of the store, same login or not.
@@ -172,6 +182,13 @@ interface AppState {
   completeOnboarding: () => void;
   asignarPrograma: (mensaje: string) => void;
   dismissWelcomeMessage: () => void;
+  // Called by RouteGuard when the signed-in user id changes — clears the
+  // demo/onboarding fields that used to leak across accounts.
+  resetOnboardingForNewAccount: (userId: string | null) => void;
+  // Pulls a real account's saved onboarding_answers row into the local
+  // store, so PerfilResumen/"editar módulo" (which still only read/write
+  // onboarding2 locally) show and edit real data instead of staying blank.
+  hydrateOnboarding: (answers: Answers) => void;
 
   updateTaskEstado: (dia: string, taskId: string, estado: PlanDayStatus) => void;
   startPlanDraft: () => void;
@@ -211,6 +228,7 @@ export const useAppStore = create<AppState>()(
   onboarding2: { ...defaultOnboarding },
   modalidad: "orientado",
   onboardingComplete: false,
+  lastUserId: null,
   // Defaults to "asignado" so paciente@test.com/clinica@test.com keep
   // looking fully set up when a tester jumps straight there — only a fresh
   // walk through the real familiar flow (completeOnboarding) sets it to
@@ -317,6 +335,15 @@ export const useAppStore = create<AppState>()(
     get().pushAudit("Plan", "asigna el programa y notifica a la familia", "Dra. Guiselle Solano");
   },
   dismissWelcomeMessage: () => set({ welcomeMessagePending: false }),
+  resetOnboardingForNewAccount: (userId) =>
+    set({
+      onboarding2: {},
+      modalidad: "orientado",
+      onboardingComplete: false,
+      welcomeMessagePending: false,
+      lastUserId: userId,
+    }),
+  hydrateOnboarding: (answers) => set({ onboarding2: answers }),
 
   updateTaskEstado: (dia, taskId, estado) => {
     set((s) => ({ plan: mapTask(s.plan, dia, taskId, (t) => ({ ...t, estado })) }));
@@ -396,6 +423,7 @@ export const useAppStore = create<AppState>()(
         onboarding2: s.onboarding2,
         modalidad: s.modalidad,
         onboardingComplete: s.onboardingComplete,
+        lastUserId: s.lastUserId,
         planStatus: s.planStatus,
         welcomeMessagePending: s.welcomeMessagePending,
         mensajes: s.mensajes,

@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppHeader } from "./components/layout/AppHeader";
 import { FamiliarShell } from "./components/layout/FamiliarShell";
 import { ParticipantShell } from "./components/layout/ParticipantShell";
 import { ProfesionalShell } from "./components/layout/ProfesionalShell";
 import { useSession, roleHome } from "./lib/useSession";
+import { useMyPatient } from "./lib/useMyPatient";
 import { useAppStore } from "./lib/store";
 
 import { Landing } from "./pages/Landing";
@@ -55,10 +56,23 @@ import { Vacio } from "./pages/estados/Vacio";
 // under /app (familiar pages, the shared alert/estado screens, consent,
 // perfil) just needs "signed in as someone" — those still read/write the
 // shared demo data in Zustand regardless of exact role in this phase.
+//
+// "Has this familiar account finished onboarding" is answered by whether a
+// real patient_links row exists (useMyPatient()), not by a local flag — a
+// local flag persisted across every account sharing a browser, which is
+// exactly how a brand new signup ended up seeing the demo account's name
+// and patient. A real per-account DB row can't leak that way.
 function RouteGuard({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const session = useSession();
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
+  const { data: myPatient, isLoading: patientLoading } = useMyPatient();
+  const currentUserId = session.status === "authed" ? session.session.user.id : null;
+  const lastUserId = useAppStore((s) => s.lastUserId);
+  const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
+
+  useEffect(() => {
+    if (currentUserId && lastUserId !== currentUserId) resetOnboardingForNewAccount(currentUserId);
+  }, [currentUserId, lastUserId, resetOnboardingForNewAccount]);
 
   if (session.status === "loading") {
     return <div className="min-h-[40vh]" />;
@@ -67,9 +81,21 @@ function RouteGuard({ children }: { children: ReactNode }) {
     return pathname === "/app/login" ? <>{children}</> : <Navigate to="/app/login" replace />;
   }
   const { role } = session.profile;
+
+  if (role === "familiar" && patientLoading) {
+    return <div className="min-h-[40vh]" />;
+  }
+
   if (pathname === "/app/login") {
-    const home = role === "familiar" && !onboardingComplete ? "/app/consent" : roleHome(role);
+    const home = role === "familiar" && !myPatient ? "/app/consent" : roleHome(role);
     return <Navigate to={home} replace />;
+  }
+  const onOnboardingPath = pathname === "/app/consent" || pathname.startsWith("/app/perfil");
+  if (role === "familiar" && !myPatient && !onOnboardingPath) {
+    return <Navigate to="/app/consent" replace />;
+  }
+  if (role === "familiar" && myPatient && pathname === "/app/consent") {
+    return <Navigate to="/app/hoy" replace />;
   }
   if (pathname.startsWith("/app/participante") && role !== "paciente") {
     return <Navigate to="/app/login" replace />;

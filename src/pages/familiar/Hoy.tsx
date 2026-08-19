@@ -81,7 +81,7 @@ export function Hoy() {
         <Modal onClose={dismissWelcomeMessage}>
           <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">¡Ya tenés tu programa!</h2>
           <p className="m-0 mb-4 text-[16px] leading-relaxed text-tinta-suave">
-            El equipo de IntegraMente revisó el perfil de {getPatientName(onboarding2)} y armó su primer programa personalizado. Ya
+            El equipo de IntegraMente revisó el perfil de {myPatient?.nombre ?? getPatientName(onboarding2)} y armó su primer programa personalizado. Ya
             podés ver la actividad de hoy y el resto de la semana.
           </p>
           {ultimoMensaje && (
