@@ -1,9 +1,17 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
+import { useSession } from "../../lib/useSession";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
+import { PillToggle } from "../ui/PillToggle";
 import { planTiers } from "../../lib/mockData";
+
+const modalidadOptions = planTiers.map((t) => ({ value: t.id, label: t.nombre }));
+const planStatusOptions: { value: "pendiente" | "asignado"; label: string }[] = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "asignado", label: "Asignado" },
+];
 
 export interface PatientLink {
   profile_id: string;
@@ -37,6 +45,13 @@ const relationLabel: Record<string, string> = {
   profesional_asignado: "Clínica",
 };
 
+interface Mensaje {
+  id: string;
+  texto: string;
+  autor_id: string | null;
+  created_at: string;
+}
+
 export function PatientDetailModal({
   patient,
   onClose,
@@ -52,9 +67,12 @@ export function PatientDetailModal({
   const [planStatus, setPlanStatus] = useState(patient.plan_status);
   const [saving, setSaving] = useState(false);
   const [linkBusy, setLinkBusy] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const [localError, setLocalError] = useState("");
+
+  const session = useSession();
+  const myUserId = session.status === "authed" ? session.session.user.id : null;
+  const queryClient = useQueryClient();
 
   const { data: accounts } = useQuery({
     queryKey: ["managed-accounts"],
@@ -65,6 +83,49 @@ export function PatientDetailModal({
     },
     enabled: linkPickerOpen,
   });
+
+  const { data: mensajes, isLoading: loadingMensajes } = useQuery({
+    queryKey: ["mensajes", patient.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mensajes")
+        .select("id, texto, autor_id, created_at")
+        .eq("patient_id", patient.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as Mensaje[];
+    },
+  });
+
+  // Names for messages not authored by the viewer come from the patient's
+  // already-fetched links (sourced from list_patients(), which bypasses
+  // profiles RLS server-side) — never from a profiles join, which RLS would
+  // null out for anyone the clinic can't otherwise read.
+  const linkNameByProfileId = new Map(patient.links.map((l) => [l.profile_id, l.nombre]));
+  function authorLabel(autorId: string | null) {
+    if (autorId === myUserId) return "Vos";
+    if (autorId && linkNameByProfileId.has(autorId)) return linkNameByProfileId.get(autorId);
+    return "Familia";
+  }
+
+  const [texto, setTexto] = useState("");
+  const [sendingMensaje, setSendingMensaje] = useState(false);
+  const [mensajeError, setMensajeError] = useState("");
+
+  async function sendMensaje() {
+    if (!texto.trim() || !myUserId) return;
+    setMensajeError("");
+    setSendingMensaje(true);
+    const { error } = await supabase.from("mensajes").insert({ patient_id: patient.id, texto: texto.trim(), autor_id: myUserId });
+    setSendingMensaje(false);
+    if (error) {
+      setMensajeError("No pudimos enviar el mensaje. Probá de nuevo.");
+      return;
+    }
+    setTexto("");
+    queryClient.invalidateQueries({ queryKey: ["mensajes", patient.id] });
+    queryClient.invalidateQueries({ queryKey: ["pending-threads"] });
+  }
 
   async function saveBasics() {
     setLocalError("");
@@ -100,18 +161,6 @@ export function PatientDetailModal({
     onClose();
   }
 
-  async function deletePatient() {
-    setSaving(true);
-    const { error } = await supabase.from("patients").delete().eq("id", patient.id);
-    setSaving(false);
-    if (error) {
-      onChanged(error.message, true);
-      return;
-    }
-    onChanged(`${patient.nombre} fue eliminado.`);
-    onClose();
-  }
-
   const linkedProfileIds = new Set(patient.links.map((l) => l.profile_id));
   const linkableAccounts = (accounts ?? []).filter((a) => !linkedProfileIds.has(a.id));
 
@@ -141,32 +190,15 @@ export function PatientDetailModal({
             />
           </label>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-            Modalidad
-            <select
-              value={modalidad}
-              onChange={(e) => setModalidad(e.target.value)}
-              className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
-            >
-              {planTiers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-            Estado del plan
-            <select
-              value={planStatus}
-              onChange={(e) => setPlanStatus(e.target.value as "pendiente" | "asignado")}
-              className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
-            >
-              <option value="pendiente">Pendiente</option>
-              <option value="asignado">Asignado</option>
-            </select>
-          </label>
+        <div className="grid gap-4">
+          <div>
+            <p className="m-0 mb-2 text-[15px] font-semibold text-[#3b4c51]">Modalidad</p>
+            <PillToggle value={modalidad} onChange={setModalidad} options={modalidadOptions} />
+          </div>
+          <div>
+            <p className="m-0 mb-2 text-[15px] font-semibold text-[#3b4c51]">Estado del plan</p>
+            <PillToggle value={planStatus} onChange={setPlanStatus} options={planStatusOptions} />
+          </div>
         </div>
         {localError && <p className="m-0 text-[14px] text-alerta-texto">{localError}</p>}
         <Button variant="ink" dense onClick={saveBasics} disabled={saving} className="justify-self-start">
@@ -214,24 +246,48 @@ export function PatientDetailModal({
       </div>
 
       <div className="pt-5 mt-5 border-t border-[#efeada]">
-        {!confirmDelete ? (
-          <button type="button" onClick={() => setConfirmDelete(true)} className="text-[14px] font-semibold text-alerta-texto underline decoration-dotted cursor-pointer">
-            Eliminar paciente
-          </button>
-        ) : (
-          <div className="bg-alerta rounded-xl p-4">
-            <p className="m-0 mb-3 text-[14px] text-alerta-texto">
-              Esto borra a {patient.nombre} y toda su información asociada (plan, mensajes, cuestionario). No se puede deshacer.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="secondary" dense onClick={() => setConfirmDelete(false)}>
-                Cancelar
-              </Button>
-              <Button variant="urgency" dense onClick={deletePatient} disabled={saving}>
-                Sí, eliminar
+        <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Mensajes</p>
+
+        {loadingMensajes && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
+
+        {!loadingMensajes && (
+          <>
+            {!mensajes || mensajes.length === 0 ? (
+              <p className="m-0 mb-3 text-sm text-tinta-tenue">Todavía no hay mensajes con esta familia.</p>
+            ) : (
+              <div className="grid gap-2.5 mb-3 max-h-64 overflow-y-auto pr-1">
+                {mensajes.map((m) => {
+                  const mine = m.autor_id === myUserId;
+                  return (
+                    <div
+                      key={m.id}
+                      className={`rounded-xl p-3.5 max-w-[85%] ${mine ? "justify-self-end border-[1.5px] border-verde-serenidad bg-[#f5f9f9]" : "justify-self-start border border-borde bg-campo"}`}
+                    >
+                      <p className="m-0 mb-1 text-[12px] text-tinta-tenue">
+                        {authorLabel(m.autor_id)} ·{" "}
+                        {new Date(m.created_at).toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" })}
+                      </p>
+                      <p className="m-0 text-[14px] leading-relaxed text-tinta">{m.texto}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <textarea
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                placeholder="Responder a la familia…"
+                rows={2}
+                className="w-full min-h-[64px] rounded-xl border-[1.5px] border-[#ddd7be] bg-campo px-3.5 py-2.5 font-sans text-[14px] leading-relaxed text-tinta resize-y"
+              />
+              {mensajeError && <p className="m-0 text-[13px] text-alerta-texto">{mensajeError}</p>}
+              <Button variant="ink" dense onClick={sendMensaje} disabled={sendingMensaje || !texto.trim()} className="justify-self-start">
+                {sendingMensaje ? "Enviando…" : "Enviar"}
               </Button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </Modal>

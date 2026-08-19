@@ -37,8 +37,7 @@ import { Panel } from "./pages/profesional/Panel";
 import { Ficha } from "./pages/profesional/Ficha";
 import { Editor } from "./pages/profesional/Editor";
 import { ProfesionalAlerta } from "./pages/profesional/Alerta";
-import { Cuentas } from "./pages/profesional/Cuentas";
-import { Pacientes } from "./pages/profesional/Pacientes";
+import { Usuarios } from "./pages/profesional/Usuarios";
 import { Biblioteca } from "./pages/profesional/Biblioteca";
 
 import { Ideacion } from "./pages/alertas/Ideacion";
@@ -114,8 +113,7 @@ function AppLayout() {
 
         <Route path="profesional" element={<ProfesionalShell />}>
           <Route path="panel" element={<Panel />} />
-          <Route path="pacientes" element={<Pacientes />} />
-          <Route path="cuentas" element={<Cuentas />} />
+          <Route path="usuarios" element={<Usuarios />} />
           <Route path="biblioteca" element={<Biblioteca />} />
           <Route path="ficha" element={<Ficha />} />
           <Route path="editor" element={<Editor />} />

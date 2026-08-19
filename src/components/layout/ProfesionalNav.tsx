@@ -24,28 +24,15 @@ const items: NavItem[] = [
     ),
   },
   {
-    label: "Pacientes",
-    to: "/app/profesional/pacientes",
-    match: (p) => p.startsWith("/app/profesional/pacientes"),
+    label: "Usuarios",
+    to: "/app/profesional/usuarios",
+    match: (p) => p.startsWith("/app/profesional/usuarios"),
     icon: (active) => (
       <svg {...iconProps}>
         <circle cx="7.2" cy="6.8" r="2.6" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
         <path d="M2.5 17c0-2.9 2.1-4.8 4.7-4.8s4.7 1.9 4.7 4.8" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
         <circle cx="14.3" cy="6" r="1.9" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
         <path d="M13 12.7c2.4.2 4 1.8 4 4.3" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    label: "Cuentas",
-    to: "/app/profesional/cuentas",
-    match: (p) => p.startsWith("/app/profesional/cuentas"),
-    icon: (active) => (
-      <svg {...iconProps}>
-        <rect x="2.5" y="4.5" width="15" height="11" rx="2" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
-        <circle cx="7.3" cy="9.5" r="1.6" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
-        <path d="M4.8 13.2c.4-1.4 1.4-2.1 2.5-2.1s2.1.7 2.5 2.1" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
-        <path d="M12.3 8.8h3M12.3 11h3" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
       </svg>
     ),
   },

@@ -295,26 +295,6 @@ export const assistantAnswers: Record<string, { titulo: string; cuerpo: string; 
   },
 };
 
-export interface ClinicPatient {
-  nombre: string;
-  edad: number;
-  familiar: string;
-  modalidad: string;
-  semaforo: Semaforo;
-  adherencia: string;
-  // "ficha"/"alerta" open a real dedicated screen for that patient.
-  // "resumen" is for patients that don't have one built (only Rosa's ficha
-  // and Marta's alert exist) — it opens an inline summary instead of
-  // linking to a page that would silently show someone else's data.
-  destino: "ficha" | "alerta" | "rechazo" | "resumen";
-}
-
-export const clinicPatients: ClinicPatient[] = [
-  { nombre: "Elena Vargas", edad: 83, familiar: "Jorge", modalidad: "Orientado", semaforo: "amarillo", adherencia: "2 de 5", destino: "rechazo" },
-  { nombre: "Marta Solís", edad: 88, familiar: "Laura", modalidad: "Clínico", semaforo: "rojo", adherencia: "1 de 5", destino: "alerta" },
-  { nombre: "Óscar Brenes", edad: 76, familiar: "Sofía", modalidad: "Autoguiado", semaforo: "verde", adherencia: "5 de 5", destino: "resumen" },
-];
-
 export const planHistory = [
   { quien: "12 ago · sistema", que: "reduce dificultad tras dos «en parte»." },
   { quien: "10 ago · G. Solano", que: "sustituye juego numérico por fotos." },

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
 import { rechazoTriggered } from "../../lib/rules";
 import { todayFeaturedTask, getPatientName } from "../../lib/patient";
@@ -7,7 +8,9 @@ import { ActivityCard } from "../../components/ui/ActivityCard";
 import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
-import { professional } from "../../lib/mockData";
+import { supabase } from "../../lib/supabase";
+import { useSession } from "../../lib/useSession";
+import { useMyPatient } from "../../lib/useMyPatient";
 
 const regMessages: Record<string, string> = {
   done: "Registrado. Mañana se repite para consolidar la rutina.",
@@ -26,11 +29,31 @@ export function Hoy() {
   const reg = useAppStore((s) => s.reg);
   const noCount = useAppStore((s) => s.noCount);
   const markRegistro = useAppStore((s) => s.markRegistro);
-  const mensajes = useAppStore((s) => s.mensajes);
-  const ultimoMensaje = mensajes[0];
   const onboarding2 = useAppStore((s) => s.onboarding2);
   const welcomeMessagePending = useAppStore((s) => s.welcomeMessagePending);
   const dismissWelcomeMessage = useAppStore((s) => s.dismissWelcomeMessage);
+
+  const session = useSession();
+  const myUserId = session.status === "authed" ? session.session.user.id : null;
+  const { data: myPatient } = useMyPatient();
+  const { data: recentMensajes } = useQuery({
+    queryKey: ["mensajes-preview", myPatient?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mensajes")
+        .select("id, texto, autor_id, created_at")
+        .eq("patient_id", myPatient!.id)
+        .order("created_at", { ascending: false })
+        .limit(2);
+      if (error) throw error;
+      return data as { id: string; texto: string; autor_id: string | null; created_at: string }[];
+    },
+    enabled: !!myPatient,
+  });
+  // Only surface the preview when the clinic spoke last — if the family sent
+  // the last message, there's nothing new for them to see here.
+  const ultimoMensaje = recentMensajes?.[0]?.autor_id !== myUserId ? recentMensajes?.[0] : undefined;
+  const hasMoreMensajes = (recentMensajes?.length ?? 0) > 1;
 
   const today = plan.find((d) => d.isToday);
 
@@ -63,7 +86,7 @@ export function Hoy() {
           </p>
           {ultimoMensaje && (
             <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-5">
-              <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de {professional.nombre}</p>
+              <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
               <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
             </div>
           )}
@@ -75,9 +98,9 @@ export function Hoy() {
 
       {ultimoMensaje && (
         <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-4.5">
-          <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de {professional.nombre}</p>
+          <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
           <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
-          {mensajes.length > 1 && (
+          {hasMoreMensajes && (
             <Link to="/app/mensajes" className="inline-block mt-2 text-[13px] font-semibold text-verde-profundo">
               Ver mensajes anteriores ›
             </Link>

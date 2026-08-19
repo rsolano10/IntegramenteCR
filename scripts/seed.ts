@@ -169,15 +169,6 @@ const WEEKLY_PLAN_DAYS = [
   },
 ];
 
-// Ported from src/lib/mockData.ts's `clinicPatients` — decorative rows in
-// the clinic panel, linked only to the professional (no family/participant
-// accounts of their own in this phase).
-const DECORATIVE_PATIENTS = [
-  { nombre: "Elena Vargas", edad: 83, modalidad: "orientado" as const },
-  { nombre: "Marta Solís", edad: 88, modalidad: "clinico" as const },
-  { nombre: "Óscar Brenes", edad: 76, modalidad: "autoguiado" as const },
-];
-
 async function createUser(email: string, role: "familiar" | "paciente" | "profesional", nombre: string, especialidad?: string) {
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -258,27 +249,6 @@ async function main() {
     autor_id: profesionalId,
   });
   if (mensajeError) throw mensajeError;
-
-  console.log("Creando pacientes decorativos del panel clínico…");
-  for (const p of DECORATIVE_PATIENTS) {
-    const { data: patient, error: patientError } = await admin
-      .from("patients")
-      .insert({
-        nombre: p.nombre,
-        edad: String(p.edad),
-        modalidad: p.modalidad,
-        plan_status: "asignado",
-        onboarding_complete: true,
-      })
-      .select()
-      .single();
-    if (patientError) throw patientError;
-
-    const { error: decorativeLinkError } = await admin
-      .from("patient_links")
-      .insert({ patient_id: patient.id, profile_id: profesionalId, relation: "profesional_asignado" });
-    if (decorativeLinkError) throw decorativeLinkError;
-  }
 
   console.log("\nListo. Contraseña de las 3 cuentas de prueba:", DEMO_PASSWORD);
   console.log("  familiar@test.com / paciente@test.com / clinica@test.com");
