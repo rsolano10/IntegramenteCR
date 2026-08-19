@@ -1,15 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../lib/store";
-import { CheckRow, RadioRow } from "../components/ui/CheckRow";
+import { CheckRow } from "../components/ui/CheckRow";
 
 export function Consent() {
   const navigate = useNavigate();
   const c1 = useAppStore((s) => s.c1);
   const c2 = useAppStore((s) => s.c2);
-  const notify = useAppStore((s) => s.notify);
   const toggleConsent1 = useAppStore((s) => s.toggleConsent1);
   const toggleConsent2 = useAppStore((s) => s.toggleConsent2);
-  const setNotify = useAppStore((s) => s.setNotify);
 
   const canContinue = c1 && c2;
 
@@ -39,20 +37,6 @@ export function Consent() {
         <CheckRow checked={c2} onToggle={toggleConsent2}>
           Autorizo el uso de los datos ingresados para generar el plan y compartirlo con el equipo tratante.
         </CheckRow>
-        <div className="border-t border-[#efeada] pt-4.5">
-          <p className="m-0 mb-3 text-[15px] font-semibold text-[#3b4c51]">
-            Si el sistema detecta una señal de riesgo, ¿querés que se avise a la profesional asignada?
-          </p>
-          <div className="grid gap-2.5">
-            <RadioRow checked={notify === "si"} onSelect={() => setNotify("si")}>
-              Sí, avisar a la Dra. Solano
-            </RadioRow>
-            <RadioRow checked={notify === "no"} onSelect={() => setNotify("no")}>
-              No, prefiero decidirlo en el momento
-            </RadioRow>
-          </div>
-          <p className="m-0 mt-3 text-[15px] text-tinta-tenue">Podés cambiarlo cuando aparezca la alerta.</p>
-        </div>
         <button
           type="button"
           disabled={!canContinue}

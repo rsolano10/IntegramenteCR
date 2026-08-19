@@ -714,3 +714,39 @@ export function resolveOptions(q: Question, a: Answers): Option[] {
   if (!q.options) return [];
   return typeof q.options === "function" ? q.options(a) : q.options;
 }
+
+// Human-readable rendering of whatever was answered — the single place the
+// "revisar tu cuestionario" screen (and anything else that needs to show a
+// past answer back to a person) turns a raw stored value into a label.
+export function describeAnswer(q: Question, a: Answers): string {
+  const value = a[q.id];
+  if (q.type === "text") {
+    return typeof value === "string" && value.trim() ? value.trim() : "Sin responder";
+  }
+  const opts = resolveOptions(q, a);
+  if (Array.isArray(value)) {
+    const labels = value.map((v) => opts.find((o) => o.value === v)?.label).filter((x): x is string => !!x);
+    return labels.length ? labels.join(" · ") : "Sin responder";
+  }
+  if (typeof value === "string" && value) {
+    return opts.find((o) => o.value === value)?.label ?? value;
+  }
+  return "Sin responder";
+}
+
+// Every answerable (non-"info") question that currently applies, grouped by
+// module in the order each module first appears — the read model behind the
+// "revisar tu cuestionario" screen.
+export function groupAnswerableByModule(a: Answers): { module: string; questions: Question[] }[] {
+  const order: string[] = [];
+  const map = new Map<string, Question[]>();
+  for (const q of applicableQuestions(a)) {
+    if (q.type === "info" || !q.module) continue;
+    if (!map.has(q.module)) {
+      map.set(q.module, []);
+      order.push(q.module);
+    }
+    map.get(q.module)!.push(q);
+  }
+  return order.map((m) => ({ module: m, questions: map.get(m)! }));
+}

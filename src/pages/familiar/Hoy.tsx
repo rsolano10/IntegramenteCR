@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "../../lib/store";
 import { rechazoTriggered } from "../../lib/rules";
-import { todayFeaturedTask } from "../../lib/patient";
+import { todayFeaturedTask, getPatientName } from "../../lib/patient";
+import { Link } from "react-router-dom";
 import { ActivityCard } from "../../components/ui/ActivityCard";
 import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
+import { Modal } from "../../components/ui/Modal";
 import { professional } from "../../lib/mockData";
 
 const regMessages: Record<string, string> = {
@@ -24,8 +26,11 @@ export function Hoy() {
   const reg = useAppStore((s) => s.reg);
   const noCount = useAppStore((s) => s.noCount);
   const markRegistro = useAppStore((s) => s.markRegistro);
-  const mensajeFamilia = useAppStore((s) => s.mensajeFamilia);
-  const mensajeFamiliaEnviado = useAppStore((s) => s.mensajeFamiliaEnviado);
+  const mensajes = useAppStore((s) => s.mensajes);
+  const ultimoMensaje = mensajes[0];
+  const onboarding2 = useAppStore((s) => s.onboarding2);
+  const welcomeMessagePending = useAppStore((s) => s.welcomeMessagePending);
+  const dismissWelcomeMessage = useAppStore((s) => s.dismissWelcomeMessage);
 
   const today = plan.find((d) => d.isToday);
 
@@ -49,10 +54,34 @@ export function Hoy() {
 
   return (
     <div>
-      {mensajeFamiliaEnviado && mensajeFamilia && (
+      {welcomeMessagePending && (
+        <Modal onClose={dismissWelcomeMessage}>
+          <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">¡Ya tenés tu programa!</h2>
+          <p className="m-0 mb-4 text-[16px] leading-relaxed text-tinta-suave">
+            El equipo de IntegraMente revisó el perfil de {getPatientName(onboarding2)} y armó su primer programa personalizado. Ya
+            podés ver la actividad de hoy y el resto de la semana.
+          </p>
+          {ultimoMensaje && (
+            <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-5">
+              <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de {professional.nombre}</p>
+              <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
+            </div>
+          )}
+          <Button variant="ink" fullWidth onClick={dismissWelcomeMessage}>
+            Empezar
+          </Button>
+        </Modal>
+      )}
+
+      {ultimoMensaje && (
         <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-4.5">
           <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de {professional.nombre}</p>
-          <p className="m-0 text-[16px] leading-relaxed text-tinta">{mensajeFamilia}</p>
+          <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
+          {mensajes.length > 1 && (
+            <Link to="/app/mensajes" className="inline-block mt-2 text-[13px] font-semibold text-verde-profundo">
+              Ver mensajes anteriores ›
+            </Link>
+          )}
         </div>
       )}
 

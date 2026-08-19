@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
 import { NotifyBar } from "../../components/ui/NotifyBar";
+import { emergencyContacts } from "../../lib/mockData";
 
 export function Ideacion() {
+  const emergencia = emergencyContacts.find((c) => c.id === "emergencia")!;
+  const apoyo = emergencyContacts.find((c) => c.id === "apoyo")!;
+
   return (
     <div className="min-h-[84vh] bg-alerta flex items-center justify-center px-4 py-10 sm:px-8 sm:py-12">
       <div className="max-w-[680px] bg-white border-2 border-semaforo-rojo rounded-3xl p-6 sm:p-10">
@@ -16,12 +20,12 @@ export function Ideacion() {
         <div className="grid gap-3 mb-6.5">
           <div className="bg-alerta rounded-2xl p-5.5">
             <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">Emergencia inmediata</p>
-            <p className="m-0 font-serif text-[30px]">9-1-1</p>
+            <p className="m-0 font-serif text-[30px]">{emergencia.value}</p>
           </div>
           <div className="bg-alerta rounded-2xl p-5.5">
-            <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">Línea de apoyo emocional · Costa Rica</p>
-            <p className="m-0 font-serif text-[30px]">1322 · Aquí Estoy</p>
-            <p className="m-0 mt-1.5 text-[15px] text-[#6e4436]">Atención gratuita en crisis, 24 horas.</p>
+            <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">{apoyo.label}</p>
+            <p className="m-0 font-serif text-[30px]">{apoyo.value}</p>
+            <p className="m-0 mt-1.5 text-[15px] text-[#6e4436]">{apoyo.note}</p>
           </div>
           <div className="bg-campo border border-[#efeada] rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
             No la dejes sola. Retirá medicamentos y objetos de riesgo del alcance. Escuchá sin discutir ni minimizar.

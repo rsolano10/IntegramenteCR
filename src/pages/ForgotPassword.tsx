@@ -1,13 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import { Button } from "../components/ui/Button";
 
 export function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function submit() {
+  async function submit() {
     if (!email.trim()) return;
+    setLoading(true);
+    await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/restablecer-contrasena`,
+    });
+    // Deliberately shown regardless of whether the email has an account —
+    // Supabase already avoids leaking that either way, and the copy below
+    // is worded to match ("si tiene una cuenta con nosotros...").
+    setLoading(false);
     setSent(true);
   }
 
@@ -35,8 +45,8 @@ export function ForgotPassword() {
                   className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
                 />
               </label>
-              <Button variant="ink" fullWidth onClick={submit}>
-                Enviar instrucciones
+              <Button variant="ink" fullWidth onClick={submit} disabled={loading || !email.trim()}>
+                {loading ? "Enviando…" : "Enviar instrucciones"}
               </Button>
             </div>
           </>

@@ -71,14 +71,21 @@ export const professional = {
   especialidad: "Neuropsicología",
 };
 
+// The single source for every hard number shown on a safety screen. Ideacion
+// and Maltrato each keep their own contextual framing text (the "why" for
+// that situation genuinely differs), but both read the actual phone
+// numbers/lines from here via `id` — so a number never has to be updated
+// in two places to stay correct everywhere it's shown.
 export const emergencyContacts = [
-  { label: "Emergencia inmediata", value: "9-1-1" },
+  { id: "emergencia", label: "Emergencia inmediata", value: "9-1-1" },
   {
+    id: "apoyo",
     label: "Línea de apoyo emocional · Costa Rica",
     value: "1322 · Aquí Estoy",
     note: "Atención gratuita en crisis, 24 horas.",
   },
   {
+    id: "conapam",
     label: "CONAPAM · Consejo Nacional de la Persona Adulta Mayor",
     value: "Línea de denuncia y orientación",
     note: "Para personas adultas mayores en Costa Rica.",
@@ -295,13 +302,17 @@ export interface ClinicPatient {
   modalidad: string;
   semaforo: Semaforo;
   adherencia: string;
-  destino: "ficha" | "alerta" | "rechazo";
+  // "ficha"/"alerta" open a real dedicated screen for that patient.
+  // "resumen" is for patients that don't have one built (only Rosa's ficha
+  // and Marta's alert exist) — it opens an inline summary instead of
+  // linking to a page that would silently show someone else's data.
+  destino: "ficha" | "alerta" | "rechazo" | "resumen";
 }
 
 export const clinicPatients: ClinicPatient[] = [
   { nombre: "Elena Vargas", edad: 83, familiar: "Jorge", modalidad: "Orientado", semaforo: "amarillo", adherencia: "2 de 5", destino: "rechazo" },
   { nombre: "Marta Solís", edad: 88, familiar: "Laura", modalidad: "Clínico", semaforo: "rojo", adherencia: "1 de 5", destino: "alerta" },
-  { nombre: "Óscar Brenes", edad: 76, familiar: "Sofía", modalidad: "Autoguiado", semaforo: "verde", adherencia: "5 de 5", destino: "ficha" },
+  { nombre: "Óscar Brenes", edad: 76, familiar: "Sofía", modalidad: "Autoguiado", semaforo: "verde", adherencia: "5 de 5", destino: "resumen" },
 ];
 
 export const planHistory = [

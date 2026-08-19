@@ -40,28 +40,35 @@
   --shadow-marco: 0 30px 70px -50px rgba(31, 51, 56, 0.65);
 }
 
-body {
-  margin: 0;
-  background: var(--color-fondo-papel);
-  color: var(--color-tinta);
-  -webkit-font-smoothing: antialiased;
+/* Base-element defaults live in @layer base so Tailwind utility classes
+   (e.g. text-white on a Link/<a>) can override them as expected. Unlayered
+   CSS always wins over @layer styles in Tailwind v4 regardless of
+   specificity — without this, every <a> was forced to verde-profundo,
+   even ones explicitly styled white on a dark button background. */
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-fondo-papel);
+    color: var(--color-tinta);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--color-verde-profundo);
+  }
+
+  input:focus,
+  textarea:focus,
+  button:focus-visible {
+    outline: 3px solid var(--color-tinta);
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
-}
-
-a {
-  color: var(--color-verde-profundo);
-}
-
-input:focus,
-textarea:focus,
-button:focus-visible {
-  outline: 3px solid var(--color-tinta);
-  outline-offset: 2px;
 }
 
 /* Opacity-only on purpose: animating transform here would make this element

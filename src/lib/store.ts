@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { makeAuditEntry, type AuditEntry } from "./rules";
 import { classifyMessage } from "./chatbot";
 import type { Answers } from "./onboardingSchema";
@@ -18,9 +19,27 @@ const welcomeMessage: ChatMessage = {
   text: "Hola, Marcela. Contame qué está pasando y te ayudo, o elegí una de las dudas frecuentes de abajo.",
 };
 
-export type Role = "familiar" | "paciente" | "profesional" | null;
+export interface MensajeClinico {
+  id: string;
+  texto: string;
+  autor: string;
+  fecha: string;
+}
+
+let mensajeSeq = 0;
+function makeMensaje(texto: string, autor: string): MensajeClinico {
+  mensajeSeq += 1;
+  return { id: `msg-${mensajeSeq}`, texto, autor, fecha: new Date().toLocaleString("es-CR", { dateStyle: "short", timeStyle: "short" }) };
+}
+const seedMensajes: MensajeClinico[] = [
+  makeMensaje("Marcela: mantengamos las actividades de la mañana. Bajé la merienda a una sola consigna.", "Dra. Guiselle Solano"),
+];
+
 export type RegistroEstado = "done" | "partial" | "no" | null;
 export type Modalidad = "autoguiado" | "orientado" | "clinico";
+// "pendiente" right after finishing onboarding — the family/participant see
+// only the review-pending screen until the clinic assigns a program.
+export type PlanStatus = "pendiente" | "asignado";
 
 // Seeded so every view looks complete and consistent even if a tester jumps
 // straight to clinica@test.com or paciente@test.com without running the
@@ -86,9 +105,11 @@ function mapTask(plan: PlanDay[], dia: string, taskId: string, fn: (t: PlanTask)
 }
 
 interface AppState {
-  role: Role;
+  // UI-only convenience: prefills the email field across Landing/Login, and
+  // surfaces a failed-login message. Who's actually signed in comes from
+  // useSession() (src/lib/useSession.ts), backed by real Supabase auth.
   email: string;
-  loginHint: string;
+  authError: string;
 
   c1: boolean;
   c2: boolean;
@@ -96,13 +117,25 @@ interface AppState {
 
   onboarding2: Answers;
   modalidad: Modalidad;
+  // Persisted to localStorage (see `persist` wrapper below) — once someone
+  // finishes the questionnaire, they shouldn't have to redo it on every
+  // login. Only cleared by deleting the browser's local storage by hand.
+  onboardingComplete: boolean;
+  // Also persisted. "pendiente" blocks the familiar/participante shells down
+  // to a single waiting screen; the clinic flips it to "asignado" and that
+  // takes effect on the family's next read of the store, same login or not.
+  planStatus: PlanStatus;
+  // True right after the clinic assigns, until the family has seen the
+  // combined welcome + clinic-message banner once on Hoy.
+  welcomeMessagePending: boolean;
+  perfilEditModule: string | null;
 
   plan: PlanDay[];
   planDraft: PlanDay[] | null;
 
   notaInterna: string;
-  mensajeFamilia: string;
-  mensajeFamiliaEnviado: boolean;
+  mensajeBorrador: string;
+  mensajes: MensajeClinico[];
   perfilValidado: boolean;
 
   reg: RegistroEstado;
@@ -118,9 +151,12 @@ interface AppState {
   auditLog: AuditEntry[];
 
   setEmail: (v: string) => void;
-  setLoginHint: (v: string) => void;
-  loginAs: (role: Role) => void;
-  logout: () => void;
+  setAuthError: (v: string) => void;
+  // Resets session-only demo state after a real supabase.auth.signOut().
+  // Deliberately leaves onboarding2/modalidad/onboardingComplete/planStatus
+  // /welcomeMessagePending/mensajes alone — they're the persisted profile
+  // and its correspondence, not session state.
+  resetSessionState: () => void;
 
   toggleConsent1: () => void;
   toggleConsent2: () => void;
@@ -131,6 +167,11 @@ interface AppState {
   setAnswerList: (id: string, list: string[]) => void;
   setModalidad: (v: Modalidad) => void;
   updateBasicInfo: (patch: { nombre: string; edad: string; modalidad: Modalidad; intereses: string[] }) => void;
+  startModuleEdit: (module: string) => void;
+  endModuleEdit: () => void;
+  completeOnboarding: () => void;
+  asignarPrograma: (mensaje: string) => void;
+  dismissWelcomeMessage: () => void;
 
   updateTaskEstado: (dia: string, taskId: string, estado: PlanDayStatus) => void;
   startPlanDraft: () => void;
@@ -139,7 +180,7 @@ interface AppState {
   saveDraftOnly: () => void;
 
   setNotaInterna: (v: string) => void;
-  setMensajeFamilia: (v: string) => void;
+  setMensajeBorrador: (v: string) => void;
   sendMensajeFamilia: () => void;
   validarPerfil: () => void;
 
@@ -157,10 +198,11 @@ interface AppState {
   pushAudit: (entidad: string, accion: string, autor: string) => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  role: null,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
   email: "",
-  loginHint: "",
+  authError: "",
 
   c1: true,
   c2: true,
@@ -168,14 +210,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   onboarding2: { ...defaultOnboarding },
   modalidad: "orientado",
+  onboardingComplete: false,
+  // Defaults to "asignado" so paciente@test.com/clinica@test.com keep
+  // looking fully set up when a tester jumps straight there — only a fresh
+  // walk through the real familiar flow (completeOnboarding) sets it to
+  // "pendiente" and demonstrates the review/assign story.
+  planStatus: "asignado",
+  welcomeMessagePending: false,
+  perfilEditModule: null,
 
   plan: clonePlan(weeklyPlan),
   planDraft: null,
 
   notaInterna:
     "Perfil consistente con lo observado en consulta. Vigilar carga de la cuidadora: Marcela reporta agotamiento sin nombrarlo.",
-  mensajeFamilia: "Marcela: mantengamos las actividades de la mañana. Bajé la merienda a una sola consigna.",
-  mensajeFamiliaEnviado: false,
+  mensajeBorrador: "",
+  mensajes: seedMensajes,
   perfilValidado: false,
 
   reg: null,
@@ -191,24 +241,25 @@ export const useAppStore = create<AppState>((set, get) => ({
   auditLog: [],
 
   setEmail: (v) => set({ email: v }),
-  setLoginHint: (v) => set({ loginHint: v }),
-  loginAs: (role) => set({ role, loginHint: "" }),
-  logout: () =>
+  setAuthError: (v) => set({ authError: v }),
+  resetSessionState: () =>
     set({
-      role: null,
       email: "",
-      loginHint: "",
+      authError: "",
       c1: true,
       c2: true,
       notify: "si",
-      onboarding2: { ...defaultOnboarding },
-      modalidad: "orientado",
+      // onboarding2/modalidad/onboardingComplete/planStatus/welcomeMessagePending
+      // /mensajes deliberately survive logout — they're the persisted
+      // profile and its correspondence, not session state. A message the
+      // clinic writes has to still be there the next time the family logs
+      // in, even in a different session.
+      perfilEditModule: null,
       plan: clonePlan(weeklyPlan),
       planDraft: null,
       notaInterna:
         "Perfil consistente con lo observado en consulta. Vigilar carga de la cuidadora: Marcela reporta agotamiento sin nombrarlo.",
-      mensajeFamilia: "Marcela: mantengamos las actividades de la mañana. Bajé la merienda a una sola consigna.",
-      mensajeFamiliaEnviado: false,
+      mensajeBorrador: "",
       perfilValidado: false,
       reg: null,
       noCount: 0,
@@ -250,6 +301,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
     get().pushAudit("Perfil", "actualiza datos básicos del perfil", "Marcela");
   },
+  startModuleEdit: (module) => set({ perfilEditModule: module }),
+  endModuleEdit: () => set({ perfilEditModule: null }),
+  completeOnboarding: () => {
+    set({ onboardingComplete: true, planStatus: "pendiente" });
+    get().pushAudit("Perfil funcional", "completa el cuestionario — enviado a la clínica", "Marcela");
+  },
+  asignarPrograma: (mensaje) => {
+    const texto = mensaje.trim();
+    set((s) => ({
+      planStatus: "asignado",
+      welcomeMessagePending: true,
+      mensajes: texto ? [makeMensaje(texto, "Dra. Guiselle Solano"), ...s.mensajes] : s.mensajes,
+    }));
+    get().pushAudit("Plan", "asigna el programa y notifica a la familia", "Dra. Guiselle Solano");
+  },
+  dismissWelcomeMessage: () => set({ welcomeMessagePending: false }),
 
   updateTaskEstado: (dia, taskId, estado) => {
     set((s) => ({ plan: mapTask(s.plan, dia, taskId, (t) => ({ ...t, estado })) }));
@@ -266,9 +333,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   saveDraftOnly: () => get().pushAudit("Plan", "guarda un borrador del plan", "Dra. Guiselle Solano"),
 
   setNotaInterna: (v) => set({ notaInterna: v }),
-  setMensajeFamilia: (v) => set({ mensajeFamilia: v, mensajeFamiliaEnviado: false }),
+  setMensajeBorrador: (v) => set({ mensajeBorrador: v }),
   sendMensajeFamilia: () => {
-    set({ mensajeFamiliaEnviado: true });
+    const texto = get().mensajeBorrador.trim();
+    if (!texto) return;
+    set((s) => ({ mensajes: [makeMensaje(texto, "Dra. Guiselle Solano"), ...s.mensajes], mensajeBorrador: "" }));
     get().pushAudit("Mensaje", "envía mensaje a la familia", "Dra. Guiselle Solano");
   },
   validarPerfil: () => {
@@ -315,4 +384,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   pushAudit: (entidad, accion, autor) =>
     set((s) => ({ auditLog: [makeAuditEntry(entidad, accion, autor), ...s.auditLog].slice(0, 20) })),
-}));
+    }),
+    {
+      name: "integramente-storage",
+      // The profile, its assignment status, and the clinic's correspondence
+      // persist — chat history, plan registro marks, drafts, and audit log
+      // stay session-only so each login still starts on a clean "today",
+      // just without redoing the questionnaire or losing what the clinic
+      // wrote while the family was logged out.
+      partialize: (s) => ({
+        onboarding2: s.onboarding2,
+        modalidad: s.modalidad,
+        onboardingComplete: s.onboardingComplete,
+        planStatus: s.planStatus,
+        welcomeMessagePending: s.welcomeMessagePending,
+        mensajes: s.mensajes,
+      }),
+    },
+  ),
+);

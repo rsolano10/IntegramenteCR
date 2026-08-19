@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { applicableQuestions, questions, resolveOptions } from "../../lib/onboardingSchema";
 import { Button } from "../../components/ui/Button";
-import { ChipToggle } from "../../components/ui/ChipToggle";
+import { CheckRow } from "../../components/ui/CheckRow";
 
 function hasAnswer(value: string | string[] | undefined): boolean {
   if (Array.isArray(value)) return value.length > 0;
@@ -16,6 +16,9 @@ export function OnboardingStep() {
   const answers = useAppStore((s) => s.onboarding2);
   const answerQuestion = useAppStore((s) => s.answerQuestion);
   const toggleMultiAnswer = useAppStore((s) => s.toggleMultiAnswer);
+  const perfilEditModule = useAppStore((s) => s.perfilEditModule);
+  const endModuleEdit = useAppStore((s) => s.endModuleEdit);
+  const completeOnboarding = useAppStore((s) => s.completeOnboarding);
   const [text, setText] = useState("");
 
   const applicable = applicableQuestions(answers);
@@ -24,6 +27,12 @@ export function OnboardingStep() {
 
   const questionSteps = applicable.filter((q) => q.type !== "info");
   const questionIdx = question ? questionSteps.findIndex((q) => q.id === question.id) : -1;
+
+  // Recomputed from live answers (not frozen at edit-start) so it self-
+  // corrects if answering a question mid-edit changes which others in the
+  // same module still apply.
+  const editQuestions = perfilEditModule ? applicable.filter((q) => q.module === perfilEditModule) : null;
+  const editIdx = editQuestions && question ? editQuestions.findIndex((q) => q.id === question.id) : -1;
 
   useEffect(() => {
     if (!question) navigate(`/app/perfil/${questions[0].id}`, { replace: true });
@@ -38,9 +47,29 @@ export function OnboardingStep() {
     else navigate(fallback);
   }
   function goNext() {
-    goTo(applicable[idx + 1]?.id, "/app/hoy");
+    if (editQuestions) {
+      const next = editQuestions[editIdx + 1];
+      if (next) navigate(`/app/perfil/${next.id}`);
+      else {
+        endModuleEdit();
+        navigate("/app/perfil/resumen");
+      }
+      return;
+    }
+    const next = applicable[idx + 1]?.id;
+    if (next) navigate(`/app/perfil/${next}`);
+    else {
+      completeOnboarding();
+      navigate("/app/hoy");
+    }
   }
   function goBack() {
+    if (editQuestions) {
+      const prev = editQuestions[editIdx - 1];
+      if (prev) navigate(`/app/perfil/${prev.id}`);
+      else navigate("/app/perfil/resumen");
+      return;
+    }
     goTo(applicable[idx - 1]?.id, "/app/consent");
   }
 
@@ -62,22 +91,31 @@ export function OnboardingStep() {
 
   return (
     <div className="im-in max-w-[680px] mx-auto px-5 pt-8 pb-16 sm:px-8 lg:pt-10 lg:pb-20">
-      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-5 mb-3">
-        <span className="text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">
-          {question.module ? `${question.module} · ` : ""}
-          {questionIdx + 1} de {questionSteps.length}
-        </span>
-        <span className="text-xs sm:text-sm text-[#4c7a4c] inline-flex items-center gap-2">
+      {editQuestions ? (
+        <div className="flex items-center gap-2 mb-6 text-sm text-verde-profundo font-semibold">
           <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
-          Guardado automáticamente
-        </span>
-      </div>
-      <div className="h-2 rounded-full bg-beige-serenidad overflow-hidden mb-8">
-        <div
-          className="h-full bg-verde-serenidad rounded-full transition-[width]"
-          style={{ width: `${((questionIdx + 1) / Math.max(1, questionSteps.length)) * 100}%` }}
-        />
-      </div>
+          Editando "{perfilEditModule}" · pregunta {editIdx + 1} de {editQuestions.length}
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-5 mb-3">
+            <span className="text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">
+              {question.module ? `${question.module} · ` : ""}
+              {questionIdx + 1} de {questionSteps.length}
+            </span>
+            <span className="text-xs sm:text-sm text-[#4c7a4c] inline-flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
+              Guardado automáticamente
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-beige-serenidad overflow-hidden mb-8">
+            <div
+              className="h-full bg-verde-serenidad rounded-full transition-[width]"
+              style={{ width: `${((questionIdx + 1) / Math.max(1, questionSteps.length)) * 100}%` }}
+            />
+          </div>
+        </>
+      )}
 
       <h1 className="font-serif font-normal text-[24px] sm:text-[32px] leading-[1.2] lg:leading-[1.14] m-0 mb-2">{question.title}</h1>
       {question.example && <p className="m-0 mb-6 text-[15px] text-tinta-tenue">{question.example}</p>}
@@ -104,17 +142,17 @@ export function OnboardingStep() {
       )}
 
       {question.type === "multi" && (
-        <div className="flex flex-wrap gap-2.5 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2">
           {resolveOptions(question, answers).map((opt) => {
             const list = Array.isArray(value) ? value : [];
             return (
-              <ChipToggle
+              <CheckRow
                 key={opt.value}
-                active={list.includes(opt.value)}
+                checked={list.includes(opt.value)}
                 onToggle={() => toggleMultiAnswer(question.id, opt.value, question.exclusive)}
               >
                 {opt.label}
-              </ChipToggle>
+              </CheckRow>
             );
           })}
         </div>
@@ -146,7 +184,7 @@ export function OnboardingStep() {
           Atrás
         </Button>
         <Button variant="ink" onClick={goNext} disabled={!canContinue}>
-          Continuar
+          {editQuestions && editIdx >= editQuestions.length - 1 ? "Guardar y volver" : "Continuar"}
         </Button>
       </div>
     </div>

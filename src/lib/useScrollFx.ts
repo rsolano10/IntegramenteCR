@@ -14,9 +14,13 @@ export function easeOut(t: number) {
   return 1 - Math.pow(1 - t, 3);
 }
 
-// Fires once when the element crosses into view, then stops observing.
+// Fires once when the element crosses into the middle band of the
+// viewport, then stops observing. Restricting the trigger area to roughly
+// the center (rather than "just touched the bottom edge") means the
+// fade+rise transition actually plays out while the element is near where
+// the eye is looking, instead of finishing while it's still low on screen.
 // Used for simple fade+rise reveals on section content.
-export function useReveal<T extends HTMLElement>(threshold = 0.18) {
+export function useReveal<T extends HTMLElement>(threshold = 0.15) {
   const ref = useRef<T | null>(null);
   const [visible, setVisible] = useState(prefersReducedMotion);
 
@@ -34,7 +38,7 @@ export function useReveal<T extends HTMLElement>(threshold = 0.18) {
           observer.unobserve(el);
         }
       },
-      { threshold, rootMargin: "0px 0px -60px 0px" },
+      { threshold, rootMargin: "-28% 0px -28% 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -43,10 +47,12 @@ export function useReveal<T extends HTMLElement>(threshold = 0.18) {
   return { ref, visible };
 }
 
-// A continuous 0→1 value tracking how far an element has travelled through
-// the viewport as the page scrolls — the primitive behind the "assembles
-// itself" plan-preview card. 0 as it enters from the bottom, 1 once it has
-// settled a quarter of the way up the viewport; reversible on scroll-up.
+// A continuous 0→1 value tracking how close an element's center has come
+// to the viewport's center as the page scrolls — the primitive behind the
+// "assembles itself" plan-preview card. 0 as its center enters from the
+// bottom half of the screen, 1 exactly when it's vertically centered, so
+// the scroll-linked motion culminates right where the eye actually is,
+// not while the element is still low on screen. Reversible on scroll-up.
 export function useScrollProgress<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
   const [progress, setProgress] = useState(() => (prefersReducedMotion() ? 1 : 0));
@@ -64,7 +70,9 @@ export function useScrollProgress<T extends HTMLElement>() {
       raf = 0;
       const rect = el!.getBoundingClientRect();
       const vh = window.innerHeight;
-      setProgress(clamp((vh - rect.top) / (vh * 0.75)));
+      const elCenter = rect.top + rect.height / 2;
+      const distFromCenter = elCenter - vh / 2;
+      setProgress(clamp(1 - distFromCenter / (vh / 2)));
     }
     function onScroll() {
       if (!raf) raf = requestAnimationFrame(update);
