@@ -13,7 +13,7 @@ const items: NavItem[] = [
   {
     label: "Hoy",
     to: "/app/hoy",
-    match: (p) => p === "/app/hoy" || p === "/app/hoy/actividad",
+    match: (p) => p === "/app/hoy" || p.startsWith("/app/hoy/actividad"),
     icon: (active) => (
       <svg {...iconProps}>
         <path
@@ -65,6 +65,22 @@ const items: NavItem[] = [
       </svg>
     ),
   },
+  {
+    label: "Semana",
+    to: "/app/revision",
+    match: (p) => p === "/app/revision" || p === "/app/resumen",
+    icon: (active) => (
+      <svg {...iconProps}>
+        <path
+          d="M4 11a7 7 0 1 1 2.1 5M4 11v4.5M4 11h4.5"
+          stroke="currentColor"
+          strokeWidth={active ? 2 : 1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
 ];
 
 export function FamiliarNav() {
@@ -74,7 +90,7 @@ export function FamiliarNav() {
     <>
       {/* Phone: fixed bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-4"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {items.map((item) => {

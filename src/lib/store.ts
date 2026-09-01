@@ -139,6 +139,9 @@ interface AppState {
   // combined welcome + clinic-message banner once on Hoy.
   welcomeMessagePending: boolean;
   perfilEditModule: string | null;
+  // Editing exactly one question from PerfilResumen (not the whole module)
+  // — mutually exclusive with perfilEditModule.
+  perfilEditQuestionId: string | null;
 
   plan: PlanDay[];
   planDraft: PlanDay[] | null;
@@ -153,7 +156,6 @@ interface AppState {
 
   notifySent: boolean;
 
-  paso: number; // participant step-by-step activity (1-3)
   weekMood: "better" | "same" | "worse";
 
   chatMessages: ChatMessage[];
@@ -179,6 +181,8 @@ interface AppState {
   updateBasicInfo: (patch: { nombre: string; edad: string; modalidad: Modalidad; intereses: string[] }) => void;
   startModuleEdit: (module: string) => void;
   endModuleEdit: () => void;
+  startQuestionEdit: (questionId: string) => void;
+  endQuestionEdit: () => void;
   completeOnboarding: () => void;
   asignarPrograma: (mensaje: string) => void;
   dismissWelcomeMessage: () => void;
@@ -201,11 +205,8 @@ interface AppState {
   sendMensajeFamilia: () => void;
   validarPerfil: () => void;
 
-  markRegistro: (taskId: string, v: Exclude<RegistroEstado, null>) => void;
+  markRegistro: (taskId: string, v: Exclude<RegistroEstado, null>, comentario?: string) => void;
   setWeekMood: (v: "better" | "same" | "worse") => void;
-
-  pasoNext: () => void;
-  resetPasos: () => void;
 
   notifyNow: () => void;
   notifySkip: () => void;
@@ -236,6 +237,7 @@ export const useAppStore = create<AppState>()(
   planStatus: "asignado",
   welcomeMessagePending: false,
   perfilEditModule: null,
+  perfilEditQuestionId: null,
 
   plan: clonePlan(weeklyPlan),
   planDraft: null,
@@ -251,7 +253,6 @@ export const useAppStore = create<AppState>()(
 
   notifySent: false,
 
-  paso: 1,
   weekMood: "same",
 
   chatMessages: [welcomeMessage],
@@ -273,6 +274,7 @@ export const useAppStore = create<AppState>()(
       // clinic writes has to still be there the next time the family logs
       // in, even in a different session.
       perfilEditModule: null,
+      perfilEditQuestionId: null,
       plan: clonePlan(weeklyPlan),
       planDraft: null,
       notaInterna:
@@ -282,7 +284,6 @@ export const useAppStore = create<AppState>()(
       reg: null,
       noCount: 0,
       notifySent: false,
-      paso: 1,
       weekMood: "same",
       chatMessages: [welcomeMessage],
     }),
@@ -319,8 +320,12 @@ export const useAppStore = create<AppState>()(
     }));
     get().pushAudit("Perfil", "actualiza datos básicos del perfil", "Marcela");
   },
-  startModuleEdit: (module) => set({ perfilEditModule: module }),
+  // Mutually exclusive — starting one clears any stale other-mode flag left
+  // over from an abandoned edit (e.g. browser back button bypassing goBack()).
+  startModuleEdit: (module) => set({ perfilEditModule: module, perfilEditQuestionId: null }),
   endModuleEdit: () => set({ perfilEditModule: null }),
+  startQuestionEdit: (questionId) => set({ perfilEditQuestionId: questionId, perfilEditModule: null }),
+  endQuestionEdit: () => set({ perfilEditQuestionId: null }),
   completeOnboarding: () => {
     set({ onboardingComplete: true, planStatus: "pendiente" });
     get().pushAudit("Perfil funcional", "completa el cuestionario — enviado a la clínica", "Marcela");
@@ -372,7 +377,7 @@ export const useAppStore = create<AppState>()(
     get().pushAudit("Perfil", "valida el perfil funcional", "Dra. Guiselle Solano");
   },
 
-  markRegistro: (taskId, v) => {
+  markRegistro: (taskId, v, comentario) => {
     const featuredEstado: PlanDayStatus = v === "done" ? "realizado" : v === "partial" ? "parcial" : "no";
     set((s) => {
       const today = s.plan.find((d) => d.isToday);
@@ -380,15 +385,12 @@ export const useAppStore = create<AppState>()(
       return {
         reg: v,
         noCount: v === "done" ? 0 : v === "no" ? s.noCount + 1 : s.noCount,
-        plan: mapTask(s.plan, today.dia, taskId, (t) => ({ ...t, estado: featuredEstado })),
+        plan: mapTask(s.plan, today.dia, taskId, (t) => ({ ...t, estado: featuredEstado, comentario: comentario?.trim() || t.comentario })),
       };
     });
     get().pushAudit("Registro", `marca actividad como "${v}"`, "Marcela");
   },
   setWeekMood: (v) => set({ weekMood: v }),
-
-  pasoNext: () => set((s) => ({ paso: Math.min(3, s.paso + 1) })),
-  resetPasos: () => set({ paso: 1 }),
 
   notifyNow: () => {
     set({ notifySent: true });

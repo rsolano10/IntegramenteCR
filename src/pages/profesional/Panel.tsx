@@ -70,6 +70,9 @@ export function Panel() {
 
   const patientsById = useMemo(() => new Map((patients ?? []).map((p) => [p.id, p])), [patients]);
 
+  const esperandoRevision = useMemo(() => (patients ?? []).filter((p) => p.needs_review), [patients]);
+  const esperandoAsignacion = useMemo(() => (patients ?? []).filter((p) => p.needs_assignment), [patients]);
+
   const distribucion = useMemo(() => {
     const counts: Record<"verde" | "amarillo" | "rojo" | "sinEvaluar", number> = { verde: 0, amarillo: 0, rojo: 0, sinEvaluar: 0 };
     for (const p of patients ?? []) {
@@ -198,9 +201,58 @@ export function Panel() {
           </div>
         </div>
 
-        <div className="px-5 py-4 sm:px-8 flex items-center gap-3 text-[14px] text-tinta-tenue">
-          <span className="w-2 h-2 rounded-full bg-[#e3ddc4] shrink-0" />
-          <span>Alertas sin revisar — sin sistema de alertas automáticas todavía.</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 border-t border-[#efeada]">
+          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-[#efeada]">
+            <div className="flex items-center justify-between mb-3.5">
+              <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Esperando revisión de semana</p>
+              {esperandoRevision.length > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{esperandoRevision.length}</span>}
+            </div>
+            {loadingPatients && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
+            {!loadingPatients && esperandoRevision.length === 0 && (
+              <p className="m-0 text-[15px] text-tinta-tenue">Ninguna semana pendiente de revisión.</p>
+            )}
+            {!loadingPatients && esperandoRevision.length > 0 && (
+              <div className="grid gap-2">
+                {esperandoRevision.slice(0, 5).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setDetailPatient(p)}
+                    className="flex items-center justify-between gap-3 bg-fila-calida rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
+                  >
+                    <span className="text-[15px] font-bold text-tinta">{p.nombre}</span>
+                    <span className="text-[13px] font-semibold text-semaforo-amarillo-texto shrink-0">Revisar ›</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="px-5 py-6 sm:px-8 sm:py-7">
+            <div className="flex items-center justify-between mb-3.5">
+              <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Esperando asignación de la próxima semana</p>
+              {esperandoAsignacion.length > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{esperandoAsignacion.length}</span>}
+            </div>
+            {loadingPatients && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
+            {!loadingPatients && esperandoAsignacion.length === 0 && (
+              <p className="m-0 text-[15px] text-tinta-tenue">Todos tienen la próxima semana asignada.</p>
+            )}
+            {!loadingPatients && esperandoAsignacion.length > 0 && (
+              <div className="grid gap-2">
+                {esperandoAsignacion.slice(0, 5).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setDetailPatient(p)}
+                    className="flex items-center justify-between gap-3 bg-aviso rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
+                  >
+                    <span className="text-[15px] font-bold text-tinta">{p.nombre}</span>
+                    <span className="text-[13px] font-semibold text-semaforo-amarillo-texto shrink-0">Asignar ›</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

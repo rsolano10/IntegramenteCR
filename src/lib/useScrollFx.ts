@@ -47,12 +47,17 @@ export function useReveal<T extends HTMLElement>(threshold = 0.15) {
   return { ref, visible };
 }
 
-// A continuous 0→1 value tracking how close an element's center has come
-// to the viewport's center as the page scrolls — the primitive behind the
+// A continuous value tracking how close an element's center has come to
+// the viewport's center as the page scrolls — the primitive behind the
 // "assembles itself" plan-preview card. 0 as its center enters from the
 // bottom half of the screen, 1 exactly when it's vertically centered, so
 // the scroll-linked motion culminates right where the eye actually is,
 // not while the element is still low on screen. Reversible on scroll-up.
+// Deliberately unclamped (can go negative before entering, or past 1 once
+// scrolled beyond center) — every consumer already wraps its own use of
+// this in `clamp(...)`, so callers that want a window extending before 0
+// or after 1 (e.g. "start slightly before it's on screen, finish slightly
+// past center") can just clamp a wider range themselves.
 export function useScrollProgress<T extends HTMLElement>() {
   const ref = useRef<T | null>(null);
   const [progress, setProgress] = useState(() => (prefersReducedMotion() ? 1 : 0));
@@ -72,7 +77,7 @@ export function useScrollProgress<T extends HTMLElement>() {
       const vh = window.innerHeight;
       const elCenter = rect.top + rect.height / 2;
       const distFromCenter = elCenter - vh / 2;
-      setProgress(clamp(1 - distFromCenter / (vh / 2)));
+      setProgress(1 - distFromCenter / (vh / 2));
     }
     function onScroll() {
       if (!raf) raf = requestAnimationFrame(update);

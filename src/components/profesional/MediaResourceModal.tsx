@@ -41,6 +41,8 @@ export function MediaResourceModal({
   const [tipo, setTipo] = useState<ResourceTipo>(resource?.tipo ?? "actividad");
   const [duracion, setDuracion] = useState(resource?.duracion ?? "");
   const [precaucion, setPrecaucion] = useState(resource?.precaucion ?? "");
+  const [pasos, setPasos] = useState((resource?.pasos ?? []).join("\n"));
+  const [porQue, setPorQue] = useState(resource?.por_que ?? "");
   const [source, setSource] = useState<"upload" | "link">(resource?.external_url ? "link" : "upload");
   const [externalUrl, setExternalUrl] = useState(resource?.external_url ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -81,6 +83,8 @@ export function MediaResourceModal({
         media_kind: mediaKind,
         duracion: duracion.trim() || null,
         precaucion: precaucion.trim() || null,
+        pasos: pasos.trim() ? pasos.split("\n").map((p) => p.trim()).filter(Boolean) : null,
+        por_que: porQue.trim() || null,
         storage_path: source === "upload" ? storagePath : null,
         external_url: source === "link" ? externalUrl.trim() : null,
       };
@@ -123,7 +127,6 @@ export function MediaResourceModal({
             type="text"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Movilidad sentada"
             className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
           />
         </label>
@@ -188,6 +191,26 @@ export function MediaResourceModal({
             />
           </label>
         </div>
+        <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+          Pasos (uno por línea, opcional)
+          <textarea
+            value={pasos}
+            onChange={(e) => setPasos(e.target.value)}
+            rows={3}
+            placeholder={"Poné sobre la mesa solo lo que se va a usar.\nPedí una acción por vez…"}
+            className="px-4 py-3 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[15px] text-tinta resize-y"
+          />
+        </label>
+        <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+          ¿Para qué sirve? (opcional)
+          <textarea
+            value={porQue}
+            onChange={(e) => setPorQue(e.target.value)}
+            rows={2}
+            placeholder="Qué estimula esta actividad y por qué se eligió."
+            className="px-4 py-3 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[15px] text-tinta resize-y"
+          />
+        </label>
 
         <div className="grid grid-cols-2 gap-1.5 bg-[#f2eede] p-1.5 rounded-full">
           <button

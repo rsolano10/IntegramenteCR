@@ -15,6 +15,8 @@ export interface MediaResource {
   external_url: string | null;
   duracion: string | null;
   precaucion: string | null;
+  pasos: string[] | null;
+  por_que: string | null;
   activo: boolean;
   created_by: string | null;
   created_at: string;

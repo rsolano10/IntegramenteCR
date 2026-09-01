@@ -8,6 +8,8 @@ export interface SessionProfile {
   role: AppRole;
   nombre: string;
   especialidad: string | null;
+  foto_url: string | null;
+  must_change_password: boolean;
 }
 
 export type SessionState =
@@ -35,7 +37,7 @@ export function useSession(): SessionState {
       }
       const { data, error } = await supabase
         .from("profiles")
-        .select("role, nombre, especialidad")
+        .select("role, nombre, especialidad, foto_url, must_change_password")
         .eq("id", session.user.id)
         .single();
       if (cancelled) return;
@@ -62,6 +64,6 @@ export function useSession(): SessionState {
 
 export function roleHome(role: AppRole): string {
   if (role === "familiar") return "/app/hoy";
-  if (role === "paciente") return "/app/participante/gustos";
+  if (role === "paciente") return "/app/participante/hoy";
   return "/app/profesional/panel";
 }

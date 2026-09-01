@@ -63,6 +63,15 @@
     outline: 3px solid var(--color-tinta);
     outline-offset: 2px;
   }
+
+  /* Placeholder text must never read as if it were already typed —
+     lighter + italic sets it apart from real input at a glance. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-tinta-tenue);
+    font-style: italic;
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

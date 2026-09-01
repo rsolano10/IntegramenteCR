@@ -8,11 +8,17 @@ export function PerfilResumen() {
   const navigate = useNavigate();
   const answers = useAppStore((s) => s.onboarding2);
   const startModuleEdit = useAppStore((s) => s.startModuleEdit);
+  const startQuestionEdit = useAppStore((s) => s.startQuestionEdit);
   const groups = groupAnswerableByModule(answers);
 
   function editModule(moduleName: string, firstQuestionId: string) {
     startModuleEdit(moduleName);
     navigate(`/app/perfil/${firstQuestionId}`);
+  }
+
+  function editQuestion(questionId: string) {
+    startQuestionEdit(questionId);
+    navigate(`/app/perfil/${questionId}`);
   }
 
   return (
@@ -40,9 +46,19 @@ export function PerfilResumen() {
             </div>
             <div className="grid gap-3">
               {g.questions.map((q) => (
-                <div key={q.id} className="grid sm:grid-cols-[1.1fr_1fr] gap-1 sm:gap-4 py-2.5 border-t border-[#efeada] first:border-t-0 first:pt-0">
+                <div
+                  key={q.id}
+                  className="grid sm:grid-cols-[1.1fr_1fr_auto] gap-1 sm:gap-4 items-start py-2.5 border-t border-[#efeada] first:border-t-0 first:pt-0"
+                >
                   <span className="text-[14.5px] text-tinta-tenue leading-snug">{q.title}</span>
                   <span className="text-[15px] text-tinta font-medium leading-snug">{describeAnswer(q, answers)}</span>
+                  <button
+                    type="button"
+                    onClick={() => editQuestion(q.id)}
+                    className="justify-self-start sm:justify-self-end border-none bg-transparent p-0 font-sans text-[13px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer"
+                  >
+                    Editar
+                  </button>
                 </div>
               ))}
             </div>

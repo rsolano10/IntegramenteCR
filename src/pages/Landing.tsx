@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PlanRow } from "../components/ui/PlanRow";
 import { Reveal } from "../components/ui/Reveal";
+import { LoginSignupCard } from "../components/auth/LoginSignupCard";
 import { clamp, easeOut, useScrolled, useScrollProgress, useTypewriterLoop } from "../lib/useScrollFx";
-import { useAppStore } from "../lib/store";
-import { supabase } from "../lib/supabase";
-import { roleHome } from "../lib/useSession";
 
 const weekPreview: { dia: string; titulo: string; estado: "realizado" | "parcial" }[] = [
   { dia: "Lunes", titulo: "Movilidad sentado · 12 min", estado: "realizado" },
@@ -23,7 +21,10 @@ const weekPreview: { dia: string; titulo: string; estado: "realizado" | "parcial
 function PhoneWeekPreview() {
   const { ref, progress } = useScrollProgress<HTMLDivElement>();
 
-  const rise = easeOut(clamp(progress / 0.6));
+  // Wider, slower window than a plain 0→1: starts a little before the
+  // phone is even on screen and only finishes a little past the viewport's
+  // center, instead of settling well before it gets there.
+  const rise = easeOut(clamp((progress + 0.15) / 1.3));
   const rotX = 26 * (1 - rise);
   const rotY = -16 * (1 - rise);
   const scale = 0.88 + rise * 0.12;
@@ -150,90 +151,15 @@ function SeguridadRows() {
 }
 
 export function Landing() {
-  const navigate = useNavigate();
-  const email = useAppStore((s) => s.email);
-  const setEmail = useAppStore((s) => s.setEmail);
-  const authError = useAppStore((s) => s.authError);
-  const setAuthError = useAppStore((s) => s.setAuthError);
-  const [mode, setMode] = useState<"login" | "register">("login");
-  const [nombre, setNombre] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [signupSent, setSignupSent] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendMsg, setResendMsg] = useState("");
-  const isRegister = mode === "register";
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const scrolled = useScrolled(24);
 
-  const tabClass = (active: boolean) =>
-    `min-h-[46px] rounded-full border-none font-sans text-[16px] font-semibold cursor-pointer ${
-      active ? "bg-white text-tinta shadow-[0_2px_8px_-4px_rgba(31,51,56,.6)]" : "bg-transparent text-[#6b7c80]"
-    }`;
-
+  // Desktop: scroll to the inline card, pre-set to the register tab. Mobile
+  // doesn't render this card at all — its own CTA buttons link to /ingresar
+  // instead (see the hero section below).
   function goToRegister() {
-    setMode("register");
+    setAuthMode("register");
     document.getElementById("acceso")?.scrollIntoView({ behavior: "smooth" });
-  }
-
-  function switchMode(next: "login" | "register") {
-    setMode(next);
-    setAuthError("");
-    setSignupSent(false);
-    setResendMsg("");
-  }
-
-  async function submit() {
-    setAuthError("");
-    if (isRegister) {
-      if (!nombre.trim() || !email.trim() || !password) {
-        setAuthError("Completá nombre, correo y contraseña.");
-        return;
-      }
-      setLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: { data: { role: "familiar", nombre: nombre.trim() }, emailRedirectTo: `${window.location.origin}/app/login` },
-      });
-      setLoading(false);
-      if (error) {
-        setAuthError(
-          error.message.toLowerCase().includes("already registered")
-            ? "Ese correo ya tiene una cuenta. Iniciá sesión en vez de crear una nueva."
-            : "No pudimos crear la cuenta. Intentá de nuevo.",
-        );
-        return;
-      }
-      setSignupSent(true);
-      return;
-    }
-    setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error || !data.session) {
-      setLoading(false);
-      setAuthError("Correo o contraseña incorrectos.");
-      return;
-    }
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", data.session.user.id)
-      .single();
-    setLoading(false);
-    if (profileError || !profile) {
-      setAuthError("No pudimos cargar tu cuenta. Intentá de nuevo.");
-      return;
-    }
-    navigate(roleHome(profile.role));
-  }
-
-  async function resendSignup() {
-    setResendMsg("");
-    setResendLoading(true);
-    await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/app/login` } });
-    setResendLoading(false);
-    setResendMsg("Te reenviamos el correo de confirmación.");
   }
 
   return (
@@ -251,57 +177,13 @@ export function Landing() {
             <span className="text-[10px] lg:text-xs tracking-[0.16em] uppercase text-tinta-tenue pb-0.5">en Casa</span>
           </div>
 
-          {/* Desktop nav — unchanged from the original computer design */}
+          {/* Desktop nav — mobile shows no menu at all, there's nothing to
+              navigate to besides scrolling this one page. */}
           <nav className="hidden lg:flex items-center gap-8.5 text-[16px]">
             <a href="#como-funciona" className="text-verde-profundo">Cómo funciona</a>
             <a href="#planes" className="text-verde-profundo">Planes</a>
             <a href="#seguridad" className="text-verde-profundo">Seguridad</a>
           </nav>
-
-          {/* Phone / tablet nav — hamburger toggle */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={menuOpen}
-            className="lg:hidden inline-flex items-center justify-center w-11 h-11 shrink-0 rounded-full border-[1.5px] border-borde text-tinta"
-          >
-            {menuOpen ? (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
-
-          {menuOpen && (
-            <div className="lg:hidden absolute top-full left-4 right-4 sm:left-8 sm:right-8 mt-2 bg-white border border-borde rounded-2xl shadow-elevada p-3 grid gap-1 z-30">
-              <a
-                href="#como-funciona"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-3.5 rounded-xl text-tinta font-semibold text-[16px] hover:bg-fondo-papel"
-              >
-                Cómo funciona
-              </a>
-              <a
-                href="#planes"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-3.5 rounded-xl text-tinta font-semibold text-[16px] hover:bg-fondo-papel"
-              >
-                Planes
-              </a>
-              <a
-                href="#seguridad"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-3.5 rounded-xl text-tinta font-semibold text-[16px] hover:bg-fondo-papel"
-              >
-                Seguridad
-              </a>
-            </div>
-          )}
         </div>
       </header>
 
@@ -324,7 +206,10 @@ export function Landing() {
             Un plan semanal breve y adaptado para acompañar en casa a una persona con cambios cognitivos: qué actividad hacer, cómo
             hacerla y cuándo pedir ayuda profesional.
           </p>
-          <div className="flex flex-wrap gap-3 lg:gap-3.5 mb-6 lg:mb-10">
+          {/* Desktop: scrolls to the inline card below. Mobile: no inline
+              card exists (hidden further down), so these go to a dedicated
+              full-page screen instead — see Ingresar.tsx. */}
+          <div className="hidden lg:flex flex-wrap gap-3 lg:gap-3.5 mb-6 lg:mb-10">
             <button
               type="button"
               onClick={goToRegister}
@@ -339,118 +224,24 @@ export function Landing() {
               Ver cómo funciona
             </a>
           </div>
+          <div className="flex lg:hidden flex-wrap gap-3 mb-6">
+            <Link
+              to="/ingresar?mode=register"
+              className="inline-flex items-center min-h-12 px-6 rounded-full bg-verde-serenidad text-white font-semibold text-[15px] hover:bg-verde-profundo transition-colors"
+            >
+              Crear mi perfil gratuito
+            </Link>
+            <Link
+              to="/ingresar?mode=login"
+              className="inline-flex items-center min-h-12 px-6 rounded-full border-[1.5px] border-borde text-tinta font-semibold text-[15px] hover:border-verde-serenidad transition-colors"
+            >
+              Iniciar sesión
+            </Link>
+          </div>
         </Reveal>
 
-        <Reveal delay={140} id="acceso" className="bg-white border border-borde rounded-3xl p-6 sm:p-8 lg:p-9 shadow-elevada">
-          <div className="grid grid-cols-2 gap-1.5 bg-[#f2eede] p-1.5 rounded-full mb-7">
-            <button type="button" onClick={() => switchMode("login")} className={tabClass(!isRegister)}>
-              Iniciar sesión
-            </button>
-            <button type="button" onClick={() => switchMode("register")} className={tabClass(isRegister)}>
-              Crear cuenta
-            </button>
-          </div>
-
-          {isRegister && signupSent ? (
-            <>
-              <h3 className="font-serif font-normal text-2xl m-0 mb-2">Revisá tu correo</h3>
-              <p className="m-0 mb-4 text-[15px] leading-relaxed text-tinta-suave">
-                Te enviamos un enlace de confirmación a <strong>{email}</strong>. Hacé clic ahí para activar tu cuenta y empezar el
-                perfil funcional.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <button
-                  type="button"
-                  onClick={resendSignup}
-                  disabled={resendLoading}
-                  className="text-[14px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer disabled:opacity-60"
-                >
-                  {resendLoading ? "Reenviando…" : "Reenviar el correo"}
-                </button>
-                {resendMsg && <span className="text-[13px] text-tinta-tenue">{resendMsg}</span>}
-              </div>
-              <div className="pt-4 border-t border-[#efeada]">
-                <p className="m-0 text-sm leading-relaxed text-[#6b7c80]">
-                  ¿No te llega? Escribinos a{" "}
-                  <a href="mailto:info@integramente.com" className="text-verde-profundo">
-                    info@integramente.com
-                  </a>{" "}
-                  o llamanos al{" "}
-                  <a href="tel:+50683435772" className="text-verde-profundo">
-                    +506 8343 5772
-                  </a>{" "}
-                  y lo revisamos.
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              {isRegister && (
-                <div className="grid gap-4.5 mb-1.5">
-                  <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-                    Nombre completo
-                    <input
-                      type="text"
-                      value={nombre}
-                      onChange={(e) => setNombre(e.target.value)}
-                      placeholder="Ana Solano"
-                      className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-                    />
-                  </label>
-                </div>
-              )}
-
-              <div className="grid gap-4.5">
-                <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-                  Correo electrónico
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nombre@correo.com"
-                    className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-                  />
-                </label>
-                <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-                  Contraseña
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={loading || (isRegister ? !nombre.trim() || !email.trim() || !password : !email.trim() || !password)}
-                  className="inline-flex items-center justify-center min-h-14 rounded-full bg-tinta text-white font-semibold text-[17px] hover:bg-verde-profundo transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-default"
-                >
-                  {loading ? (isRegister ? "Creando…" : "Entrando…") : isRegister ? "Crear cuenta y empezar" : "Entrar"}
-                </button>
-                {authError && <p className="m-0 text-[14px] text-alerta-texto">{authError}</p>}
-              </div>
-
-              <div className="flex flex-wrap justify-between items-center gap-3 mt-4.5 text-[15px]">
-                <Link to="/olvide-password" className="text-verde-profundo">¿Olvidaste tu contraseña?</Link>
-                {isRegister ? (
-                  <span className="text-tinta-tenue">Gratis, sin tarjeta</span>
-                ) : (
-                  <button type="button" onClick={() => switchMode("register")} className="text-tinta-tenue underline decoration-dotted cursor-pointer">
-                    ¿Primera vez? Creá tu cuenta
-                  </button>
-                )}
-              </div>
-
-              <div className="mt-6.5 pt-5.5 border-t border-[#efeada] grid gap-2.5">
-                <p className="m-0 text-sm leading-relaxed text-[#6b7c80]">
-                  ¿Sos paciente o familiar del programa IntegraMente? Tu cuenta la crea la clínica: entrá con el correo que registraste
-                  en consulta.
-                </p>
-              </div>
-            </>
-          )}
+        <Reveal delay={140} id="acceso" className="hidden lg:block bg-white border border-borde rounded-3xl p-6 sm:p-8 lg:p-9 shadow-elevada">
+          <LoginSignupCard key={authMode} defaultMode={authMode} />
         </Reveal>
       </section>
 
@@ -639,6 +430,20 @@ export function Landing() {
           </p>
         </div>
       </footer>
+
+      {/* Mobile-only: with no nav menu, this is the way back up. */}
+      {scrolled && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Volver arriba"
+          className="lg:hidden fixed bottom-5 right-5 z-30 w-13 h-13 rounded-full bg-tinta text-white shadow-elevada flex items-center justify-center cursor-pointer"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 15V5M10 5l-5 5M10 5l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

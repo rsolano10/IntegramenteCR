@@ -7,6 +7,7 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { professional } from "../../lib/mockData";
 import { AccountMenu } from "../ui/AccountMenu";
 import { Modal } from "../ui/Modal";
+import { MiPerfilModal } from "../ui/MiPerfilModal";
 import { SettingsModal } from "../ui/SettingsModal";
 import { EmergencyContactsModal } from "../ui/EmergencyContactsModal";
 
@@ -24,9 +25,8 @@ const crumbs: [string, string][] = [
   ["/app/asistente", "Dudas"],
   ["/app/revision", "Revisión"],
   ["/app/resumen", "Resumen"],
-  ["/app/participante/gustos", "Sus gustos"],
   ["/app/participante/hoy", "Hoy"],
-  ["/app/participante/pasos", "Paso a paso"],
+  ["/app/participante/actividad", "Actividad"],
   ["/app/participante/ayuda", "Pidió ayuda"],
   ["/app/profesional/panel", "Dra. Solano · Panel"],
   ["/app/profesional/usuarios", "Dra. Solano · Usuarios"],
@@ -70,24 +70,44 @@ export function AppHeader() {
   if (pathname.startsWith("/app/participante")) return null;
 
   async function doLogout() {
-    await supabase.auth.signOut();
-    resetSessionState();
+    // Navigate away FIRST: signOut() flips the session to "anon" and
+    // RouteGuard reacts to that by itself redirecting any /app/* path to
+    // /app/login. If that fires while we're still mounted there, it races
+    // this navigate("/") and (last-write-wins) can leave you on the login
+    // screen instead of home. Unmounting RouteGuard before signOut ever
+    // starts its async work removes the race entirely.
     navigate("/");
+    resetSessionState();
+    await supabase.auth.signOut();
   }
+
+  const isAuthed = session.status === "authed";
+  const logoContent = (
+    <>
+      Integra<em className="italic text-verde-profundo">Mente</em>{" "}
+      <span className="hidden sm:inline font-sans text-[11px] tracking-[0.16em] uppercase text-tinta-tenue">en Casa</span>
+    </>
+  );
 
   return (
     <header className="flex items-center justify-between gap-3 sm:gap-6 px-4 sm:px-6 lg:px-8 py-3.5 bg-white border-b border-borde sticky top-0 z-20">
       <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-        <Link to="/" className="flex items-baseline gap-1.5 sm:gap-2 font-serif text-lg sm:text-[22px] text-tinta no-underline shrink-0">
-          Integra<em className="italic text-verde-profundo">Mente</em>{" "}
-          <span className="hidden sm:inline font-sans text-[11px] tracking-[0.16em] uppercase text-tinta-tenue">en Casa</span>
-        </Link>
+        {/* Logged in, the logo is a label, not an exit — leaving the app is
+            only ever "Cerrar sesión" so a stray tap can't drop someone out
+            of their session without meaning to. */}
+        {isAuthed ? (
+          <span className="flex items-baseline gap-1.5 sm:gap-2 font-serif text-lg sm:text-[22px] text-tinta shrink-0">{logoContent}</span>
+        ) : (
+          <Link to="/" className="flex items-baseline gap-1.5 sm:gap-2 font-serif text-lg sm:text-[22px] text-tinta no-underline shrink-0">
+            {logoContent}
+          </Link>
+        )}
         {crumbFor(pathname) && (
           <span className="hidden sm:inline text-sm text-tinta-tenue pl-5 border-l border-borde truncate">{crumbFor(pathname)}</span>
         )}
       </div>
 
-      {role === "familiar" && (
+      {(role === "familiar" || (role === "paciente" && myPatient?.vista_completa)) && (
         <AccountMenu
           initials={
             nombre
@@ -98,7 +118,13 @@ export function AppHeader() {
               .toUpperCase() || "F"
           }
           name={nombre}
-          subtitle={myPatient ? `Familiar de ${myPatient.nombre}` : "Completá el perfil de tu familiar"}
+          subtitle={
+            role === "paciente"
+              ? "Tu cuenta"
+              : myPatient
+                ? `Familiar de ${myPatient.nombre}`
+                : "Completá el perfil de tu familiar"
+          }
           items={[
             { label: "Mi perfil", onClick: () => setModal("mi-perfil") },
             { label: "Ver el cuestionario completo", onClick: () => navigate("/app/perfil/resumen") },
@@ -133,25 +159,8 @@ export function AppHeader() {
         </button>
       )}
 
-      {modal === "mi-perfil" && role === "familiar" && (
-        <Modal onClose={() => setModal(null)}>
-          <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Mi perfil</h2>
-          <p className="m-0 mb-5 text-sm text-tinta-tenue">Datos de tu cuenta como familiar administrador.</p>
-          <div className="grid gap-3">
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
-              <strong className="block text-sm text-tinta-tenue mb-1">Nombre</strong>
-              {nombre}
-            </div>
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
-              <strong className="block text-sm text-tinta-tenue mb-1">Correo</strong>
-              {email}
-            </div>
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
-              <strong className="block text-sm text-tinta-tenue mb-1">Rol</strong>
-              Familiar administrador{myPatient ? ` de ${myPatient.nombre}` : ""}
-            </div>
-          </div>
-        </Modal>
+      {modal === "mi-perfil" && (role === "familiar" || role === "paciente") && (
+        <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} />
       )}
 
       {modal === "mi-perfil" && role === "profesional" && (

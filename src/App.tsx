@@ -9,15 +9,18 @@ import { useMyPatient } from "./lib/useMyPatient";
 import { useAppStore } from "./lib/store";
 
 import { Landing } from "./pages/Landing";
+import { Ingresar } from "./pages/Ingresar";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
 import { CompletarCuenta } from "./pages/CompletarCuenta";
 import { PlanCheckout } from "./pages/PlanCheckout";
 import { LegalPage } from "./pages/LegalPage";
 import { Login } from "./pages/Login";
+import { CambiarPassword } from "./pages/CambiarPassword";
 import { Consent } from "./pages/Consent";
 import { OnboardingStep } from "./pages/onboarding/OnboardingStep";
 import { PerfilResumen } from "./pages/onboarding/PerfilResumen";
+import { InvitarContraparte } from "./pages/onboarding/InvitarContraparte";
 
 import { Hoy } from "./pages/familiar/Hoy";
 import { Actividad } from "./pages/familiar/Actividad";
@@ -29,9 +32,8 @@ import { Resumen } from "./pages/familiar/Resumen";
 import { Emergencia } from "./pages/familiar/Emergencia";
 import { Mensajes } from "./pages/familiar/Mensajes";
 
-import { Gustos } from "./pages/participante/Gustos";
 import { ParticipanteHoy } from "./pages/participante/Hoy";
-import { Pasos } from "./pages/participante/Pasos";
+import { ParticipanteActividad } from "./pages/participante/Actividad";
 import { Ayuda } from "./pages/participante/Ayuda";
 
 import { Panel } from "./pages/profesional/Panel";
@@ -82,19 +84,47 @@ function RouteGuard({ children }: { children: ReactNode }) {
   }
   const { role } = session.profile;
 
-  if (role === "familiar" && patientLoading) {
+  // Accounts created with the generic starter password (alta asistida)
+  // can't reach anything else until they set a real one.
+  if (session.profile.must_change_password && pathname !== "/app/cambiar-password") {
+    return <Navigate to="/app/cambiar-password" replace />;
+  }
+  if (!session.profile.must_change_password && pathname === "/app/cambiar-password") {
+    return <Navigate to={roleHome(role)} replace />;
+  }
+  // Reaching here means we're legitimately on cambiar-password (the check
+  // above already sent anyone who shouldn't be here elsewhere) — stop
+  // before the onboarding-gate rules below, which don't know about this
+  // route and would otherwise bounce a patient-less familiar/paciente to
+  // /app/consent, ping-ponging against the redirect above forever.
+  if (pathname === "/app/cambiar-password") {
+    return <>{children}</>;
+  }
+
+  if ((role === "familiar" || role === "paciente") && patientLoading) {
     return <div className="min-h-[40vh]" />;
   }
 
   if (pathname === "/app/login") {
-    const home = role === "familiar" && !myPatient ? "/app/consent" : roleHome(role);
+    const home =
+      (role === "familiar" || role === "paciente") && !myPatient
+        ? "/app/consent"
+        : role === "paciente" && myPatient?.vista_completa
+          ? "/app/hoy"
+          : roleHome(role);
     return <Navigate to={home} replace />;
   }
   const onOnboardingPath = pathname === "/app/consent" || pathname.startsWith("/app/perfil");
-  if (role === "familiar" && !myPatient && !onOnboardingPath) {
+  if ((role === "familiar" || role === "paciente") && !myPatient && !onOnboardingPath) {
     return <Navigate to="/app/consent" replace />;
   }
-  if (role === "familiar" && myPatient && pathname === "/app/consent") {
+  if ((role === "familiar" || role === "paciente") && myPatient && pathname === "/app/consent") {
+    return <Navigate to={roleHome(role)} replace />;
+  }
+  // A patient with no familiar can be granted the same full access a
+  // familiar gets (clinic's call, at accept time) — send them into the
+  // familiar route tree instead of the deliberately minimal participant one.
+  if (role === "paciente" && myPatient?.vista_completa && pathname.startsWith("/app/participante")) {
     return <Navigate to="/app/hoy" replace />;
   }
   if (pathname.startsWith("/app/participante") && role !== "paciente") {
@@ -114,13 +144,15 @@ function AppLayout() {
       <Routes>
         <Route index element={<Navigate to="/app/login" replace />} />
         <Route path="login" element={<Login />} />
+        <Route path="cambiar-password" element={<CambiarPassword />} />
         <Route path="consent" element={<Consent />} />
         <Route path="perfil/resumen" element={<PerfilResumen />} />
+        <Route path="perfil/invitar" element={<InvitarContraparte />} />
         <Route path="perfil/:step" element={<OnboardingStep />} />
 
         <Route element={<FamiliarShell />}>
           <Route path="hoy" element={<Hoy />} />
-          <Route path="hoy/actividad" element={<Actividad />} />
+          <Route path="hoy/actividad/:taskId" element={<Actividad />} />
           <Route path="plan" element={<Plan />} />
           <Route path="actividades" element={<Actividades />} />
           <Route path="asistente" element={<Asistente />} />
@@ -131,10 +163,11 @@ function AppLayout() {
         </Route>
 
         <Route path="participante" element={<ParticipantShell />}>
-          <Route path="gustos" element={<Gustos />} />
           <Route path="hoy" element={<ParticipanteHoy />} />
-          <Route path="pasos" element={<Pasos />} />
+          <Route path="actividad/:taskId" element={<ParticipanteActividad />} />
           <Route path="ayuda" element={<Ayuda />} />
+          <Route path="revision" element={<Revision />} />
+          <Route path="resumen" element={<Resumen />} />
         </Route>
 
         <Route path="profesional" element={<ProfesionalShell />}>
@@ -167,6 +200,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/ingresar" element={<Ingresar />} />
       <Route path="/olvide-password" element={<ForgotPassword />} />
       <Route path="/restablecer-contrasena" element={<ResetPassword />} />
       <Route path="/completar-cuenta" element={<CompletarCuenta />} />

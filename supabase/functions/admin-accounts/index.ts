@@ -10,6 +10,24 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = Deno.env.get("SITE_URL") ?? "http://localhost:5173";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+// Custom-content mail (rejection notices, etc.) — Auth's SMTP config (also
+// Resend, see supabase/config.toml) only covers Supabase's own auth
+// templates, not arbitrary app text, so this calls Resend's HTTP API
+// directly. Returns an error string on failure instead of throwing, since a
+// failed notification email shouldn't undo the (already-committed) decision
+// it's reporting.
+async function sendMail(to: string, subject: string, html: string): Promise<string | null> {
+  if (!RESEND_API_KEY) return "El envío de correos no está configurado.";
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: "IntegraMente en Casa <no-responder@integramentecr.com>", to, subject, html }),
+  });
+  if (!res.ok) return `No pudimos enviar el correo (${res.status}).`;
+  return null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +45,35 @@ const roleForRelation: Record<Relation, "familiar" | "paciente"> = {
   participante: "paciente",
 };
 
+// Fase 7: accounts the clinic creates in person (assisted onboarding) get a
+// shared starter password instead of an invite link — they're standing
+// right there to confirm the email and pick a real password immediately
+// after, via must_change_password (see RouteGuard). Same underlying
+// patients/patient_links wiring as the invite-link path, just a different
+// way of getting the account itself into existence.
+const GENERIC_PASSWORD = "integramentecr";
+
+async function createAccount(
+  admin: ReturnType<typeof createClient>,
+  email: string,
+  metadata: Record<string, unknown>,
+  genericPassword: boolean,
+): Promise<{ user: { id: string } | null; error: { message: string } | null; warning?: string }> {
+  if (!genericPassword) {
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: metadata, redirectTo: `${SITE_URL}/completar-cuenta` });
+    return { user: data?.user ?? null, error };
+  }
+  const { data, error } = await admin.auth.admin.createUser({ email, password: GENERIC_PASSWORD, email_confirm: false, user_metadata: metadata });
+  if (error) return { user: null, error };
+  await admin.from("profiles").update({ must_change_password: true }).eq("id", data.user.id);
+  const { error: resendError } = await admin.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${SITE_URL}/app/login` } });
+  return {
+    user: data.user,
+    error: null,
+    warning: resendError ? `Cuenta creada, pero no pudimos enviar el correo de confirmación: ${resendError.message}` : undefined,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -42,7 +89,6 @@ Deno.serve(async (req) => {
   if (!user) return json({ error: "No autenticado." }, 401);
 
   const { data: callerProfile } = await userClient.from("profiles").select("role").eq("id", user.id).single();
-  if (callerProfile?.role !== "profesional") return json({ error: "Solo el equipo clínico puede hacer esto." }, 403);
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -53,12 +99,31 @@ Deno.serve(async (req) => {
     return json({ error: "Cuerpo inválido." }, 400);
   }
 
+  // invite_counterpart is the one action a familiar/paciente caller can take
+  // themselves (inviting their own missing familiar/participante) — every
+  // other action stays profesional-only, checked here before dispatch.
+  if (payload.action === "invite_counterpart") {
+    if (callerProfile?.role !== "familiar" && callerProfile?.role !== "paciente") {
+      return json({ error: "No autorizado." }, 403);
+    }
+    try {
+      return await handleInviteCounterpart(admin, user.id, callerProfile.role, payload);
+    } catch (err) {
+      console.error(err);
+      return json({ error: err instanceof Error ? err.message : "Error inesperado." }, 500);
+    }
+  }
+
+  if (callerProfile?.role !== "profesional") return json({ error: "Solo el equipo clínico puede hacer esto." }, 403);
+
   try {
     if (payload.action === "invite") return await handleInvite(admin, user.id, payload);
     if (payload.action === "resend") return await handleResend(admin, payload);
     if (payload.action === "update_email") return await handleUpdateEmail(admin, payload);
     if (payload.action === "update_role") return await handleUpdateRole(admin, user.id, payload);
     if (payload.action === "delete_user") return await handleDeleteUser(admin, user.id, payload);
+    if (payload.action === "reject_patient") return await handleRejectPatient(admin, payload);
+    if (payload.action === "notify_plan_assigned") return await handleNotifyPlanAssigned(admin, payload);
     return json({ error: "Acción desconocida." }, 400);
   } catch (err) {
     console.error(err);
@@ -69,17 +134,15 @@ Deno.serve(async (req) => {
 async function handleInvite(admin: ReturnType<typeof createClient>, profesionalId: string, payload: Record<string, unknown>) {
   const email = String(payload.email ?? "").trim().toLowerCase();
   const nombre = String(payload.nombre ?? "").trim();
+  const genericPassword = payload.genericPassword === true;
   if (!email || !nombre) return json({ error: "Faltan datos: correo y nombre son obligatorios." }, 400);
 
   // Clinic staff accounts aren't linked to any patient at all.
   if (payload.accountType === "profesional") {
     const especialidad = String(payload.especialidad ?? "").trim() || null;
-    const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { role: "profesional", nombre, especialidad },
-      redirectTo: `${SITE_URL}/completar-cuenta`,
-    });
-    if (error) return json({ error: error.message }, 400);
-    return json({ profileId: invited.user.id, patientId: null });
+    const { user: invitedUser, error, warning } = await createAccount(admin, email, { role: "profesional", nombre, especialidad }, genericPassword);
+    if (error || !invitedUser) return json({ error: error?.message ?? "No pudimos crear la cuenta." }, 400);
+    return json({ profileId: invitedUser.id, patientId: null, warning });
   }
 
   const relation = payload.relation as Relation;
@@ -95,13 +158,10 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
   if (patientMode === "new" && !newPatientNombre) return json({ error: "Falta el nombre del paciente." }, 400);
 
   const role = roleForRelation[relation];
-  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { role, nombre },
-    redirectTo: `${SITE_URL}/completar-cuenta`,
-  });
-  if (inviteError) return json({ error: inviteError.message }, 400);
+  const { user: invited, error: inviteError, warning: createWarning } = await createAccount(admin, email, { role, nombre }, genericPassword);
+  if (inviteError || !invited) return json({ error: inviteError?.message ?? "No pudimos crear la cuenta." }, 400);
 
-  if (patientMode === "none") return json({ profileId: invited.user.id, patientId: null });
+  if (patientMode === "none") return json({ profileId: invited.id, patientId: null, warning: createWarning });
 
   let patientId = payload.patientId ? String(payload.patientId) : null;
   if (!patientId) {
@@ -120,7 +180,7 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
     patientId = patient.id;
   }
 
-  const links = [{ patient_id: patientId, profile_id: invited.user.id, relation }];
+  const links = [{ patient_id: patientId, profile_id: invited.id, relation }];
   const { data: existingProfesionalLink } = await admin
     .from("patient_links")
     .select("patient_id")
@@ -133,7 +193,7 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
   const { error: linkError } = await admin.from("patient_links").insert(links);
   if (linkError) return json({ error: linkError.message }, 400);
 
-  return json({ profileId: invited.user.id, patientId });
+  return json({ profileId: invited.id, patientId, warning: createWarning });
 }
 
 async function handleResend(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
@@ -247,5 +307,145 @@ async function handleDeleteUser(admin: ReturnType<typeof createClient>, callerId
 
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) return json({ error: error.message }, 400);
+  return json({ ok: true });
+}
+
+// Rejecting a pending patient during evaluation: the patient record (never
+// accepted, so nothing else depends on it) is removed, and the linked
+// family account is notified by email with the clinic's message. Finding
+// the email requires the Auth Admin API — patient_links only stores a
+// profile id, and profiles never stores email — so this has to live here.
+async function handleRejectPatient(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
+  const patientId = String(payload.patientId ?? "");
+  const mensaje = String(payload.mensaje ?? "").trim();
+  if (!patientId || !mensaje) return json({ error: "Faltan datos." }, 400);
+
+  const { data: patient } = await admin.from("patients").select("nombre").eq("id", patientId).maybeSingle();
+  const patientNombre = patient?.nombre ?? "tu solicitud";
+
+  const { data: links } = await admin
+    .from("patient_links")
+    .select("profile_id")
+    .eq("patient_id", patientId)
+    .eq("relation", "familiar_admin");
+  const familiarProfileId = links?.[0]?.profile_id as string | undefined;
+
+  let email: string | null = null;
+  if (familiarProfileId) {
+    const { data: found } = await admin.auth.admin.getUserById(familiarProfileId);
+    email = found?.user?.email ?? null;
+  }
+
+  const { error: deleteError } = await admin.from("patients").delete().eq("id", patientId);
+  if (deleteError) return json({ error: deleteError.message }, 400);
+
+  if (!email) {
+    return json({ ok: true, warning: "El paciente se rechazó, pero no encontramos un correo de familiar para notificar." });
+  }
+
+  const html = `
+    <p>Hola,</p>
+    <p>Sobre la solicitud de <strong>${patientNombre}</strong> en IntegraMente en Casa, el equipo clínico decidió no continuar en este momento:</p>
+    <p style="white-space: pre-wrap;">${mensaje.replace(/</g, "&lt;")}</p>
+    <p>Si tenés preguntas, podés responder a este correo.</p>
+    <p>— Equipo IntegraMente en Casa</p>
+  `;
+  const mailError = await sendMail(email, "Sobre tu solicitud en IntegraMente en Casa", html);
+  if (mailError) {
+    return json({ ok: true, warning: `El paciente se rechazó, pero no pudimos enviar el correo de aviso: ${mailError}` });
+  }
+  return json({ ok: true, message: `${patientNombre} fue rechazado y se le avisó a la familia por correo.` });
+}
+
+// Notifies every linked family/participant account by email once the clinic
+// accepts a patient and assigns their first (or next) plan — the RPC that
+// actually assigns the plan is a plain SQL function with no HTTP access, so
+// this is called separately right after it succeeds.
+async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
+  const patientId = String(payload.patientId ?? "");
+  if (!patientId) return json({ error: "Falta el paciente." }, 400);
+
+  const { data: patient } = await admin.from("patients").select("nombre").eq("id", patientId).maybeSingle();
+  const patientNombre = patient?.nombre ?? "tu perfil";
+
+  const { data: links } = await admin
+    .from("patient_links")
+    .select("profile_id")
+    .eq("patient_id", patientId)
+    .in("relation", ["familiar_admin", "participante"]);
+
+  const profileIds = [...new Set((links ?? []).map((l) => l.profile_id as string))];
+  if (profileIds.length === 0) {
+    return json({ ok: true, warning: "El plan se asignó, pero no encontramos cuentas vinculadas para notificar." });
+  }
+
+  const failures: string[] = [];
+  for (const profileId of profileIds) {
+    const { data: found } = await admin.auth.admin.getUserById(profileId);
+    const email = found?.user?.email;
+    if (!email) continue;
+    const html = `
+      <p>Hola,</p>
+      <p>Ya revisamos el perfil de <strong>${patientNombre}</strong> en IntegraMente en Casa y armamos su programa de esta semana.</p>
+      <p>Ya podés ingresar a la plataforma con tu correo y contraseña.</p>
+      <p><a href="${SITE_URL}/app/login">Ingresar a IntegraMente en Casa</a></p>
+      <p>— Equipo IntegraMente en Casa</p>
+    `;
+    const mailError = await sendMail(email, "Ya podés ingresar a IntegraMente en Casa", html);
+    if (mailError) failures.push(mailError);
+  }
+
+  if (failures.length > 0) {
+    return json({ ok: true, warning: `El plan se asignó, pero no pudimos enviar algún correo de aviso: ${failures[0]}` });
+  }
+  return json({ ok: true });
+}
+
+// Self-service counterpart invite: a familiar_admin can invite the missing
+// participante for their own patient (and vice versa) — the one privileged
+// action a non-profesional caller is allowed to trigger here. Authorization
+// is entirely re-derived from patient_links, never trusted from the client.
+async function handleInviteCounterpart(
+  admin: ReturnType<typeof createClient>,
+  callerId: string,
+  callerRole: "familiar" | "paciente",
+  payload: Record<string, unknown>,
+) {
+  const patientId = String(payload.patientId ?? "");
+  const email = String(payload.email ?? "").trim().toLowerCase();
+  const nombre = String(payload.nombre ?? "").trim();
+  if (!patientId || !email || !nombre) return json({ error: "Faltan datos." }, 400);
+
+  const callerRelation: Relation = callerRole === "familiar" ? "familiar_admin" : "participante";
+  const targetRelation: Relation = callerRole === "familiar" ? "participante" : "familiar_admin";
+
+  const { data: callerLink } = await admin
+    .from("patient_links")
+    .select("patient_id")
+    .eq("patient_id", patientId)
+    .eq("profile_id", callerId)
+    .eq("relation", callerRelation)
+    .maybeSingle();
+  if (!callerLink) return json({ error: "No autorizado para este paciente." }, 403);
+
+  const { data: existingTarget } = await admin
+    .from("patient_links")
+    .select("patient_id")
+    .eq("patient_id", patientId)
+    .eq("relation", targetRelation)
+    .maybeSingle();
+  if (existingTarget) return json({ error: "Ya hay una cuenta vinculada con ese rol para este paciente." }, 400);
+
+  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { role: roleForRelation[targetRelation], nombre },
+    redirectTo: `${SITE_URL}/completar-cuenta`,
+  });
+  if (inviteError) return json({ error: inviteError.message }, 400);
+
+  const { error: linkError } = await admin
+    .from("patient_links")
+    .insert({ patient_id: patientId, profile_id: invited.user.id, relation: targetRelation });
+  if (linkError) return json({ error: linkError.message }, 400);
+
   return json({ ok: true });
 }

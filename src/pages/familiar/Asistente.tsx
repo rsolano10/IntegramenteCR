@@ -51,7 +51,9 @@ export function Asistente() {
         Respuestas basadas en protocolos revisados. Para lo demás, te conecto con la Dra. Solano.
       </p>
 
-      <div className="flex-1 grid gap-3 overflow-y-auto pr-1 mb-4" style={{ maxHeight: "50vh" }}>
+      {/* No independent scroll region here — the page itself scrolls, so
+          there's only ever one scrollbar instead of two nested ones. */}
+      <div className="grid gap-3 mb-4">
         {messages.map((m) => (
           <div key={m.id}>
             <ChatBubble role={m.role}>

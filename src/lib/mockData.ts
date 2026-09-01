@@ -110,6 +110,8 @@ export interface PlanTask {
   precaucion?: string;
   pasos?: string[];
   porQue?: string;
+  comentario?: string;
+  notaClinica?: string;
 }
 
 export interface PlanDay {

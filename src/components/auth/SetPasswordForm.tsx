@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { roleHome } from "../../lib/useSession";
 import { Button } from "../ui/Button";
+import { PasswordInput } from "../ui/PasswordInput";
 
 // Shared by CompletarCuenta (first login after a clinic invite) and
 // ResetPassword (after a recovery link) — both land here with an active
@@ -35,6 +36,10 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    // Harmless no-op for accounts that were never gated by this flag
+    // (invite-link/recovery-link flows) — only the alta asistida path (a
+    // generic starter password) actually needs it cleared.
+    await supabase.from("profiles").update({ must_change_password: false }).eq("id", user?.id ?? "");
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user?.id ?? "").single();
     setLoading(false);
     if (!profile) {
@@ -51,23 +56,11 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
       <div className="grid gap-4.5">
         <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
           Nueva contraseña
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-          />
+          <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
         </label>
         <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
           Confirmar contraseña
-          <input
-            type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="••••••••"
-            className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-          />
+          <PasswordInput value={confirm} onChange={setConfirm} placeholder="••••••••" />
         </label>
         {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
         <Button variant="ink" fullWidth onClick={submit} disabled={loading || !password || !confirm}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
@@ -17,11 +17,22 @@ function hasAnswer(value: string | string[] | undefined): boolean {
 export function OnboardingStep() {
   const navigate = useNavigate();
   const { step: stepId } = useParams();
+  // Assisted onboarding: the clinic fills this out in person on an existing
+  // patient's behalf (?paciente=<id> — see PatientDetailModal's "Llenar
+  // encuesta" entry point) — same wizard, but it writes directly to that
+  // patient's onboarding_answers instead of calling self_onboard.
+  const [searchParams] = useSearchParams();
+  const assistedPatientId = searchParams.get("paciente");
+  function withAssisted(path: string) {
+    return assistedPatientId ? `${path}?paciente=${assistedPatientId}` : path;
+  }
   const answers = useAppStore((s) => s.onboarding2);
   const answerQuestion = useAppStore((s) => s.answerQuestion);
   const toggleMultiAnswer = useAppStore((s) => s.toggleMultiAnswer);
   const perfilEditModule = useAppStore((s) => s.perfilEditModule);
   const endModuleEdit = useAppStore((s) => s.endModuleEdit);
+  const perfilEditQuestionId = useAppStore((s) => s.perfilEditQuestionId);
+  const endQuestionEdit = useAppStore((s) => s.endQuestionEdit);
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +55,7 @@ export function OnboardingStep() {
   const editIdx = editQuestions && question ? editQuestions.findIndex((q) => q.id === question.id) : -1;
 
   useEffect(() => {
-    if (!question) navigate(`/app/perfil/${questions[0].id}`, { replace: true });
+    if (!question) navigate(withAssisted(`/app/perfil/${questions[0].id}`), { replace: true });
     else setText(typeof answers[question.id] === "string" ? (answers[question.id] as string) : "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepId]);
@@ -52,10 +63,29 @@ export function OnboardingStep() {
   if (!question) return null;
 
   function goTo(id: string | undefined, fallback: string) {
-    if (id) navigate(`/app/perfil/${id}`);
+    if (id) navigate(withAssisted(`/app/perfil/${id}`));
     else navigate(fallback);
   }
+  async function saveAndReturnToResumen(endEdit: () => void) {
+    if (myPatient) {
+      setSubmitError("");
+      setSubmitting(true);
+      const { error } = await supabase.from("onboarding_answers").update({ answers }).eq("patient_id", myPatient.id);
+      setSubmitting(false);
+      if (error) {
+        setSubmitError("No pudimos guardar el cambio. Probá de nuevo.");
+        return;
+      }
+    }
+    endEdit();
+    navigate("/app/perfil/resumen");
+  }
+
   async function goNext() {
+    if (perfilEditQuestionId) {
+      await saveAndReturnToResumen(endQuestionEdit);
+      return;
+    }
     if (editQuestions) {
       const next = editQuestions[editIdx + 1];
       if (next) {
@@ -65,23 +95,12 @@ export function OnboardingStep() {
       // Last question of an edit session on an already-real patient — push
       // the correction back to Supabase (onboarding_answers: familiar
       // update already allows this), not just the local copy.
-      if (myPatient) {
-        setSubmitError("");
-        setSubmitting(true);
-        const { error } = await supabase.from("onboarding_answers").update({ answers }).eq("patient_id", myPatient.id);
-        setSubmitting(false);
-        if (error) {
-          setSubmitError("No pudimos guardar el cambio. Probá de nuevo.");
-          return;
-        }
-      }
-      endModuleEdit();
-      navigate("/app/perfil/resumen");
+      await saveAndReturnToResumen(endModuleEdit);
       return;
     }
     const next = applicable[idx + 1]?.id;
     if (next) {
-      navigate(`/app/perfil/${next}`);
+      navigate(withAssisted(`/app/perfil/${next}`));
       return;
     }
     // Last question of the wizard — this is the first time this account's
@@ -89,12 +108,28 @@ export function OnboardingStep() {
     // demo default here — an empty name blocks submission instead.
     const nombre = typeof answers.persona_nombre === "string" ? answers.persona_nombre.trim() : "";
     if (!nombre) {
-      setSubmitError("Falta el nombre de tu familiar — volvé y completalo antes de continuar.");
+      setSubmitError(assistedPatientId ? "Falta el nombre — volvé y completalo antes de continuar." : "Falta el nombre de tu familiar — volvé y completalo antes de continuar.");
       return;
     }
     if (session.status !== "authed") return;
     setSubmitError("");
     setSubmitting(true);
+
+    if (assistedPatientId) {
+      // Assisted mode: the clinic already created the patient — just save
+      // the answers directly (RLS: "onboarding_answers: profesional
+      // insert/update", Fase 7). No self_onboard call, no new patient_links.
+      const { error: upsertError } = await supabase.from("onboarding_answers").upsert({ patient_id: assistedPatientId, answers });
+      setSubmitting(false);
+      if (upsertError) {
+        setSubmitError("No pudimos guardar la encuesta. Probá de nuevo.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["onboarding-answers", assistedPatientId] });
+      navigate(`/app/profesional/usuarios?tab=pacientes&encuestaGuardada=${assistedPatientId}`);
+      return;
+    }
+
     const edad = typeof answers.persona_edad === "string" ? answers.persona_edad.trim() : "";
     const { error } = await supabase.rpc("self_onboard", { p_nombre: nombre, p_edad: edad || null, p_answers: answers });
     setSubmitting(false);
@@ -104,16 +139,21 @@ export function OnboardingStep() {
     }
     completeOnboarding();
     queryClient.invalidateQueries({ queryKey: ["my-patient", session.session.user.id] });
-    navigate("/app/hoy");
+    navigate("/app/perfil/invitar");
   }
   function goBack() {
+    if (perfilEditQuestionId) {
+      endQuestionEdit();
+      navigate("/app/perfil/resumen");
+      return;
+    }
     if (editQuestions) {
       const prev = editQuestions[editIdx - 1];
       if (prev) navigate(`/app/perfil/${prev.id}`);
       else navigate("/app/perfil/resumen");
       return;
     }
-    goTo(applicable[idx - 1]?.id, "/app/consent");
+    goTo(applicable[idx - 1]?.id, assistedPatientId ? "/app/profesional/usuarios?tab=pacientes" : "/app/consent");
   }
 
   const value = answers[question.id];
@@ -134,7 +174,12 @@ export function OnboardingStep() {
 
   return (
     <div className="im-in max-w-[680px] mx-auto px-5 pt-8 pb-16 sm:px-8 lg:pt-10 lg:pb-20">
-      {editQuestions ? (
+      {perfilEditQuestionId ? (
+        <div className="flex items-center gap-2 mb-6 text-sm text-verde-profundo font-semibold">
+          <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
+          Editando esta pregunta
+        </div>
+      ) : editQuestions ? (
         <div className="flex items-center gap-2 mb-6 text-sm text-verde-profundo font-semibold">
           <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
           Editando "{perfilEditModule}" · pregunta {editIdx + 1} de {editQuestions.length}
@@ -231,11 +276,13 @@ export function OnboardingStep() {
         <Button variant="ink" onClick={goNext} disabled={!canContinue || submitting}>
           {submitting
             ? "Guardando…"
-            : editQuestions && editIdx >= editQuestions.length - 1
+            : perfilEditQuestionId
               ? "Guardar y volver"
-              : !editQuestions && !applicable[idx + 1]
-                ? "Finalizar"
-                : "Continuar"}
+              : editQuestions && editIdx >= editQuestions.length - 1
+                ? "Guardar y volver"
+                : !editQuestions && !applicable[idx + 1]
+                  ? "Finalizar"
+                  : "Continuar"}
         </Button>
       </div>
     </div>

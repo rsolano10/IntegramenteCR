@@ -7,6 +7,7 @@ import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import type { Answers } from "../../lib/onboardingSchema";
 import { FamiliarNav } from "./FamiliarNav";
+import { WelcomeMessageModal } from "../ui/WelcomeMessageModal";
 
 function PendienteRevision({ nombre }: { nombre: string }) {
   return (
@@ -72,6 +73,8 @@ export function FamiliarShell() {
       <div className="max-w-3xl mx-auto px-5 py-6 sm:px-8 lg:px-12 lg:py-8">
         {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} /> : <Outlet />}
       </div>
+
+      {!pendiente && myPatient?.welcome_message_pending && <WelcomeMessageModal patientId={myPatient.id} />}
     </div>
   );
 }

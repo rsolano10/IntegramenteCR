@@ -243,7 +243,6 @@ function NewPatientModal({ onClose, onCreated, onError }: { onClose: () => void;
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Rosa Jiménez"
               className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
             />
           </label>
@@ -253,7 +252,6 @@ function NewPatientModal({ onClose, onCreated, onError }: { onClose: () => void;
               type="text"
               value={edad}
               onChange={(e) => setEdad(e.target.value)}
-              placeholder="79"
               className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
             />
           </label>

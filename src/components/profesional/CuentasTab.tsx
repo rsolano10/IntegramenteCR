@@ -188,7 +188,7 @@ export function CuentasTab({
         <CreateAccountModal
           existingPatients={existingPatients}
           onClose={() => onCreateOpenChange(false)}
-          onCreated={() => onChanged("Cuenta creada. Le enviamos una invitación por correo.")}
+          onCreated={(msg) => onChanged(msg ?? "Cuenta creada. Le enviamos una invitación por correo.")}
           onError={(msg) => onChanged(msg, true)}
         />
       )}
@@ -234,10 +234,11 @@ function CreateAccountModal({
 }: {
   existingPatients: { id: string; nombre: string }[];
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (msg?: string) => void;
   onError: (msg: string) => void;
 }) {
   const [accountType, setAccountType] = useState<"familiar_admin" | "participante" | "profesional">("familiar_admin");
+  const [metodo, setMetodo] = useState<"invite" | "generic">("invite");
   const [patientMode, setPatientMode] = useState<"none" | "new" | "existing">(existingPatients.length > 0 ? "existing" : "none");
   const [patientId, setPatientId] = useState(existingPatients[0]?.id ?? "");
   const [patientNombre, setPatientNombre] = useState("");
@@ -272,9 +273,10 @@ function CreateAccountModal({
     }
     setLoading(true);
     try {
-      await callAdminAccounts("invite", {
+      const result = await callAdminAccounts("invite", {
         email: email.trim(),
         nombre: nombre.trim(),
+        genericPassword: metodo === "generic",
         ...(isStaff
           ? { accountType: "profesional", especialidad: especialidad.trim() }
           : {
@@ -282,7 +284,12 @@ function CreateAccountModal({
               ...(patientMode === "existing" ? { patientId } : patientMode === "new" ? { patientNombre: patientNombre.trim(), patientEdad: patientEdad.trim() } : {}),
             }),
       });
-      onCreated();
+      const successMsg =
+        result?.warning ??
+        (metodo === "generic"
+          ? "Cuenta creada con la contraseña provisional (integramentecr). Le pedirá confirmar el correo y cambiarla al entrar."
+          : "Cuenta creada. Le enviamos una invitación por correo.");
+      onCreated(successMsg);
       onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "No pudimos crear la cuenta.";
@@ -296,7 +303,11 @@ function CreateAccountModal({
   return (
     <Modal onClose={onClose}>
       <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Crear cuenta</h2>
-      <p className="m-0 mb-5 text-sm text-tinta-tenue">Le enviamos un correo de invitación. Va a poder entrar en cuanto confirme y elija una contraseña.</p>
+      <p className="m-0 mb-5 text-sm text-tinta-tenue">
+        {metodo === "generic"
+          ? "Se crea con la contraseña provisional \"integramentecr\" — confirma el correo y la cambia al entrar."
+          : "Le enviamos un correo de invitación. Va a poder entrar en cuanto confirme y elija una contraseña."}
+      </p>
 
       <div className="grid gap-4.5">
         <div>
@@ -312,6 +323,18 @@ function CreateAccountModal({
           />
         </div>
 
+        <div>
+          <p className="m-0 mb-2 text-[15px] font-semibold text-[#3b4c51]">Cómo entra</p>
+          <PillToggle
+            value={metodo}
+            onChange={setMetodo}
+            options={[
+              { value: "invite", label: "Invitación por correo" },
+              { value: "generic", label: "Contraseña provisional (presencial)" },
+            ]}
+          />
+        </div>
+
         {isStaff ? (
           <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
             Especialidad
@@ -319,7 +342,6 @@ function CreateAccountModal({
               type="text"
               value={especialidad}
               onChange={(e) => setEspecialidad(e.target.value)}
-              placeholder="Neuropsicología"
               className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
             />
           </label>
@@ -354,7 +376,6 @@ function CreateAccountModal({
                     type="text"
                     value={patientNombre}
                     onChange={(e) => setPatientNombre(e.target.value)}
-                    placeholder="Rosa Jiménez"
                     className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
                   />
                 </label>
@@ -364,7 +385,6 @@ function CreateAccountModal({
                     type="text"
                     value={patientEdad}
                     onChange={(e) => setPatientEdad(e.target.value)}
-                    placeholder="79"
                     className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
                   />
                 </label>
@@ -379,7 +399,6 @@ function CreateAccountModal({
             type="text"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            placeholder="Marcela Jiménez"
             className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
           />
         </label>

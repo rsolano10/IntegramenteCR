@@ -1,41 +1,53 @@
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAppStore } from "../../lib/store";
-import { rechazoTriggered } from "../../lib/rules";
-import { todayFeaturedTask, getPatientName } from "../../lib/patient";
-import { Link } from "react-router-dom";
-import { ActivityCard } from "../../components/ui/ActivityCard";
-import { OptionGroup } from "../../components/ui/OptionGroup";
-import { Button } from "../../components/ui/Button";
-import { Modal } from "../../components/ui/Modal";
+import { Link, useNavigate } from "react-router-dom";
+import type { PlanTask } from "../../lib/mockData";
+import { ImagePlaceholder } from "../../components/ui/ImagePlaceholder";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
+import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
+import { Button } from "../../components/ui/Button";
 
-const regMessages: Record<string, string> = {
-  done: "Registrado. Mañana se repite para consolidar la rutina.",
-  partial: "Registrado. Se acortará la próxima consigna.",
-  no: "Registrado sin penalizar. Nadie tiene que justificar un día difícil.",
+const estadoBadge: Record<PlanTask["estado"], { text: string; className: string } | null> = {
+  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-[#4c7a4c]" },
+  parcial: { text: "En parte", className: "bg-fila-calida text-semaforo-amarillo-texto" },
+  no: { text: "No se realizó", className: "bg-campo text-tinta-tenue" },
+  pendiente: null,
+  futuro: null,
 };
 
-const estadoToReg: Record<string, "done" | "partial" | "no"> = {
-  realizado: "done",
-  parcial: "partial",
-  no: "no",
-};
+function TaskRow({ task, onOpen }: { task: PlanTask; onOpen: () => void }) {
+  const badge = estadoBadge[task.estado];
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="w-full text-left flex gap-3.5 items-start rounded-2xl border border-borde bg-white p-3.5 hover:border-verde-serenidad cursor-pointer"
+    >
+      <div className="shrink-0 w-16">
+        <ImagePlaceholder label={task.tipo} height={64} rounded="rounded-xl" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[13px] font-bold text-verde-profundo">{task.hora}</span>
+          {task.duracion && <span className="text-[13px] text-tinta-tenue">· {task.duracion}</span>}
+        </div>
+        <p className="m-0 text-[16px] font-semibold text-tinta leading-snug">{task.titulo}</p>
+        {task.detalle && <p className="m-0 mt-0.5 text-[14px] text-tinta-suave leading-snug line-clamp-2">{task.detalle}</p>}
+        {badge && <span className={`inline-block mt-2 px-2.5 py-1 rounded-full text-[12px] font-semibold ${badge.className}`}>{badge.text}</span>}
+      </div>
+    </button>
+  );
+}
 
 export function Hoy() {
-  const plan = useAppStore((s) => s.plan);
-  const reg = useAppStore((s) => s.reg);
-  const noCount = useAppStore((s) => s.noCount);
-  const markRegistro = useAppStore((s) => s.markRegistro);
-  const onboarding2 = useAppStore((s) => s.onboarding2);
-  const welcomeMessagePending = useAppStore((s) => s.welcomeMessagePending);
-  const dismissWelcomeMessage = useAppStore((s) => s.dismissWelcomeMessage);
-
+  const navigate = useNavigate();
   const session = useSession();
   const myUserId = session.status === "authed" ? session.session.user.id : null;
   const { data: myPatient } = useMyPatient();
+  const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
+  const { data: planMeta } = useCurrentPlanMeta(myPatient?.id);
+
   const { data: recentMensajes } = useQuery({
     queryKey: ["mensajes-preview", myPatient?.id],
     queryFn: async () => {
@@ -55,47 +67,19 @@ export function Hoy() {
   const ultimoMensaje = recentMensajes?.[0]?.autor_id !== myUserId ? recentMensajes?.[0] : undefined;
   const hasMoreMensajes = (recentMensajes?.length ?? 0) > 1;
 
-  const today = plan.find((d) => d.isToday);
+  const today = days?.find((d) => d.isToday);
+  // Registered tasks (any outcome) drop to a separate "Realizado" section so
+  // the top of the page only ever shows what's still actionable today.
+  const pendingTasks = today?.tasks.filter((t) => t.estado !== "realizado" && t.estado !== "parcial" && t.estado !== "no") ?? [];
+  const doneTasks = today?.tasks.filter((t) => t.estado === "realizado" || t.estado === "parcial" || t.estado === "no") ?? [];
 
-  // Pinned to a single task id so marking "Sí"/"En parte"/"No" doesn't
-  // silently swap the visible card out from under the confirmation message
-  // — the plan re-derives "next up" live, but what the family is looking
-  // at right now shouldn't move until they choose to advance.
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  useEffect(() => {
-    if (!today) return;
-    if (activeTaskId && today.tasks.some((t) => t.id === activeTaskId)) return;
-    setActiveTaskId(todayFeaturedTask(plan)?.task.id ?? today.tasks[0]?.id ?? null);
-    // Only re-anchor when the day identity changes, not on every plan edit.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today?.dia]);
+  const allTasks = days?.flatMap((d) => d.tasks) ?? [];
+  const weekComplete = allTasks.length > 0 && allTasks.every((t) => t.estado !== "pendiente" && t.estado !== "futuro");
 
-  const rechazo = rechazoTriggered(reg, noCount);
-  const activeTask = today?.tasks.find((t) => t.id === activeTaskId) ?? null;
-  const otherPending = today?.tasks.filter((t) => t.id !== activeTaskId && t.estado !== "realizado") ?? [];
-  const showReg = activeTask ? estadoToReg[activeTask.estado] ?? null : null;
+  if (loadingPlan) return <div className="flex-1" />;
 
   return (
     <div>
-      {welcomeMessagePending && (
-        <Modal onClose={dismissWelcomeMessage}>
-          <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">¡Ya tenés tu programa!</h2>
-          <p className="m-0 mb-4 text-[16px] leading-relaxed text-tinta-suave">
-            El equipo de IntegraMente revisó el perfil de {myPatient?.nombre ?? getPatientName(onboarding2)} y armó su primer programa personalizado. Ya
-            podés ver la actividad de hoy y el resto de la semana.
-          </p>
-          {ultimoMensaje && (
-            <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-5">
-              <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
-              <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
-            </div>
-          )}
-          <Button variant="ink" fullWidth onClick={dismissWelcomeMessage}>
-            Empezar
-          </Button>
-        </Modal>
-      )}
-
       {ultimoMensaje && (
         <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-4.5">
           <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
@@ -108,88 +92,54 @@ export function Hoy() {
         </div>
       )}
 
-      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Lo único de hoy</p>
+      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Actividades de hoy</p>
 
-      {!activeTask ? (
+      {!today || today.tasks.length === 0 ? (
         <div className="bg-fila-fria rounded-2xl p-5 mb-4.5">
-          <p className="m-0 text-[16px] leading-relaxed text-verde-profundo">
-            No hay más actividades pendientes para hoy. ¡Buen trabajo!
-          </p>
+          <p className="m-0 text-[16px] leading-relaxed text-verde-profundo">No hay actividades programadas para hoy.</p>
         </div>
       ) : (
         <>
-          <div className="mb-4.5">
-            <ActivityCard
-              placeholderLabel={`${activeTask.tipo} · ${activeTask.titulo.toLowerCase()}`}
-              title={activeTask.titulo}
-              meta={[activeTask.duracion, activeTask.hora].filter(Boolean).join(" · ")}
-            >
-              {activeTask.precaucion && (
-                <p className="m-0 mb-4 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-3.5 py-3">
-                  {activeTask.precaucion}
-                </p>
-              )}
-              <Button fullWidth to="/app/hoy/actividad">
-                Abrir actividad
-              </Button>
-            </ActivityCard>
-          </div>
-
-          <p className="m-0 mb-2.5 text-[15px] font-semibold">¿Se realizó?</p>
-          <div className="mb-4.5">
-            <OptionGroup
-              value={showReg ?? ""}
-              onChange={(v) => markRegistro(activeTask.id, v as "done" | "partial" | "no")}
-              options={[
-                { value: "done", label: "Sí" },
-                { value: "partial", label: "En parte" },
-                { value: "no", label: "No" },
-              ]}
-            />
-          </div>
-
-          {showReg && (
-            <div className="bg-fila-fria rounded-2xl p-4 mb-4.5">
-              <p className="m-0 text-[16px] leading-relaxed text-verde-profundo">{regMessages[showReg]}</p>
-              {otherPending.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTaskId(otherPending[0].id)}
-                  className="mt-2.5 border-none bg-transparent p-0 font-sans text-[14px] font-semibold text-verde-profundo cursor-pointer underline"
-                >
-                  Siguiente: {otherPending[0].titulo} ›
-                </button>
-              )}
+          {pendingTasks.length === 0 ? (
+            <div className="bg-fila-fria rounded-2xl p-5 mb-4.5">
+              <p className="m-0 text-[16px] leading-relaxed text-verde-profundo">Ya registraste todas las actividades de hoy. ¡Buen trabajo!</p>
+            </div>
+          ) : (
+            <div className="grid gap-2.5 mb-4.5">
+              {pendingTasks.map((task) => (
+                <TaskRow key={task.id} task={task} onOpen={() => navigate(`/app/hoy/actividad/${task.id}`)} />
+              ))}
             </div>
           )}
 
-          {rechazo && (
-            <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl p-4.5 mb-4.5">
-              <p className="m-0 mb-3 text-[16px] leading-relaxed text-riesgo-texto">
-                Es la tercera vez que esta actividad no se hace. Podemos cambiarla.
-              </p>
-              <Button variant="caution" dense to="/app/alerta/rechazo">
-                Revisar el ajuste
-              </Button>
+          {doneTasks.length > 0 && (
+            <div className="mb-4.5">
+              <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Realizado</p>
+              <div className="grid gap-2.5 opacity-80">
+                {doneTasks.map((task) => (
+                  <TaskRow key={task.id} task={task} onOpen={() => navigate(`/app/hoy/actividad/${task.id}`)} />
+                ))}
+              </div>
             </div>
           )}
         </>
       )}
 
-      <div className="bg-mostaza-vital rounded-2xl p-4.5 mb-4.5">
-        <p className="m-0 mb-1.5 text-[13px] tracking-[0.12em] uppercase text-[#7a5c1c]">Estrategia de la semana</p>
-        <p className="m-0 text-[16px] leading-snug text-[#4a3a1b]">Dar una instrucción por vez y evitar corregir innecesariamente.</p>
-      </div>
-
-      {reg && (
-        <div className="border border-borde bg-white rounded-2xl p-4.5 flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <p className="m-0 mb-0.5 text-[15px] font-bold">Revisión semanal disponible</p>
-            <p className="m-0 text-[14px] text-tinta-tenue">Tres preguntas cortas sobre cómo fue la semana.</p>
-          </div>
-          <Button variant="secondary" dense to="/app/revision">
-            Revisar la semana
+      {weekComplete && planMeta && !planMeta.family_reviewed_at && (
+        <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mt-4.5">
+          <p className="m-0 mb-1 text-[16px] font-bold text-verde-profundo">¡Semana completa!</p>
+          <p className="m-0 mb-3 text-[14px] text-tinta-suave">Ya registraste todas las actividades de la semana. Contanos cómo estuvo.</p>
+          <Button variant="ink" dense to={`/app/revision?plan=${planMeta.id}`}>
+            Evaluar la semana
           </Button>
+        </div>
+      )}
+
+      {weekComplete && planMeta?.family_reviewed_at && (
+        <div className="border border-borde bg-white rounded-2xl p-4.5 mt-4.5">
+          <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
+            Tu equipo clínico está revisando la semana. Pronto vas a tener novedades y las actividades de la próxima semana.
+          </p>
         </div>
       )}
     </div>

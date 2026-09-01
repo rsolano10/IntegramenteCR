@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../lib/store";
 import { supabase } from "../lib/supabase";
 import { roleHome } from "../lib/useSession";
+import { isUnconfirmedEmailError } from "../lib/authErrors";
 import { Button } from "../components/ui/Button";
+import { PasswordInput } from "../components/ui/PasswordInput";
 
 export function Login() {
   const navigate = useNavigate();
@@ -13,14 +15,24 @@ export function Login() {
   const setAuthError = useAppStore((s) => s.setAuthError);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
 
   async function submit() {
     setAuthError("");
+    setUnconfirmed(false);
+    setResendMsg("");
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error || !data.session) {
       setLoading(false);
-      setAuthError("Correo o contraseña incorrectos.");
+      if (isUnconfirmedEmailError(error)) {
+        setUnconfirmed(true);
+        setAuthError("Todavía no confirmaste tu correo — revisá tu bandeja de entrada.");
+      } else {
+        setAuthError("No pudimos iniciar sesión — revisá tu correo y contraseña.");
+      }
       return;
     }
     const { data: profile, error: profileError } = await supabase
@@ -34,6 +46,14 @@ export function Login() {
       return;
     }
     navigate(roleHome(profile.role));
+  }
+
+  async function resendConfirmation() {
+    setResendMsg("");
+    setResendLoading(true);
+    await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/app/login` } });
+    setResendLoading(false);
+    setResendMsg("Te reenviamos el correo de confirmación.");
   }
 
   return (
@@ -54,18 +74,38 @@ export function Login() {
           </label>
           <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
             Contraseña
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-            />
+            <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
           </label>
           <Button variant="ink" fullWidth onClick={submit} disabled={loading || !email.trim() || !password}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
           <p className="m-0 text-[15px] text-alerta-texto min-h-[22px]">{authError}</p>
+          {unconfirmed && (
+            <div className="-mt-2.5 grid gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={resendConfirmation}
+                  disabled={resendLoading}
+                  className="text-[14px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer disabled:opacity-60"
+                >
+                  {resendLoading ? "Reenviando…" : "Reenviar correo de confirmación"}
+                </button>
+                {resendMsg && <span className="text-[13px] text-tinta-tenue">{resendMsg}</span>}
+              </div>
+              <p className="m-0 text-[13px] leading-relaxed text-tinta-tenue">
+                ¿No te llega? Escribinos a{" "}
+                <a href="mailto:info@integramente.com" className="text-verde-profundo">
+                  info@integramente.com
+                </a>{" "}
+                o llamanos al{" "}
+                <a href="tel:+50683435772" className="text-verde-profundo">
+                  +506 8343 5772
+                </a>
+                .
+              </p>
+            </div>
+          )}
           <Link to="/olvide-password" className="text-[15px] text-verde-profundo justify-self-start">
             ¿Olvidaste tu contraseña?
           </Link>

@@ -5,7 +5,11 @@ import { useSession } from "./useSession";
 export interface MyPatient {
   id: string;
   nombre: string;
+  edad: string | null;
+  modalidad: string;
   plan_status: "pendiente" | "asignado";
+  vista_completa: boolean;
+  welcome_message_pending: boolean;
 }
 
 // Resolves "which real patient record am I (familiar/paciente) linked to"
@@ -24,19 +28,32 @@ export function useMyPatient() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("patient_links")
-        .select("patient_id, patients(nombre, plan_status)")
+        .select("patient_id, patients(nombre, edad, modalidad, plan_status, vista_completa, welcome_message_pending)")
         .eq("profile_id", userId)
         .in("relation", ["familiar_admin", "participante"])
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const patients = data.patients as unknown as
-        | { nombre: string; plan_status: "pendiente" | "asignado" }
-        | { nombre: string; plan_status: "pendiente" | "asignado" }[]
-        | null;
+      type PatientCols = {
+        nombre: string;
+        edad: string | null;
+        modalidad: string;
+        plan_status: "pendiente" | "asignado";
+        vista_completa: boolean;
+        welcome_message_pending: boolean;
+      };
+      const patients = data.patients as unknown as PatientCols | PatientCols[] | null;
       const patient = Array.isArray(patients) ? patients[0] : patients;
-      return { id: data.patient_id, nombre: patient?.nombre ?? "", plan_status: patient?.plan_status ?? "pendiente" } as MyPatient;
+      return {
+        id: data.patient_id,
+        nombre: patient?.nombre ?? "",
+        edad: patient?.edad ?? null,
+        modalidad: patient?.modalidad ?? "orientado",
+        plan_status: patient?.plan_status ?? "pendiente",
+        vista_completa: patient?.vista_completa ?? false,
+        welcome_message_pending: patient?.welcome_message_pending ?? false,
+      } as MyPatient;
     },
     enabled: !!userId,
   });
