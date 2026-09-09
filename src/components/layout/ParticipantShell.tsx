@@ -7,6 +7,9 @@ import { supabase } from "../../lib/supabase";
 import { uploadAvatar } from "../../lib/avatar";
 import { Modal } from "../ui/Modal";
 import { WelcomeMessageModal } from "../ui/WelcomeMessageModal";
+import { ProductTour } from "../ui/ProductTour";
+import { participanteTourSteps } from "../../lib/tourSteps";
+import { CalendarSyncCard } from "../ui/CalendarSyncCard";
 
 function PendienteRevision() {
   return (
@@ -25,8 +28,10 @@ function PendienteRevision() {
 function AvatarMenu() {
   const navigate = useNavigate();
   const session = useSession();
+  const { data: myPatient } = useMyPatient();
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const [open, setOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -74,7 +79,7 @@ function AvatarMenu() {
         )}
       </button>
 
-      {open && (
+      {open && !showCalendar && (
         <Modal onClose={() => setOpen(false)}>
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="w-20 h-20 rounded-full overflow-hidden">
@@ -96,6 +101,15 @@ function AvatarMenu() {
               {uploading ? "Subiendo…" : "Cambiar foto"}
             </button>
             {error && <p className="m-0 text-[15px] text-alerta-texto">{error}</p>}
+            {myPatient?.id && (
+              <button
+                type="button"
+                onClick={() => setShowCalendar(true)}
+                className="w-full min-h-17 border-2 border-verde-serenidad rounded-2xl bg-[#f5f9f9] text-verde-profundo font-sans text-[20px] font-bold cursor-pointer"
+              >
+                Avisos en tu teléfono
+              </button>
+            )}
             <button
               type="button"
               onClick={doLogout}
@@ -104,6 +118,22 @@ function AvatarMenu() {
               Cerrar sesión
             </button>
           </div>
+        </Modal>
+      )}
+
+      {open && showCalendar && myPatient?.id && (
+        <Modal onClose={() => setShowCalendar(false)}>
+          <button
+            type="button"
+            onClick={() => setShowCalendar(false)}
+            className="mb-3 border-none bg-transparent font-sans text-[16px] text-verde-profundo cursor-pointer p-0"
+          >
+            ‹ Atrás
+          </button>
+          <p className="m-0 mb-4 text-[18px] leading-relaxed text-tinta">
+            Agregá tus actividades al calendario de tu teléfono para recibir un aviso a la hora exacta de cada una.
+          </p>
+          <CalendarSyncCard patientId={myPatient.id} />
         </Modal>
       )}
     </>
@@ -115,6 +145,14 @@ export function ParticipantShell() {
   const { data: myPatient } = useMyPatient();
   const pendiente = myPatient?.plan_status === "pendiente";
   const nombre = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
+  const [tourSeen, setTourSeen] = useState(false);
+
+  function dismissTour() {
+    setTourSeen(true);
+    if (session.status === "authed") {
+      supabase.from("profiles").update({ onboarding_tour_seen: true }).eq("id", session.session.user.id);
+    }
+  }
 
   return (
     <div className="im-in min-h-full flex flex-col">
@@ -131,7 +169,12 @@ export function ParticipantShell() {
         <div className="w-full max-w-xl flex flex-col gap-5.5">{pendiente ? <PendienteRevision /> : <Outlet />}</div>
       </div>
 
-      {!pendiente && myPatient?.welcome_message_pending && <WelcomeMessageModal patientId={myPatient.id} />}
+      {(() => {
+        const tourPending = session.status === "authed" && !session.profile.onboarding_tour_seen && !tourSeen;
+        if (tourPending) return <ProductTour steps={participanteTourSteps} onFinish={dismissTour} />;
+        if (!pendiente && myPatient?.welcome_message_pending) return <WelcomeMessageModal patientId={myPatient.id} />;
+        return null;
+      })()}
     </div>
   );
 }

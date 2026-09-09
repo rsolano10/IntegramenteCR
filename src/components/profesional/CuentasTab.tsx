@@ -64,6 +64,12 @@ export function CuentasTab({
     onError: (err: Error) => onChanged(err.message, true),
   });
 
+  const reactivateMutation = useMutation({
+    mutationFn: (account: ManagedAccount) => callAdminAccounts("reactivate_user", { userId: account.id }),
+    onSuccess: (_data, account) => onChanged(`${account.nombre} fue reactivado.`),
+    onError: (err: Error) => onChanged(err.message, true),
+  });
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -150,7 +156,9 @@ export function CuentasTab({
                         {a.especialidad ? a.especialidad : a.links.length === 0 ? "—" : a.links.map((l) => l.patient_nombre).join(", ")}
                       </td>
                       <td className="py-3 pr-3">
-                        {confirmed ? (
+                        {!a.is_active ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-campo text-tinta-tenue">Desactivada</span>
+                        ) : confirmed ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-verde-serenidad/15 text-verde-profundo">Confirmado</span>
                         ) : (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-aviso text-semaforo-amarillo-texto">Pendiente</span>
@@ -161,8 +169,9 @@ export function CuentasTab({
                         <RowMenu
                           items={[
                             { label: "Ver detalle", onClick: () => setDetailFor(a) },
-                            { label: "Reenviar confirmación", hidden: confirmed, onClick: () => resendMutation.mutate(a) },
-                            { label: "Eliminar cuenta", danger: true, onClick: () => setDeleteFor(a) },
+                            { label: "Reenviar confirmación", hidden: confirmed || !a.is_active, onClick: () => resendMutation.mutate(a) },
+                            { label: "Reactivar cuenta", hidden: a.is_active, onClick: () => reactivateMutation.mutate(a) },
+                            { label: "Desactivar cuenta", danger: true, hidden: !a.is_active, onClick: () => setDeleteFor(a) },
                           ]}
                         />
                       </td>
@@ -207,15 +216,17 @@ export function CuentasTab({
 
       {deleteFor && (
         <DeleteConfirmModal
-          title={`¿Eliminar la cuenta de ${deleteFor.nombre}?`}
-          message="Se borra su acceso por completo. No se puede deshacer."
+          title={`¿Desactivar la cuenta de ${deleteFor.nombre}?`}
+          message="No va a poder ingresar hasta que se reactive. Su historial (mensajes, notas, cambios de estado) se conserva intacto."
+          confirmLabel="Sí, desactivar"
+          confirmLoadingLabel="Desactivando…"
           onCancel={() => setDeleteFor(null)}
           onConfirm={async () => {
             try {
               await callAdminAccounts("delete_user", { userId: deleteFor.id });
-              onChanged(`${deleteFor.nombre} fue eliminado.`);
+              onChanged(`${deleteFor.nombre} fue desactivado.`);
             } catch (err) {
-              onChanged(err instanceof Error ? err.message : "No pudimos eliminar la cuenta.", true);
+              onChanged(err instanceof Error ? err.message : "No pudimos desactivar la cuenta.", true);
             } finally {
               setDeleteFor(null);
             }

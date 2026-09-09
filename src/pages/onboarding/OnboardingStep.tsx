@@ -5,7 +5,7 @@ import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { applicableQuestions, questions, resolveOptions } from "../../lib/onboardingSchema";
+import { applicableQuestions, questions, resolveOptions, resolveText } from "../../lib/onboardingSchema";
 import { Button } from "../../components/ui/Button";
 import { CheckRow } from "../../components/ui/CheckRow";
 
@@ -37,6 +37,12 @@ export function OnboardingStep() {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  // integramente_flujos_interaccion_usuarios.md §3.1/§7.1: antes de crear un
+  // paciente nuevo, avisar si ya existe uno con nombre+edad similares —
+  // nunca fusionar automáticamente, solo dejar la marca para que el equipo
+  // clínico lo revise (ver check_possible_duplicate/posible_duplicado_de).
+  const [duplicateCandidate, setDuplicateCandidate] = useState<{ id: string; nombre: string } | null>(null);
+  const [duplicateResolved, setDuplicateResolved] = useState<"same" | "different" | null>(null);
   const session = useSession();
   const { data: myPatient } = useMyPatient();
   const queryClient = useQueryClient();
@@ -59,6 +65,15 @@ export function OnboardingStep() {
     else setText(typeof answers[question.id] === "string" ? (answers[question.id] as string) : "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepId]);
+
+  // Once the duplicate question is answered (via the confirmation panel
+  // below), automatically resume the submission that paused for it —
+  // goNext reads duplicateResolved via closure, so this needs the value to
+  // already be committed, not the same click handler that set it.
+  useEffect(() => {
+    if (duplicateResolved !== null) goNext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplicateResolved]);
 
   if (!question) return null;
 
@@ -106,7 +121,7 @@ export function OnboardingStep() {
     // Last question of the wizard — this is the first time this account's
     // answers become a real patient. Never fall back to the "Rosa Jiménez"
     // demo default here — an empty name blocks submission instead.
-    const nombre = typeof answers.persona_nombre === "string" ? answers.persona_nombre.trim() : "";
+    const nombre = typeof answers.nombre_participante === "string" ? answers.nombre_participante.trim() : "";
     if (!nombre) {
       setSubmitError(assistedPatientId ? "Falta el nombre — volvé y completalo antes de continuar." : "Falta el nombre de tu familiar — volvé y completalo antes de continuar.");
       return;
@@ -119,7 +134,11 @@ export function OnboardingStep() {
       // Assisted mode: the clinic already created the patient — just save
       // the answers directly (RLS: "onboarding_answers: profesional
       // insert/update", Fase 7). No self_onboard call, no new patient_links.
-      const { error: upsertError } = await supabase.from("onboarding_answers").upsert({ patient_id: assistedPatientId, answers });
+      // schema_version=2 explicit: this row is never touched by
+      // self_onboard/reregister_onboarding, so it must set the new
+      // questionnaire's version itself (Fase 11) or it would default to 1
+      // and read as needing re-registration forever.
+      const { error: upsertError } = await supabase.from("onboarding_answers").upsert({ patient_id: assistedPatientId, answers, schema_version: 2 });
       setSubmitting(false);
       if (upsertError) {
         setSubmitError("No pudimos guardar la encuesta. Probá de nuevo.");
@@ -130,8 +149,31 @@ export function OnboardingStep() {
       return;
     }
 
-    const edad = typeof answers.persona_edad === "string" ? answers.persona_edad.trim() : "";
-    const { error } = await supabase.rpc("self_onboard", { p_nombre: nombre, p_edad: edad || null, p_answers: answers });
+    const edad = typeof answers.edad === "string" ? answers.edad.trim() : "";
+
+    // Only relevant the first time (self_onboard, brand-new patient) — a
+    // re-registration updates an existing record, so there's no
+    // duplication risk to check for.
+    if (!myPatient && duplicateResolved === null) {
+      const { data: dupData } = await supabase.rpc("check_possible_duplicate", { p_nombre: nombre, p_edad: edad || null });
+      if (Array.isArray(dupData) && dupData.length > 0) {
+        setSubmitting(false);
+        setDuplicateCandidate(dupData[0]);
+        return; // pause — the confirmation panel below takes over from here
+      }
+    }
+
+    // Fase 11: myPatient already existing here means this is a forced
+    // re-registration (schema_version < 2), not a first-time signup —
+    // self_onboard would reject it ("Ya tenés un perfil creado").
+    const { error } = myPatient
+      ? await supabase.rpc("reregister_onboarding", { p_nombre: nombre, p_edad: edad || null, p_answers: answers })
+      : await supabase.rpc("self_onboard", {
+          p_nombre: nombre,
+          p_edad: edad || null,
+          p_answers: answers,
+          p_posible_duplicado_de: duplicateResolved === "same" ? duplicateCandidate?.id ?? null : null,
+        });
     setSubmitting(false);
     if (error) {
       setSubmitError("No pudimos guardar tu perfil. Probá de nuevo.");
@@ -139,7 +181,7 @@ export function OnboardingStep() {
     }
     completeOnboarding();
     queryClient.invalidateQueries({ queryKey: ["my-patient", session.session.user.id] });
-    navigate("/app/perfil/invitar");
+    navigate("/app/perfil/final");
   }
   function goBack() {
     if (perfilEditQuestionId) {
@@ -156,17 +198,44 @@ export function OnboardingStep() {
     goTo(applicable[idx - 1]?.id, assistedPatientId ? "/app/profesional/usuarios?tab=pacientes" : "/app/consent");
   }
 
+  if (duplicateCandidate && !duplicateResolved) {
+    return (
+      <div className="im-in max-w-[620px] mx-auto px-5 py-14 pb-20 sm:px-8 text-center">
+        <h1 className="font-serif font-normal text-[26px] sm:text-[32px] leading-[1.2] m-0 mb-4">Un momento</h1>
+        <p className="m-0 mb-8 text-base sm:text-lg leading-relaxed text-tinta-suave">
+          Parece que <strong>{duplicateCandidate.nombre}</strong> ya tiene un registro con nosotros. ¿Puede tratarse de la misma persona?
+        </p>
+        <div className="grid gap-3 max-w-[360px] mx-auto">
+          <Button variant="secondary" onClick={() => setDuplicateResolved("same")} disabled={submitting}>
+            Sí, puede ser la misma persona
+          </Button>
+          <Button variant="ink" onClick={() => setDuplicateResolved("different")} disabled={submitting}>
+            No, es alguien diferente
+          </Button>
+        </div>
+        <p className="m-0 mt-6 text-sm text-tinta-tenue">
+          De cualquier forma vas a poder continuar — si es la misma persona, se lo señalamos al equipo clínico para que lo revise, sin combinar
+          la información automáticamente.
+        </p>
+      </div>
+    );
+  }
+
   const value = answers[question.id];
-  const warningActive =
-    question.warning && typeof value === "string" && question.warning.when(value) ? question.warning : null;
+  const warningTriggered = question.warning
+    ? typeof value === "string"
+      ? question.warning.when(value)
+      : Array.isArray(value) && value.some((v) => question.warning!.when(v))
+    : false;
+  const warningActive = warningTriggered ? question.warning! : null;
 
   const canContinue = question.type === "text" || question.type === "info" || hasAnswer(value);
 
   if (question.type === "info") {
     return (
       <div className="im-in max-w-[620px] mx-auto px-5 py-14 pb-20 sm:px-8 text-center">
-        <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.16] lg:leading-[1.12] m-0 mb-4">{question.title}</h1>
-        <p className="m-0 mb-8 text-base sm:text-lg leading-relaxed text-tinta-suave">{question.body}</p>
+        <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.16] lg:leading-[1.12] m-0 mb-4">{resolveText(question.title, answers)}</h1>
+        <p className="m-0 mb-8 text-base sm:text-lg leading-relaxed text-tinta-suave">{resolveText(question.body, answers)}</p>
         <Button onClick={goNext}>{question.cta}</Button>
       </div>
     );
@@ -205,7 +274,8 @@ export function OnboardingStep() {
         </>
       )}
 
-      <h1 className="font-serif font-normal text-[24px] sm:text-[32px] leading-[1.2] lg:leading-[1.14] m-0 mb-2">{question.title}</h1>
+      <h1 className="font-serif font-normal text-[24px] sm:text-[32px] leading-[1.2] lg:leading-[1.14] m-0 mb-2">{resolveText(question.title, answers)}</h1>
+      {question.subtitle && <p className="m-0 mb-2 text-[16px] leading-relaxed text-tinta-suave">{resolveText(question.subtitle, answers)}</p>}
       {question.example && <p className="m-0 mb-6 text-[15px] text-tinta-tenue">{question.example}</p>}
       {!question.example && <div className="mb-6" />}
 
@@ -233,11 +303,13 @@ export function OnboardingStep() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2">
           {resolveOptions(question, answers).map((opt) => {
             const list = Array.isArray(value) ? value : [];
+            const capReached = !!question.maxSelect && list.filter((v) => !question.exclusive?.includes(v)).length >= question.maxSelect;
             return (
               <CheckRow
                 key={opt.value}
                 checked={list.includes(opt.value)}
-                onToggle={() => toggleMultiAnswer(question.id, opt.value, question.exclusive)}
+                disabled={capReached}
+                onToggle={() => toggleMultiAnswer(question.id, opt.value, question.exclusive, question.maxSelect)}
               >
                 {opt.label}
               </CheckRow>

@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
     if (payload.action === "update_email") return await handleUpdateEmail(admin, payload);
     if (payload.action === "update_role") return await handleUpdateRole(admin, user.id, payload);
     if (payload.action === "delete_user") return await handleDeleteUser(admin, user.id, payload);
+    if (payload.action === "reactivate_user") return await handleReactivateUser(admin, payload);
     if (payload.action === "reject_patient") return await handleRejectPatient(admin, payload);
     if (payload.action === "notify_plan_assigned") return await handleNotifyPlanAssigned(admin, payload);
     return json({ error: "Acción desconocida." }, 400);
@@ -300,13 +301,33 @@ async function handleUpdateRole(admin: ReturnType<typeof createClient>, callerId
   return json({ ok: true });
 }
 
+// Deactivates rather than deletes (integramente_flujos_interaccion_usuarios.md
+// §6: "Desactivación (no eliminación)... para preservar el historial de
+// auditoría intacto") — also sidesteps a real FK issue: mensajes.autor_id
+// and audit_log.autor_id reference profiles(id) with no cascade/set-null,
+// so a hard delete on any account that ever sent a message or generated an
+// audit entry used to fail outright. `ban_duration` blocks new sign-ins at
+// the Auth level; `is_active = false` is what the rest of the app reads.
 async function handleDeleteUser(admin: ReturnType<typeof createClient>, callerId: string, payload: Record<string, unknown>) {
   const userId = String(payload.userId ?? "");
   if (!userId) return json({ error: "Falta el usuario." }, 400);
-  if (userId === callerId) return json({ error: "No podés borrar tu propia cuenta desde acá." }, 400);
+  if (userId === callerId) return json({ error: "No podés desactivar tu propia cuenta desde acá." }, 400);
 
-  const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) return json({ error: error.message }, 400);
+  const { error: banError } = await admin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
+  if (banError) return json({ error: banError.message }, 400);
+  const { error: profileError } = await admin.from("profiles").update({ is_active: false }).eq("id", userId);
+  if (profileError) return json({ error: profileError.message }, 400);
+  return json({ ok: true });
+}
+
+async function handleReactivateUser(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
+  const userId = String(payload.userId ?? "");
+  if (!userId) return json({ error: "Falta el usuario." }, 400);
+
+  const { error: unbanError } = await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
+  if (unbanError) return json({ error: unbanError.message }, 400);
+  const { error: profileError } = await admin.from("profiles").update({ is_active: true }).eq("id", userId);
+  if (profileError) return json({ error: profileError.message }, 400);
   return json({ ok: true });
 }
 

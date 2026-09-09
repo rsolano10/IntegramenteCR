@@ -18,6 +18,7 @@ export interface ManagedAccount {
   invited_at: string | null;
   created_at: string;
   links: AccountLink[];
+  is_active: boolean;
 }
 
 export const roleLabel: Record<AppRole, string> = {

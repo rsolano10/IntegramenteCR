@@ -4,6 +4,7 @@
 
 import { questions, resolveOptions, type Answers } from "./onboardingSchema";
 import { computeProfiles } from "./clinicalEngine";
+import { computeActiveAlerts } from "./alertsEngine";
 import type { PlanDay, PlanTask } from "./mockData";
 
 const DEFAULT_NAME = "Rosa Jiménez";
@@ -11,12 +12,12 @@ const DEFAULT_AGE = "79";
 const DEFAULT_INTERESTS = ["Cocinar", "Música", "Plantas y jardín"];
 
 export function getPatientName(a: Answers): string {
-  const v = a.persona_nombre;
+  const v = a.nombre_participante;
   return typeof v === "string" && v.trim() ? v.trim() : DEFAULT_NAME;
 }
 
 export function getPatientAge(a: Answers): string {
-  const v = a.persona_edad;
+  const v = a.edad;
   return typeof v === "string" && v.trim() ? v.trim() : DEFAULT_AGE;
 }
 
@@ -29,9 +30,9 @@ function labelFor(questionId: string, a: Answers): string | undefined {
 }
 
 export function getInterestLabels(a: Answers): string[] {
-  const raw = a.persona2_actividades;
-  const list = Array.isArray(raw) ? raw : [];
-  const q = questions.find((qq) => qq.id === "persona2_actividades");
+  const raw = a.intereses_actuales;
+  const list = Array.isArray(raw) ? raw.filter((v) => v !== "otra" && v !== "poco_interes" && v !== "no_se") : [];
+  const q = questions.find((qq) => qq.id === "intereses_actuales");
   const opts = q ? resolveOptions(q, a) : [];
   const labels = list.map((v) => opts.find((o) => o.value === v)?.label).filter((x): x is string => !!x);
   return labels.length >= 2 ? labels : DEFAULT_INTERESTS;
@@ -62,18 +63,18 @@ export function computeAdherencia(plan: PlanDay[]): { done: number; total: numbe
 }
 
 const caidasSuffix: Record<string, string> = {
-  ninguna: "sin caídas registradas",
-  una: "una caída registrada",
-  dos_mas: "caídas repetidas registradas",
-  no_seguro: "antecedente de caídas sin confirmar",
+  no: "sin caídas registradas",
+  casi_cae: "casi una caída registrada",
+  una_vez: "una caída registrada",
+  varias_veces: "caídas repetidas registradas",
 };
 
 export function summarizeProfile(a: Answers) {
-  const banarse = labelFor("funcional_banarse", a);
-  const medicamentos = labelFor("funcional_medicamentos", a);
-  const desplazamiento = labelFor("movimiento_desplazamiento", a);
-  const caidas = typeof a.movimiento_caidas === "string" ? caidasSuffix[a.movimiento_caidas] : undefined;
-  const instrucciones = labelFor("memoria_instrucciones", a);
+  const banarse = labelFor("avdb_bano_aseo", a);
+  const medicamentos = labelFor("manejo_medicamentos", a);
+  const desplazamiento = labelFor("movilidad_dentro_casa", a);
+  const caidas = typeof a.caidas_ultimos_6_meses === "string" ? caidasSuffix[a.caidas_ultimos_6_meses] : undefined;
+  const comprension = labelFor("comprension_consignas", a);
 
   return {
     autonomia:
@@ -81,7 +82,7 @@ export function summarizeProfile(a: Answers) {
         ? `Baño: ${banarse ?? "sin registrar"} · Medicamentos: ${(medicamentos ?? "sin registrar").toLowerCase()}`
         : "Perfil funcional pendiente de completar.",
     movilidad: desplazamiento ? `${desplazamiento}${caidas ? ` · ${caidas}` : ""}` : "Perfil de movimiento pendiente de completar.",
-    comprension: instrucciones ? `${instrucciones} a la vez` : "Comprensión pendiente de evaluar.",
+    comprension: comprension ? comprension : "Comprensión pendiente de evaluar.",
     intereses: getInterestLabels(a).join(" · "),
   };
 }
@@ -93,25 +94,28 @@ export interface PlanRestriction {
 
 // Turns the internal severity profiles into the concrete "what changes in
 // the plan" copy the professional sees while editing — the engine's tiers
-// stay internal, but their consequences for planning don't.
+// stay internal, but their consequences for planning don't. The 4 axes
+// (§8/§9/§10) stay independent here too — each contributes its own
+// restriction line, never merged into one combined verdict.
 export function getPlanRestrictions(a: Answers): PlanRestriction[] {
   const profiles = computeProfiles(a);
+  const alertas = computeActiveAlerts(a);
   const items: PlanRestriction[] = [];
 
-  if (profiles.movimiento === "rojo" || a.movimiento_caidas === "dos_mas") {
+  if (profiles.fisico === "rojo" || alertas.some((al) => al.codigo === "alerta_caida")) {
     items.push({ texto: "Sin ejercicios de pie con desplazamiento — antecedente de caídas.", color: "rojo" });
-  } else if (profiles.movimiento === "amarillo") {
+  } else if (profiles.fisico === "amarillo") {
     items.push({ texto: "Actividades de pie solo con apoyo firme cerca.", color: "amarillo" });
   }
 
-  if (a.memoria_instrucciones === "una" || profiles.cognitivo === "rojo") {
+  if (a.comprension_consignas === "otra_guia_completa" || profiles.cognitivo === "rojo") {
     items.push({ texto: "Una sola instrucción a la vez, sin combinarla con otra tarea.", color: "rojo" });
   } else if (profiles.cognitivo === "amarillo") {
     items.push({ texto: "Máximo dos instrucciones seguidas antes de repetir.", color: "amarillo" });
   }
 
-  if (a.nutricion_masticar_tragar === "frecuentemente" || profiles.nutricional === "rojo") {
-    items.push({ texto: "Supervisión estrecha al comer — dificultad para masticar o tragar.", color: "rojo" });
+  if (alertas.some((al) => al.codigo === "alerta_deglucion") || profiles.nutricional === "rojo") {
+    items.push({ texto: "Supervisión estrecha al comer — señales de dificultad para tragar.", color: "rojo" });
   } else if (profiles.nutricional === "amarillo") {
     items.push({ texto: "Priorizar frutas, vegetales y agua sobre ultraprocesados.", color: "amarillo" });
   }

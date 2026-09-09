@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useAppStore } from "../../lib/store";
-import { groupAnswerableByModule, describeAnswer, questions, type Answers } from "../../lib/onboardingSchema";
+import { groupAnswerableByModule, describeAnswer, questions, resolveText, type Answers } from "../../lib/onboardingSchema";
+import { computeActiveAlerts } from "../../lib/alertsEngine";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
 import { PillToggle } from "../ui/PillToggle";
@@ -22,6 +23,15 @@ const tierOverrideOptions: { value: Semaforo | ""; label: string }[] = [
   { value: "amarillo", label: "Amarillo" },
   { value: "rojo", label: "Rojo" },
 ];
+
+// Los 4 semáforos siempre por separado — nunca combinados en uno solo
+// (business/general_rules.md §5/§15.7).
+const ejeKeys = [
+  { key: "cognitivo", label: "Cognitivo" },
+  { key: "fisico", label: "Físico" },
+  { key: "funcional", label: "Funcional" },
+  { key: "nutricional", label: "Nutricional" },
+] as const;
 
 const estadoLabel: Record<string, { text: string; className: string } | null> = {
   realizado: { text: "✓ Realizado", className: "bg-fila-fria text-[#4c7a4c]" },
@@ -54,10 +64,15 @@ export interface PatientRow {
   plan_status: "pendiente" | "asignado";
   onboarding_complete: boolean;
   created_at: string;
-  overall: string | null;
+  cognitivo: string | null;
+  fisico: string | null;
+  funcional: string | null;
+  nutricional: string | null;
   links: PatientLink[];
   needs_review: boolean;
   needs_assignment: boolean;
+  posible_duplicado_de: string | null;
+  posible_duplicado_nombre: string | null;
 }
 
 interface ManagedAccount {
@@ -122,10 +137,10 @@ export function PatientDetailModal({
     enabled: linkPickerOpen,
   });
 
-  // Only fetched while evaluating a pending patient — this is the data the
-  // clinic decides on, per the same render pattern PerfilResumen.tsx already
-  // uses for onboarding_answers, just sourced from a direct fetch instead of
-  // the local demo store.
+  // Fetched for every patient (not only while pending): the "Alertas"
+  // section below (§14) needs to read it regardless of review status —
+  // an alert can surface again after a later re-completion of the
+  // questionnaire (Fase 11), not only during the first review.
   const { data: onboardingAnswers, isLoading: loadingAnswers } = useQuery({
     queryKey: ["onboarding-answers", patient.id],
     queryFn: async () => {
@@ -133,7 +148,6 @@ export function PatientDetailModal({
       if (error) throw error;
       return (data?.answers ?? {}) as Answers;
     },
-    enabled: pending,
   });
 
   // Read-only view of the currently published plan, so the clinic can see
@@ -232,24 +246,36 @@ export function PatientDetailModal({
     queryClient.invalidateQueries({ queryKey: ["pending-threads"] });
   }
 
-  // clinical_profiles.overall stays trigger-only (no update policy exists on
-  // purpose), so the override lives on patients.tier_override instead — read
-  // both here to show the computed value and let the clinic reset to it.
+  // clinical_profiles stays trigger-only (no update policy exists on
+  // purpose), so each axis' override lives on its own patients.tier_override_*
+  // column instead — read both here to show the computed value and let the
+  // clinic reset to it. The 4 axes are read/written independently — never
+  // combined into one value (business/general_rules.md §5/§15.7).
   const { data: tierInfo } = useQuery({
     queryKey: ["tier-info", patient.id],
     queryFn: async () => {
       const [{ data: p, error: pErr }, { data: cp, error: cpErr }] = await Promise.all([
-        supabase.from("patients").select("tier_override").eq("id", patient.id).single(),
-        supabase.from("clinical_profiles").select("overall").eq("patient_id", patient.id).maybeSingle(),
+        supabase
+          .from("patients")
+          .select("tier_override_cognitivo, tier_override_fisico, tier_override_funcional, tier_override_nutricional")
+          .eq("id", patient.id)
+          .single(),
+        supabase.from("clinical_profiles").select("cognitivo, fisico, funcional, nutricional").eq("patient_id", patient.id).maybeSingle(),
       ]);
       if (pErr) throw pErr;
       if (cpErr) throw cpErr;
-      return { override: (p?.tier_override ?? null) as Semaforo | null, auto: (cp?.overall ?? null) as Semaforo | null };
+      const pRow = (p ?? {}) as Record<string, unknown>;
+      const cpRow = (cp ?? {}) as Record<string, unknown>;
+      return ejeKeys.map((eje) => ({
+        eje,
+        override: (pRow[`tier_override_${eje.key}`] ?? null) as Semaforo | null,
+        auto: (cpRow[eje.key] ?? null) as Semaforo | null,
+      }));
     },
   });
 
-  async function setTierOverride(v: Semaforo | "") {
-    const { error } = await supabase.from("patients").update({ tier_override: v || null }).eq("id", patient.id);
+  async function setTierOverride(axisKey: (typeof ejeKeys)[number]["key"], v: Semaforo | "") {
+    const { error } = await supabase.from("patients").update({ [`tier_override_${axisKey}`]: v || null }).eq("id", patient.id);
     if (error) {
       onChanged(error.message, true);
       return;
@@ -300,6 +326,16 @@ export function PatientDetailModal({
   return (
     <>
     <Modal onClose={onClose}>
+      {patient.posible_duplicado_de && (
+        <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl p-4 mb-5">
+          <p className="m-0 text-[14px] font-bold text-riesgo-texto">Posible duplicado</p>
+          <p className="m-0 mt-1 text-[13.5px] leading-relaxed text-riesgo-texto">
+            La familia indicó que esta persona podría ser la misma que <strong>{patient.posible_duplicado_nombre ?? "otro registro"}</strong>, ya
+            vinculado con otra familia. El sistema no combinó la información automáticamente — revisá ambos registros manualmente antes de
+            decidir.
+          </p>
+        </div>
+      )}
       <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">{patient.nombre}</h2>
       <p className="m-0 mb-5 text-sm text-tinta-tenue">Datos básicos y cuentas vinculadas.</p>
 
@@ -340,18 +376,25 @@ export function PatientDetailModal({
             <p className="m-0 text-[14px] text-tinta-tenue">{pending ? "Pendiente de evaluación" : "Asignado"}</p>
           </div>
           <div>
-            <p className="m-0 mb-2 text-[15px] font-semibold text-[#3b4c51]">Categoría</p>
-            {tierInfo?.auto && (
-              <p className="m-0 mb-2 text-[13px] text-tinta-tenue">
-                Calculada automáticamente: <SemaforoChip sem={tierInfo.auto} variant="bare" />
-              </p>
-            )}
-            <PillToggle value={tierInfo?.override ?? ""} onChange={setTierOverride} options={tierOverrideOptions} />
-            {tierInfo?.override && (
-              <p className={`m-0 mt-2 text-[13px] leading-relaxed ${semaforoData[tierInfo.override].ink}`}>
-                Se está mostrando <strong>{semaforoData[tierInfo.override].short}</strong> en vez del cálculo automático.
-              </p>
-            )}
+            <p className="m-0 mb-3 text-[15px] font-semibold text-[#3b4c51]">Categoría — 4 ejes independientes</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(tierInfo ?? ejeKeys.map((eje) => ({ eje, override: null, auto: null }))).map(({ eje, override, auto }) => (
+                <div key={eje.key} className="bg-campo border border-[#efeada] rounded-xl p-3.5">
+                  <p className="m-0 mb-1.5 text-[13px] font-bold text-tinta">{eje.label}</p>
+                  {auto && (
+                    <p className="m-0 mb-1.5 text-[12.5px] text-tinta-tenue">
+                      Automático: <SemaforoChip sem={auto} variant="bare" />
+                    </p>
+                  )}
+                  <PillToggle value={override ?? ""} onChange={(v) => setTierOverride(eje.key, v)} options={tierOverrideOptions} />
+                  {override && (
+                    <p className={`m-0 mt-1.5 text-[12.5px] leading-relaxed ${semaforoData[override].ink}`}>
+                      Mostrando <strong>{semaforoData[override].short}</strong> en vez del cálculo automático.
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
         {localError && <p className="m-0 text-[14px] text-alerta-texto">{localError}</p>}
@@ -359,6 +402,10 @@ export function PatientDetailModal({
           {saving ? "Guardando…" : "Guardar cambios"}
         </Button>
       </div>
+
+      {!loadingAnswers && onboardingAnswers && (
+        <AlertasSection answers={onboardingAnswers} />
+      )}
 
       {pending && (
         <div className="pt-5 border-t border-[#efeada] mb-6">
@@ -373,7 +420,7 @@ export function PatientDetailModal({
                   <div className="grid gap-1.5">
                     {g.questions.map((q) => (
                       <div key={q.id} className="grid grid-cols-[1.2fr_1fr] gap-3 text-[13px]">
-                        <span className="text-tinta-tenue">{q.title}</span>
+                        <span className="text-tinta-tenue">{resolveText(q.title, onboardingAnswers ?? {})}</span>
                         <span className="text-tinta font-medium">{describeAnswer(q, onboardingAnswers ?? {})}</span>
                       </div>
                     ))}
@@ -570,6 +617,32 @@ export function PatientDetailModal({
       />
     )}
     </>
+  );
+}
+
+// §14 — capa de consolidación: lista cada alerta activa con su origen y sus
+// acciones. Independiente de los 4 semáforos (nunca los modifica), y nunca
+// bloquea el flujo del paciente — solo informa a la clínica.
+function AlertasSection({ answers }: { answers: Answers }) {
+  const activas = computeActiveAlerts(answers);
+  if (activas.length === 0) return null;
+  return (
+    <div className="pt-5 border-t border-[#efeada] mb-6">
+      <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Alertas activas ({activas.length})</p>
+      <div className="grid gap-2.5">
+        {activas.map((alerta) => (
+          <div key={alerta.codigo} className="rounded-xl border-[1.5px] border-riesgo-borde bg-riesgo p-3.5">
+            <p className="m-0 mb-1 text-[14px] font-bold text-riesgo-texto">{alerta.etiqueta}</p>
+            <p className="m-0 mb-1.5 text-[12px] text-riesgo-texto/70">Origen: {alerta.origenPantalla}</p>
+            <ul className="m-0 pl-4 text-[13px] text-riesgo-texto leading-relaxed">
+              {alerta.acciones.map((accion) => (
+                <li key={accion}>{accion}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

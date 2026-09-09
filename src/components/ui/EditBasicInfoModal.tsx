@@ -12,7 +12,7 @@ const modalidadOptions: { value: Modalidad; label: string }[] = [
   { value: "clinico", label: "Clínico" },
 ];
 
-const interestsQuestion = questions.find((q) => q.id === "persona2_actividades")!;
+const interestsQuestion = questions.find((q) => q.id === "intereses_actuales")!;
 
 export function EditBasicInfoModal({ onClose }: { onClose: () => void }) {
   const onboarding2 = useAppStore((s) => s.onboarding2);
@@ -22,10 +22,10 @@ export function EditBasicInfoModal({ onClose }: { onClose: () => void }) {
   const [nombre, setNombre] = useState(getPatientName(onboarding2));
   const [edad, setEdad] = useState(getPatientAge(onboarding2));
   const [modalidadValue, setModalidadValue] = useState<Modalidad>(modalidad);
-  const rawInterests = Array.isArray(onboarding2.persona2_actividades) ? onboarding2.persona2_actividades : [];
-  const [intereses, setIntereses] = useState<string[]>(rawInterests);
+  const rawInterests = Array.isArray(onboarding2.intereses_actuales) ? onboarding2.intereses_actuales : [];
+  const [intereses, setIntereses] = useState<string[]>(rawInterests.filter((v) => v !== "otra" && v !== "poco_interes" && v !== "no_se"));
 
-  const interestOpts = resolveOptions(interestsQuestion, onboarding2).filter((o) => o.value !== "otro");
+  const interestOpts = resolveOptions(interestsQuestion, onboarding2).filter((o) => !["otra", "poco_interes", "no_se"].includes(o.value));
 
   function toggleInterest(v: string) {
     setIntereses((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));

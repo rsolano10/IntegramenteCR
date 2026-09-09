@@ -316,7 +316,8 @@ export function AssignPlanModal({
         <div className="grid grid-cols-2 gap-3">
           <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
             Hora (opcional)
-            <input type="text" value={hora} onChange={(e) => setHora(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+            <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+            <span className="text-[11.5px] font-normal text-tinta-tenue">Se usa también para la notificación en el calendario de la familia.</span>
           </label>
           <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
             Duración (opcional)

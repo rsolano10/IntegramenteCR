@@ -5,6 +5,7 @@ import { FamiliarShell } from "./components/layout/FamiliarShell";
 import { ParticipantShell } from "./components/layout/ParticipantShell";
 import { ProfesionalShell } from "./components/layout/ProfesionalShell";
 import { useSession, roleHome } from "./lib/useSession";
+import { supabase } from "./lib/supabase";
 import { useMyPatient } from "./lib/useMyPatient";
 import { useAppStore } from "./lib/store";
 
@@ -20,6 +21,7 @@ import { CambiarPassword } from "./pages/CambiarPassword";
 import { Consent } from "./pages/Consent";
 import { OnboardingStep } from "./pages/onboarding/OnboardingStep";
 import { PerfilResumen } from "./pages/onboarding/PerfilResumen";
+import { ResumenFinal } from "./pages/onboarding/ResumenFinal";
 import { InvitarContraparte } from "./pages/onboarding/InvitarContraparte";
 
 import { Hoy } from "./pages/familiar/Hoy";
@@ -64,6 +66,19 @@ import { Vacio } from "./pages/estados/Vacio";
 // local flag persisted across every account sharing a browser, which is
 // exactly how a brand new signup ended up seeing the demo account's name
 // and patient. A real per-account DB row can't leak that way.
+function DesactivadaGate() {
+  useEffect(() => {
+    supabase.auth.signOut();
+  }, []);
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center px-5 text-center">
+      <p className="max-w-sm text-[16px] leading-relaxed text-tinta-suave">
+        Esta cuenta fue desactivada. Si creés que es un error, contactá a tu clínica.
+      </p>
+    </div>
+  );
+}
+
 function RouteGuard({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const session = useSession();
@@ -83,6 +98,15 @@ function RouteGuard({ children }: { children: ReactNode }) {
     return pathname === "/app/login" ? <>{children}</> : <Navigate to="/app/login" replace />;
   }
   const { role } = session.profile;
+
+  // A deactivated account (integramente_flujos_interaccion_usuarios.md §6
+  // punto 6) can still be carrying a still-valid JWT — the Auth-level ban
+  // only blocks the NEXT sign-in, it doesn't revoke an already-issued
+  // token. Signing out here closes that gap immediately instead of waiting
+  // for the token to expire on its own.
+  if (!session.profile.is_active) {
+    return <DesactivadaGate />;
+  }
 
   // Accounts created with the generic starter password (alta asistida)
   // can't reach anything else until they set a real one.
@@ -105,20 +129,33 @@ function RouteGuard({ children }: { children: ReactNode }) {
     return <div className="min-h-[40vh]" />;
   }
 
+  // Fase 11: un paciente ya evaluado con el cuestionario viejo
+  // (schema_version < 2) debe volver a completarlo por completo antes de
+  // seguir usando la app — decisión ya tomada con el usuario (re-registro
+  // forzado, sin migración best-effort). Salta directo al cuestionario, sin
+  // pasar de nuevo por /app/consent (el consentimiento ya se dio la
+  // primera vez).
+  const needsReregistration = (role === "familiar" || role === "paciente") && myPatient?.needsReregistration === true;
+
   if (pathname === "/app/login") {
     const home =
       (role === "familiar" || role === "paciente") && !myPatient
         ? "/app/consent"
-        : role === "paciente" && myPatient?.vista_completa
-          ? "/app/hoy"
-          : roleHome(role);
+        : needsReregistration
+          ? "/app/perfil/bienvenida"
+          : role === "paciente" && myPatient?.vista_completa
+            ? "/app/hoy"
+            : roleHome(role);
     return <Navigate to={home} replace />;
   }
   const onOnboardingPath = pathname === "/app/consent" || pathname.startsWith("/app/perfil");
   if ((role === "familiar" || role === "paciente") && !myPatient && !onOnboardingPath) {
     return <Navigate to="/app/consent" replace />;
   }
-  if ((role === "familiar" || role === "paciente") && myPatient && pathname === "/app/consent") {
+  if (needsReregistration && !pathname.startsWith("/app/perfil")) {
+    return <Navigate to="/app/perfil/bienvenida" replace />;
+  }
+  if ((role === "familiar" || role === "paciente") && myPatient && !needsReregistration && pathname === "/app/consent") {
     return <Navigate to={roleHome(role)} replace />;
   }
   // A patient with no familiar can be granted the same full access a
@@ -147,6 +184,7 @@ function AppLayout() {
         <Route path="cambiar-password" element={<CambiarPassword />} />
         <Route path="consent" element={<Consent />} />
         <Route path="perfil/resumen" element={<PerfilResumen />} />
+        <Route path="perfil/final" element={<ResumenFinal />} />
         <Route path="perfil/invitar" element={<InvitarContraparte />} />
         <Route path="perfil/:step" element={<OnboardingStep />} />
 

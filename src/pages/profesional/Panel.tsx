@@ -73,14 +73,21 @@ export function Panel() {
   const esperandoRevision = useMemo(() => (patients ?? []).filter((p) => p.needs_review), [patients]);
   const esperandoAsignacion = useMemo(() => (patients ?? []).filter((p) => p.needs_assignment), [patients]);
 
-  const distribucion = useMemo(() => {
-    const counts: Record<"verde" | "amarillo" | "rojo" | "sinEvaluar", number> = { verde: 0, amarillo: 0, rojo: 0, sinEvaluar: 0 };
-    for (const p of patients ?? []) {
-      if (p.overall === "verde" || p.overall === "amarillo" || p.overall === "rojo") counts[p.overall]++;
-      else counts.sinEvaluar++;
-    }
-    return counts;
+  // 4 semáforos siempre independientes — nunca combinados en un solo valor
+  // (business/general_rules.md §5/§15.7), incluida esta vista de resumen.
+  const distribucionPorEje = useMemo(() => {
+    const ejes = ["cognitivo", "fisico", "funcional", "nutricional"] as const;
+    return ejes.map((eje) => {
+      const counts: Record<"verde" | "amarillo" | "rojo" | "sinEvaluar", number> = { verde: 0, amarillo: 0, rojo: 0, sinEvaluar: 0 };
+      for (const p of patients ?? []) {
+        const v = p[eje];
+        if (v === "verde" || v === "amarillo" || v === "rojo") counts[v]++;
+        else counts.sinEvaluar++;
+      }
+      return { eje, counts };
+    });
   }, [patients]);
+  const ejeLabel: Record<string, string> = { cognitivo: "Cognitivo", fisico: "Físico", funcional: "Funcional", nutricional: "Nutricional" };
 
   function handleChanged(message: string, isError?: boolean) {
     setStatusMsg({ text: message, error: isError });
@@ -269,18 +276,19 @@ export function Panel() {
           </div>
 
           <div className="bg-white px-5 py-5 sm:px-8 sm:py-6">
-            <p className="m-0 mb-2.5 text-sm sm:text-[15px] text-tinta-tenue">distribución por semáforo</p>
-            <div className="flex flex-wrap gap-2">
-              {(["verde", "amarillo", "rojo"] as Semaforo[]).map((sem) => (
-                <span key={sem} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-bold ${semaforoData[sem].bg} ${semaforoData[sem].ink}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${semaforoData[sem].dot}`} />
-                  {distribucion[sem]}
-                </span>
+            <p className="m-0 mb-2.5 text-sm sm:text-[15px] text-tinta-tenue">distribución — 4 ejes independientes</p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+              {distribucionPorEje.map(({ eje, counts }) => (
+                <div key={eje} className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-tinta-tenue w-[52px] shrink-0">{ejeLabel[eje]}</span>
+                  {(["verde", "amarillo", "rojo"] as Semaforo[]).map((sem) => (
+                    <span key={sem} className="inline-flex items-center gap-1 text-[11.5px] font-bold text-tinta">
+                      <span className={`w-1.5 h-1.5 rounded-full ${semaforoData[sem].dot}`} />
+                      {counts[sem]}
+                    </span>
+                  ))}
+                </div>
               ))}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-bold bg-campo text-tinta-tenue">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#d8d2ba]" />
-                {distribucion.sinEvaluar} sin evaluar
-              </span>
             </div>
           </div>
 

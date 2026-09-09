@@ -5,12 +5,16 @@ export function DeleteConfirmModal({
   title,
   message,
   warningNote,
+  confirmLabel = "Sí, eliminar",
+  confirmLoadingLabel = "Eliminando…",
   onConfirm,
   onCancel,
 }: {
   title: string;
   message: string;
   warningNote?: string;
+  confirmLabel?: string;
+  confirmLoadingLabel?: string;
   onConfirm: () => Promise<void>;
   onCancel: () => void;
 }) {
@@ -35,7 +39,7 @@ export function DeleteConfirmModal({
         {warningNote && <p className="m-0 mb-5 text-[14px] leading-relaxed text-aviso-texto bg-aviso rounded-xl px-4 py-3">{warningNote}</p>}
         <div className="flex gap-3 flex-wrap">
           <Button variant="urgency" onClick={confirm} disabled={loading}>
-            {loading ? "Eliminando…" : "Sí, eliminar"}
+            {loading ? confirmLoadingLabel : confirmLabel}
           </Button>
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
             Cancelar

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
-import { describeAnswer, groupAnswerableByModule } from "../../lib/onboardingSchema";
+import { describeAnswer, groupAnswerableByModule, resolveText } from "../../lib/onboardingSchema";
 import { getPatientName } from "../../lib/patient";
 import { Button } from "../../components/ui/Button";
 
@@ -50,7 +50,7 @@ export function PerfilResumen() {
                   key={q.id}
                   className="grid sm:grid-cols-[1.1fr_1fr_auto] gap-1 sm:gap-4 items-start py-2.5 border-t border-[#efeada] first:border-t-0 first:pt-0"
                 >
-                  <span className="text-[14.5px] text-tinta-tenue leading-snug">{q.title}</span>
+                  <span className="text-[14.5px] text-tinta-tenue leading-snug">{resolveText(q.title, answers)}</span>
                   <span className="text-[15px] text-tinta font-medium leading-snug">{describeAnswer(q, answers)}</span>
                   <button
                     type="button"

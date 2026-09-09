@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
@@ -8,6 +8,8 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import type { Answers } from "../../lib/onboardingSchema";
 import { FamiliarNav } from "./FamiliarNav";
 import { WelcomeMessageModal } from "../ui/WelcomeMessageModal";
+import { ProductTour } from "../ui/ProductTour";
+import { familiarTourSteps } from "../../lib/tourSteps";
 
 function PendienteRevision({ nombre }: { nombre: string }) {
   return (
@@ -31,6 +33,14 @@ export function FamiliarShell() {
   const session = useSession();
   const { data: myPatient, isLoading } = useMyPatient();
   const hydrateOnboarding = useAppStore((s) => s.hydrateOnboarding);
+  const [tourSeen, setTourSeen] = useState(false);
+
+  function dismissTour() {
+    setTourSeen(true);
+    if (session.status === "authed") {
+      supabase.from("profiles").update({ onboarding_tour_seen: true }).eq("id", session.session.user.id);
+    }
+  }
 
   // PerfilResumen / "editar módulo" still only read/write the local
   // onboarding2 copy — this is what makes them show the account's real
@@ -74,7 +84,15 @@ export function FamiliarShell() {
         {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} /> : <Outlet />}
       </div>
 
-      {!pendiente && myPatient?.welcome_message_pending && <WelcomeMessageModal patientId={myPatient.id} />}
+      {(() => {
+        const tourPending = session.status === "authed" && !session.profile.onboarding_tour_seen && !tourSeen;
+        // Tour first, welcome-message second — never stack two full-screen
+        // modals when a brand-new account's plan gets assigned before their
+        // very first dashboard visit.
+        if (tourPending) return <ProductTour steps={familiarTourSteps} onFinish={dismissTour} />;
+        if (!pendiente && myPatient?.welcome_message_pending) return <WelcomeMessageModal patientId={myPatient.id} />;
+        return null;
+      })()}
     </div>
   );
 }

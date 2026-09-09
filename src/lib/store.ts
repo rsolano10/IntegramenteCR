@@ -48,52 +48,94 @@ export type PlanStatus = "pendiente" | "asignado";
 // by default. Running onboarding as familiar simply overwrites these, and
 // that override is what then propagates to every other view.
 const defaultOnboarding: Answers = {
-  persona_nombre: "Rosa Jiménez",
-  persona_edad: "79",
-  persona_escolaridad: "primaria",
-  persona_convivencia: "familiares",
-  persona_tiempo_con: "hijo",
-  diagnostico_tiene: "si",
-  diagnostico_tipo: "alzheimer",
-  diagnostico_tiempo: "mas_2a",
-  diagnostico_etapa: "leve",
-  condiciones: ["hipertension"],
-  medicamentos_toma: "si",
-  medicamentos_administra: "familiar_prepara",
-  memoria_repite: "algunas",
-  memoria_olvida: "algunas",
-  memoria_aprender: "algunas",
-  memoria_desorientacion: "nunca",
-  memoria_lenguaje: "nunca",
-  memoria_instrucciones: "dos",
-  funcional_medicamentos: "con_ayuda",
-  funcional_desayuno: "si",
-  funcional_ropa: "si",
-  funcional_banarse: "con_ayuda",
-  funcional_compra: "no_puede",
-  funcional_telefono: "si",
-  movimiento_desplazamiento: "baston",
-  movimiento_seguridad: "a_veces_inseguro",
-  movimiento_caidas: "una",
-  movimiento_salir: "acompanado",
-  movimiento_levantarse: "con_impulso",
-  movimiento_depie: "poco_tiempo",
-  movimiento_sigue_indicaciones: "sin_dificultad",
-  movimiento_limitacion_medica: "no",
-  movimiento_mejorar: "equilibrio",
-  nutricion_perdida_peso: "no",
-  nutricion_come_menos: "no",
-  nutricion_masticar_tragar: "no",
-  nutricion_ultraprocesados: "1_2_semana",
-  nutricion_frutas_veg: "3_mas_semana",
-  nutricion_agua: "3_5",
-  nutricion_quien_prepara: "familiar",
-  nutricion_meta: "cerebro",
-  persona2_actividades: ["cocinar", "musica", "jardineria", "fotos"],
-  persona2_fortalezas: ["conversar", "cocinar"],
-  persona2_incomoda: ["ruido"],
-  persona2_momento_dia: "manana",
+  rol_respondente: "familiar",
+  nombre_participante: "Rosa Jiménez",
+  tratamiento_preferido: "nombre_simple",
+  edad: "79",
+  escolaridad: "primaria_completa",
+  situacion_ocupacional_actual: "pensionado",
+  ocupacion_principal: "ama de casa",
+  convivencia_actual: ["familiares"],
+  mejor_momento_dia: "manana",
+
+  // Bloque 1 — Salud general y diagnóstico (§7).
+  salud_general_percibida: "buena",
+  antecedentes_medicos: ["presion_alta"],
+  eventos_salud_ultimo_anio: ["ninguna"],
+  manejo_medicamentos: "recordatorios",
+  errores_medicacion: "una_vez",
+  cambio_agudo_reportado: "no",
+  estado_diagnostico_cognitivo: "si",
+  diagnostico_cognitivo_informado: "demencia",
+  etapa_demencia_informada: "leve",
+  tiempo_desde_diagnostico: "2a_5a",
+  conciencia_diagnostico: "conoce_habla",
+  areas_apoyo_demencia: ["recordar_reciente"],
+  tiempo_evolucion_cognitiva: "2a_5a",
+  patron_evolucion_cognitiva: "avance_lento",
   preocupacion_principal: "memoria",
+
+  // Bloque 2 — Cognición, emocional/conductual, AVDI (§8).
+  memoria_reciente_funcional: "olvidos_con_recordatorios",
+  repeticion_perdida_hilo: "algunas_veces",
+  atencion_funcional: "distrae_continua",
+  comprension_consignas: "uno_dos_pasos",
+  organizacion_decisiones: "con_tiempo_lista",
+  comunicacion_expresiva: "tarda_palabras",
+  respuesta_demanda_cognitiva: "cansa_despues",
+  estado_emocional_actual: ["tranquilo"],
+  interes_iniciativa: "participa_si_invitan",
+  patron_sueno: ["duerme_bien"],
+  avdi_finanzas: "recordatorios_supervision",
+  avdi_compras_organizacion: "recordatorios_supervision",
+  avdi_preparacion_alimentos: "recordatorios_supervision",
+  avdi_telefono: "independiente",
+  avdi_agenda_responsabilidades: "recordatorios_supervision",
+  origen_cambio_funcional: "antes_mas_independiente",
+
+  // Bloque 3 — Movimiento y seguridad física (§9).
+  movilidad_dentro_casa: "baston",
+  movilidad_fuera_casa: "sale_baston_andadera",
+  levantarse_silla: "apoyandose",
+  equilibrio_de_pie: "estable_apoyo_cerca",
+  caidas_ultimos_6_meses: "una_vez",
+  consecuencias_caida: ["dolor_moretones_mejoraron"],
+  sintomas_durante_movimiento: ["ninguna"],
+  restriccion_profesional_ejercicio: "no",
+  frecuencia_actividad_fisica: "tres_cuatro",
+  duracion_actividad_fisica: "10_20",
+  preferencias_actividad_fisica: ["caminar", "jardineria"],
+  disposicion_movimiento: "le_gusta_participa",
+
+  // Bloque 4 — Alimentación, hidratación y nutrición (§10).
+  regularidad_alimentacion: "regular_horarios",
+  cambio_apetito: "como_costumbre",
+  patron_hidratacion: "si_le_ofrecen",
+  indicaciones_alimentarias: ["baja_sal"],
+  dificultades_alimentacion: ["sin_dificultades"],
+  apoyo_durante_alimentacion: "otra_prepara",
+  responsable_preparacion_alimentos: "otro_familiar",
+  variedad_alimentaria: "variedad_limitada",
+  preferencias_alimentarias: ["frutas", "sopas", "cafe_bebidas"],
+
+  // Bloque 5 — Vida social, estimulación y rutina (§11).
+  frecuencia_contacto_social: "varias_semana",
+  percepcion_compania: "satisfecho",
+  frecuencia_estimulacion_cognitiva: "varias_semana",
+  forma_participacion_cognitiva: "si_se_propone",
+  estructura_rutina_diaria: "estable",
+  actividades_predominantes: ["tareas_hogar", "television", "conversando"],
+  participacion_actividades_cotidianas: "si_se_propone",
+  frecuencia_salidas: "varias_semana",
+  cambio_nivel_participacion: "disminuido_poco",
+  motivos_disminucion_participacion: ["cambios_memoria"],
+
+  // Bloque final — Intereses e historia significativa (§12).
+  intereses_actuales: ["musica", "jardineria", "conversar"],
+  existen_intereses_previos: "si",
+  intereses_previos_texto: "Coser y cocinar para la familia",
+  temas_historia_significativa: ["familia", "cocina", "religion_espiritualidad"],
+  disponibilidad_acompanante: "varias_semana",
 };
 
 function clonePlan(plan: PlanDay[]): PlanDay[] {
@@ -175,7 +217,7 @@ interface AppState {
   setNotify: (v: "si" | "no") => void;
 
   answerQuestion: (id: string, value: string) => void;
-  toggleMultiAnswer: (id: string, value: string, exclusive?: string[]) => void;
+  toggleMultiAnswer: (id: string, value: string, exclusive?: string[], maxSelect?: number) => void;
   setAnswerList: (id: string, list: string[]) => void;
   setModalidad: (v: Modalidad) => void;
   updateBasicInfo: (patch: { nombre: string; edad: string; modalidad: Modalidad; intereses: string[] }) => void;
@@ -296,7 +338,7 @@ export const useAppStore = create<AppState>()(
     set((s) => ({ onboarding2: { ...s.onboarding2, [id]: value } }));
     get().pushAudit("Perfil funcional", `responde "${id}"`, "Marcela");
   },
-  toggleMultiAnswer: (id, value, exclusive) =>
+  toggleMultiAnswer: (id, value, exclusive, maxSelect) =>
     set((s) => {
       const current = s.onboarding2[id];
       const list = Array.isArray(current) ? current.slice() : [];
@@ -307,7 +349,13 @@ export const useAppStore = create<AppState>()(
       } else if (exclusive?.includes(value)) {
         next = [value];
       } else {
-        next = [...list.filter((v) => !exclusive?.includes(v)), value];
+        const rest = list.filter((v) => !exclusive?.includes(v));
+        // Selection caps (EMO-01 "máx. 2", RUT-06/INT-03 "hasta 3", etc.) —
+        // once at the limit, picking a new (non-exclusive) option is a
+        // no-op instead of bumping the oldest choice out; the person has to
+        // deselect one first, which matches how the UI disables the rest.
+        if (maxSelect && rest.length >= maxSelect) return {};
+        next = [...rest, value];
       }
       return { onboarding2: { ...s.onboarding2, [id]: next } };
     }),
@@ -315,7 +363,7 @@ export const useAppStore = create<AppState>()(
   setModalidad: (v) => set({ modalidad: v }),
   updateBasicInfo: (patch) => {
     set((s) => ({
-      onboarding2: { ...s.onboarding2, persona_nombre: patch.nombre, persona_edad: patch.edad, persona2_actividades: patch.intereses },
+      onboarding2: { ...s.onboarding2, nombre_participante: patch.nombre, edad: patch.edad, persona2_actividades: patch.intereses },
       modalidad: patch.modalidad,
     }));
     get().pushAudit("Perfil", "actualiza datos básicos del perfil", "Marcela");

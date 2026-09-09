@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { semaforoData } from "../../lib/rules";
-import { computeProfiles, overallTier } from "../../lib/clinicalEngine";
+import { computeProfiles } from "../../lib/clinicalEngine";
 import { getPatientName, getPatientAge, summarizeProfile } from "../../lib/patient";
-import { planTiers } from "../../lib/mockData";
+import { planTiers, type Semaforo } from "../../lib/mockData";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { EditBasicInfoModal } from "../../components/ui/EditBasicInfoModal";
@@ -12,8 +12,15 @@ import { EditBasicInfoModal } from "../../components/ui/EditBasicInfoModal";
 export function Ficha() {
   const onboarding2 = useAppStore((s) => s.onboarding2);
   const modalidad = useAppStore((s) => s.modalidad);
-  const sem = overallTier(computeProfiles(onboarding2));
-  const d = semaforoData[sem];
+  // 4 semáforos siempre independientes — nunca combinados en uno solo
+  // (business/general_rules.md §5/§15.7).
+  const profiles = computeProfiles(onboarding2);
+  const ejes: { label: string; sem: Semaforo }[] = [
+    { label: "Cognitivo", sem: profiles.cognitivo },
+    { label: "Físico", sem: profiles.fisico },
+    { label: "Funcional", sem: profiles.funcional },
+    { label: "Nutricional", sem: profiles.nutricional },
+  ];
   const notaInterna = useAppStore((s) => s.notaInterna);
   const setNotaInterna = useAppStore((s) => s.setNotaInterna);
   const mensajeBorrador = useAppStore((s) => s.mensajeBorrador);
@@ -52,10 +59,16 @@ export function Ficha() {
                   Pendiente de revisión
                 </span>
               )}
-              <span className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full text-[15px] font-bold ${d.bg} ${d.ink}`}>
-                <span className={`w-2.5 h-2.5 rounded-full ${d.dot}`} />
-                {d.short}
-              </span>
+              {ejes.map((eje) => (
+                <span
+                  key={eje.label}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] font-bold ${semaforoData[eje.sem].bg} ${semaforoData[eje.sem].ink}`}
+                  title={eje.label}
+                >
+                  <span className={`w-2 h-2 rounded-full ${semaforoData[eje.sem].dot}`} />
+                  {eje.label}
+                </span>
+              ))}
             </div>
           </div>
           {planStatus === "pendiente" && (

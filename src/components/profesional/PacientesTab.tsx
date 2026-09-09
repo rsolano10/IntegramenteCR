@@ -17,6 +17,13 @@ type SortKey = "nombre" | "creado";
 
 const modalidadLabel = Object.fromEntries(planTiers.map((t) => [t.id, t.nombre]));
 
+const ejes: { key: "cognitivo" | "fisico" | "funcional" | "nutricional"; label: string }[] = [
+  { key: "cognitivo", label: "Cog" },
+  { key: "fisico", label: "Fís" },
+  { key: "funcional", label: "Func" },
+  { key: "nutricional", label: "Nutr" },
+];
+
 // Every visible column, flattened to searchable text — typing "orientado"
 // or "asignado" matches the same words the table already shows, instead of
 // needing a separate filter control for each column.
@@ -25,7 +32,7 @@ function patientHaystack(p: PatientRow): string {
     p.nombre,
     p.edad ?? "",
     modalidadLabel[p.modalidad] ?? p.modalidad,
-    p.overall ? semaforoData[p.overall as Semaforo].short : "Sin evaluar",
+    ...ejes.map((e) => (p[e.key] ? semaforoData[p[e.key] as Semaforo].short : "Sin evaluar")),
     p.plan_status === "asignado" ? "Asignado" : "Pendiente",
     ...p.links.map((l) => l.nombre),
   ]
@@ -128,7 +135,7 @@ export function PacientesTab({
                     Nombre{sortIndicator("nombre")}
                   </th>
                   <th className="py-2.5 pr-3 font-semibold">Modalidad</th>
-                  <th className="py-2.5 pr-3 font-semibold">Estado</th>
+                  <th className="py-2.5 pr-3 font-semibold">Estado (4 ejes)</th>
                   <th className="py-2.5 pr-3 font-semibold">Plan</th>
                   <th className="py-2.5 pr-3 font-semibold">Cuentas</th>
                   <th className="py-2.5" />
@@ -140,10 +147,28 @@ export function PacientesTab({
                     <td className="py-3 pr-3">
                       <p className="m-0 font-bold text-tinta">{p.nombre}</p>
                       <p className="m-0 text-[13px] text-tinta-tenue">{p.edad ? `${p.edad} años` : "—"}</p>
+                      {p.posible_duplicado_de && (
+                        <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-riesgo text-riesgo-texto">
+                          Posible duplicado
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 pr-3 text-tinta-suave">{modalidadLabel[p.modalidad] ?? p.modalidad}</td>
                     <td className="py-3 pr-3">
-                      {p.overall ? <SemaforoChip sem={p.overall as Semaforo} variant="bare" /> : <span className="text-tinta-tenue">Sin evaluar</span>}
+                      {p.cognitivo || p.fisico || p.funcional || p.nutricional ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {ejes.map((e) =>
+                            p[e.key] ? (
+                              <span key={e.key} className="inline-flex items-center gap-1 text-[11px] font-bold text-tinta-tenue" title={e.label}>
+                                <SemaforoChip sem={p[e.key] as Semaforo} variant="bare" />
+                                <span>{e.label}</span>
+                              </span>
+                            ) : null,
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-tinta-tenue">Sin evaluar</span>
+                      )}
                     </td>
                     <td className="py-3 pr-3">
                       <span

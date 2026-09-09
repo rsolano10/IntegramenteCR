@@ -19,8 +19,8 @@ export function Actividades() {
   // profile instead of a hardcoded flag — a concrete example of content
   // actually respecting what onboarding recorded, not just displaying it.
   const items = useMemo(() => {
-    const { movimiento } = computeProfiles(onboarding2);
-    const blocked = movimiento === "rojo" || onboarding2.movimiento_caidas === "dos_mas";
+    const { fisico } = computeProfiles(onboarding2);
+    const blocked = fisico === "rojo" || onboarding2.caidas_ultimos_6_meses === "varias_veces";
     return libraryItems.map((item) =>
       item.titulo === "Ejercicio de pie con desplazamiento"
         ? blocked

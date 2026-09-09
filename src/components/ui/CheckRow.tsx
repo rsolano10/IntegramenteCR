@@ -2,14 +2,20 @@ interface Props {
   checked: boolean;
   onToggle: () => void;
   children: React.ReactNode;
+  // Selection-cap reached (EMO-01/RUT-06/INT-03 style "hasta N") — unchecked
+  // rows go inert instead of silently no-op'ing on click, so it's clear why
+  // nothing happens; an already-checked row stays toggleable so it can be
+  // deselected to free up a slot.
+  disabled?: boolean;
 }
 
-export function CheckRow({ checked, onToggle, children }: Props) {
+export function CheckRow({ checked, onToggle, children, disabled }: Props) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      className={`grid grid-cols-[28px_1fr] gap-3.5 items-start text-left p-3.5 rounded-2xl border-[1.5px] font-sans text-tinta cursor-pointer ${
+      disabled={disabled && !checked}
+      className={`grid grid-cols-[28px_1fr] gap-3.5 items-start text-left p-3.5 rounded-2xl border-[1.5px] font-sans text-tinta cursor-pointer disabled:cursor-not-allowed disabled:opacity-45 ${
         checked ? "border-verde-serenidad bg-[#f5f9f9]" : "border-borde bg-white"
       }`}
     >

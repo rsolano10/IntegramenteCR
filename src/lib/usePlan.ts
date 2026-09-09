@@ -30,10 +30,26 @@ interface PlanTaskRow {
   nota_clinica: string | null;
 }
 
+// AssignPlanModal now writes hora as a real "HH:MM" (24h) value via
+// <input type="time"> — needed so the calendar-sync feature (see
+// supabase/functions/calendar-feed) has a reliable time to schedule a
+// notification for, not just a display string. Older plans (assigned
+// before this change) still have free-text values like "9:00 a.m." —
+// those are left exactly as they were typed, since they were never
+// meant to be machine-readable and don't need to become one.
+function formatHora(hora: string): string {
+  const match = /^(\d{2}):(\d{2})$/.exec(hora);
+  if (!match) return hora;
+  const h = parseInt(match[1], 10);
+  const suffix = h < 12 ? "a.m." : "p.m.";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${match[2]} ${suffix}`;
+}
+
 function toPlanTask(row: PlanTaskRow): PlanTask {
   return {
     id: row.id,
-    hora: row.hora ?? "",
+    hora: row.hora ? formatHora(row.hora) : "",
     titulo: row.titulo,
     tipo: row.tipo,
     estado: row.estado,

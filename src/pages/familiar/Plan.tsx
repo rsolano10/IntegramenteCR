@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
+import { CalendarSyncCard } from "../../components/ui/CalendarSyncCard";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan } from "../../lib/usePlan";
 import type { PlanDayStatus, PlanTask } from "../../lib/mockData";
@@ -79,6 +80,12 @@ export function Plan() {
       <div className="mb-4.5">
         <p className="m-0 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Tu plan de la semana</p>
       </div>
+
+      {myPatient?.id && (
+        <div className="mb-5">
+          <CalendarSyncCard patientId={myPatient.id} />
+        </div>
+      )}
 
       {!plan || plan.length === 0 ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Todavía no hay un plan asignado.</p>

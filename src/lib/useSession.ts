@@ -10,6 +10,8 @@ export interface SessionProfile {
   especialidad: string | null;
   foto_url: string | null;
   must_change_password: boolean;
+  onboarding_tour_seen: boolean;
+  is_active: boolean;
 }
 
 export type SessionState =
@@ -37,7 +39,7 @@ export function useSession(): SessionState {
       }
       const { data, error } = await supabase
         .from("profiles")
-        .select("role, nombre, especialidad, foto_url, must_change_password")
+        .select("role, nombre, especialidad, foto_url, must_change_password, onboarding_tour_seen, is_active")
         .eq("id", session.user.id)
         .single();
       if (cancelled) return;
