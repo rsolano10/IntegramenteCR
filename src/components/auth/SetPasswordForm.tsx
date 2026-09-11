@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { roleHome } from "../../lib/useSession";
 import { Button } from "../ui/Button";
 import { PasswordInput } from "../ui/PasswordInput";
 
@@ -40,13 +39,12 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
     // (invite-link/recovery-link flows) — only the alta asistida path (a
     // generic starter password) actually needs it cleared.
     await supabase.from("profiles").update({ must_change_password: false }).eq("id", user?.id ?? "");
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user?.id ?? "").single();
     setLoading(false);
-    if (!profile) {
-      navigate("/app/login");
-      return;
-    }
-    navigate(roleHome(profile.role));
+    // RouteGuard (src/App.tsx) is the one place that knows whether this
+    // account still needs onboarding/re-registration before it can go to
+    // its normal role home — routing straight there via roleHome() here
+    // used to skip that check entirely (see Login.tsx for the same fix).
+    navigate("/app/login");
   }
 
   return (

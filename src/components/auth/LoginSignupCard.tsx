@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
-import { roleHome } from "../../lib/useSession";
 import { isUnconfirmedEmailError } from "../../lib/authErrors";
 import { PasswordInput } from "../ui/PasswordInput";
 
@@ -89,7 +88,10 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
       setAuthError("No pudimos cargar tu cuenta. Intentá de nuevo.");
       return;
     }
-    navigate(roleHome(profile.role));
+    // RouteGuard (src/App.tsx) is the one place that knows whether this
+    // account still needs onboarding/re-registration before going to its
+    // normal role home — see Login.tsx for the same fix and why.
+    navigate("/app/login");
   }
 
   async function resendSignup() {

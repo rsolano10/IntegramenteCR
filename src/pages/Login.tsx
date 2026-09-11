@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAppStore } from "../lib/store";
 import { supabase } from "../lib/supabase";
-import { roleHome } from "../lib/useSession";
 import { isUnconfirmedEmailError } from "../lib/authErrors";
 import { Button } from "../components/ui/Button";
 import { PasswordInput } from "../components/ui/PasswordInput";
 
 export function Login() {
-  const navigate = useNavigate();
   const email = useAppStore((s) => s.email);
   const authError = useAppStore((s) => s.authError);
   const setEmail = useAppStore((s) => s.setEmail);
@@ -45,7 +43,14 @@ export function Login() {
       setAuthError("No pudimos cargar tu cuenta. Intentá de nuevo.");
       return;
     }
-    navigate(roleHome(profile.role));
+    // Deliberately no navigate() here: RouteGuard (src/App.tsx) already
+    // redirects away from /app/login the moment useSession()/useMyPatient()
+    // resolve for an authed user, and it's the one place that correctly
+    // knows whether this account still needs onboarding, re-registration,
+    // etc. Navigating straight to roleHome(role) here used to skip all of
+    // that — sending a not-yet-onboarded account straight to its normal
+    // home before bouncing back to /app/consent, a wasted round trip that
+    // briefly flashed the wrong screen.
   }
 
   async function resendConfirmation() {

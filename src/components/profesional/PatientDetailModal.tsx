@@ -275,7 +275,12 @@ export function PatientDetailModal({
   });
 
   async function setTierOverride(axisKey: (typeof ejeKeys)[number]["key"], v: Semaforo | "") {
-    const { error } = await supabase.from("patients").update({ [`tier_override_${axisKey}`]: v || null }).eq("id", patient.id);
+    // A clinical override — routed through a profesional-only RPC (not a
+    // direct .update()) since patients.UPDATE grants can't distinguish "a
+    // familiar editing their own basic info" from "a profesional setting a
+    // severity override" when both read from the same shared `authenticated`
+    // Postgres role. See 20260910010000_fix_patients_self_update.sql.
+    const { error } = await supabase.rpc("set_patient_tier_override", { p_patient_id: patient.id, p_axis: axisKey, p_value: v || null });
     if (error) {
       onChanged(error.message, true);
       return;
@@ -291,17 +296,25 @@ export function PatientDetailModal({
       return;
     }
     setSaving(true);
-    // Modalidad only changes here once the patient is accepted — while
-    // pending, it's decided together with the plan via "Aceptar", not
-    // edited loose.
-    const update: Record<string, unknown> = { nombre: nombre.trim(), edad: edad.trim() || null };
-    if (!pending) update.modalidad = modalidad;
-    const { error } = await supabase.from("patients").update(update).eq("id", patient.id);
-    setSaving(false);
+    const { error } = await supabase.from("patients").update({ nombre: nombre.trim(), edad: edad.trim() || null }).eq("id", patient.id);
     if (error) {
+      setSaving(false);
       setLocalError(error.message);
       return;
     }
+    // Modalidad only changes here once the patient is accepted — while
+    // pending, it's decided together with the plan via "Aceptar", not
+    // edited loose. Routed through a profesional-only RPC, same reason as
+    // setTierOverride above.
+    if (!pending) {
+      const { error: modalidadError } = await supabase.rpc("set_patient_modalidad", { p_patient_id: patient.id, p_modalidad: modalidad });
+      if (modalidadError) {
+        setSaving(false);
+        setLocalError(modalidadError.message);
+        return;
+      }
+    }
+    setSaving(false);
     onChanged("Datos del paciente actualizados.");
   }
 

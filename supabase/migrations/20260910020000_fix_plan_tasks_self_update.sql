@@ -1,0 +1,22 @@
+-- SECURITY FIX (same class as the two migrations before this one):
+-- "plan_tasks: familiar/participante mark registro on published pl" lets a
+-- family/participant account UPDATE any plan_tasks row on their own
+-- published plan, gated by row only (no with_check, no column
+-- restriction) — combined with Supabase's default blanket column grant,
+-- this let them rewrite ANY field on their own activities via a raw API
+-- call: `titulo`, `detalle`, `precaucion` (safety warnings), `nota_clinica`
+-- (meant to be profesional-authored), `hora`, `dia`, `tipo`, `duracion`,
+-- even `sort_order`/`plan_id`. The only legitimate use (confirmed: the
+-- single `.from("plan_tasks").update(...)` call site in the whole
+-- frontend, src/lib/usePlan.ts's useMarkRegistro) ever touches `estado`
+-- and `comentario`.
+--
+-- No profesional code path directly UPDATEs an existing plan_tasks row
+-- either (new activities are INSERTed via assign_initial_plan) — the
+-- "plan_tasks: profesional update" RLS policy exists but is currently
+-- unexercised, so nothing legitimate is lost by not granting it any wider
+-- column access here either; a real per-task-edit feature for the clinic
+-- should get its own SECURITY DEFINER RPC when it's actually built, same
+-- pattern as set_patient_tier_override/set_patient_modalidad.
+revoke update on public.plan_tasks from authenticated;
+grant update (estado, comentario) on public.plan_tasks to authenticated;
