@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { applicableQuestions, questions, resolveOptions, resolveText } from "../../lib/onboardingSchema";
+import { normalizeCrPhone } from "../../lib/phone";
 import { Button } from "../../components/ui/Button";
 import { CheckRow } from "../../components/ui/CheckRow";
 
@@ -145,11 +146,13 @@ export function OnboardingStep() {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["onboarding-answers", assistedPatientId] });
-      navigate(`/app/profesional/usuarios?tab=pacientes&encuestaGuardada=${assistedPatientId}`);
+      navigate(`/app/profesional/usuarios?encuestaGuardada=${assistedPatientId}`);
       return;
     }
 
     const edad = typeof answers.edad === "string" ? answers.edad.trim() : "";
+    const whatsappPhone =
+      typeof answers.whatsapp_telefono === "string" ? normalizeCrPhone(answers.whatsapp_telefono) : null;
 
     // Only relevant the first time (self_onboard, brand-new patient) — a
     // re-registration updates an existing record, so there's no
@@ -167,12 +170,18 @@ export function OnboardingStep() {
     // re-registration (schema_version < 2), not a first-time signup —
     // self_onboard would reject it ("Ya tenés un perfil creado").
     const { error } = myPatient
-      ? await supabase.rpc("reregister_onboarding", { p_nombre: nombre, p_edad: edad || null, p_answers: answers })
+      ? await supabase.rpc("reregister_onboarding", {
+          p_nombre: nombre,
+          p_edad: edad || null,
+          p_answers: answers,
+          p_whatsapp_phone: whatsappPhone,
+        })
       : await supabase.rpc("self_onboard", {
           p_nombre: nombre,
           p_edad: edad || null,
           p_answers: answers,
           p_posible_duplicado_de: duplicateResolved === "same" ? duplicateCandidate?.id ?? null : null,
+          p_whatsapp_phone: whatsappPhone,
         });
     setSubmitting(false);
     if (error) {
@@ -195,7 +204,7 @@ export function OnboardingStep() {
       else navigate("/app/perfil/resumen");
       return;
     }
-    goTo(applicable[idx - 1]?.id, assistedPatientId ? "/app/profesional/usuarios?tab=pacientes" : "/app/consent");
+    goTo(applicable[idx - 1]?.id, assistedPatientId ? "/app/profesional/usuarios" : "/app/consent");
   }
 
   if (duplicateCandidate && !duplicateResolved) {
@@ -260,7 +269,7 @@ export function OnboardingStep() {
               {question.module ? `${question.module} · ` : ""}
               {questionIdx + 1} de {questionSteps.length}
             </span>
-            <span className="text-xs sm:text-sm text-[#4c7a4c] inline-flex items-center gap-2">
+            <span className="text-xs sm:text-sm text-semaforo-verde-texto inline-flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
               Guardado automáticamente
             </span>
@@ -289,7 +298,7 @@ export function OnboardingStep() {
                 type="button"
                 onClick={() => answerQuestion(question.id, opt.value)}
                 className={`text-left min-h-14 px-5 py-3.5 rounded-2xl border-[1.5px] font-sans text-[16px] cursor-pointer ${
-                  active ? "border-verde-serenidad bg-[#f5f9f9] font-semibold" : "border-borde bg-white hover:border-verde-serenidad"
+                  active ? "border-verde-serenidad bg-verde-tenue font-semibold" : "border-borde bg-white hover:border-verde-serenidad"
                 }`}
               >
                 {opt.label}
@@ -321,12 +330,13 @@ export function OnboardingStep() {
       {question.type === "text" && (
         <input
           type="text"
+          inputMode={question.inputMode ?? "text"}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
             answerQuestion(question.id, e.target.value);
           }}
-          className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta mb-2"
+          className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta mb-2"
         />
       )}
 

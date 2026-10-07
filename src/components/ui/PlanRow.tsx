@@ -4,12 +4,12 @@ const statusBg: Record<PlanDayStatus, string> = {
   realizado: "bg-fila-fria",
   parcial: "bg-fila-calida",
   no: "bg-campo",
-  pendiente: "bg-[#edf4f4] border-[1.5px] border-verde-serenidad",
+  pendiente: "bg-verde-tenue border-[1.5px] border-verde-serenidad",
   futuro: "bg-fondo-papel",
 };
 
 const statusLabel: Record<PlanDayStatus, { text: string; className: string } | null> = {
-  realizado: { text: "✓ Realizado", className: "text-[#4c7a4c]" },
+  realizado: { text: "✓ Realizado", className: "text-semaforo-verde-texto" },
   parcial: { text: "En parte", className: "text-semaforo-amarillo-texto" },
   no: { text: "No se realizó", className: "text-tinta-tenue" },
   pendiente: { text: "Pendiente", className: "text-verde-profundo" },

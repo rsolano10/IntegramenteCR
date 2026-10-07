@@ -24,13 +24,13 @@ export function Maltrato() {
           </div>
           <div className="bg-alerta rounded-2xl p-5.5">
             <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">{conapam.label}</p>
-            <p className="m-0 text-[17px] leading-relaxed text-[#6e4436]">{conapam.value} — {conapam.note}</p>
+            <p className="m-0 text-[17px] leading-relaxed text-alerta-texto-suave">{conapam.value} — {conapam.note}</p>
           </div>
-          <div className="bg-campo border border-[#efeada] rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
+          <div className="bg-campo border border-borde-suave rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
             Guardá lo que observaste con fechas. No confrontes a solas a la persona que te preocupa.
           </div>
         </div>
-        <div className="border-t border-[#efeada] pt-5.5 grid gap-3.5">
+        <div className="border-t border-borde-suave pt-5.5 grid gap-3.5">
           <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">Podés hablarlo con la Dra. Solano de forma reservada.</p>
           <NotifyBar />
           <Link to="/app/hoy" className="justify-self-start border-none bg-transparent font-sans text-[15px] text-verde-profundo">

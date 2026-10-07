@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PlanRow } from "../components/ui/PlanRow";
 import { Reveal } from "../components/ui/Reveal";
+import { Button } from "../components/ui/Button";
 import { LoginSignupCard } from "../components/auth/LoginSignupCard";
 import { clamp, easeOut, useScrolled, useScrollProgress, useTypewriterLoop } from "../lib/useScrollFx";
 
@@ -81,7 +82,7 @@ function PhoneWeekPreview() {
                 })}
               </div>
               <div className="mt-2.5 p-3 rounded-xl bg-mostaza-vital" style={{ opacity: easeOut(clamp((progress - 0.85) / 0.15)) }}>
-                <p className="m-0 text-[11px] leading-relaxed text-[#4a3a1b]">
+                <p className="m-0 text-[11px] leading-relaxed text-semaforo-amarillo-texto">
                   <strong>Estrategia:</strong> una instrucción por vez.
                 </p>
               </div>
@@ -136,7 +137,7 @@ function SeguridadRows() {
           <div
             key={s.t}
             style={{ opacity: t, transform: `translateY(${(1 - t) * 26}px)` }}
-            className="grid grid-cols-[14px_1fr] gap-4 lg:gap-5 items-start bg-white border border-[#e9e4ce] rounded-2xl px-5 py-5 lg:px-7 lg:py-6.5"
+            className="grid grid-cols-[14px_1fr] gap-4 lg:gap-5 items-start bg-white border border-borde rounded-2xl px-5 py-5 lg:px-7 lg:py-6.5"
           >
             <span className={`w-3.5 h-3.5 rounded-full mt-2 im-pulse ${s.color}`} />
             <div>
@@ -202,7 +203,7 @@ export function Landing() {
             <br />
             <em className="italic text-verde-profundo">sin improvisar.</em>
           </h1>
-          <p className="text-base sm:text-lg lg:text-[21px] leading-relaxed text-[#3b4c51] max-w-[30em] m-0 mb-6 lg:mb-9" style={{ textWrap: "pretty" }}>
+          <p className="text-base sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[30em] m-0 mb-6 lg:mb-9" style={{ textWrap: "pretty" }}>
             Un plan semanal breve y adaptado para acompañar en casa a una persona con cambios cognitivos: qué actividad hacer, cómo
             hacerla y cuándo pedir ayuda profesional.
           </p>
@@ -210,33 +211,16 @@ export function Landing() {
               card exists (hidden further down), so these go to a dedicated
               full-page screen instead — see Ingresar.tsx. */}
           <div className="hidden lg:flex flex-wrap gap-3 lg:gap-3.5 mb-6 lg:mb-10">
-            <button
-              type="button"
-              onClick={goToRegister}
-              className="inline-flex items-center min-h-12 lg:min-h-14 px-6 lg:px-8 rounded-full bg-verde-serenidad text-white font-semibold text-[15px] lg:text-[17px] hover:bg-verde-profundo transition-colors cursor-pointer"
-            >
-              Crear mi perfil gratuito
-            </button>
-            <a
-              href="#como-funciona"
-              className="inline-flex items-center min-h-12 lg:min-h-14 px-6 lg:px-7 rounded-full border-[1.5px] border-borde text-tinta font-semibold text-[15px] lg:text-[17px] hover:border-verde-serenidad transition-colors"
-            >
+            <Button onClick={goToRegister}>Crear mi perfil gratuito</Button>
+            <Button variant="secondary" to="#como-funciona">
               Ver cómo funciona
-            </a>
+            </Button>
           </div>
           <div className="flex lg:hidden flex-wrap gap-3 mb-6">
-            <Link
-              to="/ingresar?mode=register"
-              className="inline-flex items-center min-h-12 px-6 rounded-full bg-verde-serenidad text-white font-semibold text-[15px] hover:bg-verde-profundo transition-colors"
-            >
-              Crear mi perfil gratuito
-            </Link>
-            <Link
-              to="/ingresar?mode=login"
-              className="inline-flex items-center min-h-12 px-6 rounded-full border-[1.5px] border-borde text-tinta font-semibold text-[15px] hover:border-verde-serenidad transition-colors"
-            >
+            <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
+            <Button variant="secondary" to="/ingresar?mode=login">
               Iniciar sesión
-            </Link>
+            </Button>
           </div>
         </Reveal>
 
@@ -280,7 +264,7 @@ export function Landing() {
               d: "Entre tres y cinco acciones repartidas por día, con video, instrucciones y un registro que toma segundos.",
             },
           ].map((c, i) => (
-            <Reveal key={c.n} delay={i * 110} className="bg-white border border-[#e9e4ce] rounded-[20px] p-6 lg:p-8">
+            <Reveal key={c.n} delay={i * 110} className="bg-white border border-borde rounded-3xl p-6 lg:p-8">
               <div className="font-serif text-2xl lg:text-[30px] text-verde-serenidad mb-3 lg:mb-4.5">{c.n}</div>
               <h3 className="text-lg lg:text-xl m-0 mb-2 lg:mb-3 font-bold">{c.t}</h3>
               <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">{c.d}</p>
@@ -306,7 +290,7 @@ export function Landing() {
         <PhoneWeekPreview />
       </section>
 
-      <section id="planes" className="bg-white border-y border-[#efeada]">
+      <section id="planes" className="bg-white border-y border-borde-suave">
         <div className="max-w-[1280px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-24">
           <Reveal>
             <p className="m-0 mb-2.5 lg:mb-3.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">Tres formas de acompañarte</p>
@@ -315,23 +299,20 @@ export function Landing() {
             </h2>
           </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
-            <Reveal className="border border-borde rounded-[20px] p-6 lg:p-8.5 flex flex-col gap-4">
+            <Reveal className="border border-borde rounded-3xl p-6 lg:p-8.5 flex flex-col gap-4">
               <h3 className="font-serif font-normal text-2xl lg:text-[28px] m-0">Autoguiado</h3>
               <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">
                 Perfil funcional, plan semanal, biblioteca de videos y asistente guiado para las dudas más frecuentes.
               </p>
               <p className="m-0 text-sm lg:text-[15px] text-tinta-tenue">Para familias que empiezan hoy.</p>
-              <Link
-                to="/planes/autoguiado"
-                className="mt-auto self-start inline-flex items-center min-h-12.5 px-6 rounded-full border-[1.5px] border-verde-serenidad text-tinta font-semibold hover:bg-verde-serenidad hover:text-white transition-colors"
-              >
+              <Button variant="secondary" to="/planes/autoguiado" className="mt-auto self-start">
                 Empezar
-              </Link>
+              </Button>
             </Reveal>
-            <Reveal delay={110} className="border-[1.5px] border-verde-serenidad rounded-[20px] p-6 lg:p-8.5 flex flex-col gap-4 bg-[#f5f9f9]">
+            <Reveal delay={110} className="border-[1.5px] border-verde-serenidad rounded-3xl p-6 lg:p-8.5 flex flex-col gap-4 bg-verde-tenue">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="font-serif font-normal text-2xl lg:text-[28px] m-0">Orientado</h3>
-                <span className="text-xs tracking-[0.12em] uppercase bg-mostaza-vital text-[#4a3a1b] px-3 py-1.5 rounded-full font-bold">
+                <span className="text-xs tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">
                   Recomendado
                 </span>
               </div>
@@ -339,25 +320,19 @@ export function Landing() {
                 Todo lo anterior más una consulta inicial y ajustes periódicos hechos por el equipo clínico.
               </p>
               <p className="m-0 text-sm lg:text-[15px] text-tinta-tenue">Para quienes necesitan mayor personalización.</p>
-              <Link
-                to="/planes/orientado"
-                className="mt-auto self-start inline-flex items-center min-h-12.5 px-6 rounded-full bg-verde-serenidad text-white font-semibold hover:bg-verde-profundo transition-colors"
-              >
+              <Button to="/planes/orientado" className="mt-auto self-start">
                 Solicitar
-              </Link>
+              </Button>
             </Reveal>
-            <Reveal delay={220} className="border border-borde rounded-[20px] p-6 lg:p-8.5 flex flex-col gap-4">
+            <Reveal delay={220} className="border border-borde rounded-3xl p-6 lg:p-8.5 flex flex-col gap-4">
               <h3 className="font-serif font-normal text-2xl lg:text-[28px] m-0">Clínico</h3>
               <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">
                 Continuidad entre sesiones para pacientes del programa: el plan lo define el equipo tratante.
               </p>
               <p className="m-0 text-sm lg:text-[15px] text-tinta-tenue">Para pacientes actuales de IntegraMente.</p>
-              <Link
-                to="/planes/clinico"
-                className="mt-auto self-start inline-flex items-center min-h-12.5 px-6 rounded-full border-[1.5px] border-borde text-tinta font-semibold hover:border-verde-serenidad transition-colors"
-              >
+              <Button variant="secondary" to="/planes/clinico" className="mt-auto self-start">
                 Ingresar
-              </Link>
+              </Button>
             </Reveal>
           </div>
         </div>
@@ -393,7 +368,7 @@ export function Landing() {
           <button
             type="button"
             onClick={goToRegister}
-            className="inline-flex items-center justify-center min-h-13 lg:min-h-[58px] px-7 lg:px-8.5 rounded-full bg-mostaza-vital text-[#40320f] font-bold text-base lg:text-lg whitespace-nowrap hover:bg-white hover:text-tinta transition-colors w-full sm:w-auto mx-auto lg:mx-0 cursor-pointer"
+            className="inline-flex items-center justify-center min-h-13 lg:min-h-[58px] px-7 lg:px-8.5 rounded-full bg-mostaza-vital text-semaforo-amarillo-texto font-bold text-base lg:text-lg whitespace-nowrap hover:bg-white hover:text-tinta transition-colors w-full sm:w-auto mx-auto lg:mx-0 cursor-pointer"
           >
             Crear mi perfil gratuito
           </button>
@@ -403,8 +378,11 @@ export function Landing() {
       <footer className="bg-tinta text-[#c6d2d3]">
         <div className="max-w-[1280px] mx-auto px-5 py-10 sm:px-8 lg:px-12 lg:py-14 grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div>
-            <div className="font-serif text-xl lg:text-2xl text-white mb-3">
-              Integra<em className="italic text-mostaza-vital">Mente</em>
+            <div className="font-serif text-xl lg:text-2xl text-white mb-3 flex items-baseline gap-2">
+              <span>
+                Integra<em className="italic text-verde-profundo">Mente</em>
+              </span>
+              <span className="text-[11px] tracking-[0.16em] uppercase text-[#7e9294]">en Casa</span>
             </div>
             <p className="m-0 text-sm lg:text-[15px] leading-relaxed max-w-[26em]">
               Programa integral de estimulación cognitiva y acompañamiento emocional. Dra. Guiselle Solano · Neuropsicología.

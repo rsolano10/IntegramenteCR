@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
+import { BigActionButton } from "../../components/ui/BigActionButton";
 
 export function Ayuda() {
   const navigate = useNavigate();
@@ -56,20 +57,12 @@ export function Ayuda() {
         </p>
         <p className="m-0 text-[20px] leading-relaxed text-tinta-suave">¿Querés continuar?</p>
         <div className="grid gap-3">
-          <button
-            type="button"
-            onClick={() => setConfirmed(true)}
-            className="min-h-17 border-none rounded-2xl bg-verde-serenidad text-white font-sans text-[22px] font-bold cursor-pointer hover:bg-verde-profundo"
-          >
+          <BigActionButton variant="primary" size="md" onClick={() => setConfirmed(true)}>
             Sí, continuar
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/app/participante/hoy")}
-            className="min-h-17 border-2 border-borde rounded-2xl bg-white text-tinta font-sans text-[20px] font-bold cursor-pointer"
-          >
+          </BigActionButton>
+          <BigActionButton variant="secondary" size="md" onClick={() => navigate("/app/participante/hoy")}>
             Cancelar
-          </button>
+          </BigActionButton>
         </div>
       </div>
     );
@@ -82,13 +75,9 @@ export function Ayuda() {
           {sent ? "Ya le avisamos a tu equipo clínico" : "Ya le avisamos a tu familiar"}
         </p>
         <p className="m-0 text-[22px] leading-relaxed text-tinta-suave">Esperá tranquilo. No hace falta hacer nada más.</p>
-        <button
-          type="button"
-          onClick={() => navigate("/app/participante/hoy")}
-          className="min-h-17 border-none rounded-2xl bg-verde-serenidad text-white font-sans text-[22px] font-bold cursor-pointer hover:bg-verde-profundo"
-        >
+        <BigActionButton variant="primary" size="md" onClick={() => navigate("/app/participante/hoy")}>
           Volver
-        </button>
+        </BigActionButton>
       </div>
     );
   }
@@ -101,17 +90,12 @@ export function Ayuda() {
         onChange={(e) => setTexto(e.target.value)}
         rows={5}
         placeholder="Contanos qué pasa…"
-        className="w-full rounded-2xl border-[1.5px] border-[#ddd7be] bg-campo px-5 py-4 font-sans text-[20px] leading-relaxed text-tinta resize-y"
+        className="w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] leading-relaxed text-tinta resize-y"
       />
       {error && <p className="m-0 text-[16px] text-alerta-texto text-center">{error}</p>}
-      <button
-        type="button"
-        onClick={enviar}
-        disabled={sending || !texto.trim()}
-        className="min-h-17 border-none rounded-2xl bg-verde-serenidad text-white font-sans text-[22px] font-bold cursor-pointer hover:bg-verde-profundo disabled:opacity-50"
-      >
+      <BigActionButton variant="primary" size="md" disabled={sending || !texto.trim()} onClick={enviar}>
         {sending ? "Enviando…" : "Enviar a mi equipo clínico"}
-      </button>
+      </BigActionButton>
     </div>
   );
 }

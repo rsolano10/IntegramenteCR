@@ -94,7 +94,7 @@ export function Revision() {
             value={favorita}
             onChange={(e) => setFavorita(e.target.value)}
             placeholder="Opcional"
-            className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px]"
+            className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px]"
           />
         </div>
         <div>
@@ -104,7 +104,7 @@ export function Revision() {
             value={preocupacion}
             onChange={(e) => setPreocupacion(e.target.value)}
             placeholder="Opcional"
-            className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px]"
+            className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px]"
           />
         </div>
       </div>

@@ -44,9 +44,10 @@ export function Ficha() {
         ‹ Volver al panel
       </Link>
       <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6 items-start">
-        <div className="bg-white border border-borde rounded-3xl p-5 sm:p-8">
-          <div className="flex flex-wrap items-baseline justify-between gap-4 mb-5.5">
+        <div className="bg-white border border-borde rounded-3xl shadow-elevada overflow-hidden">
+          <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-borde-suave flex flex-wrap items-baseline justify-between gap-4">
             <div>
+              <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Ficha clínica</p>
               <h1 className="font-serif font-normal text-[28px] sm:text-[34px] m-0 mb-1">{getPatientName(onboarding2)}</h1>
               <p className="m-0 text-[16px] text-tinta-tenue">
                 {getPatientAge(onboarding2)} años · {rosaModalidad} · familiar administradora: Marcela
@@ -71,9 +72,10 @@ export function Ficha() {
               ))}
             </div>
           </div>
+          <div className="p-5 sm:p-8">
           {planStatus === "pendiente" && (
             <div className="border-[1.5px] border-mostaza-vital bg-aviso rounded-2xl p-4.5 mb-5.5 flex items-center justify-between gap-3 flex-wrap">
-              <p className="m-0 text-[15px] leading-relaxed text-[#4a3a1b]">
+              <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto">
                 {nombrePaciente} y su familia todavía no ven ningún programa — están viendo la pantalla de "en revisión".
               </p>
               <Button dense onClick={() => setAssignOpen(true)}>
@@ -83,19 +85,19 @@ export function Ficha() {
           )}
           <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Perfil funcional declarado por la familia</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6.5">
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
+            <div className="bg-campo border border-borde-suave rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Autonomía</strong>
               {perfil.autonomia}
             </div>
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
+            <div className="bg-campo border border-borde-suave rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Movilidad</strong>
               {perfil.movilidad}
             </div>
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
+            <div className="bg-campo border border-borde-suave rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Comprensión</strong>
               {perfil.comprension}
             </div>
-            <div className="bg-campo border border-[#efeada] rounded-2xl p-4">
+            <div className="bg-campo border border-borde-suave rounded-2xl p-4">
               <strong className="block text-sm text-tinta-tenue mb-1">Intereses</strong>
               {perfil.intereses}
             </div>
@@ -111,15 +113,16 @@ export function Ficha() {
               Editar datos básicos
             </Button>
           </div>
+          </div>
         </div>
 
-        <div className="grid gap-4">
-          <div className="bg-[#f4f2e7] border-[1.5px] border-dashed border-[#c7be9a] rounded-2xl p-6">
-            <p className="m-0 mb-2 text-[13px] tracking-[0.14em] uppercase text-[#7a5c1c]">Nota interna · no visible para la familia</p>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-aviso border-[1.5px] border-dashed border-mostaza-vital rounded-2xl p-6">
+            <p className="m-0 mb-2 text-[13px] tracking-[0.14em] uppercase text-semaforo-amarillo-texto">Nota interna · no visible para la familia</p>
             <textarea
               value={notaInterna}
               onChange={(e) => setNotaInterna(e.target.value)}
-              className="w-full min-h-[120px] rounded-xl border-[1.5px] border-[#d8d2b8] bg-white p-3.5 font-sans text-[16px] leading-relaxed text-tinta resize-y"
+              className="w-full min-h-[120px] rounded-xl border-[1.5px] border-mostaza-vital bg-white p-3.5 font-sans text-[16px] leading-relaxed text-tinta resize-y"
             />
           </div>
           <div className="bg-white border border-borde rounded-2xl p-6">
@@ -134,7 +137,7 @@ export function Ficha() {
               Enviar a la familia
             </Button>
             {mensajes.length > 0 && (
-              <div className="mt-5 pt-4 border-t border-[#efeada] grid gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+              <div className="mt-5 pt-4 border-t border-borde-suave grid gap-2.5 max-h-[220px] overflow-y-auto pr-1">
                 <p className="m-0 text-[12px] tracking-[0.1em] uppercase text-tinta-tenue">Historial enviado</p>
                 {mensajes.map((m) => (
                   <div key={m.id} className="bg-campo rounded-xl px-3.5 py-3">
@@ -183,7 +186,7 @@ function AsignarProgramaModal({
         {nombrePaciente} y su familia van a poder ver la app en cuanto confirmes. Este mensaje les aparece como bienvenida la primera
         vez que entren.
       </p>
-      <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+      <label className="grid grid-cols-1 gap-2 text-[15px] font-semibold text-tinta-suave">
         Mensaje de bienvenida para la familia
         <textarea
           value={mensaje}

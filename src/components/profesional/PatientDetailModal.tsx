@@ -8,6 +8,7 @@ import { groupAnswerableByModule, describeAnswer, questions, resolveText, type A
 import { computeActiveAlerts } from "../../lib/alertsEngine";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
+import { FormField } from "../ui/FormField";
 import { PillToggle } from "../ui/PillToggle";
 import { SemaforoChip } from "../ui/SemaforoChip";
 import { planTiers, type Semaforo } from "../../lib/mockData";
@@ -34,10 +35,10 @@ const ejeKeys = [
 ] as const;
 
 const estadoLabel: Record<string, { text: string; className: string } | null> = {
-  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-[#4c7a4c]" },
+  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-semaforo-verde-texto" },
   parcial: { text: "En parte", className: "bg-fila-calida text-semaforo-amarillo-texto" },
   no: { text: "No se realizó", className: "bg-campo text-tinta-tenue" },
-  pendiente: { text: "Pendiente", className: "bg-[#edf4f4] text-verde-profundo" },
+  pendiente: { text: "Pendiente", className: "bg-verde-tenue text-verde-profundo" },
   futuro: null,
 };
 
@@ -338,7 +339,7 @@ export function PatientDetailModal({
 
   return (
     <>
-    <Modal onClose={onClose}>
+    <Modal onClose={onClose} size="lg">
       {patient.posible_duplicado_de && (
         <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl p-4 mb-5">
           <p className="m-0 text-[14px] font-bold text-riesgo-texto">Posible duplicado</p>
@@ -352,30 +353,14 @@ export function PatientDetailModal({
       <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">{patient.nombre}</h2>
       <p className="m-0 mb-5 text-sm text-tinta-tenue">Datos básicos y cuentas vinculadas.</p>
 
-      <div className="grid gap-4.5 mb-6">
-        <div className="grid grid-cols-[2fr_1fr] gap-3">
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-            Nombre
-            <input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
-            />
-          </label>
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-            Edad
-            <input
-              type="text"
-              value={edad}
-              onChange={(e) => setEdad(e.target.value)}
-              className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
-            />
-          </label>
+      <div className="grid grid-cols-1 gap-4.5 mb-6">
+        <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+          <FormField label="Nombre" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          <FormField label="Edad" type="text" value={edad} onChange={(e) => setEdad(e.target.value)} />
         </div>
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <p className="m-0 mb-2 text-[15px] font-semibold text-[#3b4c51]">Modalidad</p>
+            <p className="m-0 mb-2 text-[15px] font-semibold text-tinta-suave">Modalidad</p>
             {pending ? (
               <p className="m-0 text-[14px] text-tinta-tenue">
                 {modalidadOptions.find((o) => o.value === modalidad)?.label ?? modalidad} — se confirma al aceptar la cuenta.
@@ -385,14 +370,14 @@ export function PatientDetailModal({
             )}
           </div>
           <div>
-            <p className="m-0 mb-2 text-[15px] font-semibold text-[#3b4c51]">Estado del plan</p>
+            <p className="m-0 mb-2 text-[15px] font-semibold text-tinta-suave">Estado del plan</p>
             <p className="m-0 text-[14px] text-tinta-tenue">{pending ? "Pendiente de evaluación" : "Asignado"}</p>
           </div>
           <div>
-            <p className="m-0 mb-3 text-[15px] font-semibold text-[#3b4c51]">Categoría — 4 ejes independientes</p>
+            <p className="m-0 mb-3 text-[15px] font-semibold text-tinta-suave">Categoría — 4 ejes independientes</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(tierInfo ?? ejeKeys.map((eje) => ({ eje, override: null, auto: null }))).map(({ eje, override, auto }) => (
-                <div key={eje.key} className="bg-campo border border-[#efeada] rounded-xl p-3.5">
+                <div key={eje.key} className="bg-campo border border-borde-suave rounded-xl p-3.5">
                   <p className="m-0 mb-1.5 text-[13px] font-bold text-tinta">{eje.label}</p>
                   {auto && (
                     <p className="m-0 mb-1.5 text-[12.5px] text-tinta-tenue">
@@ -421,18 +406,18 @@ export function PatientDetailModal({
       )}
 
       {pending && (
-        <div className="pt-5 border-t border-[#efeada] mb-6">
+        <div className="pt-5 border-t border-borde-suave mb-6">
           <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Evaluación</p>
           {loadingAnswers ? (
             <p className="m-0 text-sm text-tinta-tenue">Cargando cuestionario…</p>
           ) : (
-            <div className="grid gap-3 mb-4 max-h-72 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-3 mb-4 max-h-72 overflow-y-auto pr-1">
               {groupAnswerableByModule(onboardingAnswers ?? {}).map((g) => (
                 <div key={g.module} className="bg-campo rounded-xl p-3.5">
                   <p className="m-0 mb-2 text-[13px] font-bold text-tinta">{g.module}</p>
-                  <div className="grid gap-1.5">
+                  <div className="grid grid-cols-1 gap-1.5">
                     {g.questions.map((q) => (
-                      <div key={q.id} className="grid grid-cols-[1.2fr_1fr] gap-3 text-[13px]">
+                      <div key={q.id} className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-3 text-[13px]">
                         <span className="text-tinta-tenue">{resolveText(q.title, onboardingAnswers ?? {})}</span>
                         <span className="text-tinta font-medium">{describeAnswer(q, onboardingAnswers ?? {})}</span>
                       </div>
@@ -457,14 +442,14 @@ export function PatientDetailModal({
       )}
 
       {!pending && (
-        <div className="pt-5 border-t border-[#efeada] mb-6">
+        <div className="pt-5 border-t border-borde-suave mb-6">
           <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Plan asignado</p>
           {loadingPlanTasks ? (
             <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>
           ) : !planTasks || planTasks.length === 0 ? (
             <p className="m-0 text-sm text-tinta-tenue">Sin plan publicado todavía.</p>
           ) : (
-            <div className="grid gap-2 max-h-72 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-2 max-h-72 overflow-y-auto pr-1">
               {planTasks.map((t) => {
                 const badge = estadoLabel[t.estado];
                 return (
@@ -486,7 +471,7 @@ export function PatientDetailModal({
           )}
 
           {weekComplete && planReview && (
-            <div className="mt-4 pt-4 border-t border-[#efeada]">
+            <div className="mt-4 pt-4 border-t border-borde-suave">
               {planReview.reviewedAt ? (
                 <div className="bg-fila-fria rounded-xl p-3.5">
                   <p className="m-0 mb-1 text-[13px] font-bold text-verde-profundo">Semana revisada</p>
@@ -500,7 +485,7 @@ export function PatientDetailModal({
                     onChange={(e) => setFeedbackMensaje(e.target.value)}
                     rows={2}
                     placeholder="Mensaje de feedback para la familia (opcional)"
-                    className="w-full rounded-lg border-[1.5px] border-[#ddd7be] bg-white px-3 py-2.5 font-sans text-[13px] text-tinta resize-y mb-2.5"
+                    className="w-full rounded-lg border-[1.5px] border-borde-campo bg-white px-3 py-2.5 font-sans text-[13px] text-tinta resize-y mb-2.5"
                   />
                   {feedbackError && <p className="m-0 mb-2 text-[13px] text-alerta-texto">{feedbackError}</p>}
                   <Button variant="ink" dense onClick={markReviewed} disabled={savingFeedback}>
@@ -516,9 +501,9 @@ export function PatientDetailModal({
         </div>
       )}
 
-      <div className="pt-5 border-t border-[#efeada]">
+      <div className="pt-5 border-t border-borde-suave">
         <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Cuentas vinculadas</p>
-        <div className="grid gap-2 mb-3">
+        <div className="grid grid-cols-1 gap-2 mb-3">
           {patient.links.length === 0 && <p className="m-0 text-sm text-tinta-tenue">Sin cuentas vinculadas todavía.</p>}
           {patient.links.map((l) => (
             <div key={`${l.profile_id}-${l.relation}`} className="flex items-center justify-between gap-3 bg-campo rounded-xl px-3.5 py-2.5">
@@ -555,7 +540,7 @@ export function PatientDetailModal({
         )}
       </div>
 
-      <div className="pt-5 mt-5 border-t border-[#efeada]">
+      <div className="pt-5 mt-5 border-t border-borde-suave">
         <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Mensajes</p>
 
         {loadingMensajes && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
@@ -565,13 +550,13 @@ export function PatientDetailModal({
             {!mensajes || mensajes.length === 0 ? (
               <p className="m-0 mb-3 text-sm text-tinta-tenue">Todavía no hay mensajes con esta familia.</p>
             ) : (
-              <div className="grid gap-2.5 mb-3 max-h-64 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-2.5 mb-3 max-h-64 overflow-y-auto pr-1">
                 {mensajes.map((m) => {
                   const mine = m.autor_id === myUserId;
                   return (
                     <div
                       key={m.id}
-                      className={`rounded-xl p-3.5 max-w-[85%] ${mine ? "justify-self-end border-[1.5px] border-verde-serenidad bg-[#f5f9f9]" : "justify-self-start border border-borde bg-campo"}`}
+                      className={`rounded-xl p-3.5 max-w-[85%] ${mine ? "justify-self-end border-[1.5px] border-verde-serenidad bg-verde-tenue" : "justify-self-start border border-borde bg-campo"}`}
                     >
                       <p className="m-0 mb-1 text-[12px] text-tinta-tenue">
                         {authorLabel(m.autor_id)} ·{" "}
@@ -584,13 +569,13 @@ export function PatientDetailModal({
               </div>
             )}
 
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <textarea
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
                 placeholder="Responder a la familia…"
                 rows={2}
-                className="w-full min-h-[64px] rounded-xl border-[1.5px] border-[#ddd7be] bg-campo px-3.5 py-2.5 font-sans text-[14px] leading-relaxed text-tinta resize-y"
+                className="w-full min-h-[64px] rounded-xl border-[1.5px] border-borde-campo bg-campo px-3.5 py-2.5 font-sans text-[14px] leading-relaxed text-tinta resize-y"
               />
               {mensajeError && <p className="m-0 text-[13px] text-alerta-texto">{mensajeError}</p>}
               <Button variant="ink" dense onClick={sendMensaje} disabled={sendingMensaje || !texto.trim()} className="justify-self-start">
@@ -640,9 +625,9 @@ function AlertasSection({ answers }: { answers: Answers }) {
   const activas = computeActiveAlerts(answers);
   if (activas.length === 0) return null;
   return (
-    <div className="pt-5 border-t border-[#efeada] mb-6">
+    <div className="pt-5 border-t border-borde-suave mb-6">
       <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Alertas activas ({activas.length})</p>
-      <div className="grid gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5">
         {activas.map((alerta) => (
           <div key={alerta.codigo} className="rounded-xl border-[1.5px] border-riesgo-borde bg-riesgo p-3.5">
             <p className="m-0 mb-1 text-[14px] font-bold text-riesgo-texto">{alerta.etiqueta}</p>
@@ -704,13 +689,13 @@ function LinkAccountPicker({
   }
 
   return (
-    <div className="bg-campo rounded-xl p-4 grid gap-3">
-      <label className="grid gap-1.5 text-[14px] font-semibold text-[#3b4c51]">
+    <div className="bg-campo rounded-xl p-4 grid grid-cols-1 gap-3">
+      <label className="grid grid-cols-1 gap-1.5 text-[14px] font-semibold text-tinta-suave">
         Cuenta
         <select
           value={profileId}
           onChange={(e) => setProfileId(e.target.value)}
-          className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[15px] text-tinta"
+          className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta"
         >
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
@@ -719,12 +704,12 @@ function LinkAccountPicker({
           ))}
         </select>
       </label>
-      <label className="grid gap-1.5 text-[14px] font-semibold text-[#3b4c51]">
+      <label className="grid grid-cols-1 gap-1.5 text-[14px] font-semibold text-tinta-suave">
         Vínculo
         <select
           value={relation}
           onChange={(e) => setRelation(e.target.value as typeof relation)}
-          className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[15px] text-tinta"
+          className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta"
         >
           <option value="familiar_admin">Familiar administrador</option>
           <option value="participante">Participante</option>

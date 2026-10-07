@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
+import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
 import { CalendarSyncCard } from "../../components/ui/CalendarSyncCard";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan } from "../../lib/usePlan";
@@ -13,10 +14,10 @@ const tipoLabel: Record<PlanTask["tipo"], string> = {
 };
 
 const estadoBadge: Record<PlanDayStatus, { text: string; className: string } | null> = {
-  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-[#4c7a4c]" },
+  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-semaforo-verde-texto" },
   parcial: { text: "En parte", className: "bg-fila-calida text-semaforo-amarillo-texto" },
   no: { text: "No se realizó", className: "bg-campo text-tinta-tenue" },
-  pendiente: { text: "Pendiente", className: "bg-[#edf4f4] text-verde-profundo" },
+  pendiente: { text: "Pendiente", className: "bg-verde-tenue text-verde-profundo" },
   futuro: null,
 };
 
@@ -50,11 +51,26 @@ function TaskDetail({ task }: { task: PlanTask }) {
       {badge && <span className={`inline-block mb-3 px-3 py-1.5 rounded-full text-[13px] font-semibold ${badge.className}`}>{badge.text}</span>}
       {task.detalle && <p className="m-0 mb-3 text-base leading-relaxed text-tinta-suave">{task.detalle}</p>}
       {task.notaClinica && (
-        <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-3.5 mb-3">
+        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-3.5 mb-3">
           <p className="m-0 mb-1 text-[12px] tracking-[0.1em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
           <p className="m-0 text-[14px] leading-relaxed text-tinta">{task.notaClinica}</p>
         </div>
       )}
+      <div className="grid grid-cols-1 gap-3 mb-3">
+        <ResourceDetailView
+          content={{
+            mediaKind: task.mediaKind,
+            storagePath: task.storagePath,
+            externalUrl: task.externalUrl,
+            materiales: task.materiales,
+            adaptacion: task.adaptacion,
+            ciencia: task.ciencia,
+            porQue: task.porQue,
+            pasos: task.pasos,
+            fallbackLabel: `${tipoLabel[task.tipo]}${task.duracion ? ` · ${task.duracion}` : ""}`,
+          }}
+        />
+      </div>
       {task.precaucion && (
         <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3">{task.precaucion}</p>
       )}
@@ -90,17 +106,17 @@ export function Plan() {
       {!plan || plan.length === 0 ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Todavía no hay un plan asignado.</p>
       ) : (
-        <div className="grid gap-5">
+        <div className="grid grid-cols-1 gap-5">
           {plan.map((day) => (
             <div key={day.dia}>
               <div className="flex items-center gap-2.5 mb-2.5">
                 <span className={`text-[14px] font-bold ${day.isToday ? "text-verde-profundo" : "text-tinta-tenue"}`}>{day.dia}</span>
-                {day.isToday && <span className="text-[11px] uppercase tracking-[0.08em] bg-[#edf4f4] text-verde-profundo px-2 py-0.5 rounded-full font-semibold">Hoy</span>}
+                {day.isToday && <span className="text-[11px] uppercase tracking-[0.08em] bg-verde-tenue text-verde-profundo px-2 py-0.5 rounded-full font-semibold">Hoy</span>}
               </div>
               {day.tasks.length === 0 ? (
                 <p className="m-0 text-[14px] text-tinta-tenue">Sin actividades programadas.</p>
               ) : (
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {day.tasks.map((task) => (
                     <TaskChip key={task.id} task={task} onOpen={() => setOpenTask(task)} />
                   ))}

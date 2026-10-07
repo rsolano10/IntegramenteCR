@@ -14,10 +14,10 @@ import { familiarTourSteps } from "../../lib/tourSteps";
 function PendienteRevision({ nombre }: { nombre: string }) {
   return (
     <div className="max-w-[560px] mx-auto px-5 pt-10 pb-16 sm:px-8 text-center">
-      <div className="w-16 h-16 rounded-full bg-[#edf4f4] mx-auto mb-6 flex items-center justify-center">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-          <circle cx="13" cy="13" r="9" stroke="#3F6A70" strokeWidth="1.6" />
-          <path d="M13 8.5v5l3.2 1.9" stroke="#3F6A70" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <div className="w-16 h-16 rounded-full bg-verde-tenue mx-auto mb-6 flex items-center justify-center">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true" className="text-verde-profundo">
+          <circle cx="13" cy="13" r="9" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M13 8.5v5l3.2 1.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
       <h1 className="font-serif font-normal text-[26px] sm:text-[30px] leading-[1.18] m-0 mb-3">Estamos armando el programa de {nombre}</h1>
@@ -31,7 +31,8 @@ function PendienteRevision({ nombre }: { nombre: string }) {
 
 export function FamiliarShell() {
   const session = useSession();
-  const { data: myPatient, isLoading } = useMyPatient();
+  // isPending, not isLoading — see the comment on the same call in App.tsx's RouteGuard.
+  const { data: myPatient, isPending: isLoading } = useMyPatient();
   const hydrateOnboarding = useAppStore((s) => s.hydrateOnboarding);
   const [tourSeen, setTourSeen] = useState(false);
 

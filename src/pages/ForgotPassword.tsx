@@ -35,14 +35,14 @@ export function ForgotPassword() {
               Ingresá el correo con el que te registraste y te enviamos las instrucciones para crear una nueva contraseña.
             </p>
             <div className="grid gap-4.5">
-              <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+              <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
                 Correo electrónico
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nombre@correo.com"
-                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
+                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta"
                 />
               </label>
               <Button variant="ink" fullWidth onClick={submit} disabled={loading || !email.trim()}>

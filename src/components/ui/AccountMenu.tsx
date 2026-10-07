@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { menuItemClass } from "./RowMenu";
 
 export interface AccountMenuItem {
   label: string;
@@ -61,7 +62,7 @@ export function AccountMenu({
             role="menu"
             className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 bg-white border border-borde rounded-2xl shadow-elevada overflow-hidden"
           >
-            <div className="px-4 py-3.5 border-b border-[#efeada] bg-campo">
+            <div className="px-4 py-3.5 border-b border-borde-suave bg-campo">
               <p className="m-0 text-[14px] font-semibold text-tinta">{name}</p>
               <p className="m-0 text-[12px] text-tinta-tenue">{subtitle}</p>
             </div>
@@ -75,9 +76,7 @@ export function AccountMenu({
                     setOpen(false);
                     item.onClick();
                   }}
-                  className={`text-left min-h-11 px-4 font-sans text-[14px] cursor-pointer hover:bg-campo ${
-                    item.danger ? "text-alerta-texto font-semibold" : "text-tinta"
-                  }`}
+                  className={menuItemClass(item.danger)}
                 >
                   {item.label}
                 </button>

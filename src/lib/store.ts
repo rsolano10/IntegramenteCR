@@ -13,11 +13,6 @@ export interface ChatMessage {
 }
 
 let chatSeq = 0;
-const welcomeMessage: ChatMessage = {
-  id: "welcome",
-  role: "bot",
-  text: "Hola, Marcela. Contame qué está pasando y te ayudo, o elegí una de las dudas frecuentes de abajo.",
-};
 
 export interface MensajeClinico {
   id: string;
@@ -153,6 +148,16 @@ interface AppState {
   email: string;
   authError: string;
 
+  // Synced from useSession().profile.nombre by RouteGuard (src/App.tsx) —
+  // SECURITY/BUG FIX: pushAudit() calls below used to hardcode "Marcela" or
+  // "Dra. Guiselle Solano" as the author regardless of who was actually
+  // signed in (prototype-era leftover, back when there was only ever one
+  // demo person per role). Any real familiar/paciente's own actions were
+  // being attributed to a stranger in the audit trail. Kept in the store
+  // (not threaded through every action's params) since half a dozen actions
+  // need it and none of them are component-local.
+  realUserName: string;
+
   c1: boolean;
   c2: boolean;
   notify: "si" | "no";
@@ -206,6 +211,7 @@ interface AppState {
 
   setEmail: (v: string) => void;
   setAuthError: (v: string) => void;
+  setRealUserName: (v: string) => void;
   // Resets session-only demo state after a real supabase.auth.signOut().
   // Deliberately leaves onboarding2/modalidad/onboardingComplete/planStatus
   // /welcomeMessagePending/mensajes alone — they're the persisted profile
@@ -263,6 +269,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
   email: "",
   authError: "",
+  realUserName: "",
 
   c1: true,
   c2: true,
@@ -297,16 +304,18 @@ export const useAppStore = create<AppState>()(
 
   weekMood: "same",
 
-  chatMessages: [welcomeMessage],
+  chatMessages: [],
 
   auditLog: [],
 
   setEmail: (v) => set({ email: v }),
   setAuthError: (v) => set({ authError: v }),
+  setRealUserName: (v) => set({ realUserName: v }),
   resetSessionState: () =>
     set({
       email: "",
       authError: "",
+      realUserName: "",
       c1: true,
       c2: true,
       notify: "si",
@@ -327,7 +336,7 @@ export const useAppStore = create<AppState>()(
       noCount: 0,
       notifySent: false,
       weekMood: "same",
-      chatMessages: [welcomeMessage],
+      chatMessages: [],
     }),
 
   toggleConsent1: () => set((s) => ({ c1: !s.c1 })),
@@ -336,7 +345,7 @@ export const useAppStore = create<AppState>()(
 
   answerQuestion: (id, value) => {
     set((s) => ({ onboarding2: { ...s.onboarding2, [id]: value } }));
-    get().pushAudit("Perfil funcional", `responde "${id}"`, "Marcela");
+    get().pushAudit("Perfil funcional", `responde "${id}"`, get().realUserName || "Familiar");
   },
   toggleMultiAnswer: (id, value, exclusive, maxSelect) =>
     set((s) => {
@@ -376,7 +385,7 @@ export const useAppStore = create<AppState>()(
   endQuestionEdit: () => set({ perfilEditQuestionId: null }),
   completeOnboarding: () => {
     set({ onboardingComplete: true, planStatus: "pendiente" });
-    get().pushAudit("Perfil funcional", "completa el cuestionario — enviado a la clínica", "Marcela");
+    get().pushAudit("Perfil funcional", "completa el cuestionario — enviado a la clínica", get().realUserName || "Familiar");
   },
   asignarPrograma: (mensaje) => {
     const texto = mensaje.trim();
@@ -442,7 +451,7 @@ export const useAppStore = create<AppState>()(
 
   notifyNow: () => {
     set({ notifySent: true });
-    get().pushAudit("Alerta", "notifica a la profesional asignada", "Marcela");
+    get().pushAudit("Alerta", "notifica a la profesional asignada", get().realUserName || "Familiar");
   },
   notifySkip: () => set({ notifySent: false }),
 
@@ -455,7 +464,7 @@ export const useAppStore = create<AppState>()(
     const botMsg: ChatMessage = { id: `chat-${chatSeq}`, role: "bot", text: reply.text, escalate: reply.escalate };
     set((s) => ({ chatMessages: [...s.chatMessages, userMsg, botMsg] }));
     if (reply.escalate) {
-      get().pushAudit("Asistente", `escala consulta: "${text}"`, "Marcela");
+      get().pushAudit("Asistente", `escala consulta: "${text}"`, get().realUserName || "Familiar");
     }
   },
 

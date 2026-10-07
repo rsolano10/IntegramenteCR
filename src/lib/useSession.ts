@@ -9,6 +9,8 @@ export interface SessionProfile {
   nombre: string;
   especialidad: string | null;
   foto_url: string | null;
+  whatsapp_phone: string | null;
+  whatsapp_notifications_enabled: boolean;
   must_change_password: boolean;
   onboarding_tour_seen: boolean;
   is_active: boolean;
@@ -39,7 +41,9 @@ export function useSession(): SessionState {
       }
       const { data, error } = await supabase
         .from("profiles")
-        .select("role, nombre, especialidad, foto_url, must_change_password, onboarding_tour_seen, is_active")
+        .select(
+          "role, nombre, especialidad, foto_url, whatsapp_phone, whatsapp_notifications_enabled, must_change_password, onboarding_tour_seen, is_active",
+        )
         .eq("id", session.user.id)
         .single();
       if (cancelled) return;

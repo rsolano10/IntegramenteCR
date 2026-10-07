@@ -68,7 +68,7 @@ export function Resumen() {
           </div>
         )}
         {planMeta?.feedback_mensaje && (
-          <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4">
+          <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4">
             <p className="m-0 mb-1 text-[13px] tracking-[0.1em] uppercase text-verde-profundo">Feedback de tu equipo clínico</p>
             <p className="m-0 text-[16px] leading-relaxed text-tinta">{planMeta.feedback_mensaje}</p>
           </div>

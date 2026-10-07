@@ -4,6 +4,9 @@ import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
 import { isUnconfirmedEmailError } from "../../lib/authErrors";
 import { PasswordInput } from "../ui/PasswordInput";
+import { PillToggle } from "../ui/PillToggle";
+import { Button } from "../ui/Button";
+import { FormField } from "../ui/FormField";
 
 // The login/signup form — lifted out of Landing.tsx so it can render both
 // inline on desktop (scrolled to from the hero CTAs) and as the sole
@@ -25,11 +28,6 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMsg, setResendMsg] = useState("");
   const isRegister = mode === "register";
-
-  const tabClass = (active: boolean) =>
-    `min-h-[46px] rounded-full border-none font-sans text-[16px] font-semibold cursor-pointer ${
-      active ? "bg-white text-tinta shadow-[0_2px_8px_-4px_rgba(31,51,56,.6)]" : "bg-transparent text-[#6b7c80]"
-    }`;
 
   function switchMode(next: "login" | "register") {
     setMode(next);
@@ -104,13 +102,15 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-1.5 bg-[#f2eede] p-1.5 rounded-full mb-7">
-        <button type="button" onClick={() => switchMode("login")} className={tabClass(!isRegister)}>
-          Iniciar sesión
-        </button>
-        <button type="button" onClick={() => switchMode("register")} className={tabClass(isRegister)}>
-          Crear cuenta
-        </button>
+      <div className="mb-7">
+        <PillToggle
+          value={mode}
+          onChange={switchMode}
+          options={[
+            { value: "login", label: "Iniciar sesión" },
+            { value: "register", label: "Crear cuenta" },
+          ]}
+        />
       </div>
 
       {isRegister && signupSent ? (
@@ -131,8 +131,8 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
             </button>
             {resendMsg && <span className="text-[13px] text-tinta-tenue">{resendMsg}</span>}
           </div>
-          <div className="pt-4 border-t border-[#efeada]">
-            <p className="m-0 text-sm leading-relaxed text-[#6b7c80]">
+          <div className="pt-4 border-t border-borde-suave">
+            <p className="m-0 text-sm leading-relaxed text-pastilla-texto">
               ¿No te llega? Escribinos a{" "}
               <a href="mailto:info@integramente.com" className="text-verde-profundo">
                 info@integramente.com
@@ -149,41 +149,30 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
         <>
           {isRegister && (
             <div className="grid gap-4.5 mb-1.5">
-              <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-                Nombre completo
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-                />
-              </label>
+              <FormField label="Nombre completo" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </div>
           )}
 
           <div className="grid gap-4.5">
-            <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-              Correo electrónico
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nombre@correo.com"
-                className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
-              />
-            </label>
-            <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+            <FormField
+              label="Correo electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nombre@correo.com"
+            />
+            <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
               Contraseña
               <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
             </label>
-            <button
-              type="button"
+            <Button
+              variant="ink"
+              fullWidth
               onClick={submit}
               disabled={loading || (isRegister ? !nombre.trim() || !email.trim() || !password : !email.trim() || !password)}
-              className="inline-flex items-center justify-center min-h-14 rounded-full bg-tinta text-white font-semibold text-[17px] hover:bg-verde-profundo transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-default"
             >
               {loading ? (isRegister ? "Creando…" : "Entrando…") : isRegister ? "Crear cuenta y empezar" : "Entrar"}
-            </button>
+            </Button>
             {authError && <p className="m-0 text-[14px] text-alerta-texto">{authError}</p>}
             {unconfirmed && (
               <div className="grid gap-2 -mt-2">
@@ -198,7 +187,7 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
                   </button>
                   {resendMsg && <span className="text-[13px] text-tinta-tenue">{resendMsg}</span>}
                 </div>
-                <p className="m-0 text-[13px] leading-relaxed text-[#6b7c80]">
+                <p className="m-0 text-[13px] leading-relaxed text-pastilla-texto">
                   ¿No te llega? Escribinos a{" "}
                   <a href="mailto:info@integramente.com" className="text-verde-profundo">
                     info@integramente.com
@@ -226,8 +215,8 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
             )}
           </div>
 
-          <div className="mt-6.5 pt-5.5 border-t border-[#efeada] grid gap-2.5">
-            <p className="m-0 text-sm leading-relaxed text-[#6b7c80]">
+          <div className="mt-6.5 pt-5.5 border-t border-borde-suave grid gap-2.5">
+            <p className="m-0 text-sm leading-relaxed text-pastilla-texto">
               ¿Sos paciente o familiar del programa IntegraMente? Tu cuenta la crea la clínica: entrá con el correo que registraste en
               consulta.
             </p>

@@ -28,9 +28,9 @@ export function PlanCheckout() {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6 lg:gap-10 items-start">
-          <div className={`rounded-3xl p-6 sm:p-7 border ${tier.recomendado ? "border-[1.5px] border-verde-serenidad bg-[#f5f9f9]" : "border-borde bg-white"}`}>
+          <div className={`rounded-3xl p-6 sm:p-7 border ${tier.recomendado ? "border-[1.5px] border-verde-serenidad bg-verde-tenue" : "border-borde bg-white"}`}>
             {tier.recomendado && (
-              <span className="inline-block mb-3 text-xs tracking-[0.12em] uppercase bg-mostaza-vital text-[#4a3a1b] px-3 py-1.5 rounded-full font-bold">
+              <span className="inline-block mb-3 text-xs tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">
                 Recomendado
               </span>
             )}
@@ -54,32 +54,32 @@ export function PlanCheckout() {
             <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Creá tu cuenta</h2>
             <p className="m-0 mb-6 text-[15px] text-tinta-tenue">Sin tarjeta para empezar. Podés cancelar cuando querás.</p>
             <div className="grid gap-4.5">
-              <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+              <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
                 Nombre completo
                 <input
                   type="text"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Ana Solano"
-                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
+                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta"
                 />
               </label>
-              <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+              <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
                 Correo electrónico
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nombre@correo.com"
-                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
+                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta"
                 />
               </label>
-              <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+              <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
                 Contraseña
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
+                  className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta"
                 />
               </label>
               <Button

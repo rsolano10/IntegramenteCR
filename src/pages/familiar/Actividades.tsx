@@ -1,104 +1,99 @@
 import { useMemo, useState } from "react";
-import { useAppStore } from "../../lib/store";
-import { computeProfiles } from "../../lib/clinicalEngine";
-import { libraryItems, type ActivityCategory } from "../../lib/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
+import { Modal } from "../../components/ui/Modal";
+import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
+import { ResourceCard } from "../../components/ui/ResourceCard";
+import { ChipToggle } from "../../components/ui/ChipToggle";
+import { moduloLabel, tipoLabel, type MediaResource, type ResourceModulo } from "../../lib/mediaResources";
 
-const categories: ActivityCategory[] = ["Movimiento", "Cognitiva", "Social", "Relajación", "Música"];
+const modulos = Object.keys(moduloLabel) as ResourceModulo[];
 
 export function Actividades() {
-  const onboarding2 = useAppStore((s) => s.onboarding2);
   const [search, setSearch] = useState("");
-  const [activeCategories, setActiveCategories] = useState<ActivityCategory[]>([]);
-  const [onlyApt, setOnlyApt] = useState(true);
+  const [activeModulos, setActiveModulos] = useState<ResourceModulo[]>([]);
+  const [opened, setOpened] = useState<MediaResource | null>(null);
 
-  function toggleCategory(c: ActivityCategory) {
-    setActiveCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  const { data: resources, isLoading } = useQuery({
+    queryKey: ["media-resources-catalogo"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("media_resources").select("*").eq("activo", true).order("titulo");
+      if (error) throw error;
+      return data as MediaResource[];
+    },
+  });
+
+  function toggleModulo(m: ResourceModulo) {
+    setActiveModulos((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
   }
-
-  // "Ejercicio de pie con desplazamiento" reacts to the real movement
-  // profile instead of a hardcoded flag — a concrete example of content
-  // actually respecting what onboarding recorded, not just displaying it.
-  const items = useMemo(() => {
-    const { fisico } = computeProfiles(onboarding2);
-    const blocked = fisico === "rojo" || onboarding2.caidas_ultimos_6_meses === "varias_veces";
-    return libraryItems.map((item) =>
-      item.titulo === "Ejercicio de pie con desplazamiento"
-        ? blocked
-          ? item
-          : { ...item, disponible: true, detalle: "10 min · con apoyo firme", motivoBloqueo: undefined }
-        : item,
-    );
-  }, [onboarding2]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((item) => {
-      if (onlyApt && !item.disponible) return false;
-      if (activeCategories.length && !activeCategories.includes(item.categoria)) return false;
-      if (q && !item.titulo.toLowerCase().includes(q) && !item.detalle.toLowerCase().includes(q)) return false;
+    return (resources ?? []).filter((r) => {
+      if (activeModulos.length && !activeModulos.includes(r.modulo)) return false;
+      if (q && !r.titulo.toLowerCase().includes(q) && !(r.detalle ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [items, search, activeCategories, onlyApt]);
+  }, [resources, search, activeModulos]);
 
   return (
     <div>
       <p className="m-0 mb-3.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Actividades</p>
       <p className="m-0 mb-4 text-[15px] leading-relaxed text-tinta-suave">
-        Buscá actividades complementarias a lo que asignó la clínica, filtradas por lo que corresponde al perfil de Rosa.
+        Explorá el catálogo completo de actividades de la clínica, más allá de lo ya asignado en el plan.
       </p>
       <input
         type="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Buscar actividad o tema"
-        className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] mb-3.5"
+        className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] mb-3.5"
       />
       <div className="flex flex-wrap gap-2 mb-4.5">
-        <button
-          type="button"
-          onClick={() => setOnlyApt((v) => !v)}
-          className={`px-3.5 py-2 rounded-full text-sm font-semibold cursor-pointer ${
-            onlyApt ? "bg-verde-serenidad text-white" : "bg-beige-serenidad text-tinta"
-          }`}
-        >
-          Aptas para Rosa
-        </button>
-        {categories.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => toggleCategory(c)}
-            className={`px-3.5 py-2 rounded-full text-sm font-semibold cursor-pointer ${
-              activeCategories.includes(c) ? "bg-tinta text-white" : "bg-beige-serenidad text-tinta"
-            }`}
-          >
-            {c}
-          </button>
+        {modulos.map((m) => (
+          <ChipToggle key={m} active={activeModulos.includes(m)} onToggle={() => toggleModulo(m)}>
+            {moduloLabel[m]}
+          </ChipToggle>
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading && <p className="m-0 text-[15px] text-tinta-tenue">Cargando…</p>}
+      {!isLoading && filtered.length === 0 ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Ninguna actividad coincide con estos filtros.</p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filtered.map((item) => (
-            <div
-              key={item.titulo}
-              className={`grid grid-cols-[80px_1fr] sm:grid-cols-[92px_1fr] gap-3.5 items-center border rounded-2xl p-3 ${
-                item.disponible ? "border-borde" : "border-[#efeada] opacity-55"
-              }`}
-            >
-              <div className={`h-[62px] rounded-[10px] ${item.disponible ? "im-placeholder" : "bg-beige-serenidad"}`} />
-              <span className="text-[16px]">
-                <span className="text-[11px] uppercase tracking-[0.08em] text-tinta-tenue">{item.categoria}</span>
-                <br />
-                <strong>{item.titulo}</strong>
-                <br />
-                <span className={`text-sm ${item.disponible ? "text-tinta-tenue" : "text-semaforo-amarillo-texto"}`}>{item.detalle}</span>
-              </span>
-            </div>
+            <ResourceCard key={item.id} resource={item} onClick={() => setOpened(item)} />
           ))}
         </div>
+      )}
+
+      {opened && (
+        <Modal onClose={() => setOpened(null)}>
+          <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">
+            {moduloLabel[opened.modulo]} · {tipoLabel[opened.tipo]}
+            {opened.duracion ? ` · ${opened.duracion}` : ""}
+          </p>
+          <h3 className="font-serif font-normal text-2xl m-0 mb-4">{opened.titulo}</h3>
+          <div className="grid grid-cols-1 gap-4">
+            <ResourceDetailView
+              content={{
+                mediaKind: opened.media_kind,
+                storagePath: opened.storage_path,
+                externalUrl: opened.external_url,
+                materiales: opened.materiales,
+                adaptacion: opened.adaptacion,
+                ciencia: opened.ciencia,
+                porQue: opened.por_que,
+                pasos: opened.pasos ?? undefined,
+                fallbackLabel: `${tipoLabel[opened.tipo]}${opened.duracion ? ` · ${opened.duracion}` : ""}`,
+              }}
+            />
+            {opened.precaucion && (
+              <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3">{opened.precaucion}</p>
+            )}
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -112,6 +112,12 @@ export interface PlanTask {
   porQue?: string;
   comentario?: string;
   notaClinica?: string;
+  mediaKind?: "video" | "imagen" | "audio" | "documento" | "enlace" | null;
+  storagePath?: string | null;
+  externalUrl?: string | null;
+  materiales?: string | null;
+  adaptacion?: string | null;
+  ciencia?: { gancho: string; evidencia: string; cierre: string } | null;
 }
 
 export interface PlanDay {

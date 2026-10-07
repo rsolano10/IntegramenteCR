@@ -46,30 +46,43 @@ const roleForRelation: Record<Relation, "familiar" | "paciente"> = {
 };
 
 // Fase 7: accounts the clinic creates in person (assisted onboarding) get a
-// shared starter password instead of an invite link — they're standing
-// right there to confirm the email and pick a real password immediately
-// after, via must_change_password (see RouteGuard). Same underlying
-// patients/patient_links wiring as the invite-link path, just a different
-// way of getting the account itself into existence.
-const GENERIC_PASSWORD = "integramentecr";
+// starter password instead of an invite link — they're standing right there
+// to confirm the email and pick a real password immediately after, via
+// must_change_password (see RouteGuard). Same underlying patients/
+// patient_links wiring as the invite-link path, just a different way of
+// getting the account itself into existence.
+//
+// SECURITY FIX: this used to be one hardcoded constant ("integramentecr")
+// shared by every assisted-onboarding account ever created, shown back to
+// the admin in plaintext — a known, constant credential for the whole
+// patient population until each person individually changed it. Generated
+// fresh per account instead; the fixed "Im"/"25" bookends guarantee it
+// satisfies the project's letters+digits password policy regardless of
+// what the random slice happens to contain.
+function generateProvisionalPassword(): string {
+  const random = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+  return `Im${random}25`;
+}
 
 async function createAccount(
   admin: ReturnType<typeof createClient>,
   email: string,
   metadata: Record<string, unknown>,
   genericPassword: boolean,
-): Promise<{ user: { id: string } | null; error: { message: string } | null; warning?: string }> {
+): Promise<{ user: { id: string } | null; error: { message: string } | null; warning?: string; provisionalPassword?: string }> {
   if (!genericPassword) {
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: metadata, redirectTo: `${SITE_URL}/completar-cuenta` });
     return { user: data?.user ?? null, error };
   }
-  const { data, error } = await admin.auth.admin.createUser({ email, password: GENERIC_PASSWORD, email_confirm: false, user_metadata: metadata });
+  const provisionalPassword = generateProvisionalPassword();
+  const { data, error } = await admin.auth.admin.createUser({ email, password: provisionalPassword, email_confirm: false, user_metadata: metadata });
   if (error) return { user: null, error };
   await admin.from("profiles").update({ must_change_password: true }).eq("id", data.user.id);
   const { error: resendError } = await admin.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${SITE_URL}/app/login` } });
   return {
     user: data.user,
     error: null,
+    provisionalPassword,
     warning: resendError ? `Cuenta creada, pero no pudimos enviar el correo de confirmación: ${resendError.message}` : undefined,
   };
 }
@@ -123,6 +136,7 @@ Deno.serve(async (req) => {
     if (payload.action === "update_role") return await handleUpdateRole(admin, user.id, payload);
     if (payload.action === "delete_user") return await handleDeleteUser(admin, user.id, payload);
     if (payload.action === "reactivate_user") return await handleReactivateUser(admin, payload);
+    if (payload.action === "permanently_delete_user") return await handlePermanentlyDeleteUser(admin, user.id, payload);
     if (payload.action === "reject_patient") return await handleRejectPatient(admin, payload);
     if (payload.action === "notify_plan_assigned") return await handleNotifyPlanAssigned(admin, payload);
     return json({ error: "Acción desconocida." }, 400);
@@ -136,14 +150,20 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
   const email = String(payload.email ?? "").trim().toLowerCase();
   const nombre = String(payload.nombre ?? "").trim();
   const genericPassword = payload.genericPassword === true;
+  const whatsappPhone = String(payload.whatsappPhone ?? "").trim() || null;
   if (!email || !nombre) return json({ error: "Faltan datos: correo y nombre son obligatorios." }, 400);
 
   // Clinic staff accounts aren't linked to any patient at all.
   if (payload.accountType === "profesional") {
     const especialidad = String(payload.especialidad ?? "").trim() || null;
-    const { user: invitedUser, error, warning } = await createAccount(admin, email, { role: "profesional", nombre, especialidad }, genericPassword);
+    const { user: invitedUser, error, warning, provisionalPassword } = await createAccount(
+      admin,
+      email,
+      { role: "profesional", nombre, especialidad, whatsapp_phone: whatsappPhone },
+      genericPassword,
+    );
     if (error || !invitedUser) return json({ error: error?.message ?? "No pudimos crear la cuenta." }, 400);
-    return json({ profileId: invitedUser.id, patientId: null, warning });
+    return json({ profileId: invitedUser.id, patientId: null, warning, provisionalPassword });
   }
 
   const relation = payload.relation as Relation;
@@ -159,10 +179,15 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
   if (patientMode === "new" && !newPatientNombre) return json({ error: "Falta el nombre del paciente." }, 400);
 
   const role = roleForRelation[relation];
-  const { user: invited, error: inviteError, warning: createWarning } = await createAccount(admin, email, { role, nombre }, genericPassword);
+  const {
+    user: invited,
+    error: inviteError,
+    warning: createWarning,
+    provisionalPassword,
+  } = await createAccount(admin, email, { role, nombre, whatsapp_phone: whatsappPhone }, genericPassword);
   if (inviteError || !invited) return json({ error: inviteError?.message ?? "No pudimos crear la cuenta." }, 400);
 
-  if (patientMode === "none") return json({ profileId: invited.id, patientId: null, warning: createWarning });
+  if (patientMode === "none") return json({ profileId: invited.id, patientId: null, warning: createWarning, provisionalPassword });
 
   let patientId = payload.patientId ? String(payload.patientId) : null;
   if (!patientId) {
@@ -176,7 +201,10 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
       .select()
       .single();
     if (patientError) {
-      return json({ error: `Invitación enviada, pero no pudimos crear el paciente: ${patientError.message}` }, 400);
+      return json(
+        { error: `Invitación enviada, pero no pudimos crear el paciente: ${patientError.message}`, provisionalPassword },
+        400,
+      );
     }
     patientId = patient.id;
   }
@@ -194,7 +222,7 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
   const { error: linkError } = await admin.from("patient_links").insert(links);
   if (linkError) return json({ error: linkError.message }, 400);
 
-  return json({ profileId: invited.id, patientId, warning: createWarning });
+  return json({ profileId: invited.id, patientId, warning: createWarning, provisionalPassword });
 }
 
 async function handleResend(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
@@ -329,6 +357,30 @@ async function handleReactivateUser(admin: ReturnType<typeof createClient>, payl
   const { error: profileError } = await admin.from("profiles").update({ is_active: true }).eq("id", userId);
   if (profileError) return json({ error: profileError.message }, 400);
   return json({ ok: true });
+}
+
+// Manual, deliberate hard delete — the real "borrar de la base de datos"
+// counterpart to handleDeleteUser's soft deactivation. Only allowed once an
+// account is ALREADY inactive (checked server-side, not just hidden client-
+// side) — this is a cleanup tool for accounts everyone already agreed
+// shouldn't be around, not a shortcut around the deactivate-first flow.
+// Safe now in a way it wasn't when handleDeleteUser's comment was written:
+// mensajes.autor_id/audit_log.autor_id/plans.created_by all got "on delete
+// set null" in 20260820100000_platform_admin.sql, and patient_links/
+// profiles both cascade — deleting the auth user cleans up every row that
+// pointed at them without leaving orphaned FKs.
+async function handlePermanentlyDeleteUser(admin: ReturnType<typeof createClient>, callerId: string, payload: Record<string, unknown>) {
+  const userId = String(payload.userId ?? "");
+  if (!userId) return json({ error: "Falta el usuario." }, 400);
+  if (userId === callerId) return json({ error: "No podés eliminar tu propia cuenta." }, 400);
+
+  const { data: profile } = await admin.from("profiles").select("is_active, nombre").eq("id", userId).maybeSingle();
+  if (!profile) return json({ error: "No encontramos esa cuenta." }, 404);
+  if (profile.is_active) return json({ error: "Solo se puede eliminar por completo una cuenta ya desactivada." }, 400);
+
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) return json({ error: error.message }, 400);
+  return json({ ok: true, message: `${profile.nombre} fue eliminado permanentemente.` });
 }
 
 // Rejecting a pending patient during evaluation: the patient record (never

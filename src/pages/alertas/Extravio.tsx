@@ -37,7 +37,7 @@ export function Extravio() {
               <span>No discutas para retenerla: acompañá y redirigí.</span>
             </div>
           </div>
-          <div className="border-t border-[#efeada] pt-5 flex gap-3 flex-wrap items-center">
+          <div className="border-t border-borde-suave pt-5 flex gap-3 flex-wrap items-center">
             <NotifyButton />
             <Link
               to="/app/hoy"

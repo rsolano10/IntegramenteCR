@@ -28,6 +28,25 @@ interface PlanTaskRow {
   por_que: string | null;
   comentario: string | null;
   nota_clinica: string | null;
+  media_resource_id: string | null;
+  // PostgREST embeds a to-one FK as a single object at runtime, but
+  // supabase-js's generic (non-codegen'd) types infer embeds as arrays —
+  // accept both shapes here and normalize in toPlanTask().
+  media_resources: MediaResourceJoin | MediaResourceJoin[] | null;
+}
+
+interface MediaResourceJoin {
+  media_kind: "video" | "imagen" | "audio" | "documento" | "enlace" | null;
+  storage_path: string | null;
+  external_url: string | null;
+  materiales: string | null;
+  adaptacion: string | null;
+  ciencia: { gancho: string; evidencia: string; cierre: string } | null;
+}
+
+function joinedResource(value: PlanTaskRow["media_resources"]): MediaResourceJoin | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 // AssignPlanModal now writes hora as a real "HH:MM" (24h) value via
@@ -47,6 +66,7 @@ function formatHora(hora: string): string {
 }
 
 function toPlanTask(row: PlanTaskRow): PlanTask {
+  const resource = joinedResource(row.media_resources);
   return {
     id: row.id,
     hora: row.hora ? formatHora(row.hora) : "",
@@ -60,6 +80,12 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     porQue: row.por_que ?? undefined,
     comentario: row.comentario ?? undefined,
     notaClinica: row.nota_clinica ?? undefined,
+    mediaKind: resource?.media_kind ?? null,
+    storagePath: resource?.storage_path ?? null,
+    externalUrl: resource?.external_url ?? null,
+    materiales: resource?.materiales ?? null,
+    adaptacion: resource?.adaptacion ?? null,
+    ciencia: resource?.ciencia ?? null,
   };
 }
 
@@ -95,7 +121,9 @@ export function usePlan(patientId: string | undefined) {
 
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
-        .select("id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, sort_order")
+        .select(
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia)",
+        )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });
       if (tasksError) throw tasksError;

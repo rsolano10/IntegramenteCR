@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ImagePlaceholder } from "../../components/ui/ImagePlaceholder";
+import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
 import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
 import { useMyPatient } from "../../lib/useMyPatient";
@@ -120,7 +120,7 @@ export function Actividad() {
           rows={4}
           autoFocus
           placeholder="Ej.: hubo que recordarle el siguiente paso, se le acompañó físicamente…"
-          className="w-full min-h-[100px] rounded-xl border-[1.5px] border-[#ddd7be] bg-campo px-4 py-3 font-sans text-[16px] leading-relaxed text-tinta resize-y mb-4.5"
+          className="w-full min-h-[100px] rounded-xl border-[1.5px] border-borde-campo bg-campo px-4 py-3 font-sans text-[16px] leading-relaxed text-tinta resize-y mb-4.5"
         />
         {error && <p className="m-0 mb-4 text-[14px] text-alerta-texto">{error}</p>}
         <div className="flex gap-3">
@@ -140,13 +140,34 @@ export function Actividad() {
       <Link to="/app/hoy" className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-3.5">
         ‹ Volver a Hoy
       </Link>
-      <h3 className="font-serif font-normal text-[26px] m-0 mb-3.5">{task.titulo}</h3>
-      <div className="mb-4.5">
-        <ImagePlaceholder label={`${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`} height={150} />
+      <div className="flex items-start justify-between gap-3 mb-3.5">
+        <h3 className="font-serif font-normal text-[26px] m-0">{task.titulo}</h3>
+        <Link
+          to={`/app/hoy/actividad/${task.id}/pasos`}
+          className="shrink-0 inline-flex items-center gap-1.5 mt-1 px-3.5 py-2 rounded-full border-[1.5px] border-verde-serenidad bg-verde-tenue text-verde-profundo font-sans text-[13px] font-semibold no-underline"
+        >
+          Modo paso a paso
+        </Link>
+      </div>
+
+      <div className="grid gap-4.5 mb-4.5">
+        <ResourceDetailView
+          content={{
+            mediaKind: task.mediaKind,
+            storagePath: task.storagePath,
+            externalUrl: task.externalUrl,
+            materiales: task.materiales,
+            adaptacion: task.adaptacion,
+            ciencia: task.ciencia,
+            porQue: task.porQue,
+            pasos,
+            fallbackLabel: `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`,
+          }}
+        />
       </div>
 
       {task.notaClinica && (
-        <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4 mb-4.5">
+        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4 mb-4.5">
           <p className="m-0 mb-1 text-[13px] tracking-[0.1em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
           <p className="m-0 text-[15px] leading-relaxed text-tinta">{task.notaClinica}</p>
         </div>
@@ -154,26 +175,6 @@ export function Actividad() {
 
       {task.precaucion && (
         <p className="m-0 mb-4 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-3.5 py-3">{task.precaucion}</p>
-      )}
-
-      {pasos.length > 0 && (
-        <>
-          <p className="m-0 mb-2.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Cómo acompañar</p>
-          <div className="grid gap-2.5 mb-4.5 text-[16px] leading-relaxed text-tinta-suave">
-            {pasos.map((p, i) => (
-              <span key={p}>
-                {i + 1}. {p}
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-
-      {task.porQue && (
-        <div className="bg-fila-fria rounded-2xl p-4 mb-4.5">
-          <p className="m-0 mb-1.5 text-[15px] font-bold text-verde-profundo">¿Por qué esta actividad?</p>
-          <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">{task.porQue}</p>
-        </div>
       )}
 
       {task.comentario && (

@@ -4,7 +4,8 @@ import { supabase } from "../../lib/supabase";
 import { callAdminAccounts } from "../../lib/adminAccounts";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
-import { categoryLabel, type MediaResource, type ResourceCategory } from "../../lib/mediaResources";
+import { PillToggle } from "../ui/PillToggle";
+import { moduloLabel, type MediaResource, type ResourceModulo } from "../../lib/mediaResources";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const TIPO_OPTIONS: { value: string; label: string }[] = [
@@ -13,7 +14,7 @@ const TIPO_OPTIONS: { value: string; label: string }[] = [
   { value: "estrategia", label: "Estrategia" },
   { value: "neuroproteccion", label: "Neuroprotección" },
 ];
-const categories = Object.keys(categoryLabel) as ResourceCategory[];
+const modulos = Object.keys(moduloLabel) as ResourceModulo[];
 
 // Plans always run Sunday-to-Sunday — if this is the first plan and today
 // isn't Sunday, only today through the coming Sunday is offered (a partial
@@ -52,6 +53,7 @@ interface DraftTask {
   pasos: string;
   porQue: string;
   notaClinica: string;
+  mediaResourceId: string | null;
 }
 
 let draftSeq = 0;
@@ -84,8 +86,9 @@ export function AssignPlanModal({
   const [pasos, setPasos] = useState("");
   const [porQue, setPorQue] = useState("");
   const [notaClinica, setNotaClinica] = useState("");
+  const [mediaResourceId, setMediaResourceId] = useState<string | null>(null);
   const [guardarEnBiblioteca, setGuardarEnBiblioteca] = useState(false);
-  const [nuevaCategoria, setNuevaCategoria] = useState<ResourceCategory>("movimiento");
+  const [nuevoModulo, setNuevoModulo] = useState<ResourceModulo>("movimiento");
   const [nuevoEnlace, setNuevoEnlace] = useState("");
   const [tasks, setTasks] = useState<DraftTask[]>([]);
   const [vistaCompleta, setVistaCompleta] = useState(false);
@@ -120,6 +123,7 @@ export function AssignPlanModal({
     setPrecaucion(r.precaucion ?? "");
     setPasos((r.pasos ?? []).join("\n"));
     setPorQue(r.por_que ?? "");
+    setMediaResourceId(r.id);
   }
 
   function resetTaskForm() {
@@ -132,6 +136,7 @@ export function AssignPlanModal({
     setPasos("");
     setPorQue("");
     setNotaClinica("");
+    setMediaResourceId(null);
     setGuardarEnBiblioteca(false);
     setNuevoEnlace("");
     setResourceSearch("");
@@ -148,23 +153,29 @@ export function AssignPlanModal({
     }
     setError("");
 
+    let taskMediaResourceId = mediaResourceId;
     if (source === "nuevo" && guardarEnBiblioteca) {
-      const { error: saveError } = await supabase.from("media_resources").insert({
-        titulo: titulo.trim(),
-        tipo,
-        categoria: nuevaCategoria,
-        media_kind: "enlace",
-        external_url: nuevoEnlace.trim(),
-        duracion: duracion.trim() || null,
-        detalle: detalle.trim() || null,
-        precaucion: precaucion.trim() || null,
-        pasos: pasos.trim() ? pasos.split("\n").map((p) => p.trim()).filter(Boolean) : null,
-        por_que: porQue.trim() || null,
-      });
+      const { data: saved, error: saveError } = await supabase
+        .from("media_resources")
+        .insert({
+          titulo: titulo.trim(),
+          tipo,
+          modulo: nuevoModulo,
+          media_kind: "enlace",
+          external_url: nuevoEnlace.trim(),
+          duracion: duracion.trim() || null,
+          detalle: detalle.trim() || null,
+          precaucion: precaucion.trim() || null,
+          pasos: pasos.trim() ? pasos.split("\n").map((p) => p.trim()).filter(Boolean) : null,
+          por_que: porQue.trim() || null,
+        })
+        .select("id")
+        .single();
       if (saveError) {
         setError(`No pudimos guardar en la biblioteca: ${saveError.message}`);
         return;
       }
+      taskMediaResourceId = saved.id;
     }
 
     draftSeq += 1;
@@ -182,6 +193,7 @@ export function AssignPlanModal({
         pasos: pasos.trim(),
         porQue: porQue.trim(),
         notaClinica: notaClinica.trim(),
+        mediaResourceId: taskMediaResourceId,
       },
     ]);
     resetTaskForm();
@@ -212,6 +224,7 @@ export function AssignPlanModal({
       if (t.pasos.trim()) task.pasos = t.pasos.split("\n").map((p) => p.trim()).filter(Boolean);
       if (t.porQue.trim()) task.por_que = t.porQue.trim();
       if (t.notaClinica.trim()) task.nota_clinica = t.notaClinica.trim();
+      if (t.mediaResourceId) task.media_resource_id = t.mediaResourceId;
       return task;
     });
     const { error: rpcError } = await supabase.rpc("assign_initial_plan", {
@@ -234,7 +247,7 @@ export function AssignPlanModal({
   }
 
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={onClose} size="lg">
       <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Asignar programa {isFirstAssignment ? "inicial" : "de la semana"}</h2>
       <p className="m-0 mb-5 text-sm text-tinta-tenue">
         {isFirstAssignment
@@ -242,21 +255,18 @@ export function AssignPlanModal({
           : "Armá las actividades de la semana y elegí cuándo se publican."}
       </p>
 
-      <div className="grid grid-cols-2 gap-1.5 bg-[#f2eede] p-1.5 rounded-full mb-4">
-        <button
-          type="button"
-          onClick={() => setSource("biblioteca")}
-          className={`min-h-10 rounded-full border-none font-sans text-[14px] font-semibold cursor-pointer ${source === "biblioteca" ? "bg-white text-tinta" : "bg-transparent text-[#6b7c80]"}`}
-        >
-          Elegir de la biblioteca
-        </button>
-        <button
-          type="button"
-          onClick={() => setSource("nuevo")}
-          className={`min-h-10 rounded-full border-none font-sans text-[14px] font-semibold cursor-pointer ${source === "nuevo" ? "bg-white text-tinta" : "bg-transparent text-[#6b7c80]"}`}
-        >
-          Crear nuevo
-        </button>
+      <div className="mb-4">
+        <PillToggle
+          value={source}
+          onChange={(v) => {
+            setSource(v);
+            if (v === "nuevo") setMediaResourceId(null);
+          }}
+          options={[
+            { value: "biblioteca", label: "Elegir de la biblioteca" },
+            { value: "nuevo", label: "Crear nuevo" },
+          ]}
+        />
       </div>
 
       {source === "biblioteca" && (
@@ -266,9 +276,9 @@ export function AssignPlanModal({
             value={resourceSearch}
             onChange={(e) => setResourceSearch(e.target.value)}
             placeholder="Buscar recurso…"
-            className="w-full min-h-11 px-4 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta mb-2.5"
+            className="w-full min-h-11 px-4 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta mb-2.5"
           />
-          <div className="grid gap-1.5 max-h-40 overflow-y-auto">
+          <div className="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto">
             {filteredResources.length === 0 && <p className="m-0 text-[13px] text-tinta-tenue">Ningún recurso activo coincide.</p>}
             {filteredResources.map((r) => (
               <button
@@ -276,21 +286,21 @@ export function AssignPlanModal({
                 type="button"
                 onClick={() => pickResource(r)}
                 className={`text-left px-3.5 py-2.5 rounded-xl border-[1.5px] cursor-pointer font-sans text-[14px] ${
-                  titulo === r.titulo ? "border-verde-serenidad bg-[#f5f9f9]" : "border-[#ddd7be] bg-white"
+                  titulo === r.titulo ? "border-verde-serenidad bg-verde-tenue" : "border-borde-campo bg-white"
                 }`}
               >
-                <strong className="text-tinta">{r.titulo}</strong> <span className="text-tinta-tenue">· {categoryLabel[r.categoria]}</span>
+                <strong className="text-tinta">{r.titulo}</strong> <span className="text-tinta-tenue">· {moduloLabel[r.modulo]}</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      <div className="bg-campo rounded-2xl p-4 grid gap-3 mb-4">
+      <div className="bg-campo rounded-2xl p-4 grid grid-cols-1 gap-3 mb-4">
         <div className="grid grid-cols-2 gap-3">
-          <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+          <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
             Día
-            <select value={dia} onChange={(e) => setDia(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta">
+            <select value={dia} onChange={(e) => setDia(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta">
               {days.map((d) => (
                 <option key={d} value={d}>
                   {d}
@@ -298,9 +308,9 @@ export function AssignPlanModal({
               ))}
             </select>
           </label>
-          <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+          <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
             Tipo
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta">
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta">
               {TIPO_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
@@ -309,40 +319,40 @@ export function AssignPlanModal({
             </select>
           </label>
         </div>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+        <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
           Título
-          <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+          <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta" />
         </label>
         <div className="grid grid-cols-2 gap-3">
-          <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+          <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
             Hora (opcional)
-            <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+            <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta" />
             <span className="text-[11.5px] font-normal text-tinta-tenue">Se usa también para la notificación en el calendario de la familia.</span>
           </label>
-          <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+          <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
             Duración (opcional)
-            <input type="text" value={duracion} onChange={(e) => setDuracion(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+            <input type="text" value={duracion} onChange={(e) => setDuracion(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta" />
           </label>
         </div>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+        <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
           Detalle (opcional)
-          <textarea value={detalle} onChange={(e) => setDetalle(e.target.value)} rows={2} className="w-full rounded-lg border-[1.5px] border-[#ddd7be] bg-white px-3 py-2.5 font-sans text-[14px] text-tinta resize-y" />
+          <textarea value={detalle} onChange={(e) => setDetalle(e.target.value)} rows={2} className="w-full rounded-lg border-[1.5px] border-borde-campo bg-white px-3 py-2.5 font-sans text-[14px] text-tinta resize-y" />
         </label>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+        <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
           Precaución (opcional)
-          <input type="text" value={precaucion} onChange={(e) => setPrecaucion(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+          <input type="text" value={precaucion} onChange={(e) => setPrecaucion(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta" />
         </label>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+        <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
           Pasos (uno por línea, opcional)
-          <textarea value={pasos} onChange={(e) => setPasos(e.target.value)} rows={2} className="w-full rounded-lg border-[1.5px] border-[#ddd7be] bg-white px-3 py-2.5 font-sans text-[14px] text-tinta resize-y" />
+          <textarea value={pasos} onChange={(e) => setPasos(e.target.value)} rows={2} className="w-full rounded-lg border-[1.5px] border-borde-campo bg-white px-3 py-2.5 font-sans text-[14px] text-tinta resize-y" />
         </label>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+        <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
           ¿Para qué sirve? (opcional)
-          <input type="text" value={porQue} onChange={(e) => setPorQue(e.target.value)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+          <input type="text" value={porQue} onChange={(e) => setPorQue(e.target.value)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta" />
         </label>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+        <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
           Mensaje de la clínica para esta actividad (opcional, se destaca en la vista de la familia)
-          <textarea value={notaClinica} onChange={(e) => setNotaClinica(e.target.value)} rows={2} className="w-full rounded-lg border-[1.5px] border-[#ddd7be] bg-white px-3 py-2.5 font-sans text-[14px] text-tinta resize-y" />
+          <textarea value={notaClinica} onChange={(e) => setNotaClinica(e.target.value)} rows={2} className="w-full rounded-lg border-[1.5px] border-borde-campo bg-white px-3 py-2.5 font-sans text-[14px] text-tinta resize-y" />
         </label>
 
         {source === "nuevo" && (
@@ -353,19 +363,19 @@ export function AssignPlanModal({
         )}
         {source === "nuevo" && guardarEnBiblioteca && (
           <div className="grid grid-cols-2 gap-3">
-            <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
-              Categoría (biblioteca)
-              <select value={nuevaCategoria} onChange={(e) => setNuevaCategoria(e.target.value as ResourceCategory)} className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta">
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {categoryLabel[c]}
+            <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
+              Módulo (biblioteca)
+              <select value={nuevoModulo} onChange={(e) => setNuevoModulo(e.target.value as ResourceModulo)} className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta">
+                {modulos.map((m) => (
+                  <option key={m} value={m}>
+                    {moduloLabel[m]}
                   </option>
                 ))}
               </select>
             </label>
-            <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51]">
+            <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave">
               Enlace (video u otro)
-              <input type="url" value={nuevoEnlace} onChange={(e) => setNuevoEnlace(e.target.value)} placeholder="https://…" className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta" />
+              <input type="url" value={nuevoEnlace} onChange={(e) => setNuevoEnlace(e.target.value)} placeholder="https://…" className="w-full min-w-0 min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta" />
             </label>
           </div>
         )}
@@ -376,7 +386,7 @@ export function AssignPlanModal({
       </div>
 
       {tasks.length > 0 && (
-        <div className="grid gap-2 mb-4">
+        <div className="grid grid-cols-1 gap-2 mb-4">
           {tasks.map((t) => (
             <div key={t.key} className="flex items-center justify-between gap-3 bg-white border border-borde rounded-xl px-3.5 py-2.5">
               <span className="text-[14px] text-tinta">
@@ -390,23 +400,23 @@ export function AssignPlanModal({
         </div>
       )}
 
-      <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51] mb-4">
+      <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave mb-4">
         Fecha de publicación
         <input
           type="date"
           value={publishDate}
           onChange={(e) => setPublishDate(e.target.value)}
-          className="min-h-11 px-3 rounded-lg border-[1.5px] border-[#ddd7be] bg-white font-sans text-[14px] text-tinta max-w-[200px]"
+          className="min-h-11 px-3 rounded-lg border-[1.5px] border-borde-campo bg-white font-sans text-[14px] text-tinta max-w-[200px]"
         />
       </label>
 
-      <label className="grid gap-1.5 text-[13px] font-semibold text-[#3b4c51] mb-4">
+      <label className="grid grid-cols-1 gap-1.5 text-[13px] font-semibold text-tinta-suave mb-4">
         Mensaje de bienvenida (opcional — se muestra una sola vez al entrar)
         <textarea
           value={mensajeBienvenida}
           onChange={(e) => setMensajeBienvenida(e.target.value)}
           rows={3}
-          className="w-full rounded-lg border-[1.5px] border-verde-serenidad bg-[#f5f9f9] px-3 py-2.5 font-sans text-[14px] text-tinta resize-y"
+          className="w-full rounded-lg border-[1.5px] border-verde-serenidad bg-verde-tenue px-3 py-2.5 font-sans text-[14px] text-tinta resize-y"
         />
       </label>
 

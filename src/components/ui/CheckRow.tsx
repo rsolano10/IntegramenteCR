@@ -16,7 +16,7 @@ export function CheckRow({ checked, onToggle, children, disabled }: Props) {
       onClick={onToggle}
       disabled={disabled && !checked}
       className={`grid grid-cols-[28px_1fr] gap-3.5 items-start text-left p-3.5 rounded-2xl border-[1.5px] font-sans text-tinta cursor-pointer disabled:cursor-not-allowed disabled:opacity-45 ${
-        checked ? "border-verde-serenidad bg-[#f5f9f9]" : "border-borde bg-white"
+        checked ? "border-verde-serenidad bg-verde-tenue" : "border-borde bg-white"
       }`}
     >
       <span
@@ -37,7 +37,7 @@ export function RadioRow({ checked, onSelect, children }: { checked: boolean; on
       type="button"
       onClick={onSelect}
       className={`grid grid-cols-[26px_1fr] gap-3.5 items-center text-left min-h-14 px-4 rounded-2xl border-[1.5px] font-sans text-tinta cursor-pointer ${
-        checked ? "border-verde-serenidad bg-[#f5f9f9]" : "border-borde bg-white"
+        checked ? "border-verde-serenidad bg-verde-tenue" : "border-borde bg-white"
       }`}
     >
       <span

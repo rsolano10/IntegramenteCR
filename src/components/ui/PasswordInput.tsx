@@ -7,7 +7,7 @@ export function PasswordInput({
   value,
   onChange,
   placeholder,
-  className = "min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta",
+  className = "min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta",
 }: {
   value: string;
   onChange: (v: string) => void;

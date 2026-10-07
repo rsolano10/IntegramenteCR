@@ -49,19 +49,6 @@ export function todayFeaturedTask(plan: PlanDay[]): { day: PlanDay; task: PlanTa
   return { day, task };
 }
 
-export function computeAdherencia(plan: PlanDay[]): { done: number; total: number } {
-  let done = 0;
-  let total = 0;
-  for (const day of plan) {
-    for (const task of day.tasks) {
-      if (task.estado === "futuro") continue; // not due yet — doesn't count either way
-      total += 1;
-      if (task.estado === "realizado") done += 1;
-    }
-  }
-  return { done, total };
-}
-
 const caidasSuffix: Record<string, string> = {
   no: "sin caídas registradas",
   casi_cae: "casi una caída registrada",

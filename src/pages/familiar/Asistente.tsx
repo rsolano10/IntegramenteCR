@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
+import { useSession } from "../../lib/useSession";
 import { ChatBubble } from "../../components/ui/ChatBubble";
 
 const suggestions = [
@@ -12,6 +13,8 @@ const suggestions = [
 
 export function Asistente() {
   const navigate = useNavigate();
+  const session = useSession();
+  const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   const messages = useAppStore((s) => s.chatMessages);
   const sendChatMessage = useAppStore((s) => s.sendChatMessage);
   const notifyNow = useAppStore((s) => s.notifyNow);
@@ -54,6 +57,9 @@ export function Asistente() {
       {/* No independent scroll region here — the page itself scrolls, so
           there's only ever one scrollbar instead of two nested ones. */}
       <div className="grid gap-3 mb-4">
+        <ChatBubble role="bot">
+          Hola{firstName ? `, ${firstName}` : ""}. Contame qué está pasando y te ayudo, o elegí una de las dudas frecuentes de abajo.
+        </ChatBubble>
         {messages.map((m) => (
           <div key={m.id}>
             <ChatBubble role={m.role}>
@@ -61,7 +67,7 @@ export function Asistente() {
               {m.escalate && (
                 <div className="mt-2.5">
                   {notified.has(m.id) ? (
-                    <span className="text-[13px] font-semibold text-[#4c7a4c]">✓ Aviso enviado a la Dra. Solano</span>
+                    <span className="text-[13px] font-semibold text-semaforo-verde-texto">✓ Aviso enviado a la Dra. Solano</span>
                   ) : (
                     <button
                       type="button"
@@ -114,7 +120,7 @@ export function Asistente() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Escribí tu duda…"
-          className="flex-1 min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
+          className="flex-1 min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta"
         />
         <button
           type="submit"

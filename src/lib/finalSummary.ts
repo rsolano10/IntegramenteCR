@@ -5,9 +5,9 @@
 // respuestas, nunca de texto libre generado sin control. `validateFinalSummary`
 // existe como red de seguridad reutilizable — hoy es redundante porque esta
 // función solo puede producir salidas conformes por construcción, pero es la
-// misma validación que debe aplicarse si el generador se reemplaza más
-// adelante por un LLM (decisión ya tomada por el usuario: "LLM con
-// validación estricta posterior" — pendiente de una API key de Anthropic).
+// misma validación que debe aplicarse al generador LLM que ya reemplaza este
+// fallback en producción (supabase/functions/generate-summary, con Gemini)
+// cuando ese modelo falla o su salida no pasa `validateFinalSummary`.
 import type { Answers } from "./onboardingSchema";
 import { nombreConTratamiento, participanteEsRespondente } from "./respondentVoice";
 

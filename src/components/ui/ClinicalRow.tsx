@@ -34,7 +34,7 @@ export function ClinicalRow({
   return (
     <>
       {/* Phone / tablet: stacked card */}
-      <div className={`lg:hidden grid gap-2.5 py-4 px-3 border-b border-[#f4f0e2] text-[15px] ${highlightClass}`}>
+      <div className={`lg:hidden grid gap-2.5 py-4 px-3 border-b border-borde-suave text-[15px] ${highlightClass}`}>
         <div>
           <strong className="text-[16px]">{nombre}</strong>
           <br />
@@ -58,7 +58,7 @@ export function ClinicalRow({
 
       {/* Desktop: table row */}
       <div
-        className={`hidden lg:grid items-center gap-4 py-4.5 text-[16px] border-b border-[#f4f0e2] ${highlightClass ? `${highlightClass} px-3` : ""}`}
+        className={`hidden lg:grid items-center gap-4 py-4.5 text-[16px] border-b border-borde-suave ${highlightClass ? `${highlightClass} px-3` : ""}`}
         style={{ gridTemplateColumns: "1.6fr 1fr 0.9fr 0.9fr auto" }}
       >
         <span>

@@ -25,13 +25,13 @@ export function Ideacion() {
           <div className="bg-alerta rounded-2xl p-5.5">
             <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">{apoyo.label}</p>
             <p className="m-0 font-serif text-[30px]">{apoyo.value}</p>
-            <p className="m-0 mt-1.5 text-[15px] text-[#6e4436]">{apoyo.note}</p>
+            <p className="m-0 mt-1.5 text-[15px] text-alerta-texto-suave">{apoyo.note}</p>
           </div>
-          <div className="bg-campo border border-[#efeada] rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
+          <div className="bg-campo border border-borde-suave rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
             No la dejes sola. Retirá medicamentos y objetos de riesgo del alcance. Escuchá sin discutir ni minimizar.
           </div>
         </div>
-        <div className="border-t border-[#efeada] pt-5.5 grid gap-3.5">
+        <div className="border-t border-borde-suave pt-5.5 grid gap-3.5">
           <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">
             Definiste en el consentimiento que se avise a la profesional asignada. Podés cambiarlo ahora.
           </p>

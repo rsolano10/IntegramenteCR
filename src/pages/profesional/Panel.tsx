@@ -2,11 +2,10 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { getPatientName, computeAdherencia } from "../../lib/patient";
-import { useAppStore } from "../../lib/store";
+import { useSession } from "../../lib/useSession";
 import { semaforoData } from "../../lib/rules";
 import { PatientDetailModal, type PatientRow } from "../../components/profesional/PatientDetailModal";
-import { planTiers, professional, type Semaforo } from "../../lib/mockData";
+import { planTiers, type Semaforo } from "../../lib/mockData";
 
 interface PendingThread {
   patient_id: string;
@@ -29,15 +28,23 @@ function timeAgo(iso: string) {
 export function Panel() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const session = useSession();
+  const nombre = session.status === "authed" ? session.profile.nombre : "";
 
-  // Rosa is the only patient whose plan/adherencia is real data today (still
-  // local Zustand, not Supabase — plans/plan_tasks migration is a future
-  // phase) — the honest "adherencia" metric below is scoped to just her for
-  // that reason, never presented as a program-wide average that doesn't exist.
-  const onboarding2 = useAppStore((s) => s.onboarding2);
-  const plan = useAppStore((s) => s.plan);
-  const rosaName = getPatientName(onboarding2);
-  const { done, total } = computeAdherencia(plan);
+  // Real program-wide adherence from plan_tasks.estado (get_program_adherencia
+  // RPC) — this used to read the local Zustand demo store instead, which is
+  // why a hardcoded "Rosa Jiménez" kept showing up here even after every
+  // demo patient was deleted from the database.
+  const { data: adherencia } = useQuery({
+    queryKey: ["program-adherencia"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_program_adherencia").single();
+      if (error) throw error;
+      return data as { done: number; total: number };
+    },
+  });
+  const done = adherencia?.done ?? 0;
+  const total = adherencia?.total ?? 0;
 
   const [detailPatient, setDetailPatient] = useState<PatientRow | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
@@ -105,13 +112,13 @@ export function Panel() {
   return (
     <div className="im-in max-w-[1200px] mx-auto px-5 py-8 pb-14 sm:px-8 lg:px-8 lg:py-10 lg:pb-20">
       <div className="mb-6">
-        <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Panel · {professional.nombre}</p>
+        <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Panel · {nombre}</p>
         <h1 className="font-serif font-normal text-[32px] sm:text-[36px] m-0">Pendientes del programa</h1>
       </div>
 
       {statusMsg && (
         <div
-          className={`flex items-center justify-between gap-4 px-5 py-3 rounded-2xl mb-5 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-[#edf4f4] text-verde-profundo"}`}
+          className={`flex items-center justify-between gap-4 px-5 py-3 rounded-2xl mb-5 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-verde-tenue text-verde-profundo"}`}
         >
           <span>{statusMsg.text}</span>
           <button type="button" onClick={() => setStatusMsg(null)} className="border-none bg-transparent font-sans text-[13px] font-semibold cursor-pointer text-inherit">
@@ -121,13 +128,13 @@ export function Panel() {
       )}
 
       <div className="bg-white border border-borde rounded-3xl overflow-hidden shadow-elevada mb-6">
-        <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-[#efeada]">
+        <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-borde-suave">
           <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Pendientes</p>
           <h2 className="font-serif font-normal text-2xl m-0">Lo que necesita atención hoy</h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 border-b border-[#efeada]">
-          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-[#efeada]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 border-b border-borde-suave">
+          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-borde-suave">
             <div className="flex items-center justify-between mb-3.5">
               <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Pacientes por evaluar</p>
               {porEvaluar.length > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{porEvaluar.length}</span>}
@@ -160,7 +167,7 @@ export function Panel() {
                 {porEvaluar.length > 5 && (
                   <button
                     type="button"
-                    onClick={() => navigate("/app/profesional/usuarios?tab=pacientes")}
+                    onClick={() => navigate("/app/profesional/usuarios")}
                     className="text-[13px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none text-left justify-self-start"
                   >
                     Ver los {porEvaluar.length - 5} restantes →
@@ -208,8 +215,8 @@ export function Panel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 border-t border-[#efeada]">
-          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-[#efeada]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 border-t border-borde-suave">
+          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-borde-suave">
             <div className="flex items-center justify-between mb-3.5">
               <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Esperando revisión de semana</p>
               {esperandoRevision.length > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{esperandoRevision.length}</span>}
@@ -264,12 +271,12 @@ export function Panel() {
       </div>
 
       <div className="bg-white border border-borde rounded-3xl overflow-hidden shadow-elevada">
-        <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-[#efeada]">
+        <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-borde-suave">
           <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Métricas generales</p>
           <h2 className="font-serif font-normal text-2xl m-0">El programa en conjunto</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#efeada]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-borde-suave">
           <div className="bg-white px-5 py-5 sm:px-8 sm:py-6">
             <div className="font-serif text-2xl sm:text-[32px] text-verde-profundo">{pacientesActivos}</div>
             <p className="m-0 mt-0.5 text-sm sm:text-[15px] text-tinta-tenue">pacientes activos</p>
@@ -295,7 +302,7 @@ export function Panel() {
           <div className="bg-white px-5 py-5 sm:px-8 sm:py-6">
             <div className="font-serif text-2xl sm:text-[32px] text-verde-profundo">{total > 0 ? `${Math.round((done / total) * 100)}%` : "—"}</div>
             <p className="m-0 mt-0.5 text-sm sm:text-[15px] text-tinta-tenue">
-              adherencia · {rosaName} ({done} de {total}) — único paciente con plan real hoy, de {pacientesActivos}
+              {total > 0 ? `adherencia del programa · ${done} de ${total} tareas realizadas` : "adherencia del programa · todavía no hay tareas registradas"}
             </p>
           </div>
         </div>

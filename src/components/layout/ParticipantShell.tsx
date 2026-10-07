@@ -5,11 +5,15 @@ import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { supabase } from "../../lib/supabase";
 import { uploadAvatar } from "../../lib/avatar";
+import { useChangePassword, passwordStrength } from "../../lib/useChangePassword";
 import { Modal } from "../ui/Modal";
 import { WelcomeMessageModal } from "../ui/WelcomeMessageModal";
 import { ProductTour } from "../ui/ProductTour";
 import { participanteTourSteps } from "../../lib/tourSteps";
 import { CalendarSyncCard } from "../ui/CalendarSyncCard";
+import { BigActionButton } from "../ui/BigActionButton";
+
+const bigInputClass = "w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] text-tinta";
 
 function PendienteRevision() {
   return (
@@ -31,14 +35,30 @@ function AvatarMenu() {
   const { data: myPatient } = useMyPatient();
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const [open, setOpen] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [screen, setScreen] = useState<"menu" | "calendar" | "nombre" | "password">("menu");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [nombreValue, setNombreValue] = useState("");
+  const [savingNombre, setSavingNombre] = useState(false);
+
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const email = session.status === "authed" ? session.session.user.email ?? "" : "";
+  const { changePassword, loading: pwLoading, error: pwError, setError: setPwError } = useChangePassword(email);
+
   if (session.status !== "authed") return null;
   const { nombre, foto_url } = session.profile;
   const initials = nombre.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "P";
+
+  function closeAll() {
+    setOpen(false);
+    setScreen("menu");
+    setError("");
+    setPwError("");
+  }
 
   async function doLogout() {
     navigate("/");
@@ -64,6 +84,34 @@ function AvatarMenu() {
     }
   }
 
+  async function saveNombre() {
+    if (session.status !== "authed" || !nombreValue.trim()) return;
+    setSavingNombre(true);
+    const { error: updateError } = await supabase.from("profiles").update({ nombre: nombreValue.trim() }).eq("id", session.session.user.id);
+    setSavingNombre(false);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    await supabase.auth.refreshSession();
+    setScreen("menu");
+  }
+
+  async function submitPassword() {
+    setPwError("");
+    if (newPw !== confirmPw) {
+      setPwError("Las contraseñas nuevas no coinciden.");
+      return;
+    }
+    const ok = await changePassword(currentPw, newPw);
+    if (ok) {
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+      setScreen("menu");
+    }
+  }
+
   return (
     <>
       <button
@@ -79,8 +127,8 @@ function AvatarMenu() {
         )}
       </button>
 
-      {open && !showCalendar && (
-        <Modal onClose={() => setOpen(false)}>
+      {open && screen === "menu" && (
+        <Modal onClose={closeAll}>
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="w-20 h-20 rounded-full overflow-hidden">
               {foto_url ? (
@@ -92,40 +140,73 @@ function AvatarMenu() {
             <p className="m-0 text-[22px] font-serif">{nombre}</p>
 
             <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="w-full min-h-17 border-2 border-mostaza-vital rounded-2xl bg-aviso text-[#4a3a1b] font-sans text-[20px] font-bold cursor-pointer disabled:opacity-50"
-            >
+            <BigActionButton variant="caution" size="md" disabled={uploading} onClick={() => fileRef.current?.click()}>
               {uploading ? "Subiendo…" : "Cambiar foto"}
-            </button>
+            </BigActionButton>
             {error && <p className="m-0 text-[15px] text-alerta-texto">{error}</p>}
-            {myPatient?.id && (
-              <button
-                type="button"
-                onClick={() => setShowCalendar(true)}
-                className="w-full min-h-17 border-2 border-verde-serenidad rounded-2xl bg-[#f5f9f9] text-verde-profundo font-sans text-[20px] font-bold cursor-pointer"
-              >
-                Avisos en tu teléfono
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={doLogout}
-              className="w-full min-h-17 border-none rounded-2xl bg-tinta text-white font-sans text-[20px] font-bold cursor-pointer hover:bg-verde-profundo"
+            <BigActionButton
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                setNombreValue(nombre);
+                setScreen("nombre");
+              }}
             >
+              Cambiar mi nombre
+            </BigActionButton>
+            {myPatient?.id && (
+              <BigActionButton variant="soft" size="md" onClick={() => setScreen("calendar")}>
+                Avisos en tu teléfono
+              </BigActionButton>
+            )}
+            <BigActionButton variant="secondary" size="md" onClick={() => setScreen("password")}>
+              Cambiar contraseña
+            </BigActionButton>
+            <BigActionButton variant="ink" size="md" onClick={doLogout}>
               Cerrar sesión
-            </button>
+            </BigActionButton>
           </div>
         </Modal>
       )}
 
-      {open && showCalendar && myPatient?.id && (
-        <Modal onClose={() => setShowCalendar(false)}>
+      {open && screen === "nombre" && (
+        <Modal onClose={closeAll}>
+          <button type="button" onClick={() => setScreen("menu")} className="mb-3 border-none bg-transparent font-sans text-[16px] text-verde-profundo cursor-pointer p-0">
+            ‹ Atrás
+          </button>
+          <p className="m-0 mb-4 text-[20px] leading-relaxed text-tinta">¿Cómo querés que te llamemos?</p>
+          <input type="text" value={nombreValue} onChange={(e) => setNombreValue(e.target.value)} className={`${bigInputClass} mb-4`} />
+          {error && <p className="m-0 mb-4 text-[15px] text-alerta-texto">{error}</p>}
+          <BigActionButton variant="ink" disabled={savingNombre || !nombreValue.trim()} onClick={saveNombre}>
+            {savingNombre ? "Guardando…" : "Guardar"}
+          </BigActionButton>
+        </Modal>
+      )}
+
+      {open && screen === "password" && (
+        <Modal onClose={closeAll}>
+          <button type="button" onClick={() => setScreen("menu")} className="mb-3 border-none bg-transparent font-sans text-[16px] text-verde-profundo cursor-pointer p-0">
+            ‹ Atrás
+          </button>
+          <p className="m-0 mb-4 text-[20px] leading-relaxed text-tinta">Cambiar contraseña</p>
+          <div className="grid grid-cols-1 gap-3.5 mb-4">
+            <input type="password" placeholder="Contraseña actual" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} className={bigInputClass} />
+            <input type="password" placeholder="Nueva contraseña" value={newPw} onChange={(e) => setNewPw(e.target.value)} className={bigInputClass} />
+            {newPw && <p className="m-0 text-[15px] text-tinta-tenue">Fuerza: {passwordStrength(newPw)} · al menos 8 caracteres, con letras y números</p>}
+            <input type="password" placeholder="Confirmar nueva contraseña" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} className={bigInputClass} />
+          </div>
+          {pwError && <p className="m-0 mb-4 text-[15px] text-alerta-texto">{pwError}</p>}
+          <BigActionButton variant="ink" disabled={pwLoading || !currentPw || !newPw || !confirmPw} onClick={submitPassword}>
+            {pwLoading ? "Guardando…" : "Guardar contraseña"}
+          </BigActionButton>
+        </Modal>
+      )}
+
+      {open && screen === "calendar" && myPatient?.id && (
+        <Modal onClose={closeAll}>
           <button
             type="button"
-            onClick={() => setShowCalendar(false)}
+            onClick={() => setScreen("menu")}
             className="mb-3 border-none bg-transparent font-sans text-[16px] text-verde-profundo cursor-pointer p-0"
           >
             ‹ Atrás

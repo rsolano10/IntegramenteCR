@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../lib/store";
 import { CheckRow } from "../components/ui/CheckRow";
+import { Button } from "../components/ui/Button";
 
 export function Consent() {
   const navigate = useNavigate();
@@ -37,16 +38,9 @@ export function Consent() {
         <CheckRow checked={c2} onToggle={toggleConsent2}>
           Autorizo el uso de los datos ingresados para generar el plan y compartirlo con el equipo tratante.
         </CheckRow>
-        <button
-          type="button"
-          disabled={!canContinue}
-          onClick={() => navigate("/app/perfil/bienvenida")}
-          className={`min-h-14 rounded-full font-sans font-semibold text-[17px] border-none ${
-            canContinue ? "bg-tinta text-white cursor-pointer hover:bg-verde-profundo" : "bg-[#cbd8d9] text-white cursor-not-allowed"
-          }`}
-        >
+        <Button variant="ink" fullWidth disabled={!canContinue} onClick={() => navigate("/app/perfil/bienvenida")}>
           Continuar al perfil funcional
-        </button>
+        </Button>
       </div>
     </div>
   );

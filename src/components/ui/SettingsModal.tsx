@@ -14,10 +14,10 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     <Modal onClose={onClose}>
       <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Configuraciones</h2>
       <p className="m-0 mb-5 text-sm text-tinta-tenue">Podés cambiar esto cuando quieras.</p>
-      <p className="m-0 mb-3 text-[15px] font-semibold text-[#3b4c51]">
+      <p className="m-0 mb-3 text-[15px] font-semibold text-tinta-suave">
         Si el sistema detecta una señal de riesgo, ¿querés que se avise a la profesional asignada?
       </p>
-      <div className="grid gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5">
         <RadioRow checked={notify === "si"} onSelect={() => setNotify("si")}>
           Sí, avisar a la Dra. Solano
         </RadioRow>

@@ -67,17 +67,17 @@ export function Login() {
         <h2 className="font-serif font-normal text-2xl lg:text-[28px] m-0 mb-2">Iniciar sesión</h2>
         <p className="m-0 mb-6 text-[15px] leading-relaxed text-tinta-tenue">Entrá con tu correo y contraseña.</p>
         <div className="grid gap-4.5">
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+          <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
             Correo electrónico
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nombre@correo.com"
-              className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[17px] text-tinta"
+              className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta"
             />
           </label>
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+          <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
             Contraseña
             <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
           </label>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Button } from "../ui/Button";
 import { PasswordInput } from "../ui/PasswordInput";
+import { passwordIssue, passwordStrength } from "../../lib/useChangePassword";
 
 // Shared by CompletarCuenta (first login after a clinic invite) and
 // ResetPassword (after a recovery link) — both land here with an active
@@ -17,8 +18,9 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
 
   async function submit() {
     setError("");
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    const issue = passwordIssue(password);
+    if (issue) {
+      setError(issue);
       return;
     }
     if (password !== confirm) {
@@ -52,11 +54,16 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
       <h1 className="font-serif font-normal text-[28px] sm:text-[32px] leading-tight m-0 mb-3">{title}</h1>
       <p className="text-base leading-relaxed text-tinta-suave m-0 mb-6">{subtitle}</p>
       <div className="grid gap-4.5">
-        <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+        <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
           Nueva contraseña
           <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
+          {password && (
+            <span className="text-[13px] font-normal text-tinta-tenue">
+              Fuerza: <strong className="text-tinta-suave">{passwordStrength(password)}</strong> · al menos 8 caracteres, con letras y números
+            </span>
+          )}
         </label>
-        <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+        <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
           Confirmar contraseña
           <PasswordInput value={confirm} onChange={setConfirm} placeholder="••••••••" />
         </label>

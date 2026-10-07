@@ -4,6 +4,7 @@ import { useAppStore } from "../../lib/store";
 import { getPlanRestrictions } from "../../lib/patient";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
+import { FormField } from "../../components/ui/FormField";
 import { planHistory } from "../../lib/mockData";
 
 const restrictionDot: Record<"verde" | "amarillo" | "rojo", string> = {
@@ -60,16 +61,17 @@ export function Editor() {
       <Link to="/app/profesional/panel" className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-4">
         ‹ Volver al panel
       </Link>
-      <h1 className="font-serif font-normal text-[26px] sm:text-[34px] m-0 mb-1.5">Plan de Rosa · esta semana</h1>
+      <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Plan de actividades</p>
+      <h1 className="font-serif font-normal text-[32px] sm:text-[36px] m-0 mb-1.5">Plan de Rosa · esta semana</h1>
       <p className="m-0 mb-6.5 text-base sm:text-[17px] text-tinta-tenue">
         Propuesta generada por reglas. Cada cambio se registra y la familia ve el motivo.
       </p>
       <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 items-start">
-        <div className="bg-white border border-borde rounded-3xl p-4 sm:p-7 grid gap-3">
+        <div className="bg-white border border-borde rounded-3xl shadow-elevada p-4 sm:p-7 grid gap-3">
           {displayPlan
             .filter((day) => day.tasks.length > 0)
             .map((day) => (
-              <div key={day.dia} className="grid gap-2">
+              <div key={day.dia} className="grid grid-cols-1 gap-2">
                 {day.tasks.map((task) => (
                   <div
                     key={task.id}
@@ -90,18 +92,19 @@ export function Editor() {
                         </>
                       )}
                     </span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="self-start"
                       onClick={() => setEditing({ dia: day.dia, taskId: task.id, titulo: task.titulo, hora: task.hora })}
-                      className="self-start min-h-10 px-3.5 rounded-full border-[1.5px] border-borde bg-white font-sans text-sm font-semibold cursor-pointer hover:border-verde-serenidad"
                     >
                       Cambiar
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
             ))}
-          <div className="border-t border-[#efeada] pt-4.5 mt-1.5 flex items-center gap-3 flex-wrap">
+          <div className="border-t border-borde-suave pt-4.5 mt-1.5 flex items-center gap-3 flex-wrap">
             <Button variant="ink" dense onClick={publish}>
               Publicar a la familia
             </Button>
@@ -112,10 +115,10 @@ export function Editor() {
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="bg-white border border-borde rounded-2xl p-6">
             <p className="m-0 mb-2.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Restricciones activas</p>
-            <div className="grid gap-2.5 text-[16px] leading-relaxed text-tinta-suave">
+            <div className="grid grid-cols-1 gap-2.5 text-[16px] leading-relaxed text-tinta-suave">
               {restrictions.map((r) => (
                 <span key={r.texto} className="grid grid-cols-[12px_1fr] gap-3 items-start">
                   <span className={`w-2.5 h-2.5 rounded-full mt-1.5 ${restrictionDot[r.color]}`} />
@@ -124,9 +127,9 @@ export function Editor() {
               ))}
             </div>
           </div>
-          <div className="bg-campo border border-[#efeada] rounded-2xl p-6">
+          <div className="bg-campo border border-borde-suave rounded-2xl p-6">
             <p className="m-0 mb-2.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Historial</p>
-            <div className="grid gap-2.5 text-[15px] leading-relaxed text-tinta-tenue">
+            <div className="grid grid-cols-1 gap-2.5 text-[15px] leading-relaxed text-tinta-tenue">
               {recentPlanHistory.map((h, i) => (
                 <span key={`recent-${i}`}>
                   <strong className="text-tinta">{h.quien}</strong> {h.que}
@@ -146,25 +149,15 @@ export function Editor() {
         <Modal onClose={() => setEditing(null)}>
           <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Cambiar actividad</h2>
           <p className="m-0 mb-5 text-sm text-tinta-tenue">{editing.dia}</p>
-          <div className="grid gap-4">
-            <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-              Título
-              <input
-                type="text"
-                value={editing.titulo}
-                onChange={(e) => setEditing({ ...editing, titulo: e.target.value })}
-                className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
-              />
-            </label>
-            <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
-              Hora
-              <input
-                type="text"
-                value={editing.hora}
-                onChange={(e) => setEditing({ ...editing, hora: e.target.value })}
-                className="min-h-12 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta max-w-[160px]"
-              />
-            </label>
+          <div className="grid grid-cols-1 gap-4">
+            <FormField label="Título" type="text" value={editing.titulo} onChange={(e) => setEditing({ ...editing, titulo: e.target.value })} />
+            <FormField
+              label="Hora"
+              type="text"
+              value={editing.hora}
+              onChange={(e) => setEditing({ ...editing, hora: e.target.value })}
+              className="max-w-[160px]"
+            />
           </div>
           <div className="flex gap-3 mt-6">
             <Button variant="secondary" onClick={() => setEditing(null)}>

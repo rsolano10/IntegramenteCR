@@ -26,6 +26,7 @@ import { InvitarContraparte } from "./pages/onboarding/InvitarContraparte";
 
 import { Hoy } from "./pages/familiar/Hoy";
 import { Actividad } from "./pages/familiar/Actividad";
+import { ActividadPasos } from "./pages/familiar/ActividadPasos";
 import { Plan } from "./pages/familiar/Plan";
 import { Actividades } from "./pages/familiar/Actividades";
 import { Asistente } from "./pages/familiar/Asistente";
@@ -36,6 +37,7 @@ import { Mensajes } from "./pages/familiar/Mensajes";
 
 import { ParticipanteHoy } from "./pages/participante/Hoy";
 import { ParticipanteActividad } from "./pages/participante/Actividad";
+import { ParticipanteActividadPasos } from "./pages/participante/ActividadPasos";
 import { Ayuda } from "./pages/participante/Ayuda";
 
 import { Panel } from "./pages/profesional/Panel";
@@ -80,22 +82,39 @@ function DesactivadaGate() {
 }
 
 function RouteGuard({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const session = useSession();
-  const { data: myPatient, isLoading: patientLoading } = useMyPatient();
+  // isPending, not isLoading: React Query v5's isLoading is
+  // `isPending && isFetching`, which is briefly false the instant `enabled`
+  // flips true (right after session resolves) but before the fetch itself
+  // has started — that one-render gap used to make the checks below think
+  // "no patient" was a real answer and bounce through /app/consent on every
+  // cold navigation. isPending stays true until data or an error actually
+  // arrives, regardless of whether a fetch is in flight yet.
+  const { data: myPatient, isPending: patientLoading } = useMyPatient();
   const currentUserId = session.status === "authed" ? session.session.user.id : null;
   const lastUserId = useAppStore((s) => s.lastUserId);
   const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
+  const setRealUserName = useAppStore((s) => s.setRealUserName);
 
   useEffect(() => {
     if (currentUserId && lastUserId !== currentUserId) resetOnboardingForNewAccount(currentUserId);
   }, [currentUserId, lastUserId, resetOnboardingForNewAccount]);
 
+  useEffect(() => {
+    setRealUserName(session.status === "authed" ? session.profile.nombre : "");
+  }, [session, setRealUserName]);
+
   if (session.status === "loading") {
     return <div className="min-h-[40vh]" />;
   }
   if (session.status === "anon") {
-    return pathname === "/app/login" ? <>{children}</> : <Navigate to="/app/login" replace />;
+    if (pathname === "/app/login") return <>{children}</>;
+    // Preserva a dónde iba (ej. un enlace de recordatorio de WhatsApp que
+    // abre directo una actividad) — sin esto, tocar el enlace sin sesión
+    // iniciada perdía el destino y siempre caía en la home genérica del rol.
+    const next = encodeURIComponent(pathname + search);
+    return <Navigate to={`/app/login?next=${next}`} replace />;
   }
   const { role } = session.profile;
 
@@ -138,14 +157,21 @@ function RouteGuard({ children }: { children: ReactNode }) {
   const needsReregistration = (role === "familiar" || role === "paciente") && myPatient?.needsReregistration === true;
 
   if (pathname === "/app/login") {
+    // Only trusted once the hard gates below (consent, re-registration)
+    // don't apply — a next= pointing at a WhatsApp deep link never skips
+    // those, it just replaces the generic role-home fallback.
+    const nextParam = new URLSearchParams(search).get("next");
+    const next = nextParam && nextParam.startsWith("/app/") ? nextParam : null;
     const home =
       (role === "familiar" || role === "paciente") && !myPatient
         ? "/app/consent"
         : needsReregistration
           ? "/app/perfil/bienvenida"
-          : role === "paciente" && myPatient?.vista_completa
-            ? "/app/hoy"
-            : roleHome(role);
+          : next
+            ? next
+            : role === "paciente" && myPatient?.vista_completa
+              ? "/app/hoy"
+              : roleHome(role);
     return <Navigate to={home} replace />;
   }
   const onOnboardingPath = pathname === "/app/consent" || pathname.startsWith("/app/perfil");
@@ -217,6 +243,13 @@ function AppLayout() {
           <Route path="alerta" element={<ProfesionalAlerta />} />
         </Route>
 
+        {/* Fuera de FamiliarShell/ParticipantShell a propósito: el modo paso
+            a paso es pantalla completa, sin la barra/nav del shell — mismo
+            criterio que las rutas de alerta de abajo. AppHeader también se
+            oculta para estas rutas (ver AppHeader.tsx). */}
+        <Route path="hoy/actividad/:taskId/pasos" element={<ActividadPasos />} />
+        <Route path="participante/actividad/:taskId/pasos" element={<ParticipanteActividadPasos />} />
+
         <Route path="alerta/ideacion" element={<Ideacion />} />
         <Route path="alerta/maltrato" element={<Maltrato />} />
         <Route path="alerta/caida" element={<Caida />} />
@@ -234,8 +267,29 @@ function AppLayout() {
   );
 }
 
+// React Router doesn't reset scroll position on navigation by itself, and
+// the browser's own back/forward scroll restoration (default "auto") tries
+// to restore whatever position a route was at last time — neither knows
+// that the previous page (e.g. Biblioteca's long resource grid) and the
+// next one can be wildly different heights, so landing on a short page
+// already scrolled deep into where the old page's content used to be left
+// a long stretch of blank, still-scrollable space below the real content.
+if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+  window.history.scrollRestoration = "manual";
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export function App() {
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/ingresar" element={<Ingresar />} />
@@ -247,5 +301,6 @@ export function App() {
       <Route path="/app/*" element={<AppLayout />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

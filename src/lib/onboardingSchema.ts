@@ -30,6 +30,9 @@ export interface Question {
   subtitle?: string | ((a: Answers) => string);
   example?: string;
   type: "single" | "multi" | "text" | "info";
+  // Mobile keyboard hint for `text` questions — e.g. "tel" for a phone
+  // number so the numeric keypad shows up instead of a full keyboard.
+  inputMode?: "text" | "numeric" | "tel";
   options?: Option[] | ((a: Answers) => Option[]);
   exclusive?: string[];
   // Caps how many values a multi-select question accepts (e.g. EMO-01 "máx.
@@ -191,6 +194,24 @@ export const questions: Question[] = [
       { value: "dona", label: "Doña" },
     ],
     applicable: (a) => a.tratamiento_preferido === "don_dona",
+  },
+  {
+    // No es parte del cuestionario clínico — es el canal de recordatorios
+    // de WhatsApp (preparación/inicio/cierre de cada actividad). Se pide
+    // acá, no antes, porque recién en este punto ya se puede nombrar a la
+    // persona por su nombre/tratamiento en el título. No se pide cuando
+    // responde un profesional (alta asistida): ese flujo captura el
+    // teléfono directamente en el formulario de creación de cuenta.
+    id: "whatsapp_telefono",
+    module: "Conozcamos a la persona",
+    type: "text",
+    title: (a) =>
+      participanteEsRespondente(a)
+        ? "¿A qué número de WhatsApp te enviamos recordatorios de tus actividades?"
+        : `¿A qué número de WhatsApp te enviamos recordatorios sobre las actividades de ${nombreConTratamiento(a)}?`,
+    example: "Escribí los 8 dígitos, por ejemplo 8888 8888. Ahí llegarán los recordatorios antes y durante cada actividad.",
+    inputMode: "tel",
+    applicable: (a) => a.rol_respondente !== "profesional",
   },
   {
     id: "edad",

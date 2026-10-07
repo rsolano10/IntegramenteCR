@@ -1,32 +1,57 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
 import { Button } from "../../components/ui/Button";
-import { PillToggle } from "../../components/ui/PillToggle";
+import { Metric } from "../../components/ui/Metric";
 import { CuentasTab } from "../../components/profesional/CuentasTab";
 import { PacientesTab } from "../../components/profesional/PacientesTab";
-
-type Tab = "cuentas" | "pacientes";
-
-const tabOptions: { value: Tab; label: string }[] = [
-  { value: "cuentas", label: "Cuentas" },
-  { value: "pacientes", label: "Pacientes" },
-];
+import { PatientDetailModal, type PatientRow } from "../../components/profesional/PatientDetailModal";
+import { AccountDetailModal } from "../../components/profesional/AccountDetailModal";
+import { attentionFor } from "../../lib/patientAttention";
+import type { ManagedAccount } from "../../lib/adminAccounts";
 
 export function Usuarios() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab: Tab = searchParams.get("tab") === "pacientes" ? "pacientes" : "cuentas";
-  const [tab, setTab] = useState<Tab>(initialTab);
   const [createOpen, setCreateOpen] = useState(false);
-  const [pendingPatientId, setPendingPatientId] = useState<string | null>(null);
+  const [openPatient, setOpenPatient] = useState<PatientRow | null>(null);
+  const [openAccount, setOpenAccount] = useState<ManagedAccount | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
+  const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
 
-  function switchTab(next: Tab) {
-    setTab(next);
-    setCreateOpen(false);
-    setSearchParams(next === "cuentas" ? {} : { tab: next }, { replace: true });
-  }
+  // Both PacientesTab and CuentasTab run their own useQuery on these same
+  // keys — this read only drives the KPI strip and the two cross-navigation
+  // lookups below, it doesn't trigger an extra request.
+  const { data: accounts } = useQuery({
+    queryKey: ["managed-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_managed_accounts");
+      if (error) throw error;
+      return data as ManagedAccount[];
+    },
+  });
+  const { data: patients } = useQuery({
+    queryKey: ["patients"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_patients");
+      if (error) throw error;
+      return data as PatientRow[];
+    },
+  });
+
+  // Lands here after "Llenar encuesta con el paciente" (PatientDetailModal)
+  // saves — reopening that same patient's detail is what makes the trip
+  // back from the questionnaire land somewhere useful (review the answers,
+  // assign a plan) instead of a bare roster.
+  useEffect(() => {
+    const encuestaGuardada = searchParams.get("encuestaGuardada");
+    if (!encuestaGuardada || !patients) return;
+    const match = patients.find((p) => p.id === encuestaGuardada);
+    if (match) setOpenPatient(match);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, patients]);
 
   function handleChanged(message: string, isError?: boolean) {
     setStatusMsg({ text: message, error: isError });
@@ -34,56 +59,86 @@ export function Usuarios() {
     queryClient.invalidateQueries({ queryKey: ["patients"] });
   }
 
-  function viewPatient(patientId: string) {
-    switchTab("pacientes");
-    setPendingPatientId(patientId);
-  }
+  const stats = useMemo(() => {
+    const totalPacientes = patients?.length ?? 0;
+    const necesitanAccion = (patients ?? []).filter((p) => attentionFor(p) !== null).length;
+    const familiasVinculadas = (patients ?? []).filter((p) => p.links.some((l) => l.relation !== "profesional_asignado")).length;
+    const equipoClinico = (accounts ?? []).filter((a) => a.role === "profesional").length;
+    return { totalPacientes, necesitanAccion, familiasVinculadas, equipoClinico };
+  }, [patients, accounts]);
+
+  const existingPatients = (patients ?? []).map((p) => ({ id: p.id, nombre: p.nombre }));
 
   return (
     <div className="im-in max-w-[1200px] mx-auto px-5 py-8 pb-14 sm:px-8 lg:px-8 lg:py-10 lg:pb-20">
-      <div className="flex items-end justify-between gap-5 flex-wrap mb-5">
+      <div className="flex items-end justify-between gap-5 flex-wrap mb-6">
         <div>
           <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Usuarios</p>
-          <h1 className="font-serif font-normal text-[32px] sm:text-[36px] m-0">{tab === "cuentas" ? "Cuentas" : "Pacientes"}</h1>
+          <h1 className="font-serif font-normal text-[32px] sm:text-[36px] m-0">Pacientes y familias</h1>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>{tab === "cuentas" ? "Crear cuenta" : "Nuevo paciente"}</Button>
+        <Button onClick={() => setCreateOpen(true)}>+ Nuevo paciente</Button>
       </div>
 
-      <div className="mb-5">
-        <PillToggle value={tab} onChange={switchTab} options={tabOptions} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <Metric value={String(stats.totalPacientes)} label="pacientes" />
+        <Metric value={String(stats.necesitanAccion)} label="necesitan acción" tone={stats.necesitanAccion > 0 ? "amarillo" : "verde"} />
+        <Metric value={String(stats.familiasVinculadas)} label="con familia vinculada" />
+        <Metric value={String(stats.equipoClinico)} label="cuentas de clínica" />
       </div>
 
-      <div className="bg-white border border-borde rounded-3xl overflow-hidden shadow-elevada">
-        {statusMsg && (
-          <div className={`flex items-center justify-between gap-4 px-5 py-3 sm:px-8 border-b border-[#efeada] text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-[#edf4f4] text-verde-profundo"}`}>
-            <span>{statusMsg.text}</span>
-            <button type="button" onClick={() => setStatusMsg(null)} className="border-none bg-transparent font-sans text-[13px] font-semibold cursor-pointer text-inherit">
-              Cerrar
-            </button>
-          </div>
-        )}
-
-        {/* Both tabs stay mounted, just hidden — switching tabs used to fully
-            unmount/remount the inactive one, which re-triggered its
-            useQuery on every switch. That remount fetch could resolve
-            *after* a delete's invalidation refetch and silently overwrite
-            fresh data with stale, since React Query has no way to know a
-            just-unmounted request is now outdated. Keeping both mounted
-            gives each query one stable subscription instead of a fresh
-            one per switch. */}
-        <div className={tab === "cuentas" ? "" : "hidden"}>
-          <CuentasTab createOpen={createOpen && tab === "cuentas"} onCreateOpenChange={setCreateOpen} onChanged={handleChanged} onViewPatient={viewPatient} />
+      {statusMsg && (
+        <div
+          className={`flex items-center justify-between gap-4 px-5 py-3 rounded-2xl mb-5 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-verde-tenue text-verde-profundo"}`}
+        >
+          <span>{statusMsg.text}</span>
+          <button type="button" onClick={() => setStatusMsg(null)} className="border-none bg-transparent font-sans text-[13px] font-semibold cursor-pointer text-inherit">
+            Cerrar
+          </button>
         </div>
-        <div className={tab === "pacientes" ? "" : "hidden"}>
-          <PacientesTab
-            createOpen={createOpen && tab === "pacientes"}
-            onCreateOpenChange={setCreateOpen}
-            onChanged={handleChanged}
-            pendingPatientId={pendingPatientId}
-            onConsumePending={() => setPendingPatientId(null)}
-          />
+      )}
+
+      <div className="mb-3">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar paciente por nombre, familiar vinculado…"
+          className="w-full min-h-13 px-4.5 rounded-full border-[1.5px] border-borde-campo bg-white font-sans text-[16px] text-tinta shadow-elevada"
+        />
+      </div>
+
+      <div className="bg-white border border-borde rounded-3xl overflow-hidden shadow-elevada mb-8">
+        <PacientesTab
+          createOpen={createOpen}
+          onCreateOpenChange={setCreateOpen}
+          onChanged={handleChanged}
+          onOpenPatient={setOpenPatient}
+          onOpenAccount={setOpenAccount}
+          search={search}
+        />
+      </div>
+
+      <div>
+        <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Clínica y administración</p>
+        <div className="bg-campo/60 border border-borde-suave rounded-3xl overflow-hidden">
+          <CuentasTab patients={existingPatients} onChanged={handleChanged} onOpenAccount={setOpenAccount} />
         </div>
       </div>
+
+      {openPatient && <PatientDetailModal patient={openPatient} onClose={() => setOpenPatient(null)} onChanged={handleChanged} />}
+
+      {openAccount && (
+        <AccountDetailModal
+          account={openAccount}
+          onClose={() => setOpenAccount(null)}
+          onChanged={handleChanged}
+          onViewPatient={(patientId) => {
+            const match = (patients ?? []).find((p) => p.id === patientId);
+            setOpenAccount(null);
+            if (match) setOpenPatient(match);
+          }}
+        />
+      )}
     </div>
   );
 }

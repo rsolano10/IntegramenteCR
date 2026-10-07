@@ -9,7 +9,7 @@ import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
 import { Button } from "../../components/ui/Button";
 
 const estadoBadge: Record<PlanTask["estado"], { text: string; className: string } | null> = {
-  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-[#4c7a4c]" },
+  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-semaforo-verde-texto" },
   parcial: { text: "En parte", className: "bg-fila-calida text-semaforo-amarillo-texto" },
   no: { text: "No se realizó", className: "bg-campo text-tinta-tenue" },
   pendiente: null,
@@ -81,7 +81,7 @@ export function Hoy() {
   return (
     <div>
       {ultimoMensaje && (
-        <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-4.5">
+        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4.5 mb-4.5">
           <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
           <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
           {hasMoreMensajes && (
@@ -126,7 +126,7 @@ export function Hoy() {
       )}
 
       {weekComplete && planMeta && !planMeta.family_reviewed_at && (
-        <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mt-4.5">
+        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4.5 mt-4.5">
           <p className="m-0 mb-1 text-[16px] font-bold text-verde-profundo">¡Semana completa!</p>
           <p className="m-0 mb-3 text-[14px] text-tinta-suave">Ya registraste todas las actividades de la semana. Contanos cómo estuvo.</p>
           <Button variant="ink" dense to={`/app/revision?plan=${planMeta.id}`}>

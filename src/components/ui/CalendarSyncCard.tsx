@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
+import { Button } from "./Button";
 
 // The .ics feed itself lives in supabase/functions/calendar-feed — this
 // card just surfaces the subscribe link. `calendar_feed_token` is already
@@ -38,25 +39,24 @@ export function CalendarSyncCard({ patientId }: { patientId: string }) {
   }
 
   return (
-    <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5">
+    <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4.5">
       <p className="m-0 mb-1 text-[13px] tracking-[0.1em] uppercase text-verde-profundo">Notificaciones en tu teléfono</p>
       <p className="m-0 mb-3 text-[14px] leading-relaxed text-tinta">
         Agregá el plan a tu calendario para recibir un aviso en tu teléfono a la hora exacta de cada actividad.
       </p>
       <div className="flex gap-2.5 flex-wrap">
+        {/* Button no soporta un href con esquema webcal:// (solo rutas internas
+            vía `to`) — se queda como <a>, calcado clase por clase de la variante
+            "ink" para no perder la consistencia visual con el resto de botones. */}
         <a
           href={webcalUrl}
-          className="inline-flex items-center justify-center rounded-full font-sans font-semibold cursor-pointer min-h-[48px] px-5 text-[15px] bg-tinta text-white hover:bg-verde-profundo"
+          className="inline-flex items-center justify-center rounded-full font-sans font-semibold transition-colors cursor-pointer min-h-[48px] px-5 text-[15px] bg-tinta text-white hover:bg-verde-profundo"
         >
           Agregar a tu calendario
         </a>
-        <button
-          type="button"
-          onClick={copyLink}
-          className="inline-flex items-center justify-center rounded-full font-sans font-semibold cursor-pointer min-h-[48px] px-5 text-[15px] bg-transparent border-[1.5px] border-borde text-tinta hover:border-verde-serenidad"
-        >
+        <Button variant="secondary" dense onClick={copyLink}>
           {copied ? "¡Copiado!" : "Copiar enlace"}
-        </button>
+        </Button>
       </div>
       <p className="m-0 mt-3 text-[12.5px] leading-relaxed text-tinta-tenue">
         Solo se sincronizan las actividades que tienen una hora exacta asignada. Si usás Google Calendar desde la computadora, pegá el enlace

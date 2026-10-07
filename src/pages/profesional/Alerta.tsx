@@ -11,14 +11,15 @@ export function ProfesionalAlerta() {
       <Link to="/app/profesional/panel" className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-4">
         ‹ Volver al panel
       </Link>
-      <div className="bg-white border-[1.5px] border-alerta-borde rounded-3xl overflow-hidden">
+      <div className="bg-white border-[1.5px] border-alerta-borde rounded-3xl shadow-elevada overflow-hidden">
         <div className="bg-alerta p-5 sm:p-7.5">
           <span className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white text-[15px] font-bold text-alerta-texto">
             <span className="w-2.5 h-2.5 rounded-full bg-semaforo-rojo" />
             Alerta roja · sin revisar
           </span>
-          <h1 className="font-serif font-normal text-[26px] sm:text-[34px] mt-4.5 mb-2">Marta Solís · caída reportada</h1>
-          <p className="m-0 text-base sm:text-[17px] text-[#6e4436]">11 de agosto, 18:40 · reportado por Laura (hija)</p>
+          <p className="m-0 mt-4.5 mb-1 text-[13px] tracking-[0.14em] uppercase text-alerta-texto-suave">Alerta</p>
+          <h1 className="font-serif font-normal text-[26px] sm:text-[34px] m-0 mb-2">Marta Solís · caída reportada</h1>
+          <p className="m-0 text-base sm:text-[17px] text-alerta-texto-suave">11 de agosto, 18:40 · reportado por Laura (hija)</p>
         </div>
         <div className="p-5 sm:p-7.5 grid gap-5">
           <div>
@@ -29,7 +30,7 @@ export function ProfesionalAlerta() {
               <span>Marcó el caso como rojo y lo elevó a esta bandeja.</span>
             </div>
           </div>
-          <div className="bg-campo border border-[#efeada] rounded-2xl p-5">
+          <div className="bg-campo border border-borde-suave rounded-2xl p-5">
             <p className="m-0 mb-2 text-[15px] font-bold">Lo que escribió la familia</p>
             <p className="m-0 text-[17px] leading-relaxed text-tinta-suave">
               «Se resbaló en el baño en la tarde. Camina pero se queja de la cadera.»

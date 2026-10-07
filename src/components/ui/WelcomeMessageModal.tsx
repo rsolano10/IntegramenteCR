@@ -34,7 +34,7 @@ export function WelcomeMessageModal({ patientId }: { patientId: string }) {
   return (
     <Modal onClose={dismiss}>
       <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">¡Ya tenés tu programa!</h2>
-      <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-4.5 mb-5">
+      <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4.5 mb-5">
         <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
         <p className="m-0 text-[16px] leading-relaxed text-tinta">{mensaje}</p>
       </div>

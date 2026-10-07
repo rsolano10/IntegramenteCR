@@ -2,6 +2,7 @@ import { useState } from "react";
 import { callAdminAccounts } from "../../lib/adminAccounts";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
+import { WarningIcon } from "../ui/Icons";
 
 export function RejectPatientModal({
   patientId,
@@ -36,21 +37,26 @@ export function RejectPatientModal({
   }
 
   return (
-    <Modal onClose={onClose}>
-      <h2 className="font-serif font-normal text-2xl m-0 mb-1.5 text-alerta-texto">¿Rechazar a {patientNombre}?</h2>
+    <Modal onClose={onClose} tone={confirming ? "danger" : "default"} className={confirming ? "sm:max-w-[440px]" : ""}>
+      <div className="flex items-start gap-3 mb-1.5">
+        <span className="shrink-0 w-9 h-9 rounded-full bg-alerta flex items-center justify-center text-alerta-texto">
+          <WarningIcon />
+        </span>
+        <h2 className="font-serif font-normal text-2xl m-0 mt-1 text-alerta-texto">¿Rechazar a {patientNombre}?</h2>
+      </div>
       <p className="m-0 mb-5 text-sm text-tinta-tenue">
         Se borra el registro del paciente y no se puede deshacer. La familia recibe el mensaje que escribas acá.
       </p>
 
       {!confirming ? (
         <>
-          <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51] mb-5">
+          <label className="grid grid-cols-1 gap-2 text-[15px] font-semibold text-tinta-suave mb-5">
             Mensaje para la familia
             <textarea
               value={mensaje}
               onChange={(e) => setMensaje(e.target.value)}
               rows={4}
-              className="w-full rounded-xl border-[1.5px] border-[#ddd7be] bg-campo px-4 py-3 font-sans text-[15px] leading-relaxed text-tinta resize-y"
+              className="w-full rounded-xl border-[1.5px] border-borde-campo bg-campo px-4 py-3 font-sans text-[15px] leading-relaxed text-tinta resize-y"
             />
           </label>
           {error && <p className="m-0 mb-4 text-[14px] text-alerta-texto">{error}</p>}

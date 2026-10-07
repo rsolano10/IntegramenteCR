@@ -8,7 +8,7 @@ export function AlertNotice({ title, children }: { title: string; children: Reac
   return (
     <div className="border-[1.5px] border-alerta-borde bg-alerta rounded-2xl p-4.5">
       {title && <p className="m-0 mb-1.5 text-[16px] font-bold text-alerta-texto">{title}</p>}
-      <div className="text-[15px] leading-relaxed text-[#6e4436]">{children}</div>
+      <div className="text-[15px] leading-relaxed text-alerta-texto-suave">{children}</div>
     </div>
   );
 }

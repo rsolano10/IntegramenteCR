@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ImagePlaceholder } from "../../components/ui/ImagePlaceholder";
+import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
+import { BigActionButton } from "../../components/ui/BigActionButton";
+import { OptionGroup } from "../../components/ui/OptionGroup";
+import { PlayIcon } from "../../components/ui/Icons";
 import { speak } from "../../lib/speech";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useMarkRegistro } from "../../lib/usePlan";
@@ -119,20 +122,10 @@ export function ParticipanteActividad() {
           ¿Querés cambiarla a <strong>"{regLabel[pendingMark]}"</strong>?
         </p>
         <div className="grid gap-3 mt-auto">
-          <button
-            type="button"
-            onClick={() => proceed(pendingMark)}
-            className="min-h-19 border-none rounded-2xl bg-tinta text-white font-sans text-2xl font-bold cursor-pointer hover:bg-verde-profundo"
-          >
-            Sí, cambiar
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep("detail")}
-            className="min-h-17 border-2 border-borde rounded-2xl bg-white text-tinta font-sans text-[20px] font-bold cursor-pointer"
-          >
+          <BigActionButton onClick={() => proceed(pendingMark)}>Sí, cambiar</BigActionButton>
+          <BigActionButton variant="secondary" size="md" onClick={() => setStep("detail")}>
             No, dejarlo así
-          </button>
+          </BigActionButton>
         </div>
       </>
     );
@@ -148,26 +141,16 @@ export function ParticipanteActividad() {
           rows={5}
           autoFocus
           placeholder="Contanos qué ayuda necesitaste…"
-          className="w-full rounded-2xl border-[1.5px] border-[#ddd7be] bg-campo px-5 py-4 font-sans text-[20px] leading-relaxed text-tinta resize-y"
+          className="w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] leading-relaxed text-tinta resize-y"
         />
         {error && <p className="m-0 text-[16px] text-alerta-texto">{error}</p>}
         <div className="grid gap-3 mt-auto">
-          <button
-            type="button"
-            onClick={confirmHelp}
-            disabled={!helpText.trim() || saving}
-            className="min-h-19 border-none rounded-2xl bg-verde-serenidad text-white font-sans text-2xl font-bold cursor-pointer hover:bg-verde-profundo disabled:opacity-50"
-          >
+          <BigActionButton variant="primary" disabled={!helpText.trim() || saving} onClick={confirmHelp}>
             {saving ? "Guardando…" : "Guardar"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep("detail")}
-            disabled={saving}
-            className="min-h-17 border-2 border-borde rounded-2xl bg-white text-tinta font-sans text-[20px] font-bold cursor-pointer"
-          >
+          </BigActionButton>
+          <BigActionButton variant="secondary" size="md" disabled={saving} onClick={() => setStep("detail")}>
             Cancelar
-          </button>
+          </BigActionButton>
         </div>
       </>
     );
@@ -177,40 +160,17 @@ export function ParticipanteActividad() {
     return (
       <>
         <p className="m-0 text-2xl leading-snug">¿Por qué no pudiste?</p>
-        <div className="grid gap-3">
-          {RAZONES.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRazon(r)}
-              className={`min-h-16 rounded-2xl border-2 font-sans text-[19px] font-semibold cursor-pointer ${
-                razon === r ? "border-verde-serenidad bg-[#edf4f4]" : "border-borde bg-white"
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        <OptionGroup columns={1} value={razon ?? ""} onChange={setRazon} options={RAZONES.map((r) => ({ value: r, label: r }))} />
 
         <p className="m-0 mt-4 text-2xl leading-snug">¿Necesitás que alguien te ayude?</p>
         {error && <p className="m-0 text-[16px] text-alerta-texto">{error}</p>}
         <div className="grid gap-3 mt-auto">
-          <button
-            type="button"
-            onClick={() => confirmarNoPude(true)}
-            disabled={saving}
-            className="min-h-19 border-none rounded-2xl bg-tinta text-white font-sans text-2xl font-bold cursor-pointer hover:bg-verde-profundo"
-          >
+          <BigActionButton disabled={saving} onClick={() => confirmarNoPude(true)}>
             Sí, necesito ayuda
-          </button>
-          <button
-            type="button"
-            onClick={() => confirmarNoPude(false)}
-            disabled={saving}
-            className="min-h-17 border-2 border-borde rounded-2xl bg-white text-tinta font-sans text-[20px] font-bold cursor-pointer"
-          >
+          </BigActionButton>
+          <BigActionButton variant="secondary" size="md" disabled={saving} onClick={() => confirmarNoPude(false)}>
             No, está bien así
-          </button>
+          </BigActionButton>
         </div>
       </>
     );
@@ -222,10 +182,33 @@ export function ParticipanteActividad() {
         ‹ Volver a Hoy
       </Link>
       <h3 className="font-serif font-normal text-[28px] leading-snug m-0">{task.titulo}</h3>
-      <ImagePlaceholder label={`${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`} height={170} rounded="rounded-[20px]" />
+
+      <Link
+        to={`/app/participante/actividad/${task.id}/pasos`}
+        className="inline-flex items-center gap-1.5 self-start px-4 py-2.5 rounded-full border-2 border-verde-serenidad bg-verde-tenue text-verde-profundo font-sans text-[16px] font-bold no-underline"
+      >
+        Modo paso a paso
+      </Link>
+
+      <div className="grid gap-4">
+        <ResourceDetailView
+          size="large"
+          content={{
+            mediaKind: task.mediaKind,
+            storagePath: task.storagePath,
+            externalUrl: task.externalUrl,
+            materiales: task.materiales,
+            adaptacion: task.adaptacion,
+            ciencia: task.ciencia,
+            porQue: task.porQue,
+            pasos,
+            fallbackLabel: `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`,
+          }}
+        />
+      </div>
 
       {task.notaClinica && (
-        <div className="border-[1.5px] border-verde-serenidad bg-[#f5f9f9] rounded-2xl px-4 py-3.5">
+        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl px-4 py-3.5">
           <p className="m-0 mb-1 text-[15px] tracking-[0.08em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
           <p className="m-0 text-[17px] leading-relaxed text-tinta">{task.notaClinica}</p>
         </div>
@@ -235,14 +218,6 @@ export function ParticipanteActividad() {
         <p className="m-0 text-[17px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3.5">{task.precaucion}</p>
       )}
 
-      {pasos.length > 0 && (
-        <div className="grid gap-2.5 text-[19px] leading-relaxed text-tinta-suave">
-          {pasos.map((p, i) => (
-            <span key={p}>{i + 1}. {p}</span>
-          ))}
-        </div>
-      )}
-
       {task.comentario && (
         <div className="bg-fila-calida rounded-2xl px-4 py-3.5">
           <p className="m-0 mb-1 text-[16px] font-bold text-semaforo-amarillo-texto">Ayuda que necesitaste</p>
@@ -250,28 +225,28 @@ export function ParticipanteActividad() {
         </div>
       )}
 
-      <button type="button" onClick={() => speak([task.titulo, ...pasos].join(". "))} className="min-h-17 border-none rounded-2xl bg-beige-serenidad text-tinta font-sans text-[22px] font-bold cursor-pointer">
-        ▶ Escuchar
-      </button>
+      <BigActionButton variant="tertiary" size="md" onClick={() => speak([task.titulo, ...pasos].join(". "))} className="inline-flex items-center justify-center gap-2.5">
+        <PlayIcon /> Escuchar
+      </BigActionButton>
 
       {error && <p className="m-0 text-[16px] text-alerta-texto">{error}</p>}
 
       <p className="m-0 text-[20px] font-bold">¿Se realizó?</p>
       <div className="grid gap-3">
-        <button type="button" onClick={() => pick("done")} className="min-h-19 border-none rounded-2xl bg-verde-serenidad text-white font-sans text-2xl font-bold cursor-pointer hover:bg-verde-profundo">
+        <BigActionButton variant="primary" onClick={() => pick("done")}>
           Sí, lo hice
-        </button>
-        <button type="button" onClick={() => pick("partial")} className="min-h-17 border-2 border-verde-serenidad rounded-2xl bg-[#f5f9f9] text-verde-profundo font-sans text-[20px] font-bold cursor-pointer">
+        </BigActionButton>
+        <BigActionButton variant="soft" size="md" onClick={() => pick("partial")}>
           Con ayuda
-        </button>
-        <button type="button" onClick={() => pick("no")} className="min-h-17 border-2 border-borde rounded-2xl bg-white text-tinta font-sans text-[20px] font-bold cursor-pointer">
+        </BigActionButton>
+        <BigActionButton variant="secondary" size="md" onClick={() => pick("no")}>
           No pude
-        </button>
+        </BigActionButton>
       </div>
 
-      <button type="button" onClick={() => navigate("/app/participante/ayuda")} className="min-h-17 border-2 border-mostaza-vital rounded-2xl bg-aviso text-[#4a3a1b] font-sans text-[22px] font-bold cursor-pointer hover:bg-mostaza-vital">
+      <BigActionButton variant="caution" size="md" onClick={() => navigate("/app/participante/ayuda")}>
         Necesito ayuda
-      </button>
+      </BigActionButton>
     </>
   );
 }

@@ -5,7 +5,7 @@ export type AppRole = "familiar" | "paciente" | "profesional";
 export interface AccountLink {
   patient_id: string;
   patient_nombre: string;
-  relation: "familiar_admin" | "participante";
+  relation: "familiar_admin" | "participante" | "profesional_asignado";
 }
 
 export interface ManagedAccount {
@@ -21,21 +21,30 @@ export interface ManagedAccount {
   is_active: boolean;
 }
 
+// "Participante" es un tipo de VÍNCULO (patient_relation), no un rol de
+// cuenta — el rol de DB siempre fue solo familiar/paciente/profesional.
+// Mostrarlo acá como "Participante" era justo lo que hacía parecer que
+// existía un 4º rol separado; ahora coincide con la etiqueta real del rol.
 export const roleLabel: Record<AppRole, string> = {
   familiar: "Familiar",
-  paciente: "Participante",
+  paciente: "Paciente",
   profesional: "Clínica",
 };
 
 export const roleBadgeClass: Record<AppRole, string> = {
   familiar: "bg-verde-serenidad/15 text-verde-profundo",
-  paciente: "bg-[#e7edf3] text-[#3b4c51]",
+  paciente: "bg-[#e7edf3] text-tinta-suave",
   profesional: "bg-tinta text-white",
 };
 
 export const relationLabel: Record<string, string> = {
   familiar_admin: "Familiar administrador",
   participante: "Participante",
+  // Un profesional queda linkeado a cada paciente de su roster con esta
+  // relación (has_patient_link) — sin esta entrada, "Pacientes vinculados"
+  // en AccountDetailModal mostraba literalmente "undefined" para toda
+  // cuenta profesional con pacientes asignados.
+  profesional_asignado: "Clínica",
 };
 
 // Privileged account actions (invite/resend/update_email/update_role/

@@ -9,7 +9,7 @@ export interface TabDef {
 export function AppTabs({ tabs }: { tabs: TabDef[] }) {
   const { pathname } = useLocation();
   return (
-    <div className="grid border-b border-[#efeada]" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+    <div className="grid border-b border-borde-suave" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
       {tabs.map((tab) => {
         const active = tab.match(pathname);
         return (

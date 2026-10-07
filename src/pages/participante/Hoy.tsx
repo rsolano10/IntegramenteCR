@@ -5,9 +5,9 @@ import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
 import type { PlanTask } from "../../lib/mockData";
 
 const estadoBadge: Record<PlanTask["estado"], { text: string; className: string } | null> = {
-  realizado: { text: "✓ Hecho", className: "bg-fila-fria text-[#4c7a4c]" },
+  realizado: { text: "✓ Hecho", className: "bg-fila-fria text-semaforo-verde-texto" },
   parcial: { text: "Con ayuda", className: "bg-fila-calida text-semaforo-amarillo-texto" },
-  no: { text: "No se pudo", className: "bg-campo text-tinta-tenue" },
+  no: { text: "No pude", className: "bg-campo text-tinta-tenue" },
   pendiente: null,
   futuro: null,
 };
@@ -85,7 +85,7 @@ export function ParticipanteHoy() {
       )}
 
       {weekComplete && planMeta && !planMeta.family_reviewed_at && (
-        <div className="border-2 border-verde-serenidad bg-[#f5f9f9] rounded-2xl p-5">
+        <div className="border-2 border-verde-serenidad bg-verde-tenue rounded-2xl p-5">
           <p className="m-0 mb-1 text-[22px] font-bold text-verde-profundo">¡Semana completa!</p>
           <p className="m-0 mb-4 text-[17px] text-tinta-suave">Ya hiciste todas las actividades de la semana. Contanos cómo estuvo.</p>
           <button

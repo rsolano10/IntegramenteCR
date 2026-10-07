@@ -20,7 +20,7 @@ export function Rechazo() {
           <button
             type="button"
             onClick={() => navigate("/app/plan")}
-            className="text-left min-h-17 px-5 py-4 rounded-2xl border-[1.5px] border-verde-serenidad bg-[#edf4f4] font-sans cursor-pointer"
+            className="text-left min-h-17 px-5 py-4 rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue font-sans cursor-pointer"
           >
             <strong className="block text-[17px] mb-1">Bajar la dificultad</strong>
             <span className="text-[16px] text-tinta-suave">Misma actividad, una sola consigna y menos tiempo.</span>

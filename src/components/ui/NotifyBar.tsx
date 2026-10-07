@@ -1,18 +1,17 @@
 import { useAppStore } from "../../lib/store";
+import { Button } from "./Button";
 
 export function NotifyButton() {
   const notifySent = useAppStore((s) => s.notifySent);
   const notifyNow = useAppStore((s) => s.notifyNow);
   return (
-    <button
-      type="button"
+    <Button
+      variant="urgency"
       onClick={notifyNow}
-      className={`min-h-13 px-5.5 rounded-full border-none font-sans text-[16px] font-bold text-white cursor-pointer ${
-        notifySent ? "bg-[#4c7a4c]" : "bg-semaforo-rojo hover:bg-alerta-texto"
-      }`}
+      className={notifySent ? "!bg-semaforo-verde-texto hover:!bg-semaforo-verde-texto" : ""}
     >
       {notifySent ? "Aviso enviado" : "Avisar a la Dra. Solano"}
-    </button>
+    </Button>
   );
 }
 
@@ -33,13 +32,9 @@ export function NotifyBar() {
   return (
     <div className="flex gap-3 flex-wrap items-center">
       <NotifyButton />
-      <button
-        type="button"
-        onClick={notifySkip}
-        className="min-h-13 px-5.5 rounded-full border-[1.5px] border-borde bg-transparent font-sans text-[16px] font-semibold cursor-pointer hover:border-verde-serenidad"
-      >
+      <Button variant="secondary" onClick={notifySkip}>
         No avisar por ahora
-      </button>
+      </Button>
       <NotifyState />
     </div>
   );

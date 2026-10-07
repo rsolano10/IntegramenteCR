@@ -13,7 +13,7 @@ export function Caida() {
           <h1 className="font-serif font-normal text-[26px] sm:text-[34px] leading-[1.16] lg:leading-[1.14] mt-4.5 mb-2.5">
             Después de una caída, primero la revisión
           </h1>
-          <p className="m-0 text-base sm:text-[18px] leading-relaxed text-[#6e4436]">
+          <p className="m-0 text-base sm:text-[18px] leading-relaxed text-alerta-texto-suave">
             No vamos a proponer ejercicios hasta que un profesional la valore.
           </p>
         </div>
@@ -36,7 +36,7 @@ export function Caida() {
               actividades sentadas.
             </p>
           </div>
-          <div className="border-t border-[#efeada] pt-5 flex gap-3 flex-wrap items-center">
+          <div className="border-t border-borde-suave pt-5 flex gap-3 flex-wrap items-center">
             <NotifyButton />
             <Link
               to="/app/hoy"

@@ -12,7 +12,8 @@ import { Button } from "../../components/ui/Button";
 export function InvitarContraparte() {
   const navigate = useNavigate();
   const session = useSession();
-  const { data: myPatient, isLoading } = useMyPatient();
+  // isPending, not isLoading — see the comment on the same call in App.tsx's RouteGuard.
+  const { data: myPatient, isPending: isLoading } = useMyPatient();
   const role = session.status === "authed" ? session.profile.role : null;
   const isFamiliar = role === "familiar";
 
@@ -92,7 +93,7 @@ export function InvitarContraparte() {
         Le enviamos un correo para que cree su propia cuenta y pueda usar la aplicación también.
       </p>
       <div className="grid gap-4 mb-5">
-        <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+        <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
           Nombre
           <input
             type="text"
@@ -101,17 +102,17 @@ export function InvitarContraparte() {
               setNombreTouched(true);
               setNombre(e.target.value);
             }}
-            className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
+            className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta"
           />
         </label>
-        <label className="grid gap-2 text-[15px] font-semibold text-[#3b4c51]">
+        <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
           Correo electrónico
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="nombre@correo.com"
-            className="min-h-13 px-4 rounded-xl border-[1.5px] border-[#ddd7be] bg-campo font-sans text-[16px] text-tinta"
+            className="min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta"
           />
         </label>
       </div>

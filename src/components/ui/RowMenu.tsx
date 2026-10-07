@@ -8,6 +8,14 @@ export interface RowMenuItem {
   hidden?: boolean;
 }
 
+// Shared row style for every dropdown menu item in the app (this component's
+// own portal-based "⋯" panel, and AccountMenu's header panel) — one visual
+// language for "a row you click in a menu" instead of two copies of the same
+// class string drifting apart.
+export function menuItemClass(danger?: boolean): string {
+  return `w-full text-left min-h-11 px-4 font-sans text-[14px] cursor-pointer hover:bg-campo ${danger ? "text-alerta-texto font-semibold" : "text-tinta"}`;
+}
+
 const MENU_WIDTH = 208; // w-52
 const ROW_HEIGHT = 44; // min-h-11 per item
 const MENU_PADDING = 12; // top/bottom border + rounded corners slack
@@ -96,9 +104,7 @@ export function RowMenu({ items }: { items: RowMenuItem[] }) {
                     setOpen(false);
                     item.onClick();
                   }}
-                  className={`w-full text-left min-h-11 px-4 font-sans text-[14px] cursor-pointer hover:bg-campo ${
-                    item.danger ? "text-alerta-texto font-semibold" : "text-tinta"
-                  }`}
+                  className={menuItemClass(item.danger)}
                 >
                   {item.label}
                 </button>

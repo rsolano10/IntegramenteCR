@@ -14,7 +14,8 @@ interface Mensaje {
 export function Mensajes() {
   const session = useSession();
   const myUserId = session.status === "authed" ? session.session.user.id : null;
-  const { data: myPatient, isLoading: loadingPatient } = useMyPatient();
+  // isPending, not isLoading — see the comment on the same call in App.tsx's RouteGuard.
+  const { data: myPatient, isPending: loadingPatient } = useMyPatient();
   const queryClient = useQueryClient();
 
   const { data: mensajes, isLoading } = useQuery({
@@ -69,7 +70,7 @@ export function Mensajes() {
                 return (
                   <div
                     key={m.id}
-                    className={`rounded-2xl p-4.5 max-w-[85%] ${mine ? "justify-self-end border-[1.5px] border-verde-serenidad bg-[#f5f9f9]" : "justify-self-start border border-borde bg-white"}`}
+                    className={`rounded-2xl p-4.5 max-w-[85%] ${mine ? "justify-self-end border-[1.5px] border-verde-serenidad bg-verde-tenue" : "justify-self-start border border-borde bg-white"}`}
                   >
                     <p className="m-0 mb-1.5 text-[13px] text-tinta-tenue">
                       {mine ? "Vos" : "Tu equipo clínico"} ·{" "}
@@ -88,7 +89,7 @@ export function Mensajes() {
               onChange={(e) => setTexto(e.target.value)}
               placeholder="Escribí un mensaje para tu equipo clínico…"
               rows={3}
-              className="w-full min-h-[90px] rounded-2xl border-[1.5px] border-[#ddd7be] bg-campo px-4 py-3.5 font-sans text-[16px] leading-relaxed text-tinta resize-y"
+              className="w-full min-h-[90px] rounded-2xl border-[1.5px] border-borde-campo bg-campo px-4 py-3.5 font-sans text-[16px] leading-relaxed text-tinta resize-y"
             />
             {error && <p className="m-0 mt-2 text-[14px] text-alerta-texto">{error}</p>}
             <button
