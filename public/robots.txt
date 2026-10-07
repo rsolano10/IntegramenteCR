@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /ingresar
+Disallow: /completar-cuenta
+Disallow: /olvide-password
+Disallow: /restablecer-contrasena
+
+Sitemap: https://app.integramentecr.com/sitemap.xml

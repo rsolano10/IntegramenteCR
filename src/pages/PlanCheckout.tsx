@@ -4,11 +4,18 @@ import { Button } from "../components/ui/Button";
 import { useAppStore } from "../lib/store";
 import { planTiers } from "../lib/mockData";
 
+// "Orientado" sigue existiendo en planTiers porque esa misma data alimenta
+// las etiquetas de modalidad clínica dentro de la app (PillToggle de
+// pacientes, etc.) — no se puede borrar la entrada sin romper eso. Lo que
+// ya no existe es la oferta pública: solo estos dos se pueden contratar
+// desde el sitio de marketing.
+const PUBLIC_CHECKOUT_PLANS = new Set(["autoguiado", "clinico"]);
+
 export function PlanCheckout() {
   const { plan } = useParams();
   const navigate = useNavigate();
   const setModalidad = useAppStore((s) => s.setModalidad);
-  const tier = planTiers.find((t) => t.id === plan);
+  const tier = plan && PUBLIC_CHECKOUT_PLANS.has(plan) ? planTiers.find((t) => t.id === plan) : undefined;
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
 

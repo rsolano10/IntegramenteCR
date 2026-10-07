@@ -144,6 +144,51 @@ export function useTypewriterLoop(
   return display;
 }
 
+// Drives a tall multi-step sticky section (the "Cómo funciona" phone that
+// stays pinned while its screen cycles through steps): 0 while the
+// container's top is still at the viewport's bottom edge, 1 once its
+// bottom has reached the viewport's top — i.e. "how far have we scrolled
+// through this box", not the center-crossing semantics useScrollProgress
+// above uses (that one's tuned for a single reveal moment, not a scrubbed
+// range). Reduced motion freezes at 0 — a static first step, not an
+// arbitrary one — since every step's text is independently readable in
+// normal document flow regardless of which one the phone is showing.
+export function useStickyProgress<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+
+    function update() {
+      raf = 0;
+      const rect = el!.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // 0 when rect.top === vh (top of container just touching the bottom
+      // of the viewport), 1 when rect.top === -rect.height (bottom of
+      // container just touching the top of the viewport).
+      setProgress(clamp((vh - rect.top) / (vh + rect.height)));
+    }
+    function onScroll() {
+      if (!raf) raf = requestAnimationFrame(update);
+    }
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return { ref, progress };
+}
+
 // Whether the page has scrolled past `threshold` px — drives the header's
 // transition from transparent (over the hero) to a solid, blurred bar.
 export function useScrolled(threshold = 24) {
