@@ -16,7 +16,7 @@ import {
   type NivelCognitivo,
   type ResourceModulo,
 } from "../../lib/mediaResources";
-import { MediaResourceModal } from "../../components/profesional/MediaResourceModal";
+import { ResourceEditor } from "../../components/profesional/ResourceEditor";
 
 const modulos = Object.keys(moduloLabel) as ResourceModulo[];
 const nivelesCognitivos = Object.keys(nivelCognitivoLabel) as NivelCognitivo[];
@@ -167,7 +167,7 @@ export function Biblioteca() {
       </div>
 
       {editing && (
-        <MediaResourceModal
+        <ResourceEditor
           resource={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
           onSaved={(msg) => {
