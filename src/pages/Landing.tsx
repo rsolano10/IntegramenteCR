@@ -175,11 +175,82 @@ function SectionTitle({ children, className = "" }: { children: ReactNode; class
   );
 }
 
+// Íconos de línea propios (mismo trazo en todo el home).
+function Icono({ name, className = "w-7 h-7" }: { name: string; className?: string }) {
+  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const paths: Record<string, ReactNode> = {
+    charla: (
+      <>
+        <path {...p} d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V15h0a2.5 2.5 0 0 1-2-2.5z" />
+        <path {...p} d="M9 9h6M9 11.5h3.5" />
+      </>
+    ),
+    elegir: (
+      <>
+        <rect {...p} x="3.5" y="5" width="7.5" height="14" rx="2" />
+        <rect {...p} x="13" y="5" width="7.5" height="14" rx="2" />
+        <path {...p} d="M15 12l1.5 1.5L19 10.5" />
+      </>
+    ),
+    profesional: (
+      <>
+        <circle {...p} cx="12" cy="8" r="3.5" />
+        <path {...p} d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
+        <path {...p} d="M16.5 4.5l1 1 2-2" />
+      </>
+    ),
+    semana: (
+      <>
+        <rect {...p} x="4" y="5" width="16" height="15" rx="3" />
+        <path {...p} d="M4 9.5h16M8.5 3v4M15.5 3v4" />
+        <path {...p} d="M9.5 15.2l1.6 1.6 3.4-3.4" />
+      </>
+    ),
+    sol: (
+      <>
+        <circle {...p} cx="12" cy="12" r="4" />
+        <path {...p} d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+      </>
+    ),
+    campana: (
+      <>
+        <path {...p} d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" />
+        <path {...p} d="M10 20.5a2 2 0 0 0 4 0" />
+      </>
+    ),
+    check: (
+      <>
+        <circle {...p} cx="12" cy="12" r="8.5" />
+        <path {...p} d="M8.3 12.3l2.5 2.5 4.9-5" />
+      </>
+    ),
+    ajuste: (
+      <>
+        <path {...p} d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+        <circle {...p} cx="16" cy="7" r="2" />
+        <circle {...p} cx="8" cy="17" r="2" />
+      </>
+    ),
+    corazon: <path {...p} d="M12 19.5s-7-4.3-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.1c0 5.1-7 9.4-7 9.4z" />,
+    escudo: (
+      <>
+        <path {...p} d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
+        <path {...p} d="M12 8.5v4M12 15.5v.5" />
+      </>
+    ),
+  };
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      {paths[name]}
+    </svg>
+  );
+}
+
 const pasos = [
-  { t: "Nos contás cómo está", d: "Un cuestionario de unos 10 minutos sobre su día a día, sus gustos y lo que le cuesta. Se guarda solo, sin términos clínicos." },
-  { t: "Elegís el programa", d: "Autoguiado u Orientado, según cuánto acompañamiento profesional querés. Ves el precio antes de decidir." },
-  { t: "Una profesional lo revisa", d: "El equipo clínico revisa el perfil y arma la primera semana con actividades seguras para su movilidad y pensadas para sus intereses." },
-  { t: "La semana llega a tu celular", d: "Actividades paso a paso, recordatorios por WhatsApp y calendario, y al final de la semana tres preguntas para ajustar la siguiente." },
+  { icono: "charla", t: "Contanos de su día", d: "Unos 10 minutos" },
+  { icono: "elegir", t: "Elegí el programa", d: "Con o sin profesional" },
+  { icono: "profesional", t: "Lo revisamos", d: "Una profesional arma su semana" },
+  { icono: "semana", t: "¡A disfrutar!", d: "Actividades y recordatorios" },
 ];
 
 const modulosInfo: Record<ResourceModulo, { frase: string; ejemplos: string[] }> = {
@@ -191,13 +262,13 @@ const modulosInfo: Record<ResourceModulo, { frase: string; ejemplos: string[] }>
 
 const ordenModulos: ResourceModulo[] = ["movimiento", "musica", "reminiscencia", "sentidos"];
 
-const loQueRecibis = [
-  { icono: "☀", t: "Hoy, una cosa a la vez", d: "La actividad del día con su “por qué”, los materiales y un modo paso a paso a pantalla completa." },
-  { icono: "⏰", t: "Recordatorios", d: "Por WhatsApp y en el calendario de tu teléfono, a la hora de cada actividad." },
-  { icono: "✓", t: "Registro en segundos", d: "Hecha, en parte o no se hizo — sin culpas. Un día difícil nunca se marca como un fracaso." },
-  { icono: "✦", t: "Ajustes cada semana", d: "Tres preguntas al cerrar la semana y el plan siguiente se adapta a cómo les fue." },
-  { icono: "💬", t: "Ayuda cuando la necesitás", d: "Respuestas rápidas a dudas del cuidado y, en el programa Orientado, mensajes con tu profesional." },
-  { icono: "SOS", t: "Botón SOS", d: "Si algo pasa — una caída, un cambio repentino — te orienta paso a paso y te permite avisar a tu profesional." },
+const loQueRecibis: { icono: string; t: string; d: string; modulo: ResourceModulo | "sos" }[] = [
+  { icono: "sol", t: "Una cosa a la vez", d: "Pasos claros, sin apuro", modulo: "movimiento" },
+  { icono: "campana", t: "Recordatorios", d: "Por WhatsApp y calendario", modulo: "sentidos" },
+  { icono: "check", t: "Registro en segundos", d: "Sin culpas, sin presión", modulo: "reminiscencia" },
+  { icono: "ajuste", t: "Se ajusta cada semana", d: "Según cómo les fue", modulo: "musica" },
+  { icono: "corazon", t: "Ayuda a mano", d: "Respuestas y tu profesional", modulo: "movimiento" },
+  { icono: "escudo", t: "Botón SOS", d: "Por si algo pasa", modulo: "sos" },
 ];
 
 const seguridad = [
@@ -286,22 +357,12 @@ export function Landing() {
             por una profesional, adaptado a su día a día.
           </p>
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
-          <div className="flex flex-wrap gap-3 mb-8">
+          <div className="flex flex-wrap gap-3">
             <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
             <Button variant="secondary" to="#como-funciona">
               Ver cómo funciona
             </Button>
           </div>
-          <ul className="list-none m-0 p-0 flex flex-wrap gap-x-6 gap-y-2.5 text-[14.5px] text-tinta-suave">
-            {["Cuestionario de unos 10 minutos", "Revisado por una profesional", "Recordatorios por WhatsApp"].map((t) => (
-              <li key={t} className="inline-flex items-center gap-2">
-                <span aria-hidden="true" className="w-5 h-5 rounded-full bg-verde-tenue border border-borde text-verde-profundo text-[11px] flex items-center justify-center">
-                  ✓
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
         </Reveal>
         <Reveal delay={150}>
           <HeroPhone />
@@ -338,23 +399,39 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── Cómo funciona ─── */}
+      {/* ─── Cómo funciona: cuatro pasos como un camino ─── */}
       <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
-        <Reveal>
+        <Reveal className="text-center">
           <Eyebrow>Cómo funciona</Eyebrow>
-          <SectionTitle className="max-w-[17em] mb-10 lg:mb-14">De “no sé por dónde empezar” a una semana posible de cumplir.</SectionTitle>
+          <SectionTitle className="max-w-[16em] mx-auto mb-12 lg:mb-16">Empezar es más simple de lo que parece.</SectionTitle>
         </Reveal>
-        <ol className="list-none m-0 p-0 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 relative">
-          {pasos.map((p, i) => (
-            <Reveal key={p.t} delay={i * 90} className="relative">
-              <li className="h-full rounded-3xl bg-white border border-borde p-6 lg:p-7">
-                <span className="inline-flex w-11 h-11 rounded-full bg-verde-profundo text-white font-serif text-[20px] items-center justify-center mb-4">{i + 1}</span>
-                <h3 className="m-0 mb-2 text-[18px] font-bold">{p.t}</h3>
-                <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{p.d}</p>
-              </li>
-            </Reveal>
-          ))}
+        <ol className="list-none m-0 p-0 relative grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4 lg:gap-6">
+          {/* Línea que une los pasos (escritorio) */}
+          <span aria-hidden="true" className="hidden lg:block absolute top-[52px] left-[12.5%] right-[12.5%] border-t-2 border-dashed border-borde-campo" />
+          {pasos.map((p, i) => {
+            const tonos = ["#3f6a70", "#c0664f", "#b7a06d", "#e0a12a"];
+            return (
+              <Reveal key={p.t} delay={i * 110}>
+                <li className="relative flex flex-col items-center text-center">
+                  <span
+                    className="relative w-[84px] h-[84px] sm:w-[104px] sm:h-[104px] rounded-full flex items-center justify-center text-white shadow-[0_18px_40px_-18px_rgba(31,51,56,0.55)]"
+                    style={{ background: `radial-gradient(circle at 30% 25%, ${tonos[i]}cc, ${tonos[i]})` }}
+                  >
+                    <Icono name={p.icono} className="w-9 h-9 sm:w-11 sm:h-11" />
+                    <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-white border-2 border-fondo-papel text-tinta font-serif text-[16px] flex items-center justify-center shadow-sm">
+                      {i + 1}
+                    </span>
+                  </span>
+                  <h3 className="m-0 mt-4 sm:mt-5 font-serif font-normal text-[20px] sm:text-[24px] leading-tight">{p.t}</h3>
+                  <p className="m-0 mt-1.5 text-[14px] sm:text-[15.5px] text-tinta-suave">{p.d}</p>
+                </li>
+              </Reveal>
+            );
+          })}
         </ol>
+        <div className="flex justify-center mt-12">
+          <Button to="/ingresar?mode=register">Empezar ahora</Button>
+        </div>
       </section>
 
       {/* ─── Los cuatro módulos ─── */}
@@ -397,31 +474,33 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── Lo que recibís ─── */}
+      {/* ─── Lo que recibís: mosaico de íconos, una idea por tarjeta ─── */}
       <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
-        <Reveal>
+        <Reveal className="text-center">
           <Eyebrow>Una semana, no una aplicación llena de tareas</Eyebrow>
-          <SectionTitle className="max-w-[15em] mb-10 lg:mb-14">Todo lo que necesitás, nada que sobre.</SectionTitle>
+          <SectionTitle className="max-w-[14em] mx-auto mb-12 lg:mb-14">Todo lo que necesitás, nada que sobre.</SectionTitle>
         </Reveal>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {loQueRecibis.map((f, i) => (
-            <Reveal key={f.t} delay={(i % 3) * 80}>
-              <div className="h-full rounded-3xl bg-white border border-borde p-6 flex gap-4">
-                <span
-                  aria-hidden="true"
-                  className={`shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center font-bold ${
-                    f.icono === "SOS" ? "bg-alerta text-alerta-texto text-[12px] border border-alerta-borde" : "bg-verde-tenue text-verde-profundo text-[20px] border border-borde-suave"
-                  }`}
-                >
-                  {f.icono}
-                </span>
-                <div>
-                  <h3 className="m-0 mb-1.5 text-[17.5px] font-bold">{f.t}</h3>
-                  <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{f.d}</p>
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 max-w-[1040px] mx-auto">
+          {loQueRecibis.map((f, i) => {
+            const sos = f.modulo === "sos";
+            const t = sos ? null : moduloTheme[f.modulo as ResourceModulo];
+            return (
+              <Reveal key={f.t} delay={(i % 3) * 90}>
+                <div className="group h-full rounded-[28px] bg-white border border-borde p-5 sm:p-7 flex flex-col items-center text-center transition-all hover:-translate-y-1 hover:shadow-elevada">
+                  <span
+                    className={`w-16 h-16 sm:w-[76px] sm:h-[76px] rounded-[22px] flex items-center justify-center mb-4 transition-transform group-hover:scale-105 ${
+                      sos ? "bg-alerta text-alerta-texto border-2 border-alerta-borde" : "text-white"
+                    }`}
+                    style={t ? { backgroundImage: `linear-gradient(145deg, ${t.from}, ${t.to})` } : undefined}
+                  >
+                    {sos ? <span className="font-bold text-[17px] tracking-wide">SOS</span> : <Icono name={f.icono} className="w-8 h-8 sm:w-9 sm:h-9" />}
+                  </span>
+                  <h3 className="m-0 font-serif font-normal text-[20px] sm:text-[23px] leading-tight">{f.t}</h3>
+                  <p className="m-0 mt-1.5 text-[14px] sm:text-[15.5px] text-tinta-suave">{f.d}</p>
                 </div>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 
