@@ -43,14 +43,20 @@ function HeroPhone() {
     <div className="relative mx-auto w-[288px] sm:w-[312px]" aria-hidden="true">
       <div aria-hidden="true" className="absolute -inset-10 rounded-full bg-beige-serenidad/70 blur-2xl" />
       <div
-        className="relative w-full rounded-[15.5%/7.4%] bg-tinta p-[3%] shadow-[0_40px_80px_-40px_rgba(31,51,56,0.6)]"
-        style={{ aspectRatio: `${TELEFONO.anchoMm} / ${TELEFONO.altoMm}` }}
+        className="relative w-full rounded-[15.5%/7.4%] bg-[#1b2629] p-[2.2%]"
+        // Sombra pareja alrededor (una sombra solo hacia abajo alarga la
+        // silueta a la vista) + aro metálico fino, como el marco real.
+        style={{
+          aspectRatio: `${TELEFONO.anchoMm} / ${TELEFONO.altoMm}`,
+          boxShadow:
+            "inset 0 0 0 1.5px #8a9ea2, inset 0 0 0 3px #2c3a3e, 0 22px 50px -18px rgba(31,51,56,0.45), 0 4px 14px -4px rgba(31,51,56,0.25)",
+        }}
       >
         {/* Botones laterales */}
-        <span className="absolute -left-[3px] top-[17%] w-[3px] h-[5%] rounded-l-full bg-[#5a7278]" />
-        <span className="absolute -left-[3px] top-[24%] w-[3px] h-[9%] rounded-l-full bg-[#5a7278]" />
-        <span className="absolute -right-[3px] top-[26%] w-[3px] h-[13%] rounded-r-full bg-[#5a7278]" />
-        <div className="relative h-full w-full rounded-[12.5%/6%] overflow-hidden bg-fondo-papel flex flex-col">
+        <span className="absolute -left-[3px] top-[17%] w-[3px] h-[5%] rounded-l-full bg-[#8a9ea2]" />
+        <span className="absolute -left-[3px] top-[24%] w-[3px] h-[9%] rounded-l-full bg-[#8a9ea2]" />
+        <span className="absolute -right-[3px] top-[26%] w-[3px] h-[13%] rounded-r-full bg-[#8a9ea2]" />
+        <div className="relative h-full w-full rounded-[13.4%/6.3%] overflow-hidden bg-fondo-papel flex flex-col">
           {/* Barra de estado + Dynamic Island */}
           <div className="bg-verde-profundo text-white shrink-0">
             <div className="relative h-[34px] flex items-center justify-between px-6 text-[11px] font-semibold">
