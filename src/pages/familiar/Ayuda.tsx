@@ -8,16 +8,15 @@ import { ConversacionProfesional } from "./Mensajes";
 type Seccion = "profesional" | "dudas";
 
 // Ayuda = las dos formas de resolver una duda: respuestas inmediatas
-// (asistente con protocolos revisados) o tu profesional (programa
-// Orientado). En Autoguiado no hay profesional asignada — en su lugar se
-// explica qué agrega Orientado.
+// (asistente con protocolos revisados) o la conversación con el equipo de
+// salud, disponible en los dos programas.
 export function Ayuda() {
   const [params, setParams] = useSearchParams();
   const { data: myPatient } = useMyPatient();
   const unread = useUnreadMensajes(myPatient?.id);
   const orientado = myPatient?.modalidad !== "autoguiado";
   const requested = params.get("tab") as Seccion | null;
-  const seccion: Seccion = requested ?? (orientado ? "profesional" : "dudas");
+  const seccion: Seccion = requested ?? "profesional";
 
   const opciones: { id: Seccion; label: string; badge?: number }[] = [
     { id: "profesional", label: "Tu profesional", badge: unread },
@@ -48,33 +47,37 @@ export function Ayuda() {
 
       {seccion === "dudas" && <Asistente embedded />}
 
-      {seccion === "profesional" && myPatient && (orientado ? <ConversacionProfesional patientId={myPatient.id} /> : <SinProfesional />)}
+      {seccion === "profesional" && myPatient && (
+        <>
+          {!orientado && <SesionesEnVivo />}
+          <ConversacionProfesional patientId={myPatient.id} />
+        </>
+      )}
     </div>
   );
 }
 
-function SinProfesional() {
+// Los dos programas tienen al equipo de salud revisando el plan (y la
+// conversación). Lo que suma Orientado son las sesiones en vivo y el
+// acompañamiento cercano — se cuenta acá, sin interrumpir el chat.
+function SesionesEnVivo() {
   const orientado = programas.find((p) => p.id === "orientado")!;
   return (
-    <div className="bg-white border border-borde rounded-3xl p-5 sm:p-7">
-      <p className="m-0 mb-1 text-[12px] tracking-[0.14em] uppercase text-tinta-tenue font-semibold">Programa Autoguiado</p>
-      <h3 className="font-serif font-normal text-[23px] m-0 mb-2.5">Tu programa no incluye una profesional asignada</h3>
-      <p className="m-0 mb-4 text-[15px] leading-relaxed text-tinta-suave">
-        Mientras tanto, las respuestas rápidas cubren las dudas más comunes del cuidado. Si querés a alguien que revise cómo les va cada
-        semana y te responda directamente, el programa {orientado.nombre} agrega:
-      </p>
-      <ul className="list-none m-0 p-0 grid gap-2 mb-5">
+    <details className="mb-5 rounded-2xl border border-borde bg-white px-4.5 py-3.5">
+      <summary className="cursor-pointer text-[14.5px] font-semibold text-tinta">
+        ¿Querés sesiones en vivo con nuestros profesionales? <span className="text-verde-profundo">Conocé el programa {orientado.nombre}</span>
+      </summary>
+      <ul className="list-none m-0 mt-3 p-0 grid gap-2">
         {orientado.incluye.slice(1).map((i) => (
-          <li key={i} className="flex items-start gap-2.5 text-[15px] text-tinta">
+          <li key={i} className="flex items-start gap-2.5 text-[14.5px] text-tinta">
             <span className="text-verde-serenidad font-bold">✓</span>
             {i}
           </li>
         ))}
       </ul>
-      <p className="m-0 text-[14px] text-tinta-tenue">
-        {orientado.precio} {orientado.periodo}. Para cambiarte, escribinos a <strong className="text-tinta-suave">info@integramente.com</strong> o
-        llamanos al <strong className="text-tinta-suave">+506 8343 5772</strong>.
+      <p className="m-0 mt-3 text-[13.5px] text-tinta-tenue">
+        {orientado.precio} {orientado.periodo}. Para cambiarte, escribinos por acá mismo o a <strong className="text-tinta-suave">info@integramente.com</strong>.
       </p>
-    </div>
+    </details>
   );
 }

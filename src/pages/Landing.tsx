@@ -232,6 +232,26 @@ function Icono({ name, className = "w-7 h-7" }: { name: string; className?: stri
       </>
     ),
     corazon: <path {...p} d="M12 19.5s-7-4.3-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.1c0 5.1-7 9.4-7 9.4z" />,
+    cerebro: (
+      <>
+        <path {...p} d="M9 4.5a3 3 0 0 0-3 3 3 3 0 0 0-2 5.2A3.2 3.2 0 0 0 7 18h2V4.5z" />
+        <path {...p} d="M15 4.5a3 3 0 0 1 3 3 3 3 0 0 1 2 5.2A3.2 3.2 0 0 1 17 18h-2V4.5z" />
+        <path {...p} d="M9 4.5h6M9 18v2M15 18v2M9 11h1.5M13.5 11H15" />
+      </>
+    ),
+    manzana: (
+      <>
+        <path {...p} d="M12 7.5c-2-1.6-6-1.4-6.8 2.6-.9 4.4 2 9.4 4.3 9.4 1 0 1.5-.5 2.5-.5s1.5.5 2.5.5c2.3 0 5.2-5 4.3-9.4C18 6.1 14 5.9 12 7.5z" />
+        <path {...p} d="M12 7.5c0-2 1-3.5 3-4" />
+      </>
+    ),
+    fisio: (
+      <>
+        <circle {...p} cx="13" cy="4.5" r="1.8" />
+        <path {...p} d="M8 11l3-3.5h3l2.5 3M11 7.5l-1 6 3.5 2.5V21M10 13.5L7 21" />
+      </>
+    ),
+    estrella: <path {...p} d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.4l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" />,
     escudo: (
       <>
         <path {...p} d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
@@ -246,10 +266,46 @@ function Icono({ name, className = "w-7 h-7" }: { name: string; className?: stri
   );
 }
 
+const disciplinas = [
+  { icono: "cerebro", t: "Neuropsicología", d: "Memoria, atención y estado de ánimo", from: "#89c0c6", to: "#3f6a70" },
+  { icono: "manzana", t: "Nutrición", d: "Una alimentación que cuida el cerebro", from: "#e8b5a1", to: "#c0664f" },
+  { icono: "fisio", t: "Fisioterapia", d: "Movimiento seguro y equilibrio", from: "#fadfa9", to: "#d9a441" },
+  { icono: "estrella", t: "Expertos del programa", d: "Acompañamiento y seguimiento de resultados", from: "#ece3c4", to: "#b7a06d" },
+];
+
+// Ilustraciones propias para "Para quién es" (en lugar de emojis).
+function IlustracionAcompanar() {
+  return (
+    <svg viewBox="0 0 240 170" className="w-[240px] h-[170px]" aria-hidden="true">
+      <circle cx="96" cy="58" r="22" fill="#f7f4e9" />
+      <path d="M52 170c0-36 20-62 44-62s44 26 44 62z" fill="#f7f4e9" />
+      <circle cx="150" cy="74" r="18" fill="#ebe6ce" />
+      <path d="M116 170c0-30 15-52 34-52s34 22 34 52z" fill="#ebe6ce" />
+      <path d="M128 132c-6 6-14 8-22 6" stroke="#3f6a70" strokeWidth="5" strokeLinecap="round" fill="none" opacity=".55" />
+      <path d="M124 28c-4-7-14-6-14 2 0 7 14 14 14 14s14-7 14-14c0-8-10-9-14-2z" fill="#f4d096" />
+    </svg>
+  );
+}
+
+function IlustracionCrecer() {
+  return (
+    <svg viewBox="0 0 240 170" className="w-[240px] h-[170px]" aria-hidden="true">
+      <circle cx="120" cy="66" r="24" fill="#f7f4e9" />
+      <path d="M72 170c0-38 22-66 48-66s48 28 48 66z" fill="#f7f4e9" />
+      <path d="M120 40c0-14 4-22 4-22" stroke="#5f8b5f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <path d="M124 22c10-10 26-8 28 2-10 8-24 8-28-2z" fill="#7fae7f" />
+      <path d="M122 30c-10-8-24-6-26 2 10 7 22 7 26-2z" fill="#a8d5a2" />
+      <circle cx="62" cy="54" r="5" fill="#fffaf0" opacity=".9" />
+      <circle cx="178" cy="40" r="4" fill="#fffaf0" opacity=".9" />
+      <circle cx="190" cy="92" r="6" fill="#fffaf0" opacity=".7" />
+    </svg>
+  );
+}
+
 const pasos = [
   { icono: "charla", t: "Cuéntenos de su día", d: "Unos 10 minutos" },
-  { icono: "elegir", t: "Elija su programa", d: "Con o sin acompañamiento profesional" },
-  { icono: "profesional", t: "Lo revisamos", d: "Una profesional prepara su semana" },
+  { icono: "elegir", t: "Elija su programa", d: "Con o sin sesiones en vivo" },
+  { icono: "profesional", t: "Lo revisamos", d: "Nuestro equipo prepara su semana" },
   { icono: "semana", t: "¡A disfrutar!", d: "Actividades y recordatorios" },
 ];
 
@@ -262,14 +318,6 @@ const modulosInfo: Record<ResourceModulo, { frase: string; ejemplos: string[] }>
 
 const ordenModulos: ResourceModulo[] = ["movimiento", "musica", "reminiscencia", "sentidos"];
 
-const loQueRecibis: { icono: string; t: string; d: string; modulo: ResourceModulo | "sos" }[] = [
-  { icono: "sol", t: "Una cosa a la vez", d: "Pasos claros y sin prisa", modulo: "movimiento" },
-  { icono: "campana", t: "Recordatorios", d: "Por WhatsApp y en su calendario", modulo: "sentidos" },
-  { icono: "check", t: "Registro en segundos", d: "Sin presiones ni culpas", modulo: "reminiscencia" },
-  { icono: "ajuste", t: "Se ajusta cada semana", d: "Según cómo les fue", modulo: "musica" },
-  { icono: "corazon", t: "Ayuda a mano", d: "Respuestas y su profesional", modulo: "movimiento" },
-  { icono: "escudo", t: "Botón SOS", d: "Por si algo pasa", modulo: "sos" },
-];
 
 const seguridad = [
   {
@@ -354,12 +402,12 @@ export function Landing() {
           </h1>
           <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-3">
             Para quienes cuidan a un ser querido: un plan semanal de actividades para la memoria, el movimiento y el ánimo, preparado
-            por una profesional y adaptado a su día a día.
+            por nuestro equipo de salud y adaptado a su día a día.
           </p>
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservar lo que nos hace ser quienes somos.</p>
           <div className="flex flex-wrap gap-3">
             <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
-            <Button variant="secondary" to="#como-funciona">
+            <Button variant="secondary" onClick={() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" })}>
               Ver cómo funciona
             </Button>
           </div>
@@ -369,29 +417,62 @@ export function Landing() {
         </Reveal>
       </section>
 
-      {/* ─── Para quién ─── */}
+      {/* ─── Para quién: dos caminos, ilustrados ─── */}
       <section className="bg-beige-serenidad">
-        <div className="max-w-[1280px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-16 grid gap-6 lg:grid-cols-[0.8fr_1.2fr] items-center">
-          <Reveal>
-            <SectionTitle className="text-[28px] sm:text-[32px] lg:text-[38px]">¿Para quién es?</SectionTitle>
-            <p className="m-0 mt-3 text-[16.5px] leading-relaxed text-tinta-suave max-w-[28em]">
+        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
+          <Reveal className="text-center">
+            <Eyebrow>Para quién es</Eyebrow>
+            <SectionTitle className="max-w-[18em] mx-auto mb-3">Para cuidar a quien quiere, o para cuidarse usted.</SectionTitle>
+            <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[34em]">
               Para personas adultas mayores que desean mantener su mente activa, con o sin diagnóstico, y para las familias que las acompañan.
             </p>
           </Reveal>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 max-w-[1040px] mx-auto">
             {[
-              { t: "Cuido a un familiar", d: "Mamá, papá, abuelita o su pareja. Le indicamos qué hacer cada día y cómo hacerlo, y usted registra cómo les fue.", e: "🤝" },
-              { t: "Quiero cuidar mi propia mente", d: "Usted mismo responde el cuestionario y recibe actividades pensadas para sus gustos y su ritmo.", e: "🌱" },
+              {
+                t: "Cuido a un familiar",
+                d: "Le indicamos qué hacer cada día y cómo hacerlo. Usted acompaña y registra cómo les fue.",
+                chips: ["Mamá o papá", "Abuelita o abuelito", "Pareja"],
+                from: "#89c0c6",
+                to: "#3f6a70",
+                ilustracion: <IlustracionAcompanar />,
+              },
+              {
+                t: "Quiero cuidar mi propia mente",
+                d: "Usted mismo responde el cuestionario y recibe actividades pensadas para sus gustos y su ritmo.",
+                chips: ["Prevención", "Memoria", "Bienestar"],
+                from: "#fadfa9",
+                to: "#d9a441",
+                ilustracion: <IlustracionCrecer />,
+              },
             ].map((c, i) => (
-              <Reveal key={c.t} delay={i * 100}>
+              <Reveal key={c.t} delay={i * 110}>
                 <Link
                   to="/ingresar?mode=register"
-                  className="group h-full flex flex-col gap-2 rounded-3xl bg-white border border-borde p-6 no-underline text-tinta hover:-translate-y-0.5 hover:shadow-elevada transition-all"
+                  className="group h-full flex flex-col rounded-[32px] bg-white border border-borde overflow-hidden no-underline text-tinta transition-all hover:-translate-y-1 hover:shadow-elevada"
                 >
-                  <span aria-hidden="true" className="text-[26px]">{c.e}</span>
-                  <span className="font-serif text-[23px]">{c.t}</span>
-                  <span className="text-[15.5px] leading-relaxed text-tinta-suave">{c.d}</span>
-                  <span className="mt-auto pt-2 text-[14.5px] font-semibold text-verde-profundo group-hover:underline">Empezar →</span>
+                  <div className="relative h-[190px] overflow-hidden" style={{ backgroundImage: `linear-gradient(150deg, ${c.from}, ${c.to})` }}>
+                    <span aria-hidden="true" className="absolute -right-10 -bottom-16 w-56 h-56 rounded-full bg-white/15" />
+                    <span aria-hidden="true" className="absolute -left-8 -top-12 w-40 h-40 rounded-full bg-white/10" />
+                    <div className="absolute inset-0 flex items-end justify-center transition-transform duration-500 group-hover:scale-[1.04]">{c.ilustracion}</div>
+                  </div>
+                  <div className="flex flex-col gap-3 p-6 sm:p-7 flex-1">
+                    <h3 className="m-0 font-serif font-normal text-[27px] leading-tight">{c.t}</h3>
+                    <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{c.d}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.chips.map((x) => (
+                        <span key={x} className="text-[13px] font-semibold rounded-full px-3 py-1 bg-campo border border-borde-suave text-tinta-suave">
+                          {x}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="mt-auto pt-3 inline-flex items-center gap-2 text-[15.5px] font-semibold text-verde-profundo">
+                      Empezar
+                      <span aria-hidden="true" className="w-8 h-8 rounded-full bg-verde-tenue border border-borde-suave flex items-center justify-center transition-transform group-hover:translate-x-1">
+                        →
+                      </span>
+                    </span>
+                  </div>
                 </Link>
               </Reveal>
             ))}
@@ -474,36 +555,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── Lo que recibís: mosaico de íconos, una idea por tarjeta ─── */}
-      <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
-        <Reveal className="text-center">
-          <Eyebrow>Una semana, no una aplicación llena de tareas</Eyebrow>
-          <SectionTitle className="max-w-[14em] mx-auto mb-12 lg:mb-14">Todo lo que necesita, nada que sobre.</SectionTitle>
-        </Reveal>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 max-w-[1040px] mx-auto">
-          {loQueRecibis.map((f, i) => {
-            const sos = f.modulo === "sos";
-            const t = sos ? null : moduloTheme[f.modulo as ResourceModulo];
-            return (
-              <Reveal key={f.t} delay={(i % 3) * 90}>
-                <div className="group h-full rounded-[28px] bg-white border border-borde p-5 sm:p-7 flex flex-col items-center text-center transition-all hover:-translate-y-1 hover:shadow-elevada">
-                  <span
-                    className={`w-16 h-16 sm:w-[76px] sm:h-[76px] rounded-[22px] flex items-center justify-center mb-4 transition-transform group-hover:scale-105 ${
-                      sos ? "bg-alerta text-alerta-texto border-2 border-alerta-borde" : "text-white"
-                    }`}
-                    style={t ? { backgroundImage: `linear-gradient(145deg, ${t.from}, ${t.to})` } : undefined}
-                  >
-                    {sos ? <span className="font-bold text-[17px] tracking-wide">SOS</span> : <Icono name={f.icono} className="w-8 h-8 sm:w-9 sm:h-9" />}
-                  </span>
-                  <h3 className="m-0 font-serif font-normal text-[20px] sm:text-[23px] leading-tight">{f.t}</h3>
-                  <p className="m-0 mt-1.5 text-[14px] sm:text-[15.5px] text-tinta-suave">{f.d}</p>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
-
       {/* ─── Seguridad ─── */}
       <section id="seguridad" className="bg-verde-tenue border-y border-borde-suave scroll-mt-20">
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-start">
@@ -511,8 +562,8 @@ export function Landing() {
             <Eyebrow>Seguridad primero</Eyebrow>
             <SectionTitle className="mb-4">Antes de sugerir algo, revisamos que sea seguro.</SectionTitle>
             <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
-              Cada recomendación pasa por un filtro de seguridad basado en lo que usted nos cuenta, y una profesional revisa el plan antes de
-              que llegue a su casa.
+              Cada recomendación pasa por un filtro de seguridad basado en lo que usted nos cuenta, y nuestro equipo de salud revisa el plan
+              antes de que llegue a su casa.
             </p>
           </Reveal>
           <div className="grid gap-3.5">
@@ -537,14 +588,15 @@ export function Landing() {
 
       {/* ─── Programas ─── */}
       <section id="programas" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
-        <Reveal>
+        <Reveal className="text-center">
           <Eyebrow>Programas</Eyebrow>
-          <SectionTitle className="max-w-[15em] mb-3">Usted elige cuánto acompañamiento profesional necesita.</SectionTitle>
-          <p className="m-0 mb-10 lg:mb-12 text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-            Crear el perfil es gratis. El programa se elige al final del cuestionario, con una recomendación según sus respuestas.
+          <SectionTitle className="max-w-[15em] mx-auto mb-3">Los dos con nuestro equipo de salud. Usted elige qué tan cerca.</SectionTitle>
+          <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
+            En ambos, profesionales de la salud revisan y ajustan las actividades. La diferencia: el Orientado suma sesiones en vivo y un
+            acompañamiento cercano. Crear el perfil es gratis y el programa se elige al final del cuestionario.
           </p>
         </Reveal>
-        <div className="grid gap-5 md:grid-cols-2 max-w-[980px]">
+        <div className="grid gap-5 md:grid-cols-2 max-w-[980px] mx-auto">
           {programas.map((p, i) => {
             const destacado = p.id === "orientado";
             const txt = programasHome[p.id];
@@ -556,7 +608,7 @@ export function Landing() {
                       <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{p.nombre}</h3>
                       <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{txt.lema}</p>
                     </div>
-                    {destacado && <span className="shrink-0 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">Más acompañamiento</span>}
+                    {destacado && <span className="shrink-0 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">Con sesiones en vivo</span>}
                   </div>
                   <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{txt.descripcion}</p>
                   <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
@@ -579,7 +631,7 @@ export function Landing() {
             );
           })}
         </div>
-        <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
+        <p className="m-0 mt-6 text-center text-[15.5px] text-tinta-suave">
           ¿Ya es paciente de la clínica IntegraMente? Su cuenta la crea nuestro equipo:{" "}
           <Link to="/ingresar?mode=login" className="text-verde-profundo font-semibold">
             ingrese con el correo que registró en consulta
@@ -588,25 +640,40 @@ export function Landing() {
         </p>
       </section>
 
-      {/* ─── Equipo ─── */}
+      {/* ─── Equipo interdisciplinario ─── */}
       <section id="equipo" className="bg-beige-serenidad scroll-mt-20">
-        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-center">
-          <Reveal>
+        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
+          <Reveal className="text-center">
             <Eyebrow>Quiénes estamos detrás</Eyebrow>
-            <SectionTitle className="mb-4">Un equipo clínico, no solo una aplicación.</SectionTitle>
-            <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
-              IntegraMente en Casa es parte del programa integral de estimulación cognitiva y acompañamiento emocional de IntegraMente. Cada
-              plan lo revisa una profesional de nuestro equipo.
+            <SectionTitle className="max-w-[16em] mx-auto mb-3">Un equipo de salud, no solo una aplicación.</SectionTitle>
+            <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[36em]">
+              Profesionales de distintas áreas revisan y ajustan cada plan, para cuidar la mente, el cuerpo y la alimentación de su familiar.
             </p>
           </Reveal>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {equipo.map((m) => (
-              <Reveal key={m.nombre}>
-                <div className="rounded-3xl bg-white border border-borde p-6 flex flex-col items-start gap-4">
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            {disciplinas.map((d, i) => (
+              <Reveal key={d.t} delay={i * 90}>
+                <div className="h-full rounded-[28px] bg-white border border-borde p-5 sm:p-6 flex flex-col items-center text-center">
+                  <span
+                    className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-white mb-4 shadow-[0_14px_30px_-16px_rgba(31,51,56,0.6)]"
+                    style={{ backgroundImage: `linear-gradient(145deg, ${d.from}, ${d.to})` }}
+                  >
+                    <Icono name={d.icono} className="w-9 h-9" />
+                  </span>
+                  <h3 className="m-0 font-serif font-normal text-[21px] sm:text-[23px] leading-tight">{d.t}</h3>
+                  <p className="m-0 mt-1.5 text-[14px] sm:text-[15px] leading-relaxed text-tinta-suave">{d.d}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          {equipo.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3 mt-8">
+              {equipo.map((m) => (
+                <span key={m.nombre} className="inline-flex items-center gap-3 rounded-full bg-white border border-borde pl-1.5 pr-4 py-1.5">
                   {m.foto ? (
-                    <img src={m.foto} alt={m.nombre} className="w-24 h-24 rounded-full object-cover" />
+                    <img src={m.foto} alt="" className="w-9 h-9 rounded-full object-cover" />
                   ) : (
-                    <span className="w-24 h-24 rounded-full bg-verde-profundo text-white font-serif text-[32px] flex items-center justify-center">
+                    <span className="w-9 h-9 rounded-full bg-verde-profundo text-white font-serif text-[14px] flex items-center justify-center">
                       {m.nombre
                         .replace(/^Dr[a]?\.\s*/, "")
                         .split(" ")
@@ -615,15 +682,13 @@ export function Landing() {
                         .join("")}
                     </span>
                   )}
-                  <div>
-                    <p className="m-0 font-serif text-[24px] leading-tight">{m.nombre}</p>
-                    <p className="m-0 mt-1 text-[15px] text-verde-profundo font-semibold">{m.rol}</p>
-                  </div>
-                  {m.bio && <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{m.bio}</p>}
-                </div>
-              </Reveal>
-            ))}
-          </div>
+                  <span className="text-[14.5px] text-tinta">
+                    <strong className="font-semibold">{m.nombre}</strong> <span className="text-tinta-suave">· {m.rol}</span>
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -695,7 +760,8 @@ export function Landing() {
               <span className="text-[11px] tracking-[0.16em] uppercase text-[#a9b9bb]">en Casa</span>
             </div>
             <p className="m-0 text-[15px] leading-relaxed max-w-[26em]">
-              Programa integral de estimulación cognitiva y acompañamiento emocional. Dra. Guiselle Solano · Neuropsicología.
+              Programa integral de estimulación cognitiva y acompañamiento emocional, con un equipo interdisciplinario en neuropsicología,
+              nutrición y fisioterapia.
             </p>
           </div>
           <div className="grid gap-2.5 text-[15px] content-start">

@@ -44,28 +44,34 @@ export const testimonios: Testimonio[] = [];
 export const programasHome: Record<"autoguiado" | "orientado", { lema: string; descripcion: string; incluye: string[] }> = {
   autoguiado: {
     lema: "A su propio ritmo",
-    descripcion: "Un plan semanal de actividades preparado según el perfil de su familiar, para realizar en casa con total independencia.",
+    descripcion:
+      "Un plan semanal de actividades para realizar en casa, preparado y ajustado por nuestros profesionales de la salud según el perfil de su familiar.",
     incluye: [
       "Plan semanal personalizado",
+      "Revisión y ajuste por profesionales de la salud",
       "Actividades paso a paso, con videos y materiales",
       "Recordatorios por WhatsApp y en su calendario",
-      "Respuestas rápidas para las dudas más frecuentes",
     ],
   },
   orientado: {
-    lema: "Con una profesional a su lado",
-    descripcion: "Todo lo del programa Autoguiado, más una profesional que revisa cómo les fue cada semana y ajusta el plan junto con ustedes.",
+    lema: "Con el equipo de salud a su lado",
+    descripcion:
+      "Todo lo del Autoguiado, más sesiones en vivo con nuestros profesionales y el acompañamiento cercano de un experto del programa.",
     incluye: [
       "Todo lo del programa Autoguiado",
-      "Una profesional que revisa cada semana",
-      "Ajustes al plan según cómo les fue",
-      "Mensajes directos con su profesional",
-      "Consulta inicial de orientación",
+      "Sesiones en vivo, presenciales o virtuales",
+      "Con profesionales en neuropsicología, nutrición y fisioterapia",
+      "Acompañamiento cercano de un experto del programa",
+      "Seguimiento de los resultados",
     ],
   },
 };
 
 export const preguntas: { p: string; r: string }[] = [
+  {
+    p: "¿Cuál es la diferencia entre los programas?",
+    r: "En los dos, profesionales de la salud revisan y ajustan las actividades. El Orientado suma sesiones en vivo, presenciales o virtuales, con profesionales en neuropsicología, nutrición y fisioterapia, y el acompañamiento cercano de un experto del programa que da seguimiento a los resultados.",
+  },
   {
     p: "¿Cuánto cuesta?",
     r: "Crear el perfil y completar el cuestionario es gratis. Al terminar, usted ve los dos programas con su precio, Autoguiado y Orientado, y elige el que más le convenga. No se cobra nada sin avisarle antes.",
@@ -80,7 +86,7 @@ export const preguntas: { p: string; r: string }[] = [
   },
   {
     p: "¿Quién prepara el plan?",
-    r: "Una profesional de nuestro equipo clínico revisa el perfil y prepara la semana con actividades de nuestra biblioteca, elegidas según los gustos de su familiar y lo que es seguro para su movilidad. En el programa Orientado, además, revisa cada semana cómo les fue y ajusta el plan.",
+    r: "Nuestro equipo de salud, con profesionales en neuropsicología, nutrición y fisioterapia, revisa el perfil y prepara la semana con actividades elegidas según los gustos de su familiar y lo que es seguro para su movilidad. En los dos programas, el plan se revisa y ajusta según cómo les va.",
   },
   {
     p: "¿Qué pasa si hay una emergencia?",
