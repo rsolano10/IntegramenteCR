@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Reveal } from "../components/ui/Reveal";
 import { Button } from "../components/ui/Button";
@@ -334,29 +334,138 @@ const seguridad = [
   },
 ];
 
-function Faq() {
-  const [abierta, setAbierta] = useState<number | null>(0);
+// Preguntas frecuentes como carrusel: cada pregunta es una tarjeta con la
+// respuesta ya visible (nada que abrir). Desplazamiento nativo con
+// scroll-snap (dedo, trackpad, teclado) + flechas y puntos que también
+// sirven para saltar. La tarjeta siguiente asoma para invitar a seguir.
+const margenContenido = "max(1.25rem, calc((100vw - 1280px) / 2 + 3rem))";
+
+const tonosFaq = [
+  { from: "#4f7d83", to: "#3f6a70" },
+  { from: "#e8b5a1", to: "#c0664f" },
+  { from: "#fadfa9", to: "#d9a441" },
+  { from: "#89c0c6", to: "#4f8a91" },
+  { from: "#ece3c4", to: "#b7a06d" },
+];
+
+function FaqCarousel() {
+  const pista = useRef<HTMLDivElement>(null);
+  const [activa, setActiva] = useState(0);
+  const total = preguntas.length;
+
+  function irA(i: number) {
+    const el = pista.current;
+    const card = el?.children[i] as HTMLElement | undefined;
+    if (!el || !card) return;
+    el.scrollTo({ left: card.offsetLeft - el.offsetLeft, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
+
+  useEffect(() => {
+    const el = pista.current;
+    if (!el) return;
+    const onScroll = () => {
+      const cards = Array.from(el.children) as HTMLElement[];
+      const x = el.scrollLeft;
+      let best = 0;
+      cards.forEach((c, i) => {
+        if (Math.abs(c.offsetLeft - el.offsetLeft - x) < Math.abs(cards[best].offsetLeft - el.offsetLeft - x)) best = i;
+      });
+      // Al llegar al final, la última se marca aunque no pueda alinearse a la izquierda.
+      if (x + el.clientWidth >= el.scrollWidth - 4) best = cards.length - 1;
+      setActiva(best);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <div className="grid gap-2.5">
-      {preguntas.map((q, i) => {
-        const open = abierta === i;
-        return (
-          <div key={q.p} className={`rounded-2xl border bg-white transition-colors ${open ? "border-verde-serenidad" : "border-borde"}`}>
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => setAbierta(open ? null : i)}
-              className="w-full flex items-center justify-between gap-4 text-left px-5 sm:px-6 py-4.5 bg-transparent border-none cursor-pointer font-sans"
+    <div role="region" aria-roledescription="carrusel" aria-label="Preguntas frecuentes">
+      <div
+        ref={pista}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            irA(Math.min(total - 1, activa + 1));
+          }
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            irA(Math.max(0, activa - 1));
+          }
+        }}
+        // De borde a borde de la pantalla, pero alineado con el contenido:
+        // el relleno lateral replica el margen del contenedor de 1280px.
+        style={{ paddingInline: margenContenido, scrollPaddingInline: margenContenido }}
+        className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-6 pt-2 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-verde-serenidad/40"
+      >
+        {preguntas.map((q, i) => {
+          const t = tonosFaq[i % tonosFaq.length];
+          return (
+            <article
+              key={q.p}
+              aria-roledescription="tarjeta"
+              aria-label={`${i + 1} de ${total}`}
+              className={`snap-start shrink-0 w-[84%] sm:w-[400px] lg:w-[420px] rounded-[32px] bg-white border border-borde overflow-hidden flex flex-col transition-[transform,box-shadow,opacity] duration-500 ${
+                i === activa ? "shadow-elevada" : "opacity-[0.88]"
+              }`}
             >
-              <span className="text-[16.5px] sm:text-[17.5px] font-semibold text-tinta">{q.p}</span>
-              <span aria-hidden="true" className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[18px] transition-transform ${open ? "rotate-45 bg-verde-serenidad text-white" : "bg-campo text-tinta-suave"}`}>
-                +
-              </span>
-            </button>
-            {open && <p className="m-0 px-5 sm:px-6 pb-5 -mt-1 text-[16px] leading-relaxed text-tinta-suave max-w-[60em]">{q.r}</p>}
-          </div>
-        );
-      })}
+              <div className="relative px-6 sm:px-7 pt-6 pb-7 text-white min-h-[184px] flex flex-col" style={{ backgroundImage: `linear-gradient(150deg, ${t.from}, ${t.to})` }}>
+                <span aria-hidden="true" className="absolute right-6 top-3 font-serif italic text-[96px] leading-none text-white/20 select-none">
+                  ?
+                </span>
+                <span aria-hidden="true" className="absolute right-10 bottom-[-46px] w-28 h-28 rounded-full bg-white/10" />
+                <span className="relative text-[12px] font-semibold tracking-[0.16em] text-white/80">
+                  {String(i + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+                </span>
+                <h3 className="relative m-0 mt-auto pt-6 font-serif font-normal text-[26px] sm:text-[28px] leading-[1.15] drop-shadow-sm" style={{ textWrap: "balance" }}>
+                  {q.p}
+                </h3>
+              </div>
+              <p className="m-0 px-6 sm:px-7 py-6 text-[16px] leading-relaxed text-tinta-suave">{q.r}</p>
+            </article>
+          );
+        })}
+      </div>
+
+      {/* Controles */}
+      <div className="flex items-center justify-between gap-4 max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 mt-2">
+        <div className="flex items-center gap-1.5" role="tablist" aria-label="Elegir pregunta">
+          {preguntas.map((q, i) => (
+            <button
+              key={q.p}
+              type="button"
+              role="tab"
+              aria-selected={i === activa}
+              aria-label={`Pregunta ${i + 1}: ${q.p}`}
+              onClick={() => irA(i)}
+              className={`h-2 rounded-full border-none cursor-pointer transition-all duration-300 ${i === activa ? "w-8 bg-verde-profundo" : "w-2 bg-borde-campo hover:bg-verde-serenidad"}`}
+            />
+          ))}
+        </div>
+        <div className="hidden sm:flex gap-2.5">
+          {[
+            { d: -1, label: "Pregunta anterior", path: "M12.5 4.5L7 10l5.5 5.5" },
+            { d: 1, label: "Pregunta siguiente", path: "M7.5 4.5L13 10l-5.5 5.5" },
+          ].map((b) => {
+            const destino = activa + b.d;
+            const off = destino < 0 || destino > total - 1;
+            return (
+              <button
+                key={b.d}
+                type="button"
+                aria-label={b.label}
+                onClick={() => irA(destino)}
+                disabled={off}
+                className="w-12 h-12 rounded-full bg-white border border-borde flex items-center justify-center text-tinta cursor-pointer transition-all hover:bg-verde-profundo hover:text-white hover:border-verde-profundo disabled:opacity-35 disabled:cursor-default disabled:hover:bg-white disabled:hover:text-tinta disabled:hover:border-borde"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d={b.path} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -715,19 +824,21 @@ export function Landing() {
       )}
 
       {/* ─── Preguntas frecuentes ─── */}
-      <section id="preguntas" className="max-w-[980px] mx-auto px-5 py-16 sm:px-8 lg:py-24 scroll-mt-20">
-        <Reveal>
-          <Eyebrow>Preguntas frecuentes</Eyebrow>
-          <SectionTitle className="mb-8 lg:mb-10">Lo que suelen preguntarnos.</SectionTitle>
-        </Reveal>
-        <Faq />
-        <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
-          ¿Tenés otra consulta? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
-          <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold">
-            WhatsApp
-          </a>
-          .
-        </p>
+      <section id="preguntas" className="py-16 lg:py-24 scroll-mt-20 overflow-hidden">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
+          <Reveal>
+            <Eyebrow>Preguntas frecuentes</Eyebrow>
+            <SectionTitle>Lo que suelen preguntarnos.</SectionTitle>
+          </Reveal>
+          <p className="m-0 text-[15.5px] text-tinta-suave max-w-[24em]">
+            ¿Tenés otra consulta? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
+            <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold">
+              WhatsApp
+            </a>
+            .
+          </p>
+        </div>
+        <FaqCarousel />
       </section>
 
       {/* ─── CTA final ─── */}
