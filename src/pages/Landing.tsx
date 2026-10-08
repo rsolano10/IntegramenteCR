@@ -23,10 +23,12 @@ const semanaDemo: { dia: string; n: number; hora: string; titulo: string; modulo
   { dia: "Vie", n: 16, hora: "10:00", titulo: "Movilidad sentado", modulo: "movimiento" },
 ];
 
-// Proporciones reales del teléfono (alto/ancho del cuerpo). Medidas del
-// iPhone 17 Pro (150 × 71,9 mm); el iPhone 18 Pro mantiene el formato —
-// si cambia, basta con actualizar estas dos cifras.
-const TELEFONO = { anchoMm: 71.9, altoMm: 150 };
+// Proporción del teléfono (alto/ancho). El iPhone Pro real mide
+// 150 × 71,9 mm (2,086), pero dibujado plano y de frente — sin los bordes
+// curvos ni el reflejo del metal que lo hacen ver más ancho en la mano —
+// se percibe alargado. 2,00 se sigue leyendo como un iPhone y se ve
+// equilibrado (decisión tomada comparando 2,086 / 2,00 / 1,95).
+const TELEFONO = { ancho: 1, alto: 2 };
 
 function HeroPhone() {
   const [hechas, setHechas] = useState(prefersReducedMotion() ? 2 : 0);
@@ -47,7 +49,7 @@ function HeroPhone() {
         // Sombra pareja alrededor (una sombra solo hacia abajo alarga la
         // silueta a la vista) + aro metálico fino, como el marco real.
         style={{
-          aspectRatio: `${TELEFONO.anchoMm} / ${TELEFONO.altoMm}`,
+          aspectRatio: `${TELEFONO.ancho} / ${TELEFONO.alto}`,
           boxShadow:
             "inset 0 0 0 1.5px #8a9ea2, inset 0 0 0 3px #2c3a3e, 0 22px 50px -18px rgba(31,51,56,0.45), 0 4px 14px -4px rgba(31,51,56,0.25)",
         }}
