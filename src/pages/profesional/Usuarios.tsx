@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { Button } from "../../components/ui/Button";
 import { Metric } from "../../components/ui/Metric";
 import { CuentasTab } from "../../components/profesional/CuentasTab";
 import { PacientesTab } from "../../components/profesional/PacientesTab";
-import { PatientDetailModal, type PatientRow } from "../../components/profesional/PatientDetailModal";
+import { patientPath, type PatientRow } from "../../lib/patients";
 import { AccountDetailModal } from "../../components/profesional/AccountDetailModal";
 import { attentionFor } from "../../lib/patientAttention";
 import type { ManagedAccount } from "../../lib/adminAccounts";
 
 export function Usuarios() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
-  const [openPatient, setOpenPatient] = useState<PatientRow | null>(null);
+  const navigate = useNavigate();
+  const openPatient = (p: PatientRow) => navigate(patientPath(p.id));
   const [openAccount, setOpenAccount] = useState<ManagedAccount | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [search, setSearch] = useState("");
@@ -40,18 +41,13 @@ export function Usuarios() {
     },
   });
 
-  // Lands here after "Llenar encuesta con el paciente" (PatientDetailModal)
-  // saves — reopening that same patient's detail is what makes the trip
-  // back from the questionnaire land somewhere useful (review the answers,
-  // assign a plan) instead of a bare roster.
+  // Legacy deep link (older builds sent the assisted questionnaire back
+  // here) — forward to the patient screen.
   useEffect(() => {
     const encuestaGuardada = searchParams.get("encuestaGuardada");
-    if (!encuestaGuardada || !patients) return;
-    const match = patients.find((p) => p.id === encuestaGuardada);
-    if (match) setOpenPatient(match);
-    setSearchParams({}, { replace: true });
+    if (encuestaGuardada) navigate(patientPath(encuestaGuardada, "evaluacion"), { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, patients]);
+  }, [searchParams]);
 
   function handleChanged(message: string, isError?: boolean) {
     setStatusMsg({ text: message, error: isError });
@@ -112,7 +108,7 @@ export function Usuarios() {
           createOpen={createOpen}
           onCreateOpenChange={setCreateOpen}
           onChanged={handleChanged}
-          onOpenPatient={setOpenPatient}
+          onOpenPatient={openPatient}
           onOpenAccount={setOpenAccount}
           search={search}
         />
@@ -125,17 +121,14 @@ export function Usuarios() {
         </div>
       </div>
 
-      {openPatient && <PatientDetailModal patient={openPatient} onClose={() => setOpenPatient(null)} onChanged={handleChanged} />}
-
       {openAccount && (
         <AccountDetailModal
           account={openAccount}
           onClose={() => setOpenAccount(null)}
           onChanged={handleChanged}
           onViewPatient={(patientId) => {
-            const match = (patients ?? []).find((p) => p.id === patientId);
             setOpenAccount(null);
-            if (match) setOpenPatient(match);
+            navigate(patientPath(patientId));
           }}
         />
       )}

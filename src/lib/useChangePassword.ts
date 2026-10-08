@@ -6,6 +6,12 @@ export const MIN_PASSWORD_LENGTH = 8;
 // Mirrors the server-side policy (supabase/config.toml: minimum_password_length
 // = 8, password_requirements = "letters_digits") so a user sees the same rule
 // client-side instead of discovering it only after a rejected submit.
+export const passwordRules: { id: string; label: string; test: (p: string) => boolean }[] = [
+  { id: "length", label: `Al menos ${MIN_PASSWORD_LENGTH} caracteres`, test: (p) => p.length >= MIN_PASSWORD_LENGTH },
+  { id: "letter", label: "Al menos una letra", test: (p) => /[a-zA-Z]/.test(p) },
+  { id: "digit", label: "Al menos un número", test: (p) => /[0-9]/.test(p) },
+];
+
 export function passwordIssue(password: string): string | null {
   if (password.length < MIN_PASSWORD_LENGTH) return `Debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
   if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) return "Debe combinar letras y números.";

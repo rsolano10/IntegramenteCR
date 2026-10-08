@@ -85,8 +85,8 @@ export function ResumenFinal() {
       </h1>
       <p className="m-0 mb-8 text-[16px] leading-relaxed text-tinta-suave text-left">{resumen}</p>
       <div className="grid gap-3 max-w-[340px] mx-auto">
-        <Button variant="ink" onClick={() => navigate("/app/perfil/invitar")}>
-          Ver {esPropia ? "tu" : "su"} plan personalizado
+        <Button variant="ink" onClick={() => navigate("/app/perfil/programa")}>
+          Elegir {esPropia ? "tu" : "su"} programa
         </Button>
         <Button variant="secondary" onClick={() => navigate("/app/perfil/resumen")}>
           Revisar mis respuestas

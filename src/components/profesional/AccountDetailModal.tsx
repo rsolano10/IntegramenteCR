@@ -211,7 +211,7 @@ export function AccountDetailModal({
   );
 }
 
-// Simétrico a LinkAccountPicker en PatientDetailModal.tsx (misma escritura
+// Simétrico a LinkAccountPicker en pages/profesional/Paciente.tsx (misma escritura
 // directa a patient_links, misma política RLS "patient_links: profesional
 // insert") — a propósito no ofrece "crear paciente nuevo" inline, mismo
 // alcance que su contraparte (que tampoco crea cuentas nuevas).

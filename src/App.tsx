@@ -14,6 +14,7 @@ import { Ingresar } from "./pages/Ingresar";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
 import { CompletarCuenta } from "./pages/CompletarCuenta";
+import { ConfirmarCorreo } from "./pages/ConfirmarCorreo";
 import { PlanCheckout } from "./pages/PlanCheckout";
 import { LegalPage } from "./pages/LegalPage";
 import { Login } from "./pages/Login";
@@ -23,6 +24,7 @@ import { OnboardingStep } from "./pages/onboarding/OnboardingStep";
 import { PerfilResumen } from "./pages/onboarding/PerfilResumen";
 import { ResumenFinal } from "./pages/onboarding/ResumenFinal";
 import { InvitarContraparte } from "./pages/onboarding/InvitarContraparte";
+import { ElegirPrograma } from "./pages/onboarding/ElegirPrograma";
 
 import { Hoy } from "./pages/familiar/Hoy";
 import { Actividad } from "./pages/familiar/Actividad";
@@ -46,6 +48,7 @@ import { Editor } from "./pages/profesional/Editor";
 import { ProfesionalAlerta } from "./pages/profesional/Alerta";
 import { Usuarios } from "./pages/profesional/Usuarios";
 import { Biblioteca } from "./pages/profesional/Biblioteca";
+import { Paciente } from "./pages/profesional/Paciente";
 
 import { Ideacion } from "./pages/alertas/Ideacion";
 import { Maltrato } from "./pages/alertas/Maltrato";
@@ -212,6 +215,7 @@ function AppLayout() {
         <Route path="perfil/resumen" element={<PerfilResumen />} />
         <Route path="perfil/final" element={<ResumenFinal />} />
         <Route path="perfil/invitar" element={<InvitarContraparte />} />
+        <Route path="perfil/programa" element={<ElegirPrograma />} />
         <Route path="perfil/:step" element={<OnboardingStep />} />
 
         <Route element={<FamiliarShell />}>
@@ -238,6 +242,7 @@ function AppLayout() {
           <Route path="panel" element={<Panel />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="biblioteca" element={<Biblioteca />} />
+          <Route path="paciente/:id" element={<Paciente />} />
           <Route path="ficha" element={<Ficha />} />
           <Route path="editor" element={<Editor />} />
           <Route path="alerta" element={<ProfesionalAlerta />} />
@@ -286,16 +291,36 @@ function ScrollToTop() {
   return null;
 }
 
+// If an auth email's redirect target ever isn't on Supabase's allow-list,
+// Supabase falls back to the bare site URL — the email template still
+// appends ?token_hash=…&type=…, so route those to the page that can verify
+// them instead of silently showing the landing page.
+const LINK_DESTINATIONS: Record<string, string> = {
+  signup: "/confirmar-correo",
+  email: "/confirmar-correo",
+  recovery: "/restablecer-contrasena",
+  invite: "/completar-cuenta",
+};
+
+function EmailLinkFallback() {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const dest = params.get("token_hash") ? LINK_DESTINATIONS[params.get("type") ?? ""] : undefined;
+  if (dest) return <Navigate to={`${dest}${search}`} replace />;
+  return <Landing />;
+}
+
 export function App() {
   return (
     <>
     <ScrollToTop />
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<EmailLinkFallback />} />
       <Route path="/ingresar" element={<Ingresar />} />
       <Route path="/olvide-password" element={<ForgotPassword />} />
       <Route path="/restablecer-contrasena" element={<ResetPassword />} />
       <Route path="/completar-cuenta" element={<CompletarCuenta />} />
+      <Route path="/confirmar-correo" element={<ConfirmarCorreo />} />
       <Route path="/planes/:plan" element={<PlanCheckout />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
       <Route path="/app/*" element={<AppLayout />} />

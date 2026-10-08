@@ -2,7 +2,15 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
-import { isUnconfirmedEmailError } from "../../lib/authErrors";
+import {
+  authErrorMessage,
+  confirmEmailRedirect,
+  emailIssue,
+  isUnconfirmedEmailError,
+  PENDING_SIGNUP_EMAIL_KEY,
+} from "../../lib/authErrors";
+import { passwordIssue } from "../../lib/useChangePassword";
+import { PasswordRequirements } from "../ui/PasswordRequirements";
 import { PasswordInput } from "../ui/PasswordInput";
 import { PillToggle } from "../ui/PillToggle";
 import { Button } from "../ui/Button";
@@ -37,29 +45,46 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
     setResendMsg("");
   }
 
+  // Errors only show once a field has been left (or on submit) — nobody
+  // wants to be told their email is invalid while still typing it. The
+  // password checklist is the exception: it's guidance, not an error, so it
+  // updates live from the first keystroke.
+  const [touched, setTouched] = useState<{ nombre?: boolean; email?: boolean; password?: boolean }>({});
+  const nombreError = !nombre.trim() ? "Escribí tu nombre." : nombre.trim().length < 3 ? "Escribí tu nombre completo." : null;
+  const emailError = emailIssue(email);
+  const passwordError = isRegister ? passwordIssue(password) : !password ? "Escribí tu contraseña." : null;
+  const formValid = !emailError && !passwordError && (!isRegister || !nombreError);
+
   async function submit() {
     setAuthError("");
     setUnconfirmed(false);
     setResendMsg("");
+    setTouched({ nombre: true, email: true, password: true });
+    if (!formValid) return;
     if (isRegister) {
-      if (!nombre.trim() || !email.trim() || !password) {
-        setAuthError("Completá nombre, correo y contraseña.");
-        return;
-      }
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { role: "familiar", nombre: nombre.trim() }, emailRedirectTo: `${window.location.origin}/app/login` },
+        options: { data: { role: "familiar", nombre: nombre.trim() }, emailRedirectTo: confirmEmailRedirect() },
       });
       setLoading(false);
       if (error) {
-        setAuthError(
-          error.message.toLowerCase().includes("already registered")
-            ? "Ese correo ya tiene una cuenta. Iniciá sesión en vez de crear una nueva."
-            : "No pudimos crear la cuenta. Intentá de nuevo.",
-        );
+        setAuthError(authErrorMessage(error, "No pudimos crear la cuenta. Intentá de nuevo en un momento."));
         return;
+      }
+      // With email confirmations on, Supabase answers a signup for an
+      // already-confirmed address with a "success" whose user has no
+      // identities (so the response can't be used to probe for accounts) —
+      // that's the only signal that this person should log in instead.
+      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+        setAuthError("Ese correo ya tiene una cuenta. Iniciá sesión en vez de crear una nueva.");
+        return;
+      }
+      try {
+        localStorage.setItem(PENDING_SIGNUP_EMAIL_KEY, email.trim());
+      } catch {
+        // only used to prefill a resend later — fine to lose
       }
       setSignupSent(true);
       return;
@@ -72,7 +97,7 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
         setUnconfirmed(true);
         setAuthError("Todavía no confirmaste tu correo — revisá tu bandeja de entrada.");
       } else {
-        setAuthError("No pudimos iniciar sesión — revisá tu correo y contraseña.");
+        setAuthError(authErrorMessage(error, "No pudimos iniciar sesión — revisá tu correo y contraseña."));
       }
       return;
     }
@@ -95,9 +120,9 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
   async function resendSignup() {
     setResendMsg("");
     setResendLoading(true);
-    await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/app/login` } });
+    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: confirmEmailRedirect() } });
     setResendLoading(false);
-    setResendMsg("Te reenviamos el correo de confirmación.");
+    setResendMsg(error ? authErrorMessage(error, "No pudimos reenviarlo. Probá de nuevo en un minuto.") : "Te reenviamos el correo de confirmación.");
   }
 
   return (
@@ -149,7 +174,15 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
         <>
           {isRegister && (
             <div className="grid gap-4.5 mb-1.5">
-              <FormField label="Nombre completo" type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              <FormField
+                label="Nombre completo"
+                type="text"
+                autoComplete="name"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, nombre: true }))}
+                error={touched.nombre ? (nombreError ?? undefined) : undefined}
+              />
             </div>
           )}
 
@@ -157,23 +190,43 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
             <FormField
               label="Correo electrónico"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+              error={touched.email ? (emailError ?? undefined) : undefined}
               placeholder="nombre@correo.com"
             />
             <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
               Contraseña
-              <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
+                onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+                onEnter={submit}
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                invalid={!isRegister && !!touched.password && !!passwordError}
+                placeholder="••••••••"
+              />
+              {isRegister ? (
+                <PasswordRequirements password={password} />
+              ) : (
+                touched.password && passwordError && <span className="text-sm font-normal text-alerta-texto">{passwordError}</span>
+              )}
             </label>
             <Button
               variant="ink"
               fullWidth
               onClick={submit}
-              disabled={loading || (isRegister ? !nombre.trim() || !email.trim() || !password : !email.trim() || !password)}
+              disabled={loading}
             >
               {loading ? (isRegister ? "Creando…" : "Entrando…") : isRegister ? "Crear cuenta y empezar" : "Entrar"}
             </Button>
-            {authError && <p className="m-0 text-[14px] text-alerta-texto">{authError}</p>}
+            {authError && (
+              <p role="alert" className="m-0 text-[14px] leading-relaxed text-alerta-texto bg-alerta border border-alerta-borde rounded-xl px-3.5 py-2.5">
+                {authError}
+              </p>
+            )}
             {unconfirmed && (
               <div className="grid gap-2 -mt-2">
                 <div className="flex flex-wrap items-center gap-3">

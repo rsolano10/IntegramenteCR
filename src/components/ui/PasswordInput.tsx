@@ -7,11 +7,19 @@ export function PasswordInput({
   value,
   onChange,
   placeholder,
-  className = "min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta",
+  onBlur,
+  onEnter,
+  autoComplete,
+  invalid = false,
+  className = "min-h-13 px-4 rounded-xl border-[1.5px] bg-campo font-sans text-[17px] text-tinta",
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  onBlur?: () => void;
+  onEnter?: () => void;
+  autoComplete?: string;
+  invalid?: boolean;
   className?: string;
 }) {
   const [visible, setVisible] = useState(false);
@@ -23,7 +31,11 @@ export function PasswordInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full pr-12 ${className}`}
+        onBlur={onBlur}
+        onKeyDown={onEnter ? (e) => e.key === "Enter" && onEnter() : undefined}
+        autoComplete={autoComplete}
+        aria-invalid={invalid || undefined}
+        className={`w-full pr-12 ${invalid ? "border-semaforo-rojo bg-alerta" : "border-borde-campo focus:border-verde-serenidad"} ${className}`}
       />
       <button
         type="button"

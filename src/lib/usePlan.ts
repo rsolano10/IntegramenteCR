@@ -49,7 +49,7 @@ function joinedResource(value: PlanTaskRow["media_resources"]): MediaResourceJoi
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-// AssignPlanModal now writes hora as a real "HH:MM" (24h) value via
+// The clinic planner (PlanificadorTab) writes hora as a real "HH:MM" (24h) value via
 // <input type="time"> — needed so the calendar-sync feature (see
 // supabase/functions/calendar-feed) has a reliable time to schedule a
 // notification for, not just a display string. Older plans (assigned

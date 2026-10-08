@@ -29,6 +29,73 @@ async function sendMail(to: string, subject: string, html: string): Promise<stri
   return null;
 }
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Same look as the auth emails in supabase/templates/ (Resend sends both),
+// so every message from IntegraMente reads as one voice.
+function brandedEmail(title: string, bodyHtml: string, cta?: { label: string; url: string }): string {
+  const button = cta
+    ? `<tr><td style="padding:24px 36px 8px 36px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-radius:999px;background:#1f3338;"><a href="${cta.url}" style="display:inline-block;padding:15px 30px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">${cta.label}</a></td></tr></table></td></tr>`
+    : "";
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f7f4e9;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7f4e9;"><tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+<tr><td style="padding:0 8px 20px 8px;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#1f3338;">Integra<em style="color:#3f6a70;">Mente</em> <span style="font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7a8b8e;">&nbsp;en Casa</span></td></tr>
+<tr><td style="background:#ffffff;border:1px solid #e4dfc7;border-radius:24px;overflow:hidden;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="height:8px;background:#6a969c;line-height:8px;font-size:0;">&nbsp;</td></tr>
+<tr><td style="padding:36px 36px 8px 36px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.2;color:#1f3338;">${title}</td></tr>
+<tr><td style="padding:12px 36px 0 36px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#4a5b5f;">${bodyHtml}</td></tr>
+${button}
+<tr><td style="height:28px;line-height:28px;font-size:0;">&nbsp;</td></tr>
+</table></td></tr>
+<tr><td style="padding:24px 16px 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#7a8b8e;text-align:center;">¿Dudas? Escribinos a <a href="mailto:info@integramente.com" style="color:#3f6a70;">info@integramente.com</a> o llamanos al +506 8343 5772.<br>IntegraMente en Casa · Costa Rica</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+function quoteBlock(text: string): string {
+  return `<div style="margin:18px 0 0 0;padding:16px 18px;background:#fbf7ea;border-left:4px solid #6a969c;border-radius:12px;white-space:pre-wrap;color:#1f3338;">${escapeHtml(text)}</div>`;
+}
+
+// WhatsApp, same Cloud API call as whatsapp-notify-tick. Until the Meta
+// token and approved templates exist (see the WhatsApp memory/README),
+// this reports "not_configured" and the caller just carries on — email and
+// the in-app chat still deliver the message.
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+const WHATSAPP_TEMPLATE_LANG = Deno.env.get("WHATSAPP_TEMPLATE_LANG") ?? "es";
+const TEMPLATE_PROGRAMA_LISTO = Deno.env.get("WHATSAPP_TEMPLATE_PROGRAMA_LISTO") ?? "im_programa_listo";
+const TEMPLATE_SOLICITUD_REVISADA = Deno.env.get("WHATSAPP_TEMPLATE_SOLICITUD_REVISADA") ?? "im_solicitud_revisada";
+
+async function sendWhatsappTemplate(to: string, templateName: string, bodyParams: string[]): Promise<{ ok: boolean; messageId?: string; error?: string }> {
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) return { ok: false, error: "not_configured" };
+  const res = await fetch(`https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "template",
+      template: {
+        name: templateName,
+        language: { code: WHATSAPP_TEMPLATE_LANG },
+        components: [{ type: "body", parameters: bodyParams.map((text) => ({ type: "text", text })) }],
+      },
+    }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) return { ok: false, error: data?.error?.message ?? `HTTP ${res.status}` };
+  return { ok: true, messageId: data?.messages?.[0]?.id };
+}
+
+// WhatsApp template variables can't contain newlines or runs of spaces.
+function waParam(text: string): string {
+  return text.replace(/\s+/g, " ").trim().slice(0, 900);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -78,7 +145,7 @@ async function createAccount(
   const { data, error } = await admin.auth.admin.createUser({ email, password: provisionalPassword, email_confirm: false, user_metadata: metadata });
   if (error) return { user: null, error };
   await admin.from("profiles").update({ must_change_password: true }).eq("id", data.user.id);
-  const { error: resendError } = await admin.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${SITE_URL}/app/login` } });
+  const { error: resendError } = await admin.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${SITE_URL}/confirmar-correo` } });
   return {
     user: data.user,
     error: null,
@@ -245,7 +312,7 @@ async function handleResend(admin: ReturnType<typeof createClient>, payload: Rec
     const { error } = await admin.auth.resend({
       type: "signup",
       email: target.email,
-      options: { emailRedirectTo: `${SITE_URL}/app/login` },
+      options: { emailRedirectTo: `${SITE_URL}/confirmar-correo` },
     });
     if (error) return json({ error: error.message }, 400);
   }
@@ -281,7 +348,7 @@ async function handleUpdateEmail(admin: ReturnType<typeof createClient>, payload
     const { error } = await admin.auth.resend({
       type: "signup",
       email: newEmail,
-      options: { emailRedirectTo: `${SITE_URL}/app/login` },
+      options: { emailRedirectTo: `${SITE_URL}/confirmar-correo` },
     });
     if (error) warning = `Correo corregido, pero no pudimos reenviar la confirmación ahora: ${error.message}`;
   }
@@ -391,7 +458,7 @@ async function handlePermanentlyDeleteUser(admin: ReturnType<typeof createClient
 async function handleRejectPatient(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
   const patientId = String(payload.patientId ?? "");
   const mensaje = String(payload.mensaje ?? "").trim();
-  if (!patientId || !mensaje) return json({ error: "Faltan datos." }, 400);
+  if (!patientId || !mensaje) return json({ error: "Falta el mensaje para la familia." }, 400);
 
   const { data: patient } = await admin.from("patients").select("nombre").eq("id", patientId).maybeSingle();
   const patientNombre = patient?.nombre ?? "tu solicitud";
@@ -400,34 +467,56 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
     .from("patient_links")
     .select("profile_id")
     .eq("patient_id", patientId)
-    .eq("relation", "familiar_admin");
-  const familiarProfileId = links?.[0]?.profile_id as string | undefined;
+    .in("relation", ["familiar_admin", "participante"]);
+  const profileIds = [...new Set((links ?? []).map((l) => l.profile_id as string))];
 
-  let email: string | null = null;
-  if (familiarProfileId) {
-    const { data: found } = await admin.auth.admin.getUserById(familiarProfileId);
-    email = found?.user?.email ?? null;
+  // Read every contact BEFORE deleting — the patient row (and its links)
+  // go away below.
+  const contacts: { email: string | null; phone: string | null; nombre: string }[] = [];
+  for (const profileId of profileIds) {
+    const [{ data: found }, { data: prof }] = await Promise.all([
+      admin.auth.admin.getUserById(profileId),
+      admin.from("profiles").select("nombre, whatsapp_phone, whatsapp_notifications_enabled").eq("id", profileId).maybeSingle(),
+    ]);
+    contacts.push({
+      email: found?.user?.email ?? null,
+      phone: prof?.whatsapp_notifications_enabled ? (prof?.whatsapp_phone ?? null) : null,
+      nombre: (prof?.nombre ?? "").split(" ")[0],
+    });
   }
 
   const { error: deleteError } = await admin.from("patients").delete().eq("id", patientId);
   if (deleteError) return json({ error: deleteError.message }, 400);
 
-  if (!email) {
-    return json({ ok: true, warning: "El paciente se rechazó, pero no encontramos un correo de familiar para notificar." });
+  if (contacts.length === 0) {
+    return json({ ok: true, warning: "La solicitud se rechazó, pero no encontramos una cuenta vinculada para avisarle." });
   }
 
-  const html = `
-    <p>Hola,</p>
-    <p>Sobre la solicitud de <strong>${patientNombre}</strong> en IntegraMente en Casa, el equipo clínico decidió no continuar en este momento:</p>
-    <p style="white-space: pre-wrap;">${mensaje.replace(/</g, "&lt;")}</p>
-    <p>Si tenés preguntas, podés responder a este correo.</p>
-    <p>— Equipo IntegraMente en Casa</p>
-  `;
-  const mailError = await sendMail(email, "Sobre tu solicitud en IntegraMente en Casa", html);
-  if (mailError) {
-    return json({ ok: true, warning: `El paciente se rechazó, pero no pudimos enviar el correo de aviso: ${mailError}` });
+  const canales = new Set<string>();
+  const fallos: string[] = [];
+  for (const c of contacts) {
+    if (c.email) {
+      const html = brandedEmail(
+        "Sobre tu solicitud",
+        `<p style="margin:0 0 14px 0;">Hola${c.nombre ? `, ${escapeHtml(c.nombre)}` : ""}.</p>
+         <p style="margin:0;">Gracias por confiar en IntegraMente en Casa. Revisamos con cuidado la información de <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong> y, por ahora, el programa en casa no es la mejor opción. Te dejamos el mensaje del equipo clínico:</p>
+         ${quoteBlock(mensaje)}
+         <p style="margin:18px 0 0 0;">Si tenés preguntas o querés conversar otras alternativas, respondé a este correo o llamanos.</p>`,
+      );
+      const err = await sendMail(c.email, "Sobre tu solicitud en IntegraMente en Casa", html);
+      if (err) fallos.push(err);
+      else canales.add("correo");
+    }
+    if (c.phone) {
+      const wa = await sendWhatsappTemplate(c.phone, TEMPLATE_SOLICITUD_REVISADA, [waParam(patientNombre), waParam(mensaje)]);
+      if (wa.ok) canales.add("WhatsApp");
+    }
   }
-  return json({ ok: true, message: `${patientNombre} fue rechazado y se le avisó a la familia por correo.` });
+
+  if (canales.size === 0) {
+    return json({ ok: true, warning: `La solicitud se rechazó, pero no pudimos avisarle a la familia${fallos[0] ? `: ${fallos[0]}` : "."}` });
+  }
+  return json({ ok: true, message: `Solicitud de ${patientNombre} rechazada — se le avisó a la familia por ${[...canales].join(" y ")}.` });
 }
 
 // Notifies every linked family/participant account by email once the clinic
@@ -436,10 +525,12 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
 // this is called separately right after it succeeds.
 async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
   const patientId = String(payload.patientId ?? "");
+  const mensaje = String(payload.mensaje ?? "").trim();
+  const primeraVez = payload.primeraVez !== false;
   if (!patientId) return json({ error: "Falta el paciente." }, 400);
 
   const { data: patient } = await admin.from("patients").select("nombre").eq("id", patientId).maybeSingle();
-  const patientNombre = patient?.nombre ?? "tu perfil";
+  const patientNombre = patient?.nombre ?? "tu familiar";
 
   const { data: links } = await admin
     .from("patient_links")
@@ -449,29 +540,59 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
 
   const profileIds = [...new Set((links ?? []).map((l) => l.profile_id as string))];
   if (profileIds.length === 0) {
-    return json({ ok: true, warning: "El plan se asignó, pero no encontramos cuentas vinculadas para notificar." });
+    return json({ ok: true, warning: "El plan se asignó, pero no encontramos cuentas vinculadas para avisar." });
   }
 
+  const canales = new Set<string>(["chat de la app"]);
   const failures: string[] = [];
   for (const profileId of profileIds) {
-    const { data: found } = await admin.auth.admin.getUserById(profileId);
+    const [{ data: found }, { data: prof }] = await Promise.all([
+      admin.auth.admin.getUserById(profileId),
+      admin.from("profiles").select("nombre, whatsapp_phone, whatsapp_notifications_enabled").eq("id", profileId).maybeSingle(),
+    ]);
     const email = found?.user?.email;
-    if (!email) continue;
-    const html = `
-      <p>Hola,</p>
-      <p>Ya revisamos el perfil de <strong>${patientNombre}</strong> en IntegraMente en Casa y armamos su programa de esta semana.</p>
-      <p>Ya podés ingresar a la plataforma con tu correo y contraseña.</p>
-      <p><a href="${SITE_URL}/app/login">Ingresar a IntegraMente en Casa</a></p>
-      <p>— Equipo IntegraMente en Casa</p>
-    `;
-    const mailError = await sendMail(email, "Ya podés ingresar a IntegraMente en Casa", html);
-    if (mailError) failures.push(mailError);
+    const nombre = (prof?.nombre ?? "").split(" ")[0];
+    if (email) {
+      const html = brandedEmail(
+        primeraVez ? `El programa de ${escapeHtml(patientNombre)} está listo` : "Ya está lista la próxima semana",
+        `<p style="margin:0 0 14px 0;">Hola${nombre ? `, ${escapeHtml(nombre)}` : ""}.</p>
+         <p style="margin:0;">${
+           primeraVez
+             ? `Nuestro equipo clínico revisó el perfil de <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong> y armó su programa personalizado. Desde hoy vas a ver las actividades de cada día en la app.`
+             : `Ya preparamos las actividades de la próxima semana para <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong>, tomando en cuenta cómo les fue.`
+         }</p>
+         ${mensaje ? `<p style="margin:18px 0 0 0;">Un mensaje de tu profesional:</p>${quoteBlock(mensaje)}` : ""}`,
+        { label: primeraVez ? "Ver el programa" : "Ver la semana", url: `${SITE_URL}/app/login` },
+      );
+      const mailError = await sendMail(
+        email,
+        primeraVez ? `El programa de ${patientNombre} está listo · IntegraMente en Casa` : "Ya está lista la próxima semana · IntegraMente en Casa",
+        html,
+      );
+      if (mailError) failures.push(mailError);
+      else canales.add("correo");
+    }
+    const phone = prof?.whatsapp_notifications_enabled ? prof?.whatsapp_phone : null;
+    if (phone) {
+      const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "Hola"), waParam(patientNombre), waParam(mensaje || "Ya podés ver las actividades en la app.")]);
+      if (wa.ok) canales.add("WhatsApp");
+      await admin.from("notifications_log").insert({
+        patient_id: patientId,
+        profile_id: profileId,
+        tipo: "programa_listo",
+        scheduled_for: new Date().toISOString(),
+        sent_at: wa.ok ? new Date().toISOString() : null,
+        whatsapp_message_id: wa.messageId ?? null,
+        status: wa.ok ? "sent" : wa.error === "not_configured" ? "skipped_not_configured" : "failed",
+        error: wa.error ?? null,
+      });
+    }
   }
 
-  if (failures.length > 0) {
-    return json({ ok: true, warning: `El plan se asignó, pero no pudimos enviar algún correo de aviso: ${failures[0]}` });
+  if (failures.length > 0 && !canales.has("correo")) {
+    return json({ ok: true, canales: [...canales], warning: `El plan se asignó, pero no pudimos enviar el correo de aviso: ${failures[0]}` });
   }
-  return json({ ok: true });
+  return json({ ok: true, canales: [...canales] });
 }
 
 // Self-service counterpart invite: a familiar_admin can invite the missing

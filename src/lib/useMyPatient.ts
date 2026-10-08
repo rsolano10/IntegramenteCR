@@ -14,6 +14,8 @@ export interface MyPatient {
   // schema_version < 2 (cuestionario viejo) — RouteGuard lo obliga a
   // completar el cuestionario nuevo antes de seguir usando la app.
   needsReregistration: boolean;
+  // false = todavía no eligió entre Autoguiado y Orientado (ElegirPrograma).
+  programa_elegido: boolean;
 }
 
 // Resolves "which real patient record am I (familiar/paciente) linked to"
@@ -45,6 +47,9 @@ export function useMyPatient() {
         vista_completa: row.vista_completa ?? false,
         welcome_message_pending: row.welcome_message_pending ?? false,
         needsReregistration: row.needs_reregistration ?? false,
+        // Default true: until the elegir_programa migration is live the RPC
+        // doesn't return this column, and nobody should be nagged then.
+        programa_elegido: row.programa_elegido ?? true,
       } as MyPatient;
     },
     enabled: !!userId,

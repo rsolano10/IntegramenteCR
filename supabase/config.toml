@@ -248,10 +248,31 @@ pass = "env(RESEND_API_KEY)"
 admin_email = "no-responder@integramentecr.com"
 sender_name = "IntegraMente en Casa"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Correos de autenticación en español con la identidad de IntegraMente —
+# ver supabase/templates/README.md para cómo se publican en producción.
+[auth.email.template.confirmation]
+subject = "Confirmá tu correo y empecemos · IntegraMente en Casa"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Creá una contraseña nueva · IntegraMente en Casa"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.invite]
+subject = "Tu cuenta en IntegraMente en Casa está lista"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.email_change]
+subject = "Confirmá tu nuevo correo · IntegraMente en Casa"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.email.template.magic_link]
+subject = "Tu enlace para entrar · IntegraMente en Casa"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.reauthentication]
+subject = "Tu código de verificación · IntegraMente en Casa"
+content_path = "./supabase/templates/reauthentication.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

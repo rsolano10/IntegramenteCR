@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Button } from "../ui/Button";
 import { PasswordInput } from "../ui/PasswordInput";
-import { passwordIssue, passwordStrength } from "../../lib/useChangePassword";
+import { passwordIssue } from "../../lib/useChangePassword";
+import { PasswordRequirements } from "../ui/PasswordRequirements";
+import { authErrorMessage } from "../../lib/authErrors";
 
 // Shared by CompletarCuenta (first login after a clinic invite) and
 // ResetPassword (after a recovery link) — both land here with an active
@@ -31,7 +33,7 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
     const { error: updateError } = await supabase.auth.updateUser({ password });
     if (updateError) {
       setLoading(false);
-      setError(updateError.message);
+      setError(authErrorMessage(updateError, "No pudimos guardar la contraseña. Intentá de nuevo."));
       return;
     }
     const {
@@ -56,16 +58,22 @@ export function SetPasswordForm({ title, subtitle, cta }: { title: string; subti
       <div className="grid gap-4.5">
         <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
           Nueva contraseña
-          <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
-          {password && (
-            <span className="text-[13px] font-normal text-tinta-tenue">
-              Fuerza: <strong className="text-tinta-suave">{passwordStrength(password)}</strong> · al menos 8 caracteres, con letras y números
-            </span>
-          )}
+          <PasswordInput value={password} onChange={setPassword} autoComplete="new-password" placeholder="••••••••" />
+          <PasswordRequirements password={password} />
         </label>
         <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
           Confirmar contraseña
-          <PasswordInput value={confirm} onChange={setConfirm} placeholder="••••••••" />
+          <PasswordInput
+            value={confirm}
+            onChange={setConfirm}
+            onEnter={submit}
+            autoComplete="new-password"
+            invalid={!!confirm && confirm.length >= password.length && confirm !== password}
+            placeholder="••••••••"
+          />
+          {!!confirm && confirm.length >= password.length && confirm !== password && (
+            <span className="text-sm font-normal text-alerta-texto">Las contraseñas no coinciden.</span>
+          )}
         </label>
         {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
         <Button variant="ink" fullWidth onClick={submit} disabled={loading || !password || !confirm}>

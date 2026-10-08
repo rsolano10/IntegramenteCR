@@ -15,11 +15,34 @@ function hasAnswer(value: string | string[] | undefined): boolean {
   return !!value;
 }
 
+// Shown once, on the very first screen — sets expectations up front
+// (time, autosave, pausing) instead of a running item counter.
+function AntesDeEmpezar() {
+  const puntos = [
+    { icono: "◷", titulo: "Unos 10 minutos", detalle: "Respondés a tu ritmo — la mayoría son de tocar una opción." },
+    { icono: "✓", titulo: "Se guarda solo", detalle: "Podés pausar y seguir después desde donde te quedaste." },
+    { icono: "♡", titulo: "Sin respuestas incorrectas", detalle: "Lo que importa es cómo es su día a día, no cómo debería ser." },
+  ];
+  return (
+    <div className="grid gap-3 sm:grid-cols-3 text-left mb-9">
+      {puntos.map((p) => (
+        <div key={p.titulo} className="bg-white border border-borde rounded-2xl p-4">
+          <span aria-hidden="true" className="inline-flex w-8 h-8 rounded-full bg-verde-tenue border border-borde-suave items-center justify-center text-verde-profundo mb-2.5">
+            {p.icono}
+          </span>
+          <p className="m-0 mb-1 text-[15px] font-semibold text-tinta">{p.titulo}</p>
+          <p className="m-0 text-[14px] leading-relaxed text-tinta-suave">{p.detalle}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function OnboardingStep() {
   const navigate = useNavigate();
   const { step: stepId } = useParams();
   // Assisted onboarding: the clinic fills this out in person on an existing
-  // patient's behalf (?paciente=<id> — see PatientDetailModal's "Llenar
+  // patient's behalf (?paciente=<id> — see the patient screen's "Llenar
   // encuesta" entry point) — same wizard, but it writes directly to that
   // patient's onboarding_answers instead of calling self_onboard.
   const [searchParams] = useSearchParams();
@@ -146,7 +169,7 @@ export function OnboardingStep() {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["onboarding-answers", assistedPatientId] });
-      navigate(`/app/profesional/usuarios?encuestaGuardada=${assistedPatientId}`);
+      navigate(`/app/profesional/paciente/${assistedPatientId}?tab=evaluacion`);
       return;
     }
 
@@ -245,6 +268,7 @@ export function OnboardingStep() {
       <div className="im-in max-w-[620px] mx-auto px-5 py-14 pb-20 sm:px-8 text-center">
         <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.16] lg:leading-[1.12] m-0 mb-4">{resolveText(question.title, answers)}</h1>
         <p className="m-0 mb-8 text-base sm:text-lg leading-relaxed text-tinta-suave">{resolveText(question.body, answers)}</p>
+        {idx === 0 && !assistedPatientId && <AntesDeEmpezar />}
         <Button onClick={goNext}>{question.cta}</Button>
       </div>
     );
@@ -265,10 +289,10 @@ export function OnboardingStep() {
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-5 mb-3">
-            <span className="text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">
-              {question.module ? `${question.module} · ` : ""}
-              {questionIdx + 1} de {questionSteps.length}
-            </span>
+            {/* Deliberately no "27 de 66": with this many questions an exact
+                count reads as "still so far to go" — the bar gives a sense
+                of movement without the arithmetic. */}
+            <span className="text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">{question.module ?? ""}</span>
             <span className="text-xs sm:text-sm text-semaforo-verde-texto inline-flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
               Guardado automáticamente

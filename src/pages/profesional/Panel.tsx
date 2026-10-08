@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { semaforoData } from "../../lib/rules";
-import { PatientDetailModal, type PatientRow } from "../../components/profesional/PatientDetailModal";
+import { patientPath, usePatients } from "../../lib/patients";
 import { planTiers, type Semaforo } from "../../lib/mockData";
 
 interface PendingThread {
@@ -27,7 +27,6 @@ function timeAgo(iso: string) {
 
 export function Panel() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const session = useSession();
   const nombre = session.status === "authed" ? session.profile.nombre : "";
 
@@ -46,17 +45,18 @@ export function Panel() {
   const done = adherencia?.done ?? 0;
   const total = adherencia?.total ?? 0;
 
-  const [detailPatient, setDetailPatient] = useState<PatientRow | null>(null);
-  const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
+  const location = useLocation();
+  const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(
+    (location.state as { statusMsg?: { text: string; error?: boolean } } | null)?.statusMsg ?? null,
+  );
+  // Arrives from the patient screen after accepting/rejecting/publishing —
+  // shown once, then cleared so a reload doesn't repeat it.
+  useEffect(() => {
+    if ((location.state as { statusMsg?: unknown } | null)?.statusMsg) navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const { data: patients, isLoading: loadingPatients } = useQuery({
-    queryKey: ["patients"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_patients");
-      if (error) throw error;
-      return data as PatientRow[];
-    },
-  });
+  const { data: patients, isLoading: loadingPatients } = usePatients();
 
   const { data: pendingThreads, isLoading: loadingThreads } = useQuery({
     queryKey: ["pending-threads"],
@@ -74,8 +74,6 @@ export function Panel() {
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
     [patients],
   );
-
-  const patientsById = useMemo(() => new Map((patients ?? []).map((p) => [p.id, p])), [patients]);
 
   const esperandoRevision = useMemo(() => (patients ?? []).filter((p) => p.needs_review), [patients]);
   const esperandoAsignacion = useMemo(() => (patients ?? []).filter((p) => p.needs_assignment), [patients]);
@@ -96,16 +94,6 @@ export function Panel() {
   }, [patients]);
   const ejeLabel: Record<string, string> = { cognitivo: "Cognitivo", fisico: "Físico", funcional: "Funcional", nutricional: "Nutricional" };
 
-  function handleChanged(message: string, isError?: boolean) {
-    setStatusMsg({ text: message, error: isError });
-    queryClient.invalidateQueries({ queryKey: ["patients"] });
-    queryClient.invalidateQueries({ queryKey: ["pending-threads"] });
-  }
-
-  function openThreadPatient(threadPatientId: string) {
-    const match = patientsById.get(threadPatientId);
-    if (match) setDetailPatient(match);
-  }
 
   const pacientesActivos = patients?.length ?? 0;
 
@@ -152,7 +140,7 @@ export function Panel() {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setDetailPatient(p)}
+                    onClick={() => navigate(patientPath(p.id, "evaluacion"))}
                     className="flex items-center justify-between gap-3 bg-aviso rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
                   >
                     <span>
@@ -161,7 +149,7 @@ export function Panel() {
                         {modalidadLabel[p.modalidad] ?? p.modalidad} · esperando desde {timeAgo(p.created_at)}
                       </span>
                     </span>
-                    <span className="text-[13px] font-semibold text-semaforo-amarillo-texto shrink-0">Asignar ›</span>
+                    <span className="text-[13px] font-semibold text-semaforo-amarillo-texto shrink-0">Evaluar ›</span>
                   </button>
                 ))}
                 {porEvaluar.length > 5 && (
@@ -195,7 +183,7 @@ export function Panel() {
                   <button
                     key={t.patient_id}
                     type="button"
-                    onClick={() => openThreadPatient(t.patient_id)}
+                    onClick={() => navigate(patientPath(t.patient_id, "mensajes"))}
                     className="grid gap-1 bg-campo rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
                   >
                     <span className="flex items-center justify-between gap-3">
@@ -231,10 +219,13 @@ export function Panel() {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setDetailPatient(p)}
+                    onClick={() => navigate(patientPath(p.id, "semana"))}
                     className="flex items-center justify-between gap-3 bg-fila-calida rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
                   >
-                    <span className="text-[15px] font-bold text-tinta">{p.nombre}</span>
+                    <span>
+                      <span className="block text-[15px] font-bold text-tinta">{p.nombre}</span>
+                      <span className="block text-[13px] text-semaforo-amarillo-texto">Registraron toda la semana · ver cómo les fue</span>
+                    </span>
                     <span className="text-[13px] font-semibold text-semaforo-amarillo-texto shrink-0">Revisar ›</span>
                   </button>
                 ))}
@@ -257,10 +248,13 @@ export function Panel() {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setDetailPatient(p)}
+                    onClick={() => navigate(patientPath(p.id, "planificar"))}
                     className="flex items-center justify-between gap-3 bg-aviso rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
                   >
-                    <span className="text-[15px] font-bold text-tinta">{p.nombre}</span>
+                    <span>
+                      <span className="block text-[15px] font-bold text-tinta">{p.nombre}</span>
+                      <span className="block text-[13px] text-semaforo-amarillo-texto">Semana terminada, sin plan para la próxima</span>
+                    </span>
                     <span className="text-[13px] font-semibold text-semaforo-amarillo-texto shrink-0">Asignar ›</span>
                   </button>
                 ))}
@@ -308,13 +302,6 @@ export function Panel() {
         </div>
       </div>
 
-      {detailPatient && (
-        <PatientDetailModal
-          patient={detailPatient}
-          onClose={() => setDetailPatient(null)}
-          onChanged={handleChanged}
-        />
-      )}
     </div>
   );
 }

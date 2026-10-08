@@ -126,7 +126,7 @@ export const questions: Question[] = [
     id: "bienvenida",
     type: "info",
     title: "Bienvenido a IntegraMente en Casa",
-    body: "Nos alegra acompañarte. Antes de comenzar, queremos conocer un poco más sobre la persona que realizará las actividades. Esto nos permitirá preparar recomendaciones que realmente se ajusten a sus necesidades, capacidades e intereses. Solo tomará unos minutos.",
+    body: "Nos alegra acompañarte. Antes de comenzar, queremos conocer un poco más sobre la persona que realizará las actividades. Esto nos permitirá preparar recomendaciones que realmente se ajusten a sus necesidades, capacidades e intereses.",
     cta: "Comenzar",
   },
   {

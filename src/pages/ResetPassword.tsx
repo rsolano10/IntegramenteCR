@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
 import { useSession } from "../lib/useSession";
+import { useEmailLinkVerification } from "../lib/useEmailLinkVerification";
 import { AuthCard } from "../components/auth/AuthCard";
 import { SetPasswordForm } from "../components/auth/SetPasswordForm";
 
 // Landing page for the link inside a "¿Olvidaste tu contraseña?" email.
 export function ResetPassword() {
   const session = useSession();
+  const link = useEmailLinkVerification();
 
-  if (session.status === "loading") {
+  if (link.status === "verifying" || session.status === "loading") {
     return <AuthCard>{null}</AuthCard>;
   }
 
-  if (session.status === "anon") {
+  if (link.status === "invalid" || session.status === "anon") {
     return (
       <AuthCard>
         <h1 className="font-serif font-normal text-[28px] sm:text-[32px] leading-tight m-0 mb-3">Este enlace ya no es válido</h1>

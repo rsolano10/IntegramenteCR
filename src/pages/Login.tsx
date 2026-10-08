@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "../lib/store";
 import { supabase } from "../lib/supabase";
-import { isUnconfirmedEmailError } from "../lib/authErrors";
+import { authErrorMessage, confirmEmailRedirect, isUnconfirmedEmailError } from "../lib/authErrors";
 import { Button } from "../components/ui/Button";
 import { PasswordInput } from "../components/ui/PasswordInput";
 
@@ -29,7 +29,7 @@ export function Login() {
         setUnconfirmed(true);
         setAuthError("Todavía no confirmaste tu correo — revisá tu bandeja de entrada.");
       } else {
-        setAuthError("No pudimos iniciar sesión — revisá tu correo y contraseña.");
+        setAuthError(authErrorMessage(error, "No pudimos iniciar sesión — revisá tu correo y contraseña."));
       }
       return;
     }
@@ -56,9 +56,9 @@ export function Login() {
   async function resendConfirmation() {
     setResendMsg("");
     setResendLoading(true);
-    await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/app/login` } });
+    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: confirmEmailRedirect() } });
     setResendLoading(false);
-    setResendMsg("Te reenviamos el correo de confirmación.");
+    setResendMsg(error ? authErrorMessage(error, "No pudimos reenviarlo. Probá de nuevo en un minuto.") : "Te reenviamos el correo de confirmación.");
   }
 
   return (
@@ -79,7 +79,7 @@ export function Login() {
           </label>
           <label className="grid gap-2 text-[15px] font-semibold text-tinta-suave">
             Contraseña
-            <PasswordInput value={password} onChange={setPassword} placeholder="••••••••" />
+            <PasswordInput value={password} onChange={setPassword} onEnter={submit} autoComplete="current-password" placeholder="••••••••" />
           </label>
           <Button variant="ink" fullWidth onClick={submit} disabled={loading || !email.trim() || !password}>
             {loading ? "Entrando…" : "Entrar"}

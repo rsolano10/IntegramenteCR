@@ -1,4 +1,4 @@
-import type { PatientRow } from "../components/profesional/PatientDetailModal";
+import type { PatientRow } from "./patients";
 
 // One "what does this patient need from me right now" signal, computed the
 // same way Panel.tsx's three pendientes buckets already are (plan_status,

@@ -1,7 +1,7 @@
 import { roleLabel, type ManagedAccount } from "./adminAccounts";
 import { planTiers, type Semaforo } from "./mockData";
 import { semaforoData } from "./rules";
-import type { PatientRow } from "../components/profesional/PatientDetailModal";
+import type { PatientRow } from "./patients";
 
 const modalidadLabel = Object.fromEntries(planTiers.map((t) => [t.id, t.nombre]));
 

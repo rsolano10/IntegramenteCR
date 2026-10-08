@@ -5,23 +5,27 @@ import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { supabase } from "../../lib/supabase";
 import { uploadAvatar } from "../../lib/avatar";
-import { useChangePassword, passwordStrength } from "../../lib/useChangePassword";
+import { useChangePassword } from "../../lib/useChangePassword";
+import { PasswordRequirements } from "../ui/PasswordRequirements";
 import { Modal } from "../ui/Modal";
 import { WelcomeMessageModal } from "../ui/WelcomeMessageModal";
 import { ProductTour } from "../ui/ProductTour";
 import { participanteTourSteps } from "../../lib/tourSteps";
+import { useProductTour } from "../../lib/useProductTour";
 import { CalendarSyncCard } from "../ui/CalendarSyncCard";
 import { BigActionButton } from "../ui/BigActionButton";
 
 const bigInputClass = "w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] text-tinta";
 
-function PendienteRevision() {
+function PendienteRevision({ programaElegido }: { programaElegido: boolean }) {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-6 flex-1 justify-center text-center">
       <p className="m-0 text-[30px] leading-snug font-serif">Ya casi está listo</p>
       <p className="m-0 text-[20px] leading-relaxed text-tinta-suave">
         Tu equipo está preparando tus actividades. Pronto vas a tener novedades.
       </p>
+      {!programaElegido && <BigActionButton onClick={() => navigate("/app/perfil/programa")}>Elegir mi programa</BigActionButton>}
     </div>
   );
 }
@@ -192,7 +196,7 @@ function AvatarMenu() {
           <div className="grid grid-cols-1 gap-3.5 mb-4">
             <input type="password" placeholder="Contraseña actual" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} className={bigInputClass} />
             <input type="password" placeholder="Nueva contraseña" value={newPw} onChange={(e) => setNewPw(e.target.value)} className={bigInputClass} />
-            {newPw && <p className="m-0 text-[15px] text-tinta-tenue">Fuerza: {passwordStrength(newPw)} · al menos 8 caracteres, con letras y números</p>}
+            <PasswordRequirements password={newPw} />
             <input type="password" placeholder="Confirmar nueva contraseña" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} className={bigInputClass} />
           </div>
           {pwError && <p className="m-0 mb-4 text-[15px] text-alerta-texto">{pwError}</p>}
@@ -226,33 +230,28 @@ export function ParticipantShell() {
   const { data: myPatient } = useMyPatient();
   const pendiente = myPatient?.plan_status === "pendiente";
   const nombre = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
-  const [tourSeen, setTourSeen] = useState(false);
-
-  function dismissTour() {
-    setTourSeen(true);
-    if (session.status === "authed") {
-      supabase.from("profiles").update({ onboarding_tour_seen: true }).eq("id", session.session.user.id);
-    }
-  }
+  // The tour describes the activities screen — wait until there is one.
+  const tour = useProductTour(!!myPatient && !pendiente);
 
   return (
     <div className="im-in min-h-full flex flex-col">
       <div className="bg-beige-serenidad px-5 py-6 sm:px-8">
         <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
           <div>
-            <p className="m-0 mb-1.5 text-lg text-tinta-suave">Miércoles</p>
+            <p className="m-0 mb-1.5 text-lg text-tinta-suave first-letter:uppercase">
+              {new Date().toLocaleDateString("es-CR", { weekday: "long", timeZone: "America/Costa_Rica" })}
+            </p>
             <h1 className="font-serif font-normal text-[28px] sm:text-[32px] m-0">Hola, {nombre}</h1>
           </div>
           <AvatarMenu />
         </div>
       </div>
       <div className="flex-1 px-5 py-6 sm:px-8 flex justify-center">
-        <div className="w-full max-w-xl flex flex-col gap-5.5">{pendiente ? <PendienteRevision /> : <Outlet />}</div>
+        <div className="w-full max-w-xl flex flex-col gap-5.5">{pendiente ? <PendienteRevision programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}</div>
       </div>
 
       {(() => {
-        const tourPending = session.status === "authed" && !session.profile.onboarding_tour_seen && !tourSeen;
-        if (tourPending) return <ProductTour steps={participanteTourSteps} onFinish={dismissTour} />;
+        if (tour.pending) return <ProductTour steps={participanteTourSteps} onFinish={tour.dismiss} />;
         if (!pendiente && myPatient?.welcome_message_pending) return <WelcomeMessageModal patientId={myPatient.id} />;
         return null;
       })()}

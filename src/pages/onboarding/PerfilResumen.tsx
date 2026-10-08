@@ -2,19 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { describeAnswer, groupAnswerableByModule, resolveText } from "../../lib/onboardingSchema";
 import { getPatientName } from "../../lib/patient";
-import { Button } from "../../components/ui/Button";
 
 export function PerfilResumen() {
   const navigate = useNavigate();
   const answers = useAppStore((s) => s.onboarding2);
-  const startModuleEdit = useAppStore((s) => s.startModuleEdit);
   const startQuestionEdit = useAppStore((s) => s.startQuestionEdit);
   const groups = groupAnswerableByModule(answers);
-
-  function editModule(moduleName: string, firstQuestionId: string) {
-    startModuleEdit(moduleName);
-    navigate(`/app/perfil/${firstQuestionId}`);
-  }
 
   function editQuestion(questionId: string) {
     startQuestionEdit(questionId);
@@ -31,19 +24,14 @@ export function PerfilResumen() {
         Lo que respondiste sobre {getPatientName(answers)}
       </h1>
       <p className="m-0 mb-8 text-base sm:text-[17px] leading-relaxed text-tinta-suave max-w-[52em]">
-        Esto es lo que usamos para armar el plan y el filtro de seguridad. Si algo cambió, podés corregir cualquier sección —
+        Esto es lo que usamos para armar el plan y el filtro de seguridad. Si algo cambió, tocá "Editar" junto a esa respuesta —
         no hace falta repetir todo el cuestionario.
       </p>
 
       <div className="grid gap-4">
         {groups.map((g) => (
           <div key={g.module} className="bg-white border border-borde rounded-3xl p-5 sm:p-7">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="font-serif font-normal text-xl sm:text-[22px] m-0">{g.module}</h2>
-              <Button variant="secondary" dense onClick={() => editModule(g.module, g.questions[0].id)}>
-                Editar
-              </Button>
-            </div>
+            <h2 className="font-serif font-normal text-xl sm:text-[22px] m-0 mb-4">{g.module}</h2>
             <div className="grid gap-3">
               {g.questions.map((q) => (
                 <div

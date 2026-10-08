@@ -14,7 +14,7 @@ import { relationLabel, type ManagedAccount } from "../../lib/adminAccounts";
 import { FormField } from "../ui/FormField";
 import { patientHaystack } from "../../lib/usuariosSearch";
 import { attentionFor, attentionMeta, attentionRankOf } from "../../lib/patientAttention";
-import type { PatientRow } from "./PatientDetailModal";
+import type { PatientRow } from "../../lib/patients";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 
 type SortMode = "accion" | "nombre" | "recientes";

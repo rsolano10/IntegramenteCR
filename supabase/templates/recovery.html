@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>Creá una contraseña nueva</title>
+</head>
+<body style="margin:0;padding:0;background:#f7f4e9;">
+<!-- Plantilla de IntegraMente en Casa — ver supabase/templates/README.md -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f7f4e9;">Creá una contraseña nueva para tu cuenta.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7f4e9;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+        <tr>
+          <td style="padding:0 8px 20px 8px;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#1f3338;">
+            Integra<em style="color:#3f6a70;">Mente</em>
+            <span style="font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7a8b8e;">&nbsp;en Casa</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#ffffff;border:1px solid #e4dfc7;border-radius:24px;overflow:hidden;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="height:8px;background:#6a969c;line-height:8px;font-size:0;">&nbsp;</td></tr>
+              <tr>
+                <td style="padding:36px 36px 8px 36px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.2;color:#1f3338;">
+                  Creá una contraseña nueva
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 36px 0 36px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#4a5b5f;">
+                  <p style="margin:0 0 14px 0;">{{ if .Data.nombre }}Hola, {{ .Data.nombre }}.{{ else }}Hola.{{ end }}</p>
+                  <p style="margin:0;">Recibimos una solicitud para cambiar la contraseña de tu cuenta en IntegraMente en Casa. Tocá el botón y elegí una nueva — vas a entrar directamente, sin pasos extra.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px 36px 8px 36px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="border-radius:999px;background:#1f3338;">
+                        <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;padding:15px 30px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">Crear contraseña nueva</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:20px 36px 0 36px;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#6b7c80;">
+                  Tu contraseña actual sigue funcionando hasta que elijas una nueva.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 36px 32px 36px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#7a8b8e;">
+                  ¿El botón no funciona? Copiá y pegá este enlace en tu navegador:<br>
+                  <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery" style="color:#3f6a70;word-break:break-all;">{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 16px 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#7a8b8e;text-align:center;">
+            Este enlace funciona una sola vez y vence en una hora. Si no pediste cambiar tu contraseña, ignorá este correo — tu cuenta sigue segura.<br><br>
+            ¿Dudas? Escribinos a <a href="mailto:info@integramente.com" style="color:#3f6a70;">info@integramente.com</a> o llamanos al +506 8343 5772.<br>
+            IntegraMente en Casa · Acompañamiento cognitivo y funcional desde casa · Costa Rica
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
