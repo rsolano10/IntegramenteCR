@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import { callAdminAccounts } from "../../../lib/adminAccounts";
 import { moduloLabel } from "../../../lib/mediaResources";
@@ -26,7 +26,10 @@ interface ExistingTask {
   dia: string;
   hora: string | null;
   titulo: string;
+  estado: string;
 }
+
+type Target = { kind: "plan"; plan: PlanSummary } | { kind: "nueva"; date: Date };
 
 type EditorState = { mode: "new"; dia: string; hora: string } | { mode: "edit"; task: DraftTask } | null;
 
@@ -51,9 +54,33 @@ export function PlanificadorTab({
   onPublished: (message: string) => void;
 }) {
   const nombre = patientNombre.split(" ")[0];
+  const queryClient = useQueryClient();
+  const now = Date.now();
+
+  // Semanas que todavía se pueden tocar: la que está en curso y las ya
+  // publicadas a futuro. Agregar a una de ellas suma al MISMO plan (antes
+  // se creaba un plan nuevo que tapaba al anterior en la vista familiar).
+  const vigentes = useMemo(
+    () =>
+      plans
+        .filter((p) => {
+          const d = weekDays(new Date(p.publish_at));
+          return addDays(d[d.length - 1].date, 1).getTime() > now;
+        })
+        .sort((x, y) => new Date(x.publish_at).getTime() - new Date(y.publish_at).getTime()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [plans],
+  );
   const latest = plans[0]?.publish_at ?? null;
-  const [publishDate, setPublishDate] = useState(() => defaultPublishDate(isFirstAssignment ? null : latest));
-  const days = useMemo(() => weekDays(publishDate), [publishDate]);
+  const nuevaDefault = defaultPublishDate(isFirstAssignment ? null : latest);
+  const [target, setTarget] = useState<Target>(() => {
+    if (isFirstAssignment) return { kind: "nueva", date: nuevaDefault };
+    // Lo último que se asignó a futuro — así, al volver, se ve lo publicado.
+    const futura = [...vigentes].reverse().find((p) => new Date(p.publish_at).getTime() > now);
+    return futura ? { kind: "plan", plan: futura } : { kind: "nueva", date: nuevaDefault };
+  });
+  const publishDate = target.kind === "plan" ? new Date(target.plan.publish_at) : target.date;
+  const days = useMemo(() => weekDays(publishDate), [publishDate.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
   const [drafts, setDrafts] = useState<DraftTask[]>([]);
   const [editor, setEditor] = useState<EditorState>(null);
   const [mensaje, setMensaje] = useState(
@@ -61,53 +88,64 @@ export function PlanificadorTab({
       ? `¡Hola! Ya revisamos con cuidado el perfil de ${nombre} y armamos su programa personalizado. Esta semana empezamos suave, con actividades pensadas para sus gustos. Cualquier duda, escribinos por acá — estamos para acompañarles.`
       : `¡Hola! Ya está lista la próxima semana de ${nombre}. Tomamos en cuenta cómo les fue para ajustar las actividades. ¡Adelante!`,
   );
+  const [avisar, setAvisar] = useState(true);
   const [vistaCompleta, setVistaCompleta] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [quitando, setQuitando] = useState<string | null>(null);
 
-  // Lo que ya está publicado para esta misma semana (no se puede editar
-  // desde acá — se muestra para no encimar actividades).
-  const weekStart = days[0].date;
-  const weekEnd = addDays(days[days.length - 1].date, 1);
+  const planId = target.kind === "plan" ? target.plan.id : null;
   const { data: existing } = useQuery({
-    queryKey: ["planner-existing", patientId, toDateInputValue(weekStart)],
+    queryKey: ["planner-plan-tasks", planId],
     queryFn: async () => {
-      const { data: weekPlans, error: plansError } = await supabase
-        .from("plans")
-        .select("id")
-        .eq("patient_id", patientId)
-        .eq("status", "published")
-        .gte("publish_at", weekStart.toISOString())
-        .lt("publish_at", weekEnd.toISOString());
-      if (plansError) throw plansError;
-      if (!weekPlans || weekPlans.length === 0) return [];
-      const { data, error: tasksError } = await supabase
-        .from("plan_tasks")
-        .select("id, plan_id, dia, hora, titulo")
-        .in(
-          "plan_id",
-          weekPlans.map((p) => p.id),
-        );
+      const { data, error: tasksError } = await supabase.from("plan_tasks").select("id, plan_id, dia, hora, titulo, estado").eq("plan_id", planId!);
       if (tasksError) throw tasksError;
       return data as ExistingTask[];
     },
+    enabled: !!planId,
   });
+  const existentes = useMemo(() => (planId ? (existing ?? []) : []), [planId, existing]);
+
+  function elegir(t: Target) {
+    setTarget(t);
+    setDrafts([]);
+    setError("");
+    setMensaje(
+      t.kind === "plan" && new Date(t.plan.publish_at).getTime() <= now
+        ? `¡Hola! Agregamos actividades a la semana de ${nombre}. Ya las pueden ver en la app.`
+        : isFirstAssignment
+          ? mensaje
+          : `¡Hola! Ya está lista la próxima semana de ${nombre}. Tomamos en cuenta cómo les fue para ajustar las actividades. ¡Adelante!`,
+    );
+  }
+
+  async function quitar(taskId: string) {
+    setQuitando(taskId);
+    const { error: rpcError } = await supabase.rpc("quitar_tarea_plan", { p_task_id: taskId });
+    setQuitando(null);
+    if (rpcError) {
+      setError(rpcError.message);
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["planner-plan-tasks", planId] });
+    queryClient.invalidateQueries({ queryKey: ["seguimiento-tasks", patientId] });
+  }
 
   const validDias = new Set(days.map((d) => d.dia));
   const draftsInWeek = drafts.filter((d) => validDias.has(d.dia));
   const countByDia = new Map<string, number>();
-  for (const t of [...(existing ?? []), ...draftsInWeek]) countByDia.set(t.dia, (countByDia.get(t.dia) ?? 0) + 1);
+  for (const t of [...existentes, ...draftsInWeek]) countByDia.set(t.dia, (countByDia.get(t.dia) ?? 0) + 1);
   const diasVacios = days.filter((d) => !countByDia.get(d.dia));
 
   const choques = useMemo(() => {
     const seen = new Map<string, number>();
-    for (const t of [...(existing ?? []), ...draftsInWeek]) {
+    for (const t of [...existentes, ...draftsInWeek]) {
       if (!t.hora) continue;
       const k = `${t.dia} ${t.hora}`;
       seen.set(k, (seen.get(k) ?? 0) + 1);
     }
     return [...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k);
-  }, [existing, draftsInWeek]);
+  }, [existentes, draftsInWeek]);
 
   function cellItems(dia: string, hour: number | null) {
     // Anything outside the visible rows (no hour, legacy free text, or an
@@ -118,7 +156,7 @@ export function PlanificadorTab({
       return hour === null ? !visible : hh === hour;
     };
     return {
-      existing: (existing ?? []).filter((t) => t.dia === dia && match(t.hora)),
+      existing: existentes.filter((t) => t.dia === dia && match(t.hora)),
       drafts: draftsInWeek.filter((t) => t.dia === dia && match(t.hora)),
     };
   }
@@ -128,10 +166,8 @@ export function PlanificadorTab({
     setEditor(null);
   }
 
-  function changeWeek(value: string) {
-    if (!value) return;
-    setPublishDate(fromDateInputValue(value));
-  }
+  const visibleDesde = publishDate.getTime() > now ? publishDate : null;
+  const fechaLarga = (d: Date) => d.toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long" });
 
   async function publish() {
     setError("");
@@ -139,7 +175,8 @@ export function PlanificadorTab({
       setError("Agregá al menos una actividad al calendario.");
       return;
     }
-    if (!mensaje.trim()) {
+    const conMensaje = target.kind === "nueva" || avisar;
+    if (conMensaje && !mensaje.trim()) {
       setError("Escribí el mensaje para la familia — es lo que reciben por chat, correo y WhatsApp.");
       return;
     }
@@ -161,75 +198,121 @@ export function PlanificadorTab({
       if (t.mediaResourceId) task.media_resource_id = t.mediaResourceId;
       return task;
     });
-    // First plan: the message doubles as the one-time welcome card
-    // (welcome_message_pending). Later weeks: same chat message, without
-    // re-triggering the welcome card.
-    const { error: rpcError } = await supabase.rpc("assign_initial_plan", {
-      p_patient_id: patientId,
-      p_tasks: payload,
-      p_vista_completa: hasFamiliar ? null : vistaCompleta,
-      p_publish_at: publishDate.toISOString(),
-      p_mensaje_bienvenida: isFirstAssignment ? mensaje.trim() : null,
-    });
+
+    // Semana existente → se suma a ese plan. Semana nueva → plan nuevo; en
+    // la primera asignación el mensaje también es la tarjeta de bienvenida.
+    const { error: rpcError } =
+      target.kind === "plan"
+        ? await supabase.rpc("agregar_tareas_plan", { p_plan_id: target.plan.id, p_tasks: payload })
+        : await supabase.rpc("assign_initial_plan", {
+            p_patient_id: patientId,
+            p_tasks: payload,
+            p_vista_completa: hasFamiliar ? null : vistaCompleta,
+            p_publish_at: target.date.toISOString(),
+            p_mensaje_bienvenida: isFirstAssignment ? mensaje.trim() : null,
+          });
     if (rpcError) {
       setSaving(false);
-      setError("No pudimos publicar el plan. Probá de nuevo.");
+      setError("No pudimos publicar. Probá de nuevo.");
       return;
     }
-    if (!isFirstAssignment) {
-      const { data: s } = await supabase.auth.getUser();
-      await supabase.from("mensajes").insert({ patient_id: patientId, texto: mensaje.trim(), autor_id: s.user?.id ?? null });
+    let canales = "";
+    if (conMensaje) {
+      if (!isFirstAssignment) {
+        const { data: s } = await supabase.auth.getUser();
+        await supabase.from("mensajes").insert({ patient_id: patientId, texto: mensaje.trim(), autor_id: s.user?.id ?? null });
+      }
+      canales = "el chat de la app";
+      try {
+        const res = (await callAdminAccounts("notify_plan_assigned", { patientId, mensaje: mensaje.trim(), primeraVez: isFirstAssignment })) as {
+          canales?: string[];
+        };
+        if (res.canales?.length) canales = res.canales.join(", ");
+      } catch {
+        // already published; the chat message is the fallback channel
+      }
     }
-    let canales = "el chat de la app";
-    try {
-      const res = (await callAdminAccounts("notify_plan_assigned", { patientId, mensaje: mensaje.trim(), primeraVez: isFirstAssignment })) as {
-        canales?: string[];
-        warning?: string;
-      };
-      if (res.canales?.length) canales = res.canales.join(", ");
-    } catch {
-      // the plan is already published; the chat message is the fallback channel
-    }
+    queryClient.invalidateQueries({ queryKey: ["patient-plans", patientId] });
+    queryClient.invalidateQueries({ queryKey: ["planner-plan-tasks", planId] });
     setSaving(false);
+    const cuando = visibleDesde ? ` La familia lo verá desde el ${fechaLarga(visibleDesde)}.` : " La familia ya lo puede ver.";
+    const aviso = canales ? ` Se le avisó por ${canales}.` : "";
     onPublished(
       isFirstAssignment
-        ? `${patientNombre} fue aceptado y su plan está publicado. Se le avisó por ${canales}.`
-        : `Semana publicada para ${patientNombre}. Se le avisó por ${canales}.`,
+        ? `${patientNombre} fue aceptado y su plan está publicado.${cuando}${aviso}`
+        : target.kind === "plan"
+          ? `Se agregaron ${draftsInWeek.length} ${draftsInWeek.length === 1 ? "actividad" : "actividades"} a la semana de ${patientNombre}.${cuando}${aviso}`
+          : `Semana publicada para ${patientNombre}.${cuando}${aviso}`,
     );
   }
+
+  const opciones: { key: string; label: string; detalle: string; target: Target }[] = [
+    ...vigentes.map((p) => {
+      const enCurso = new Date(p.publish_at).getTime() <= now;
+      return { key: p.id, label: enCurso ? "Esta semana" : "Próxima", detalle: formatWeekRange(weekDays(new Date(p.publish_at))), target: { kind: "plan", plan: p } as Target };
+    }),
+    ...(isFirstAssignment ? [] : [{ key: "nueva", label: "+ Nueva semana", detalle: formatWeekRange(weekDays(nuevaDefault)), target: { kind: "nueva", date: nuevaDefault } as Target }]),
+  ];
+  const activa = target.kind === "plan" ? target.plan.id : "nueva";
 
   return (
     <div className="grid gap-5">
       {/* Semana */}
-      <section className="bg-white border border-borde rounded-3xl p-5 sm:p-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="m-0 mb-1 text-[12px] tracking-[0.14em] uppercase text-tinta-tenue font-semibold">
-            {isFirstAssignment ? "Primera semana" : "Próxima semana"}
-          </p>
-          <h3 className="font-serif font-normal text-[24px] m-0">{formatWeekRange(days)}</h3>
-          {days.length < 7 && (
-            <p className="m-0 mt-1 text-[13.5px] text-tinta-tenue">
-              Los planes van de domingo a domingo — esta primera semana cubre solo de {days[0].dia.toLowerCase()} a{" "}
-              {days[days.length - 1].dia.toLowerCase()}.
+      <section className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-4">
+        {opciones.length > 1 && (
+          <div role="tablist" aria-label="Semana" className="flex flex-wrap gap-2">
+            {opciones.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                role="tab"
+                aria-selected={activa === o.key}
+                onClick={() => elegir(o.target)}
+                className={`text-left rounded-2xl border-[1.5px] px-4 py-2.5 cursor-pointer font-sans ${
+                  activa === o.key ? "border-verde-serenidad bg-verde-tenue" : "border-borde bg-white hover:border-verde-serenidad"
+                }`}
+              >
+                <span className="block text-[13.5px] font-semibold text-tinta">{o.label}</span>
+                <span className="block text-[12px] text-tinta-tenue">{o.detalle}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="m-0 mb-1 text-[12px] tracking-[0.14em] uppercase text-tinta-tenue font-semibold">
+              {isFirstAssignment ? "Primera semana" : target.kind === "plan" ? "Semana publicada — agregá o quitá actividades" : "Semana nueva"}
             </p>
+            <h3 className="font-serif font-normal text-[24px] m-0">{formatWeekRange(days)}</h3>
+            <p className="m-0 mt-1 text-[13.5px] text-tinta-tenue">
+              {visibleDesde ? `La familia la ve desde el ${fechaLarga(visibleDesde)}.` : "La familia ya la está viendo."}
+              {days.length < 7 && ` Cubre de ${days[0].dia.toLowerCase()} a ${days[days.length - 1].dia.toLowerCase()} (los planes van de domingo a domingo).`}
+            </p>
+          </div>
+          {target.kind === "nueva" && (
+            <label className="grid gap-1.5 text-[13px] font-semibold text-tinta-suave">
+              Se publica el
+              <input
+                type="date"
+                value={toDateInputValue(target.date)}
+                min={toDateInputValue(new Date())}
+                onChange={(e) => e.target.value && setTarget({ kind: "nueva", date: fromDateInputValue(e.target.value) })}
+                className="min-h-11 px-3 rounded-xl border-[1.5px] border-borde-campo bg-white font-sans text-[14.5px] text-tinta"
+              />
+            </label>
           )}
         </div>
-        <label className="grid gap-1.5 text-[13px] font-semibold text-tinta-suave">
-          Se publica el
-          <input
-            type="date"
-            value={toDateInputValue(publishDate)}
-            min={toDateInputValue(new Date())}
-            onChange={(e) => changeWeek(e.target.value)}
-            className="min-h-11 px-3 rounded-xl border-[1.5px] border-borde-campo bg-white font-sans text-[14.5px] text-tinta"
-          />
-        </label>
       </section>
 
       {/* Calendario */}
       <section className="bg-white border border-borde rounded-3xl overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-4 border-b border-borde-suave">
           <p className="m-0 text-[14px] text-tinta-suave">
+            {existentes.length > 0 && (
+              <>
+                <strong className="text-tinta">{existentes.length}</strong> publicadas ·{" "}
+              </>
+            )}
             <strong className="text-tinta">{draftsInWeek.length}</strong> nuevas ·{" "}
             <strong className="text-tinta">{days.length - diasVacios.length}</strong> de {days.length} días con actividades
           </p>
@@ -281,12 +364,28 @@ export function PlanificadorTab({
                       className={`group relative border-l border-t border-borde-suave p-1 ${hour === null ? "min-h-[52px] bg-campo/50" : "min-h-[48px]"}`}
                     >
                       <div className="grid gap-1">
-                        {items.existing.map((t) => (
-                          <div key={t.id} title="Ya publicada" className="rounded-lg bg-beige-serenidad border border-borde px-2 py-1.5 text-[12px] leading-tight text-tinta-suave">
-                            {t.hora && <span className="block text-[10.5px] text-tinta-tenue">{formatHora(t.hora)}</span>}
-                            {t.titulo}
-                          </div>
-                        ))}
+                        {items.existing.map((t) => {
+                          const editable = t.estado === "pendiente" || t.estado === "futuro";
+                          return (
+                            <div key={t.id} className="relative rounded-lg bg-beige-serenidad border border-borde px-2 py-1.5 pr-6 text-[12px] leading-tight text-tinta-suave">
+                              {t.hora && <span className="block text-[10.5px] text-tinta-tenue">{formatHora(t.hora)}</span>}
+                              {t.titulo}
+                              {!editable && <span className="block text-[10.5px] text-[#22663f] mt-0.5">✓ registrada</span>}
+                              {editable && (
+                                <button
+                                  type="button"
+                                  onClick={() => quitar(t.id)}
+                                  disabled={quitando === t.id}
+                                  aria-label={`Quitar ${t.titulo}`}
+                                  title="Quitar del plan"
+                                  className="absolute top-1 right-1 w-5 h-5 rounded-full text-tinta-tenue hover:bg-white hover:text-alerta-texto cursor-pointer border-none bg-transparent text-[13px] leading-none disabled:opacity-50"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
                         {items.drafts.map((t) => (
                           <button
                             key={t.key}
@@ -335,9 +434,17 @@ export function PlanificadorTab({
       {/* Mensaje + publicar */}
       <section className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
         <div className="grid gap-2">
-          <label htmlFor="mensaje-familia" className="text-[14px] font-semibold text-tinta">
-            Mensaje para la familia
-          </label>
+          {target.kind === "plan" ? (
+            <label className="flex items-center gap-2 text-[14px] font-semibold text-tinta cursor-pointer">
+              <input type="checkbox" checked={avisar} onChange={(e) => setAvisar(e.target.checked)} />
+              Avisar a la familia de los cambios
+            </label>
+          ) : (
+            <label htmlFor="mensaje-familia" className="text-[14px] font-semibold text-tinta">
+              Mensaje para la familia
+            </label>
+          )}
+          {(target.kind === "nueva" || avisar) && (
           <textarea
             id="mensaje-familia"
             value={mensaje}
@@ -345,6 +452,8 @@ export function PlanificadorTab({
             rows={4}
             className="w-full rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue px-4 py-3 font-sans text-[14.5px] leading-relaxed text-tinta resize-y"
           />
+          )}
+          {(target.kind === "nueva" || avisar) && (
           <div className="flex flex-wrap gap-2">
             {["Chat de la app", "Correo", "WhatsApp"].map((c) => (
               <span key={c} className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-verde-profundo bg-fila-fria rounded-full px-2.5 py-1">
@@ -352,6 +461,7 @@ export function PlanificadorTab({
               </span>
             ))}
           </div>
+          )}
           {!hasFamiliar && (
             <label className="flex items-start gap-2.5 mt-2 bg-fila-fria rounded-2xl p-3.5 cursor-pointer">
               <input type="checkbox" checked={vistaCompleta} onChange={(e) => setVistaCompleta(e.target.checked)} className="mt-1" />
@@ -365,10 +475,10 @@ export function PlanificadorTab({
         <div className="grid gap-2.5">
           {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
           <Button variant="ink" fullWidth onClick={publish} disabled={saving}>
-            {saving ? "Publicando…" : isFirstAssignment ? "Aceptar y publicar plan" : "Publicar semana"}
+            {saving ? "Publicando…" : isFirstAssignment ? "Aceptar y publicar plan" : target.kind === "plan" ? "Agregar a esta semana" : "Publicar semana"}
           </Button>
           <p className="m-0 text-[12.5px] leading-relaxed text-tinta-tenue text-center">
-            La familia lo ve desde el {publishDate.toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long" })}.
+            {visibleDesde ? `La familia lo ve desde el ${fechaLarga(visibleDesde)}.` : "La familia lo ve de inmediato."}
           </p>
         </div>
       </section>

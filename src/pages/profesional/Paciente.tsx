@@ -251,6 +251,9 @@ export function Paciente() {
             <p className="m-0 text-[15px] text-tinta-suave">Primero hace falta el cuestionario de {patient.nombre.split(" ")[0]} — completalo desde Evaluación inicial.</p>
           </div>
         ) : (
+          !pendiente && loadingPlans ? (
+            <div className="bg-white border border-borde rounded-3xl p-8 text-center text-tinta-tenue">Cargando…</div>
+          ) : (
           <PlanificadorTab
             key={patient.id}
             patientId={patient.id}
@@ -260,6 +263,7 @@ export function Paciente() {
             plans={plans ?? []}
             onPublished={(msg) => done(msg)}
           />
+          )
         ))}
 
       {tab === "mensajes" && <MensajesTab patient={patient} myUserId={myUserId} />}
