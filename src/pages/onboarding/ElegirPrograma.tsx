@@ -84,7 +84,7 @@ export function ElegirPrograma() {
               role="radio"
               aria-checked={activo}
               onClick={() => setElegido(p.id)}
-              className={`relative text-left rounded-3xl p-6 sm:p-7 flex flex-col gap-5 cursor-pointer transition-[border-color,box-shadow,background-color] border-2 font-sans ${
+              className={`${esSugerido ? "order-first md:order-none" : ""} relative text-left rounded-3xl p-6 sm:p-7 flex flex-col gap-5 cursor-pointer transition-[border-color,box-shadow,background-color] border-2 font-sans ${
                 activo
                   ? "border-verde-serenidad bg-verde-tenue shadow-elevada"
                   : "border-borde bg-white hover:border-verde-serenidad/60"

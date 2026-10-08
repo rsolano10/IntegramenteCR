@@ -172,11 +172,16 @@ export function Paciente() {
               {attentionMeta[attention].label}
             </span>
           )}
-          <span className="inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-semibold bg-fila-fria text-verde-profundo border border-borde-suave">
-            {pendiente && !extra?.programa_elegido_en
-              ? "Programa sin elegir"
-              : `Programa ${tier?.nombre ?? patient.modalidad}${pendiente ? " · elegido por la familia" : ""}`}
-          </span>
+          <ProgramaSelector
+            patientId={patient.id}
+            modalidad={patient.modalidad}
+            label={
+              pendiente && !extra?.programa_elegido_en
+                ? "Programa sin elegir"
+                : `Programa ${tier?.nombre ?? patient.modalidad}${pendiente ? " · elegido por la familia" : ""}`
+            }
+            onChanged={changed}
+          />
         </div>
       </header>
 
@@ -255,6 +260,79 @@ export function Paciente() {
 
       {tab === "mensajes" && <MensajesTab patient={patient} myUserId={myUserId} />}
       {tab === "cuentas" && <VinculosTab patient={patient} onChanged={changed} />}
+    </div>
+  );
+}
+
+// El programa lo elige la familia al terminar el cuestionario, pero la
+// clínica puede ajustarlo en cualquier momento (set_patient_modalidad).
+function ProgramaSelector({
+  patientId,
+  modalidad,
+  label,
+  onChanged,
+}: {
+  patientId: string;
+  modalidad: string;
+  label: string;
+  onChanged: (message: string, isError?: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const opciones = planTiers.filter((t) => t.id === "autoguiado" || t.id === "orientado");
+
+  async function elegir(id: string) {
+    if (id === modalidad) {
+      setOpen(false);
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.rpc("set_patient_modalidad", { p_patient_id: patientId, p_modalidad: id });
+    setSaving(false);
+    setOpen(false);
+    if (error) {
+      onChanged("No pudimos cambiar el programa. Probá de nuevo.", true);
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["patient-extra", patientId] });
+    onChanged(`Programa cambiado a ${opciones.find((o) => o.id === id)?.nombre}.`);
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        disabled={saving}
+        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold bg-fila-fria text-verde-profundo border border-borde-suave cursor-pointer hover:border-verde-serenidad disabled:opacity-60"
+      >
+        {saving ? "Guardando…" : label}
+        <span aria-hidden="true">⌄</span>
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 mt-2 z-10 w-64 bg-white border border-borde rounded-2xl shadow-elevada p-1.5">
+          <p className="m-0 px-3 pt-2 pb-1.5 text-[11.5px] tracking-[0.1em] uppercase text-tinta-tenue font-semibold">Cambiar programa</p>
+          {opciones.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={o.id === modalidad}
+              onClick={() => elegir(o.id)}
+              className={`w-full text-left px-3 py-2.5 rounded-xl cursor-pointer border-none font-sans ${o.id === modalidad ? "bg-verde-tenue" : "bg-transparent hover:bg-campo"}`}
+            >
+              <span className="block text-[14.5px] font-semibold text-tinta">
+                {o.nombre} {o.id === modalidad && <span className="text-verde-profundo">✓</span>}
+              </span>
+              <span className="block text-[12.5px] text-tinta-tenue">
+                {o.precio} {o.periodo}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

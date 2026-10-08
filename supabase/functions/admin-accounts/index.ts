@@ -488,11 +488,19 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
   const { error: deleteError } = await admin.from("patients").delete().eq("id", patientId);
   if (deleteError) return json({ error: deleteError.message }, 400);
 
-  if (contacts.length === 0) {
-    return json({ ok: true, warning: "La solicitud se rechazó, pero no encontramos una cuenta vinculada para avisarle." });
+  // Shown in-app the next time they log in (Consent.tsx) — otherwise a
+  // patient-less account just lands on a blank new-signup flow.
+  if (profileIds.length > 0) {
+    await admin
+      .from("solicitudes_rechazadas")
+      .insert(profileIds.map((profile_id) => ({ profile_id, patient_nombre: patientNombre, mensaje })));
   }
 
-  const canales = new Set<string>();
+  if (contacts.length === 0) {
+    return json({ ok: true, warning: "La solicitud se rechazó, pero no encontramos una cuenta vinculada para avisarle por correo." });
+  }
+
+  const canales = new Set<string>(["la app"]);
   const fallos: string[] = [];
   for (const c of contacts) {
     if (c.email) {
@@ -513,10 +521,13 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
     }
   }
 
-  if (canales.size === 0) {
-    return json({ ok: true, warning: `La solicitud se rechazó, pero no pudimos avisarle a la familia${fallos[0] ? `: ${fallos[0]}` : "."}` });
+  if (!canales.has("correo")) {
+    return json({
+      ok: true,
+      warning: `Solicitud rechazada. La familia verá tu mensaje al entrar a la app, pero no pudimos enviarle el correo${fallos[0] ? `: ${fallos[0]}` : "."}`,
+    });
   }
-  return json({ ok: true, message: `Solicitud de ${patientNombre} rechazada — se le avisó a la familia por ${[...canales].join(" y ")}.` });
+  return json({ ok: true, message: `Solicitud de ${patientNombre} rechazada — se le avisó a la familia por ${[...canales].join(", ")}.` });
 }
 
 // Notifies every linked family/participant account by email once the clinic
