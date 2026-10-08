@@ -4,8 +4,8 @@ import { Reveal } from "../components/ui/Reveal";
 import { Button } from "../components/ui/Button";
 import { ModuloIcon } from "../components/ui/ModuloIcon";
 import { useScrolled } from "../lib/useScrollFx";
-import { moduloLabel, moduloTheme, type ResourceModulo } from "../lib/mediaResources";
-import { programas } from "../lib/programas";
+import { moduloLabel, moduloTheme, type ResourceModulo } from "../lib/modulos";
+import { programas } from "../lib/programasData";
 import { contacto, equipo, preguntas, programasHome, testimonios } from "../lib/landingContenido";
 
 const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -32,17 +32,27 @@ const TELEFONO = { ancho: 1, alto: 2 };
 
 function HeroPhone() {
   const [hechas, setHechas] = useState(prefersReducedMotion() ? 2 : 0);
+  const marco = useRef<HTMLDivElement>(null);
+  const [aLaVista, setALaVista] = useState(true);
+  // Solo anima mientras se ve (ahorra batería en el celular al seguir bajando).
   useEffect(() => {
-    if (prefersReducedMotion()) return;
+    const el = marco.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setALaVista(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (prefersReducedMotion() || !aLaVista) return;
     const id = window.setInterval(() => setHechas((h) => (h >= semanaDemo.length ? 0 : h + 1)), 1400);
     return () => window.clearInterval(id);
-  }, []);
+  }, [aLaVista]);
 
   // Tamaño fijo: ancho fijo + aspect-ratio real, y todo el contenido de
   // la pantalla con alturas fijas — marcar una actividad como hecha nunca
   // cambia el tamaño del teléfono, solo lo que se ve adentro.
   return (
-    <div className="relative mx-auto w-[288px] sm:w-[312px]" aria-hidden="true">
+    <div ref={marco} className="relative mx-auto w-[288px] sm:w-[312px]" aria-hidden="true">
       <div aria-hidden="true" className="absolute -inset-10 rounded-full bg-beige-serenidad/70 blur-2xl" />
       <div
         className="relative w-full rounded-[15.5%/7.4%] bg-[#1b2629] p-[2.2%]"
@@ -276,7 +286,7 @@ const disciplinas = [
 // Ilustraciones propias para "Para quién es" (en lugar de emojis).
 function IlustracionAcompanar() {
   return (
-    <svg viewBox="0 0 240 170" className="w-[240px] h-[170px]" aria-hidden="true">
+    <svg viewBox="0 0 240 170" className="w-[170px] h-[120px] md:w-[240px] md:h-[170px]" aria-hidden="true">
       <circle cx="96" cy="58" r="22" fill="#f7f4e9" />
       <path d="M52 170c0-36 20-62 44-62s44 26 44 62z" fill="#f7f4e9" />
       <circle cx="150" cy="74" r="18" fill="#ebe6ce" />
@@ -289,7 +299,7 @@ function IlustracionAcompanar() {
 
 function IlustracionCrecer() {
   return (
-    <svg viewBox="0 0 240 170" className="w-[240px] h-[170px]" aria-hidden="true">
+    <svg viewBox="0 0 240 170" className="w-[170px] h-[120px] md:w-[240px] md:h-[170px]" aria-hidden="true">
       <circle cx="120" cy="66" r="24" fill="#f7f4e9" />
       <path d="M72 170c0-38 22-66 48-66s48 28 48 66z" fill="#f7f4e9" />
       <path d="M120 40c0-14 4-22 4-22" stroke="#5f8b5f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
@@ -438,7 +448,8 @@ function FaqCarousel() {
               aria-selected={i === activa}
               aria-label={`Pregunta ${i + 1}: ${q.p}`}
               onClick={() => irA(i)}
-              className={`h-2 rounded-full border-none cursor-pointer transition-all duration-300 ${i === activa ? "w-8 bg-verde-profundo" : "w-2 bg-borde-campo hover:bg-verde-serenidad"}`}
+              // El punto se ve igual, pero el área táctil mide 44 px de alto.
+              className={`relative h-2 rounded-full border-none cursor-pointer transition-all duration-300 after:absolute after:content-[''] after:-inset-y-[18px] after:-inset-x-[3px] ${i === activa ? "w-8 bg-verde-profundo" : "w-2 bg-borde-campo hover:bg-verde-serenidad"}`}
             />
           ))}
         </div>
@@ -466,6 +477,117 @@ function FaqCarousel() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Celular: barra fija abajo con el botón principal y WhatsApp. Aparece al
+// pasar los botones del hero y se oculta al llegar al cierre (que ya tiene
+// su propio botón). Reemplaza a los dos botones flotantes, que en pantallas
+// angostas tapaban contenido.
+function BarraMovil({ waUrl }: { waUrl: string }) {
+  const [heroVisible, setHeroVisible] = useState(true);
+  const [finalVisible, setFinalVisible] = useState(false);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const hero = document.getElementById("hero-cta");
+    const fin = document.getElementById("cta-final");
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.target === hero) setHeroVisible(e.isIntersecting || e.boundingClientRect.top > 0);
+        if (e.target === fin) setFinalVisible(e.isIntersecting);
+      }
+    });
+    if (hero) io.observe(hero);
+    if (fin) io.observe(fin);
+    return () => io.disconnect();
+  }, []);
+  const visible = !heroVisible && !finalVisible;
+  return (
+    <div
+      aria-hidden={!visible}
+      className={`md:hidden fixed inset-x-0 bottom-0 z-30 transition-transform duration-300 ${visible ? "translate-y-0" : "translate-y-full"}`}
+    >
+      <div className="bg-fondo-papel/95 backdrop-blur-md border-t border-borde px-4 pt-3 flex items-center gap-3" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}>
+        <Link
+          to="/ingresar?mode=register"
+          tabIndex={visible ? 0 : -1}
+          className="flex-1 inline-flex items-center justify-center min-h-[52px] rounded-full bg-verde-serenidad text-white font-semibold text-[16.5px] no-underline active:bg-verde-profundo"
+        >
+          Crear mi perfil gratuito
+        </Link>
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noreferrer"
+          tabIndex={visible ? 0 : -1}
+          aria-label="Escribinos por WhatsApp"
+          className="shrink-0 w-[52px] h-[52px] rounded-full bg-[#25d366] text-white flex items-center justify-center"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// Celular: un programa a la vez, con selector arriba — así se comparan sin
+// bajar casi dos pantallas de tarjetas apiladas.
+function ProgramasMovil() {
+  const [sel, setSel] = useState<"autoguiado" | "orientado">("orientado");
+  const p = programas.find((x) => x.id === sel)!;
+  const txt = programasHome[sel];
+  const destacado = sel === "orientado";
+  return (
+    <div className="md:hidden">
+      <div role="tablist" aria-label="Programa" className="grid grid-cols-2 p-1 rounded-full bg-pastilla-fondo mb-4">
+        {programas.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            role="tab"
+            aria-selected={sel === x.id}
+            onClick={() => setSel(x.id)}
+            className={`min-h-11 rounded-full border-none cursor-pointer font-sans text-[15px] font-semibold transition-colors ${
+              sel === x.id ? "bg-white text-tinta shadow-sm" : "bg-transparent text-tinta-suave"
+            }`}
+          >
+            {x.nombre}
+            <span className="block text-[12px] font-normal text-tinta-tenue -mt-0.5">{x.precio}</span>
+          </button>
+        ))}
+      </div>
+      <article className={`rounded-[28px] p-6 flex flex-col gap-4 border-[1.5px] ${destacado ? "border-verde-serenidad bg-verde-tenue" : "border-borde bg-white"}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="m-0 font-serif font-normal text-[28px] leading-tight">{p.nombre}</h3>
+            <p className="m-0 mt-1 text-[15px] italic text-verde-profundo">{txt.lema}</p>
+          </div>
+          {destacado && (
+            <span className="shrink-0 text-[10.5px] tracking-[0.1em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-2.5 py-1.5 rounded-full font-bold">
+              Sesiones en vivo
+            </span>
+          )}
+        </div>
+        <p className="m-0 flex items-baseline gap-2">
+          <span className="font-serif text-[38px] leading-none">{p.precio}</span>
+          <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
+        </p>
+        <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{txt.descripcion}</p>
+        <ul className="list-none m-0 p-0 grid gap-2.5 pt-4 border-t border-borde-suave">
+          {txt.incluye.map((x) => (
+            <li key={x} className="flex gap-2.5 text-[15px] text-tinta">
+              <span aria-hidden="true" className="text-verde-serenidad font-bold">✓</span>
+              {x}
+            </li>
+          ))}
+        </ul>
+        <Button to="/ingresar?mode=register" variant={destacado ? "primary" : "secondary"} fullWidth>
+          Empezar gratis
+        </Button>
+      </article>
     </div>
   );
 }
@@ -503,9 +625,11 @@ export function Landing() {
       </header>
 
       {/* ─── Hero ─── */}
-      <section id="top" className="max-w-[1280px] mx-auto px-5 pt-8 pb-14 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-14 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
+      <section id="top" className="max-w-[1280px] mx-auto px-5 pt-8 pb-14 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-8 md:gap-14 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
         <Reveal>
-          <Eyebrow>Estimulación cognitiva en el hogar · Costa Rica</Eyebrow>
+          <Eyebrow>
+            Estimulación cognitiva en el hogar<span className="hidden md:inline"> · Costa Rica</span>
+          </Eyebrow>
           <h1 className="font-serif font-normal text-[42px] sm:text-[56px] lg:text-[72px] leading-[1.02] tracking-[-0.01em] m-0 mb-5" style={{ textWrap: "balance" }}>
             Saber qué hacer hoy, <em className="italic text-verde-profundo">sin improvisar.</em>
           </h1>
@@ -514,7 +638,7 @@ export function Landing() {
             por nuestro equipo de salud y adaptado a su día a día.
           </p>
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
-          <div className="flex flex-wrap gap-3">
+          <div id="hero-cta" className="flex flex-wrap gap-3">
             <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
             <Button variant="secondary" onClick={() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" })}>
               Ver cómo funciona
@@ -560,7 +684,7 @@ export function Landing() {
                   to="/ingresar?mode=register"
                   className="group h-full flex flex-col rounded-[32px] bg-white border border-borde overflow-hidden no-underline text-tinta transition-all hover:-translate-y-1 hover:shadow-elevada"
                 >
-                  <div className="relative h-[190px] overflow-hidden" style={{ backgroundImage: `linear-gradient(150deg, ${c.from}, ${c.to})` }}>
+                  <div className="relative h-[128px] md:h-[190px] overflow-hidden" style={{ backgroundImage: `linear-gradient(150deg, ${c.from}, ${c.to})` }}>
                     <span aria-hidden="true" className="absolute -right-10 -bottom-16 w-56 h-56 rounded-full bg-white/15" />
                     <span aria-hidden="true" className="absolute -left-8 -top-12 w-40 h-40 rounded-full bg-white/10" />
                     <div className="absolute inset-0 flex items-end justify-center transition-transform duration-500 group-hover:scale-[1.04]">{c.ilustracion}</div>
@@ -568,9 +692,9 @@ export function Landing() {
                   <div className="flex flex-col gap-3 p-6 sm:p-7 flex-1">
                     <h3 className="m-0 font-serif font-normal text-[27px] leading-tight">{c.t}</h3>
                     <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{c.d}</p>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-nowrap md:flex-wrap gap-1.5 overflow-x-auto md:overflow-visible -mx-6 px-6 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       {c.chips.map((x) => (
-                        <span key={x} className="text-[13px] font-semibold rounded-full px-3 py-1 bg-campo border border-borde-suave text-tinta-suave">
+                        <span key={x} className="shrink-0 whitespace-nowrap text-[13px] font-semibold rounded-full px-3 py-1 bg-campo border border-borde-suave text-tinta-suave">
                           {x}
                         </span>
                       ))}
@@ -634,7 +758,22 @@ export function Landing() {
               Cada semana combina actividades de estos módulos, elegidas según sus intereses y lo que es seguro para su movilidad.
             </p>
           </Reveal>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Celular: 2 × 2 compacto */}
+          <div className="md:hidden grid grid-cols-2 gap-3">
+            {ordenModulos.map((m) => {
+              const t = moduloTheme[m];
+              return (
+                <article key={m} className="rounded-[22px] overflow-hidden border border-borde bg-white flex flex-col">
+                  <div className="relative h-[86px] flex items-end px-3.5 pb-2.5" style={{ backgroundImage: `linear-gradient(140deg, ${t.from}, ${t.to})` }}>
+                    <ModuloIcon modulo={m} className="absolute right-2.5 top-2.5 w-9 h-9 text-white/45" />
+                    <h3 className="m-0 font-serif font-normal text-[20px] text-white drop-shadow-sm">{moduloLabel[m]}</h3>
+                  </div>
+                  <p className="m-0 px-3.5 py-3 text-[13.5px] leading-snug text-tinta-suave">{modulosInfo[m].frase}</p>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden md:grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {ordenModulos.map((m, i) => {
               const t = moduloTheme[m];
               const info = modulosInfo[m];
@@ -705,7 +844,8 @@ export function Landing() {
             acompañamiento cercano. Crear el perfil es gratis y el programa se elige al final del cuestionario.
           </p>
         </Reveal>
-        <div className="grid gap-5 md:grid-cols-2 max-w-[980px] mx-auto">
+        <ProgramasMovil />
+        <div className="hidden md:grid gap-5 md:grid-cols-2 max-w-[980px] mx-auto">
           {programas.map((p, i) => {
             const destacado = p.id === "orientado";
             const txt = programasHome[p.id];
@@ -832,7 +972,7 @@ export function Landing() {
           </Reveal>
           <p className="m-0 text-[15.5px] text-tinta-suave max-w-[24em]">
             ¿Tenés otra consulta? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
-            <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold">
+            <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold inline-block py-2.5 -my-2.5 md:py-0 md:my-0">
               WhatsApp
             </a>
             .
@@ -842,7 +982,7 @@ export function Landing() {
       </section>
 
       {/* ─── CTA final ─── */}
-      <section className="bg-verde-profundo text-white relative overflow-hidden">
+      <section id="cta-final" className="bg-verde-profundo text-white relative overflow-hidden">
         <div aria-hidden="true" className="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-verde-serenidad/40" />
         <Reveal className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-22 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
           <div>
@@ -878,10 +1018,10 @@ export function Landing() {
           <div className="grid gap-2.5 text-[15px] content-start">
             <span className="text-[#a9b9bb] text-xs tracking-[0.14em] uppercase">Contacto</span>
             <span>{contacto.telefono}</span>
-            <a href={waUrl} target="_blank" rel="noreferrer" className="text-[#d3dcdd]">
+            <a href={waUrl} target="_blank" rel="noreferrer" className="text-[#d3dcdd] py-2 md:py-0">
               WhatsApp · +506 8346 4703
             </a>
-            <a href={contacto.instagram} target="_blank" rel="noreferrer" className="text-[#d3dcdd]">
+            <a href={contacto.instagram} target="_blank" rel="noreferrer" className="text-[#d3dcdd] py-2 md:py-0">
               Instagram · @integramentecr
             </a>
             <span>{contacto.correo}</span>
@@ -889,18 +1029,18 @@ export function Landing() {
           </div>
           <div className="grid gap-2.5 text-[15px] content-start">
             <span className="text-[#a9b9bb] text-xs tracking-[0.14em] uppercase">Legal</span>
-            <Link to="/legal/condiciones" className="text-[#d3dcdd]">
+            <Link to="/legal/condiciones" className="text-[#d3dcdd] py-2 md:py-0">
               Condiciones de uso
             </Link>
-            <Link to="/legal/privacidad" className="text-[#d3dcdd]">
+            <Link to="/legal/privacidad" className="text-[#d3dcdd] py-2 md:py-0">
               Privacidad y datos
             </Link>
-            <Link to="/legal/emergencias" className="text-[#d3dcdd]">
+            <Link to="/legal/emergencias" className="text-[#d3dcdd] py-2 md:py-0">
               Emergencias
             </Link>
           </div>
         </div>
-        <div className="max-w-[1280px] mx-auto px-5 pb-8 sm:px-8 lg:px-12 lg:pb-11">
+        <div className="max-w-[1280px] mx-auto px-5 pb-28 md:pb-8 sm:px-8 lg:px-12 lg:pb-11">
           <p className="m-0 text-[13.5px] leading-relaxed text-[#a9b9bb] max-w-[60em]">
             IntegraMente en Casa es un servicio de educación, organización y acompañamiento. No sustituye la consulta médica ni la valoración
             neuropsicológica. Ante una emergencia, llamá al 9-1-1.
@@ -909,7 +1049,7 @@ export function Landing() {
       </footer>
 
       {/* Redes flotantes — WhatsApp (el canal natural en Costa Rica) e Instagram */}
-      <div className="fixed z-30 right-4 sm:right-6 flex flex-col gap-3" style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}>
+      <div className="fixed z-30 right-4 sm:right-6 hidden md:flex flex-col gap-3" style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}>
         <a
           href={contacto.instagram}
           target="_blank"
@@ -938,6 +1078,7 @@ export function Landing() {
           </svg>
         </a>
       </div>
+      <BarraMovil waUrl={waUrl} />
     </div>
   );
 }

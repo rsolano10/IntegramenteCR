@@ -4,7 +4,6 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 import { App } from "./App.tsx";
-import { supabase } from "./lib/supabase.ts";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +18,9 @@ async function bootstrap() {
   const params = new URLSearchParams(window.location.hash.replace(/^#/, "") || window.location.search);
   const type = params.get("type");
   if (type === "signup" || type === "email_change") {
+    // Importado solo en este caso: el home público no necesita el cliente
+    // de Supabase para mostrarse, y así carga bastante más liviano.
+    const { supabase } = await import("./lib/supabase.ts");
     await supabase.auth.signOut();
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
   }

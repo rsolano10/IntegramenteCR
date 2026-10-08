@@ -1,4 +1,4 @@
-import type { ResourceModulo } from "../../lib/mediaResources";
+import type { ResourceModulo } from "../../lib/modulos";
 
 // Replaces moduloEmoji (👃🚶🎵📷) as the module marker on resource cards —
 // same stroke-based line-icon language already used in FamiliarNav.tsx /
