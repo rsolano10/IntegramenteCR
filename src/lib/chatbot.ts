@@ -57,6 +57,18 @@ const topicKeywords: Record<string, string[]> = {
   dormir: ["dormir", "duerme", "insomnio", "sueño"],
 };
 
+// Solo las reglas de riesgo: se evalúan ANTES de consultar a la IA, para
+// que una urgencia nunca dependa del modelo.
+export function detectarRiesgo(raw: string): ChatReply | null {
+  const text = raw.trim().toLowerCase();
+  for (const rule of riskRules) {
+    if (rule.keywords.some((k) => text.includes(k))) {
+      return { text: rule.reply, escalate: { label: rule.label, to: rule.to } };
+    }
+  }
+  return null;
+}
+
 export function classifyMessage(raw: string): ChatReply {
   const text = raw.trim().toLowerCase();
 

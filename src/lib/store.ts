@@ -255,6 +255,7 @@ interface AppState {
 
 
   sendChatMessage: (text: string) => void;
+  pushChatMessage: (msg: Omit<ChatMessage, "id">) => void;
 
   pushAudit: (entidad: string, accion: string, autor: string) => void;
 }
@@ -439,6 +440,12 @@ export const useAppStore = create<AppState>()(
   },
   setWeekMood: (v) => set({ weekMood: v }),
 
+
+  pushChatMessage: (msg) => {
+    chatSeq += 1;
+    const full: ChatMessage = { id: `chat-${chatSeq}-${Date.now()}`, ...msg };
+    set((s) => ({ chatMessages: [...s.chatMessages, full] }));
+  },
 
   sendChatMessage: (text) => {
     if (!text.trim()) return;

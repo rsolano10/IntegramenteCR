@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
@@ -12,7 +13,18 @@ export function ConversacionProfesional({ patientId }: { patientId: string }) {
   const { data: mensajes, isLoading } = useMensajes(patientId);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const [texto, setTexto] = useState("");
+  // Llega desde "Respuestas rápidas" cuando la IA deriva una pregunta a su
+  // profesional: la pregunta ya viene escrita, solo falta enviarla.
+  const [params, setParams] = useSearchParams();
+  const borrador = params.get("borrador");
+  const [texto, setTexto] = useState(borrador ?? "");
+  useEffect(() => {
+    if (!borrador) return;
+    const next = new URLSearchParams(params);
+    next.delete("borrador");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
+import { supabase } from "../../lib/supabase";
+import { classifyMessage, detectarRiesgo } from "../../lib/chatbot";
 import { useSession } from "../../lib/useSession";
 import { ChatBubble } from "../../components/ui/ChatBubble";
 
@@ -16,7 +18,7 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
   const session = useSession();
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   const messages = useAppStore((s) => s.chatMessages);
-  const sendChatMessage = useAppStore((s) => s.sendChatMessage);
+  const pushChatMessage = useAppStore((s) => s.pushChatMessage);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -25,15 +27,41 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages, typing]);
 
-  function submit(text: string) {
-    if (!text.trim() || typing) return;
+  // 1) reglas de riesgo locales (sin IA) → guía de emergencia;
+  // 2) si no, la IA (asistente-ia) responde, deriva a su profesional, o
+  //    avisa que la pregunta está fuera del alcance del chat;
+  // 3) si la IA no está disponible, las respuestas fijas de siempre.
+  async function submit(text: string) {
+    const pregunta = text.trim();
+    if (!pregunta || typing) return;
     setInput("");
+    pushChatMessage({ role: "user", text: pregunta });
+
+    const riesgo = detectarRiesgo(pregunta);
+    if (riesgo) {
+      pushChatMessage({ role: "bot", text: riesgo.text, escalate: riesgo.escalate });
+      return;
+    }
+
     setTyping(true);
-    // Small delay before the bot reply lands, for a natural chat feel.
-    window.setTimeout(() => {
-      sendChatMessage(text);
-      setTyping(false);
-    }, 500);
+    const historial = messages.slice(-8).map((m) => ({ rol: m.role === "user" ? "usuario" : "asistente", texto: m.text }));
+    const { data, error } = await supabase.functions.invoke<{ categoria: string; respuesta?: string }>("asistente-ia", {
+      body: { mensaje: pregunta, historial },
+    });
+    setTyping(false);
+
+    if (error || !data || data.categoria === "sin_ia" || !data.respuesta) {
+      const fijo = classifyMessage(pregunta);
+      pushChatMessage({ role: "bot", text: fijo.text, escalate: fijo.escalate });
+      return;
+    }
+    const escalate =
+      data.categoria === "profesional"
+        ? { label: "Preguntarle a su profesional", to: `/app/ayuda?tab=profesional&borrador=${encodeURIComponent(pregunta)}` }
+        : data.categoria === "emergencia"
+          ? { label: "Ver qué hacer ahora", to: "/app/emergencia" }
+          : undefined;
+    pushChatMessage({ role: "bot", text: data.respuesta, escalate });
   }
 
   function handleEscalate(to: string) {
@@ -44,25 +72,27 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
     <div className="flex flex-col" style={{ minHeight: "min(60vh, 520px)" }}>
       {!embedded && <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Asistente guiado</p>}
       <p className="m-0 mb-4 text-[14px] text-tinta-tenue">
-        Respuestas basadas en protocolos revisados. Para lo demás, escribile a tu profesional.
+        Dudas del cuidado diario, respondidas al momento. Lo que necesite criterio clínico se lo pasamos a su profesional.
       </p>
 
       {/* No independent scroll region here — the page itself scrolls, so
           there's only ever one scrollbar instead of two nested ones. */}
       <div className="grid gap-3 mb-4">
         <ChatBubble role="bot">
-          Hola{firstName ? `, ${firstName}` : ""}. Contame qué está pasando y te ayudo, o elegí una de las dudas frecuentes de abajo.
+          Hola{firstName ? `, ${firstName}` : ""}. Cuénteme qué está pasando y le ayudo, o elija una de las dudas frecuentes de abajo.
         </ChatBubble>
         {messages.map((m) => (
           <div key={m.id}>
             <ChatBubble role={m.role}>
-              {m.text}
+              <span className="whitespace-pre-line">{m.text}</span>
               {m.escalate && (
                 <div className="mt-2.5">
                   <button
                     type="button"
                     onClick={() => handleEscalate(m.escalate!.to)}
-                    className="min-h-9 px-3.5 rounded-full bg-semaforo-rojo text-white text-[13px] font-bold cursor-pointer"
+                    className={`min-h-9 px-3.5 rounded-full text-white text-[13px] font-bold cursor-pointer border-none ${
+                      m.escalate.to.startsWith("/app/ayuda") ? "bg-verde-profundo hover:bg-tinta" : "bg-semaforo-rojo"
+                    }`}
                   >
                     {m.escalate.label}
                   </button>
@@ -108,7 +138,7 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Escribí tu duda…"
+          placeholder="Escriba su duda…"
           className="flex-1 min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta"
         />
         <button
