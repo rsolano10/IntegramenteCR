@@ -134,7 +134,7 @@ function HeroPhone() {
               );
             })}
             <div className="rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue px-3 py-2.5">
-              <p className="m-0 text-[8.5px] uppercase tracking-[0.1em] font-semibold text-verde-profundo">Mensaje de su profesional</p>
+              <p className="m-0 text-[8.5px] uppercase tracking-[0.1em] font-semibold text-verde-profundo">Mensaje de tu profesional</p>
               <p className="m-0 mt-0.5 text-[11.5px] leading-snug text-tinta">¡Qué buena semana! Esta vez sumamos más música, que tanto le gusta.</p>
             </div>
           </div>
@@ -303,8 +303,8 @@ function IlustracionCrecer() {
 }
 
 const pasos = [
-  { icono: "charla", t: "Cuéntenos de su día", d: "Unos 10 minutos" },
-  { icono: "elegir", t: "Elija su programa", d: "Con o sin sesiones en vivo" },
+  { icono: "charla", t: "Contanos de su día", d: "Unos 10 minutos" },
+  { icono: "elegir", t: "Elegí tu programa", d: "Con o sin sesiones en vivo" },
   { icono: "profesional", t: "Lo revisamos", d: "Nuestro equipo prepara su semana" },
   { icono: "semana", t: "¡A disfrutar!", d: "Actividades y recordatorios" },
 ];
@@ -326,11 +326,11 @@ const seguridad = [
   },
   {
     t: "Si algo cambia, primero la revisión",
-    d: "Ante una caída o un cambio repentino, la aplicación pausa las actividades físicas, le indica qué hacer y avisa al equipo clínico.",
+    d: "Ante una caída o un cambio repentino, la aplicación pausa las actividades físicas, te indica qué hacer y avisa al equipo clínico.",
   },
   {
     t: "Acompaña, no diagnostica",
-    d: "No interpreta exámenes ni cambia tratamientos médicos. Cuando hace falta, le recomendamos una valoración profesional.",
+    d: "No interpreta exámenes ni cambia tratamientos médicos. Cuando hace falta, te recomendamos una valoración profesional.",
   },
 ];
 
@@ -404,7 +404,7 @@ export function Landing() {
             Para quienes cuidan a un ser querido: un plan semanal de actividades para la memoria, el movimiento y el ánimo, preparado
             por nuestro equipo de salud y adaptado a su día a día.
           </p>
-          <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservar lo que nos hace ser quienes somos.</p>
+          <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
           <div className="flex flex-wrap gap-3">
             <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
             <Button variant="secondary" onClick={() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" })}>
@@ -422,7 +422,7 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
           <Reveal className="text-center">
             <Eyebrow>Para quién es</Eyebrow>
-            <SectionTitle className="max-w-[18em] mx-auto mb-3">Para cuidar a quien quiere, o para cuidarse usted.</SectionTitle>
+            <SectionTitle className="max-w-[18em] mx-auto mb-3">Para cuidar a quien querés, o para cuidarte vos.</SectionTitle>
             <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[34em]">
               Para personas adultas mayores que desean mantener su mente activa, con o sin diagnóstico, y para las familias que las acompañan.
             </p>
@@ -431,7 +431,7 @@ export function Landing() {
             {[
               {
                 t: "Cuido a un familiar",
-                d: "Le indicamos qué hacer cada día y cómo hacerlo. Usted acompaña y registra cómo les fue.",
+                d: "Te indicamos qué hacer cada día y cómo hacerlo. Vos acompañás y registrás cómo les fue.",
                 chips: ["Mamá o papá", "Abuelita o abuelito", "Pareja"],
                 from: "#89c0c6",
                 to: "#3f6a70",
@@ -439,7 +439,7 @@ export function Landing() {
               },
               {
                 t: "Quiero cuidar mi propia mente",
-                d: "Usted mismo responde el cuestionario y recibe actividades pensadas para sus gustos y su ritmo.",
+                d: "Respondés el cuestionario vos mismo y recibís actividades pensadas para tus gustos y tu ritmo.",
                 chips: ["Prevención", "Memoria", "Bienestar"],
                 from: "#fadfa9",
                 to: "#d9a441",
@@ -562,8 +562,8 @@ export function Landing() {
             <Eyebrow>Seguridad primero</Eyebrow>
             <SectionTitle className="mb-4">Antes de sugerir algo, revisamos que sea seguro.</SectionTitle>
             <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
-              Cada recomendación pasa por un filtro de seguridad basado en lo que usted nos cuenta, y nuestro equipo de salud revisa el plan
-              antes de que llegue a su casa.
+              Cada recomendación pasa por un filtro de seguridad basado en lo que nos contás, y nuestro equipo de salud revisa el plan
+              antes de que llegue a tu casa.
             </p>
           </Reveal>
           <div className="grid gap-3.5">
@@ -590,7 +590,7 @@ export function Landing() {
       <section id="programas" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
         <Reveal className="text-center">
           <Eyebrow>Programas</Eyebrow>
-          <SectionTitle className="max-w-[15em] mx-auto mb-3">Los dos con nuestro equipo de salud. Usted elige qué tan cerca.</SectionTitle>
+          <SectionTitle className="max-w-[15em] mx-auto mb-3">Los dos con nuestro equipo de salud. Vos elegís qué tan cerca.</SectionTitle>
           <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
             En ambos, profesionales de la salud revisan y ajustan las actividades. La diferencia: el Orientado suma sesiones en vivo y un
             acompañamiento cercano. Crear el perfil es gratis y el programa se elige al final del cuestionario.
@@ -632,9 +632,9 @@ export function Landing() {
           })}
         </div>
         <p className="m-0 mt-6 text-center text-[15.5px] text-tinta-suave">
-          ¿Ya es paciente de la clínica IntegraMente? Su cuenta la crea nuestro equipo:{" "}
+          ¿Ya sos paciente de la clínica IntegraMente? Tu cuenta la crea nuestro equipo:{" "}
           <Link to="/ingresar?mode=login" className="text-verde-profundo font-semibold">
-            ingrese con el correo que registró en consulta
+            entrá con el correo que registraste en consulta
           </Link>
           .
         </p>
@@ -647,7 +647,7 @@ export function Landing() {
             <Eyebrow>Quiénes estamos detrás</Eyebrow>
             <SectionTitle className="max-w-[16em] mx-auto mb-3">Un equipo de salud, no solo una aplicación.</SectionTitle>
             <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[36em]">
-              Profesionales de distintas áreas revisan y ajustan cada plan, para cuidar la mente, el cuerpo y la alimentación de su familiar.
+              Profesionales de distintas áreas revisan y ajustan cada plan, para cuidar la mente, el cuerpo y la alimentación de tu familiar.
             </p>
           </Reveal>
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -722,7 +722,7 @@ export function Landing() {
         </Reveal>
         <Faq />
         <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
-          ¿Tiene otra consulta? Escríbanos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
+          ¿Tenés otra consulta? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
           <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold">
             WhatsApp
           </a>
@@ -737,7 +737,7 @@ export function Landing() {
           <div>
             <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 mb-3 text-white">Cuidar la mente es cuidar la vida.</h2>
             <p className="m-0 text-[17px] lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
-              Empiece con el cuestionario: toma unos 10 minutos, se guarda solo y puede continuar cuando guste.
+              Empezá con el cuestionario: toma unos 10 minutos, se guarda solo y podés seguir cuando quieras.
             </p>
           </div>
           <Link
@@ -792,7 +792,7 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto px-5 pb-8 sm:px-8 lg:px-12 lg:pb-11">
           <p className="m-0 text-[13.5px] leading-relaxed text-[#a9b9bb] max-w-[60em]">
             IntegraMente en Casa es un servicio de educación, organización y acompañamiento. No sustituye la consulta médica ni la valoración
-            neuropsicológica. Ante una emergencia, llame al 9-1-1.
+            neuropsicológica. Ante una emergencia, llamá al 9-1-1.
           </p>
         </div>
       </footer>
@@ -803,7 +803,7 @@ export function Landing() {
           href={contacto.instagram}
           target="_blank"
           rel="noreferrer"
-          aria-label="Síganos en Instagram"
+          aria-label="Seguinos en Instagram"
           title="Instagram"
           className="w-14 h-14 rounded-full text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
           style={{ background: "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%)" }}
@@ -818,7 +818,7 @@ export function Landing() {
           href={waUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label="Escríbanos por WhatsApp"
+          aria-label="Escribinos por WhatsApp"
           title="WhatsApp"
           className="w-14 h-14 rounded-full bg-[#25d366] text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
         >

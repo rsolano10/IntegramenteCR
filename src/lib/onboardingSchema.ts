@@ -132,7 +132,7 @@ export const questions: Question[] = [
   {
     id: "rol_respondente",
     type: "single",
-    title: "Para comenzar, cuéntanos: ¿quién está completando esta información?",
+    title: "Para comenzar, contanos: ¿quién está completando esta información?",
     options: [
       { value: "propia_persona", label: "Estoy respondiendo para mí" },
       { value: "familiar", label: "Soy familiar de la persona" },
@@ -175,7 +175,7 @@ export const questions: Question[] = [
     id: "tratamiento_preferido",
     module: "Conozcamos a la persona",
     type: "single",
-    title: "¿Cómo prefieres que nos refiramos a él o ella?",
+    title: "¿Cómo preferís que nos refiramos a él o ella?",
     options: [
       { value: "nombre_simple", label: "Nombre simple (ej. Juan)" },
       { value: "don_dona", label: "Don-Doña + Nombre (ej. Don Juan)" },
@@ -217,7 +217,7 @@ export const questions: Question[] = [
     id: "edad",
     module: "Conozcamos a la persona",
     type: "text",
-    title: (a) => (participanteEsRespondente(a) ? "¿Cuántos años tienes?" : `¿Cuántos años tiene ${nombreConTratamiento(a)}?`),
+    title: (a) => (participanteEsRespondente(a) ? "¿Cuántos años tenés?" : `¿Cuántos años tiene ${nombreConTratamiento(a)}?`),
     example: 'Si no la conocés con exactitud, escribí un aproximado o "No lo sé".',
   },
   {
@@ -526,7 +526,7 @@ export const questions: Question[] = [
     id: "diagnostico_texto_usuario",
     module: "Diagnóstico",
     type: "text",
-    title: "Si lo deseas, puedes escribir cómo aparece el diagnóstico en el informe o cómo se lo explicó el profesional.",
+    title: "Si querés, podés escribir cómo aparece el diagnóstico en el informe o cómo se lo explicó el profesional.",
     applicable: (a) => typeof a.diagnostico_cognitivo_informado === "string" && a.diagnostico_cognitivo_informado !== "",
   },
 
@@ -649,7 +649,7 @@ export const questions: Question[] = [
     module: "Diagnóstico",
     type: "single",
     title: (a) =>
-      `Está bien si no conoces el diagnóstico. ¿Alguna vez ${nombreConTratamiento(a)} ha sido valorado por cambios en su memoria o pensamiento?`,
+      `Está bien si no conocés el diagnóstico. ¿Alguna vez ${nombreConTratamiento(a)} ha sido valorado por cambios en su memoria o pensamiento?`,
     applicable: (a) => a.estado_diagnostico_cognitivo === "no_se" || a.diagnostico_cognitivo_informado === "no_recuerdo",
     options: [
       { value: "si", label: "Sí" },
@@ -1122,7 +1122,7 @@ export const questions: Question[] = [
     type: "info",
     title: "Actividades cotidianas",
     body: (a) =>
-      `Ahora queremos conocer cómo se desenvuelve ${nombreConTratamiento(a)} en algunas actividades cotidianas. Si nunca ha realizado una actividad por costumbre o por la forma en que se organizaba su familia, puedes indicarlo. Esto no significa que tenga una dificultad.`,
+      `Ahora queremos conocer cómo se desenvuelve ${nombreConTratamiento(a)} en algunas actividades cotidianas. Si nunca ha realizado una actividad por costumbre o por la forma en que se organizaba su familia, podés indicarlo. Esto no significa que tenga una dificultad.`,
     cta: "Continuar",
   },
   {

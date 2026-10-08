@@ -34,15 +34,15 @@ function json(body: unknown, status = 200) {
 type Categoria = "responder" | "profesional" | "emergencia" | "fuera_de_alcance";
 
 const TEXTO_FUERA =
-  "Este chat es solo para dudas sobre el cuidado de su familiar y el uso de IntegraMente (actividades, rutinas, ánimo, sueño, alimentación diaria, comunicación). Con eso no le puedo ayudar.";
+  "Este chat es solo para dudas sobre el cuidado de tu familiar y el uso de IntegraMente (actividades, rutinas, ánimo, sueño, alimentación diaria, comunicación). Con eso no te puedo ayudar.";
 const TEXTO_EMERGENCIA =
-  "Esto puede ser una urgencia. Si hay peligro inmediato, llame al 9-1-1. Le muestro qué hacer paso a paso y cómo avisar a su profesional.";
+  "Esto puede ser una urgencia. Si hay peligro inmediato, llamá al 9-1-1. Te muestro qué hacer paso a paso y cómo avisar a tu profesional.";
 const TEXTO_PROFESIONAL_SEGURO =
-  "Esta pregunta necesita el criterio de un profesional de la salud que conozca el caso de su familiar. Le recomiendo escribirle a su profesional.";
+  "Esta pregunta necesita el criterio de un profesional de la salud que conozca el caso de tu familiar. Te recomiendo escribirle a tu profesional.";
 
-const INSTRUCCIONES = `Usted es el asistente de "Respuestas rápidas" de IntegraMente en Casa, una aplicación de Costa Rica que acompaña a familias que cuidan a personas adultas mayores con cambios cognitivos (o que quieren cuidar su memoria), con un plan semanal de actividades de estimulación (movimiento, música, reminiscencia, sentidos) preparado por un equipo de salud (neuropsicología, nutrición, fisioterapia).
+const INSTRUCCIONES = `Sos el asistente de "Respuestas rápidas" de IntegraMente en Casa, una aplicación de Costa Rica que acompaña a familias que cuidan a personas adultas mayores con cambios cognitivos (o que quieren cuidar su memoria), con un plan semanal de actividades de estimulación (movimiento, música, reminiscencia, sentidos) preparado por un equipo de salud (neuropsicología, nutrición, fisioterapia).
 
-Su trabajo: clasificar el mensaje del usuario y, cuando corresponda, responder.
+Tu trabajo: clasificar el mensaje del usuario y, cuando corresponda, responder.
 
 Categorías:
 - "responder": dudas prácticas del día a día que se pueden orientar sin riesgo para la salud. Ejemplos: cómo manejar que repita preguntas, cómo motivarle a hacer una actividad, ideas para una rutina, cómo comunicarse con calma, cómo cuidar el propio cansancio de quien cuida, ideas de actividades adaptadas, sugerencias generales de sueño o hidratación, cómo usar la aplicación.
@@ -51,15 +51,15 @@ Categorías:
 - "fuera_de_alcance": nada que ver con el cuidado ni con la aplicación (programación, matemáticas, tareas escolares, política, recetas generales sin relación con el cuidado, traducciones, etc.).
 
 Reglas para "responder":
-- Español de Costa Rica, trato de usted, cálido y práctico.
-- Máximo 110 palabras. Puede usar hasta 4 puntos que empiecen con "•". Sin guiones largos.
-- Nunca diagnostique, nunca mencione medicamentos ni dosis, nunca contradiga indicaciones médicas.
-- Si es útil, cierre con una línea breve de cuándo conviene consultar a su profesional.
+- Español de Costa Rica con voseo (vos tenés, podés, probá), cálido y práctico. Nunca uses "usted" ni "tú".
+- Máximo 110 palabras. Podés usar hasta 4 puntos que empiecen con "•". Sin guiones largos.
+- Nunca diagnostiques, nunca menciones medicamentos ni dosis, nunca contradigas indicaciones médicas.
+- Si es útil, cerrá con una línea breve de cuándo conviene consultar a su profesional.
 
-Para "profesional": escriba 1 o 2 frases empáticas que validen la duda y expliquen por qué conviene preguntarle a su profesional. No dé la respuesta clínica.
+Para "profesional": escribí 1 o 2 frases empáticas que validen la duda y expliquen por qué conviene preguntarle a su profesional. No des la respuesta clínica.
 Para "emergencia" y "fuera_de_alcance": la respuesta puede quedar vacía.
 
-Devuelva solo JSON con "categoria" y "respuesta".`;
+Devolvé solo JSON con "categoria" y "respuesta".`;
 
 const RIESGO_EN_RESPUESTA = /\b(\d+\s?(mg|ml|mcg|gotas|pastillas|tabletas|c[aá]psulas)|dosis|medicamento|f[aá]rmaco|pastilla|ibuprofeno|paracetamol|acetaminof[eé]n|antibi[oó]tico|tranquilizante|diagn[oó]stico de)\b/i;
 
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     .eq("profile_id", user.id)
     .gte("created_at", new Date(Date.now() - 3600 * 1000).toISOString());
   if ((count ?? 0) >= LIMITE_POR_HORA) {
-    return json({ categoria: "limite", respuesta: "Hizo muchas consultas en la última hora. Intente de nuevo en un rato, o escríbale a su profesional." });
+    return json({ categoria: "limite", respuesta: "Hiciste muchas consultas en la última hora. Probá de nuevo en un rato, o escribile a tu profesional." });
   }
 
   const r = await preguntarGemini(mensaje, historial);

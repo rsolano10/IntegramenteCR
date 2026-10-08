@@ -57,7 +57,7 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
     }
     const escalate =
       data.categoria === "profesional"
-        ? { label: "Preguntarle a su profesional", to: `/app/ayuda?tab=profesional&borrador=${encodeURIComponent(pregunta)}` }
+        ? { label: "Preguntarle a tu profesional", to: `/app/ayuda?tab=profesional&borrador=${encodeURIComponent(pregunta)}` }
         : data.categoria === "emergencia"
           ? { label: "Ver qué hacer ahora", to: "/app/emergencia" }
           : undefined;
@@ -72,14 +72,14 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
     <div className="flex flex-col" style={{ minHeight: "min(60vh, 520px)" }}>
       {!embedded && <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Asistente guiado</p>}
       <p className="m-0 mb-4 text-[14px] text-tinta-tenue">
-        Dudas del cuidado diario, respondidas al momento. Lo que necesite criterio clínico se lo pasamos a su profesional.
+        Dudas del cuidado diario, respondidas al momento. Lo que necesite criterio clínico se lo pasamos a tu profesional.
       </p>
 
       {/* No independent scroll region here — the page itself scrolls, so
           there's only ever one scrollbar instead of two nested ones. */}
       <div className="grid gap-3 mb-4">
         <ChatBubble role="bot">
-          Hola{firstName ? `, ${firstName}` : ""}. Cuénteme qué está pasando y le ayudo, o elija una de las dudas frecuentes de abajo.
+          Hola{firstName ? `, ${firstName}` : ""}. Contame qué está pasando y te ayudo, o elegí una de las dudas frecuentes de abajo.
         </ChatBubble>
         {messages.map((m) => (
           <div key={m.id}>
@@ -138,7 +138,7 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Escriba su duda…"
+          placeholder="Escribí tu duda…"
           className="flex-1 min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta"
         />
         <button
