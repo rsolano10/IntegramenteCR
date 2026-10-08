@@ -11,7 +11,7 @@ const suggestions = [
   { label: "No duerme bien", text: "No duerme bien" },
 ];
 
-export function Asistente() {
+export function Asistente({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const session = useSession();
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
@@ -49,9 +49,9 @@ export function Asistente() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: "min(60vh, 520px)" }}>
-      <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Asistente guiado</p>
+      {!embedded && <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Asistente guiado</p>}
       <p className="m-0 mb-4 text-[14px] text-tinta-tenue">
-        Respuestas basadas en protocolos revisados. Para lo demás, te conecto con la Dra. Solano.
+        Respuestas basadas en protocolos revisados. Para lo demás, escribile a tu profesional.
       </p>
 
       {/* No independent scroll region here — the page itself scrolls, so
@@ -67,7 +67,7 @@ export function Asistente() {
               {m.escalate && (
                 <div className="mt-2.5">
                   {notified.has(m.id) ? (
-                    <span className="text-[13px] font-semibold text-semaforo-verde-texto">✓ Aviso enviado a la Dra. Solano</span>
+                    <span className="text-[13px] font-semibold text-semaforo-verde-texto">✓ Aviso enviado a tu profesional</span>
                   ) : (
                     <button
                       type="button"
@@ -131,12 +131,14 @@ export function Asistente() {
         </button>
       </form>
 
-      <Link
-        to="/app/emergencia"
-        className="mt-3.5 text-center text-[13.5px] text-tinta-tenue underline decoration-dotted hover:text-alerta-texto"
-      >
-        ¿Es una emergencia o una situación de riesgo? Tocá acá
-      </Link>
+      {!embedded && (
+        <Link
+          to="/app/emergencia"
+          className="mt-3.5 text-center text-[13.5px] text-tinta-tenue underline decoration-dotted hover:text-alerta-texto"
+        >
+          ¿Es una emergencia o una situación de riesgo? Tocá acá
+        </Link>
+      )}
     </div>
   );
 }

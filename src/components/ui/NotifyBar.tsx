@@ -10,7 +10,7 @@ export function NotifyButton() {
       onClick={notifyNow}
       className={notifySent ? "!bg-semaforo-verde-texto hover:!bg-semaforo-verde-texto" : ""}
     >
-      {notifySent ? "Aviso enviado" : "Avisar a la Dra. Solano"}
+      {notifySent ? "Aviso enviado" : "Avisar a tu profesional"}
     </Button>
   );
 }
@@ -19,7 +19,7 @@ export function NotifyState() {
   const notify = useAppStore((s) => s.notify);
   const notifySent = useAppStore((s) => s.notifySent);
   const state = notifySent
-    ? "La Dra. Solano recibió el aviso. Queda registrado con fecha y hora."
+    ? "Tu profesional recibió el aviso. Queda registrado con fecha y hora."
     : notify === "si"
       ? "Tu preferencia guardada es avisar. Todavía no se envió nada."
       : "Tu preferencia guardada es no avisar automáticamente.";

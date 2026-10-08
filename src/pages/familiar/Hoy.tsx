@@ -85,7 +85,7 @@ export function Hoy() {
           <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
           <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
           {hasMoreMensajes && (
-            <Link to="/app/mensajes" className="inline-block mt-2 text-[13px] font-semibold text-verde-profundo">
+            <Link to="/app/ayuda?tab=profesional" className="inline-block mt-2 text-[13px] font-semibold text-verde-profundo">
               Ver mensajes anteriores ›
             </Link>
           )}

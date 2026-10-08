@@ -1,4 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import { useMyPatient } from "../../lib/useMyPatient";
+import { useUnreadMensajes } from "../../lib/useMensajes";
 
 interface NavItem {
   label: string;
@@ -27,9 +29,9 @@ const items: NavItem[] = [
     ),
   },
   {
-    label: "Plan",
+    label: "Mi semana",
     to: "/app/plan",
-    match: (p) => p === "/app/plan",
+    match: (p) => p === "/app/plan" || p === "/app/revision" || p === "/app/resumen",
     icon: (active) => (
       <svg {...iconProps}>
         <rect x="3.5" y="4.5" width="15" height="14" rx="2.5" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
@@ -38,22 +40,9 @@ const items: NavItem[] = [
     ),
   },
   {
-    label: "Actividades",
-    to: "/app/actividades",
-    match: (p) => p === "/app/actividades",
-    icon: (active) => (
-      <svg {...iconProps}>
-        <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.6" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
-        <rect x="12" y="3.5" width="6.5" height="6.5" rx="1.6" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
-        <rect x="3.5" y="12" width="6.5" height="6.5" rx="1.6" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
-        <rect x="12" y="12" width="6.5" height="6.5" rx="1.6" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
-      </svg>
-    ),
-  },
-  {
-    label: "Dudas",
-    to: "/app/asistente",
-    match: (p) => p === "/app/asistente",
+    label: "Ayuda",
+    to: "/app/ayuda",
+    match: (p) => p === "/app/ayuda",
     icon: (active) => (
       <svg {...iconProps}>
         <path
@@ -65,32 +54,27 @@ const items: NavItem[] = [
       </svg>
     ),
   },
-  {
-    label: "Semana",
-    to: "/app/revision",
-    match: (p) => p === "/app/revision" || p === "/app/resumen",
-    icon: (active) => (
-      <svg {...iconProps}>
-        <path
-          d="M4 11a7 7 0 1 1 2.1 5M4 11v4.5M4 11h4.5"
-          stroke="currentColor"
-          strokeWidth={active ? 2 : 1.6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
 ];
 
+// Tres pestañas (antes cinco): Hoy, Mi semana (plan + evaluación +
+// actividades sugeridas) y Ayuda (respuestas rápidas + tu profesional).
+// Menos destinos = botones más grandes en la barra inferior del teléfono.
 export function FamiliarNav() {
   const { pathname } = useLocation();
+  const { data: myPatient } = useMyPatient();
+  const unread = useUnreadMensajes(myPatient?.id);
+  const badge = (to: string) =>
+    to === "/app/ayuda" && unread > 0 ? (
+      <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-semaforo-rojo text-white text-[10.5px] font-bold inline-flex items-center justify-center" aria-label={`${unread} mensajes sin leer`}>
+        {unread}
+      </span>
+    ) : null;
 
   return (
     <>
       {/* Phone: fixed bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-5"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-3"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {items.map((item) => {
@@ -103,8 +87,11 @@ export function FamiliarNav() {
                 active ? "text-verde-profundo" : "text-tinta-tenue"
               }`}
             >
-              {item.icon(active)}
-              <span className={`text-[11px] ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
+              <span className="relative">
+                {item.icon(active)}
+                {badge(item.to)}
+              </span>
+              <span className={`text-[12px] ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
               <span className={`h-[3px] w-6 rounded-full ${active ? "bg-verde-serenidad" : "bg-transparent"}`} />
             </Link>
           );
@@ -125,6 +112,11 @@ export function FamiliarNav() {
             >
               {item.icon(active)}
               {item.label}
+              {item.to === "/app/ayuda" && unread > 0 && (
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-semaforo-rojo text-white text-[11.5px] font-bold inline-flex items-center justify-center" aria-label={`${unread} mensajes sin leer`}>
+                  {unread}
+                </span>
+              )}
             </Link>
           );
         })}

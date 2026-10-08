@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { emergencyContacts } from "../../lib/mockData";
 
 const situations: { title: string; detail: string; to: string }[] = [
   { title: "Se cayó o se lastimó", detail: "Golpe, caída, dolor que antes no tenía.", to: "/app/alerta/caida" },
@@ -25,9 +26,13 @@ export function Emergencia() {
 
   return (
     <div className="im-in max-w-[680px] mx-auto px-5 py-10 pb-16 sm:px-8 lg:py-14 lg:pb-20">
-      <Link to="/app/asistente" className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-4">
-        ‹ Volver a Dudas
-      </Link>
+      <button
+        type="button"
+        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/app/hoy"))}
+        className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-4 cursor-pointer p-0"
+      >
+        ‹ Volver
+      </button>
       <p className="m-0 mb-2.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">¿Qué está pasando?</p>
       <h1 className="font-serif font-normal text-[26px] sm:text-[34px] leading-[1.16] m-0 mb-3">Contame para orientarte mejor</h1>
       <p className="m-0 mb-7 text-base sm:text-[17px] leading-relaxed text-tinta-suave">
@@ -49,7 +54,7 @@ export function Emergencia() {
         ))}
       </div>
 
-      <div className="bg-alerta border border-alerta-borde rounded-2xl p-4.5 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-alerta border border-alerta-borde rounded-2xl p-4.5 flex items-center justify-between gap-3 flex-wrap mb-8">
         <span className="text-[15px] text-alerta-texto">¿Nada de esto encaja, pero igual es urgente?</span>
         <a
           href="tel:911"
@@ -57,6 +62,18 @@ export function Emergencia() {
         >
           Llamar al 9-1-1
         </a>
+      </div>
+      {/* Antes vivían en "Contactos de emergencia" del menú de la cuenta —
+          ahora están donde se buscan en una urgencia. */}
+      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Teléfonos de ayuda</p>
+      <div className="grid gap-2.5 sm:grid-cols-3">
+        {emergencyContacts.map((c) => (
+          <div key={c.id} className="bg-white border border-borde rounded-2xl p-4">
+            <p className="m-0 mb-1 text-[12.5px] font-bold text-alerta-texto leading-snug">{c.label}</p>
+            <p className="m-0 font-serif text-[20px] leading-tight text-tinta">{c.value}</p>
+            {c.note && <p className="m-0 mt-1 text-[12.5px] text-tinta-tenue">{c.note}</p>}
+          </div>
+        ))}
       </div>
     </div>
   );

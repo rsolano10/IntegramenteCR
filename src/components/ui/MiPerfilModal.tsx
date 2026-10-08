@@ -8,19 +8,20 @@ import { uploadAvatar } from "../../lib/avatar";
 import { normalizeCrPhone } from "../../lib/phone";
 import { useChangePassword } from "../../lib/useChangePassword";
 import { planTiers } from "../../lib/mockData";
+import { useAppStore } from "../../lib/store";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordRequirements } from "./PasswordRequirements";
 
 type Authed = Extract<SessionState, { status: "authed" }>;
-type Tab = "perfil" | "familiar" | "seguridad";
+type Tab = "perfil" | "familiar" | "avisos" | "seguridad";
 
 // One "Mi cuenta" for every role. The outer component only waits for the
 // session/patient to resolve: the form's useState initializers run once,
 // so mounting it before the data arrived is what used to leave every field
 // blank (useSession() starts in "loading" in each new component).
-export function MiPerfilModal({ onClose, isSelf = false }: { onClose: () => void; isSelf?: boolean }) {
+export function MiPerfilModal({ onClose, isSelf = false, onLogoutAll }: { onClose: () => void; isSelf?: boolean; onLogoutAll?: () => void }) {
   const session = useSession();
   const { data: myPatient, isPending } = useMyPatient();
   const ready = session.status === "authed" && (session.profile.role === "profesional" || !isPending);
@@ -28,7 +29,7 @@ export function MiPerfilModal({ onClose, isSelf = false }: { onClose: () => void
   return (
     <Modal onClose={onClose} bare>
       {ready ? (
-        <MiPerfilContent session={session as Authed} myPatient={myPatient ?? null} isSelf={isSelf} onClose={onClose} />
+        <MiPerfilContent session={session as Authed} myPatient={myPatient ?? null} isSelf={isSelf} onClose={onClose} onLogoutAll={onLogoutAll} />
       ) : (
         <div className="p-10 flex justify-center">
           <span className="inline-block w-7 h-7 rounded-full border-[3px] border-beige-serenidad border-t-verde-serenidad animate-spin" />
@@ -43,11 +44,13 @@ function MiPerfilContent({
   myPatient,
   isSelf,
   onClose,
+  onLogoutAll,
 }: {
   session: Authed;
   myPatient: MyPatient | null;
   isSelf: boolean;
   onClose: () => void;
+  onLogoutAll?: () => void;
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -79,6 +82,7 @@ function MiPerfilContent({
   const tabs: { id: Tab; label: string }[] = [
     { id: "perfil", label: "Mi perfil" },
     ...(myPatient ? [{ id: "familiar" as const, label: isSelf ? "Mi programa" : "Mi familiar" }] : []),
+    ...(!isProfesional ? [{ id: "avisos" as const, label: "Avisos" }] : []),
     { id: "seguridad", label: "Seguridad" },
   ];
 
@@ -296,9 +300,13 @@ function MiPerfilContent({
           </div>
         )}
 
-        {tab === "seguridad" && <SeguridadTab email={email} lastSignIn={user.last_sign_in_at} createdAt={user.created_at} />}
+        {tab === "avisos" && <AvisosTab userId={user.id} hasPhone={!!profile.whatsapp_phone} initialWhatsapp={profile.whatsapp_notifications_enabled} />}
 
-        {tab !== "seguridad" && (
+        {tab === "seguridad" && (
+          <SeguridadTab email={email} lastSignIn={user.last_sign_in_at} createdAt={user.created_at} onLogoutAll={onLogoutAll} />
+        )}
+
+        {tab !== "seguridad" && tab !== "avisos" && (
           <div className="mt-6 pt-5 border-t border-borde-suave flex items-center justify-between gap-3 flex-wrap">
             <p className="m-0 text-[14px] min-h-5" aria-live="polite">
               {error ? (
@@ -356,7 +364,18 @@ function ProgramaCard({ patient, onChoose }: { patient: MyPatient; onChoose: () 
   );
 }
 
-function SeguridadTab({ email, lastSignIn, createdAt }: { email: string; lastSignIn?: string; createdAt: string }) {
+function SeguridadTab({
+  email,
+  lastSignIn,
+  createdAt,
+  onLogoutAll,
+}: {
+  email: string;
+  lastSignIn?: string;
+  createdAt: string;
+  onLogoutAll?: () => void;
+}) {
+  const [confirmAll, setConfirmAll] = useState(false);
   const [open, setOpen] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -435,7 +454,99 @@ function SeguridadTab({ email, lastSignIn, createdAt }: { email: string; lastSig
           </div>
         )}
       </div>
+      {onLogoutAll && (
+        <div className="rounded-2xl border border-borde p-4.5">
+          <p className="m-0 text-[15px] font-semibold text-tinta">Cerrar sesión en todos los dispositivos</p>
+          <p className="m-0 mb-3 text-[13.5px] text-tinta-tenue">Útil si entraste desde un teléfono o computadora que ya no usás.</p>
+          {!confirmAll ? (
+            <Button variant="secondary" size="sm" onClick={() => setConfirmAll(true)} className="text-alerta-texto">
+              Cerrar todas las sesiones
+            </Button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[13.5px] text-alerta-texto">¿Seguro? Vas a tener que volver a entrar en todos lados.</span>
+              <Button variant="urgency" size="sm" onClick={onLogoutAll}>
+                Sí, cerrar todas
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setConfirmAll(false)}>
+                No
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+// Lo que antes era "Configuraciones" (una sola opción) más el interruptor
+// de recordatorios por WhatsApp, que sí se guarda en la cuenta.
+function AvisosTab({ userId, hasPhone, initialWhatsapp }: { userId: string; hasPhone: boolean; initialWhatsapp: boolean }) {
+  const notify = useAppStore((s) => s.notify);
+  const setNotify = useAppStore((s) => s.setNotify);
+  const [whatsapp, setWhatsapp] = useState(initialWhatsapp);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function toggleWhatsapp(next: boolean) {
+    setError("");
+    setWhatsapp(next);
+    setSaving(true);
+    const { error: updateError } = await supabase.from("profiles").update({ whatsapp_notifications_enabled: next }).eq("id", userId);
+    setSaving(false);
+    if (updateError) {
+      setWhatsapp(!next);
+      setError("No pudimos guardar el cambio. Probá de nuevo.");
+      return;
+    }
+    await supabase.auth.refreshSession();
+  }
+
+  return (
+    <div className="grid gap-4">
+      <SwitchRow
+        title="Recordatorios por WhatsApp"
+        detail={hasPhone ? "Preparación, inicio y cierre de las actividades del día." : "Agregá tu número en Mi perfil para activarlos."}
+        checked={whatsapp && hasPhone}
+        disabled={!hasPhone || saving}
+        onChange={toggleWhatsapp}
+      />
+      <SwitchRow
+        title="Avisar a tu profesional ante una señal de riesgo"
+        detail="Si en la app aparece una situación de riesgo, tu profesional recibe un aviso para contactarte."
+        checked={notify === "si"}
+        onChange={(v) => setNotify(v ? "si" : "no")}
+      />
+      {error && <p className="m-0 text-[13.5px] text-alerta-texto">{error}</p>}
+    </div>
+  );
+}
+
+function SwitchRow({
+  title,
+  detail,
+  checked,
+  disabled = false,
+  onChange,
+}: {
+  title: string;
+  detail: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className={`flex items-start justify-between gap-4 rounded-2xl border border-borde p-4.5 ${disabled ? "opacity-60" : "cursor-pointer"}`}>
+      <span>
+        <span className="block text-[15px] font-semibold text-tinta">{title}</span>
+        <span className="block mt-0.5 text-[13.5px] leading-relaxed text-tinta-tenue">{detail}</span>
+      </span>
+      <span className="relative shrink-0 mt-0.5">
+        <input type="checkbox" role="switch" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+        <span className="block w-11 h-6 rounded-full bg-borde-campo peer-checked:bg-verde-serenidad transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-verde-serenidad/50" />
+        <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+      </span>
+    </label>
   );
 }
 

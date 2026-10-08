@@ -3,23 +3,23 @@ import type { TourStep } from "../components/ui/ProductTour";
 export const familiarTourSteps: TourStep[] = [
   {
     title: "¡Bienvenida a IntegraMente en Casa!",
-    body: "Este es tu espacio para acompañar a tu familiar día a día. Te mostramos rápido dónde encontrar cada cosa — son solo unos segundos.",
+    body: "Este es tu espacio para acompañar a tu familiar día a día. Te mostramos rápido dónde está cada cosa — son solo tres lugares.",
   },
   {
     title: "Hoy",
-    body: "Acá aparecen las actividades del día. Tocá una para verla en detalle, y marcala como realizada cuando la completen juntos.",
+    body: "Las actividades del día. Tocá una para verla paso a paso y marcala como realizada cuando la terminen juntos.",
   },
   {
-    title: "Plan, Actividades, Dudas y Semana",
-    body: "En la parte de arriba tenés el resto: Plan muestra el programa completo de la semana, Actividades es la biblioteca de recursos, Dudas te conecta con el asistente para resolver preguntas frecuentes, y Semana es donde revisás cómo les fue.",
+    title: "Mi semana",
+    body: "El plan completo de la semana, la evaluación cuando termina (tres preguntas rápidas) y más actividades elegidas según el perfil para los días con ganas de más.",
   },
   {
-    title: "Mensajes de tu equipo clínico",
-    body: "Cuando el equipo te escriba, vas a ver una tarjeta destacada arriba de las actividades del día — no te lo vas a perder.",
+    title: "Ayuda",
+    body: "Respuestas rápidas a las dudas más comunes del cuidado y, si tu programa lo incluye, la conversación con tu profesional. Un número rojo te avisa si te escribieron.",
   },
   {
-    title: "Ya podés empezar",
-    body: "Eso es todo por ahora. Podés volver a explorar con calma — no hay nada que puedas hacer mal acá.",
+    title: "SOS, siempre a mano",
+    body: "Arriba a la derecha está el botón SOS: te orienta según lo que esté pasando y tiene los teléfonos de ayuda. Tu cuenta y el perfil de tu familiar están en el menú con tu nombre.",
   },
 ];
 

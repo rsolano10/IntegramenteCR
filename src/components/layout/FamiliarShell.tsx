@@ -62,7 +62,7 @@ function PendienteRevision({ nombre, desdeMensajes, programaElegido }: { nombre:
         </div>
         <h1 className="font-serif font-normal text-[26px] sm:text-[30px] leading-[1.18] m-0 mb-3">Estamos armando el programa de {nombre}</h1>
         <p className="m-0 text-base sm:text-[17px] leading-relaxed text-tinta-suave">
-          Normalmente tarda entre 1 y 3 días hábiles. No tenés que hacer nada más por ahora.
+          No tenés que hacer nada más por ahora — te avisamos en cuanto esté listo.
         </p>
       </div>
       <ol className="list-none m-0 p-0 grid gap-0 bg-white border border-borde rounded-3xl px-5 py-5 sm:px-6">
@@ -147,7 +147,7 @@ export function FamiliarShell() {
       )}
 
       <div className="max-w-3xl mx-auto px-5 py-6 sm:px-8 lg:px-12 lg:py-8">
-        {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeMensajes={pathname === "/app/mensajes"} programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}
+        {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeMensajes={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}
       </div>
 
       {(() => {

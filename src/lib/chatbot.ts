@@ -74,7 +74,7 @@ export function classifyMessage(raw: string): ChatReply {
   }
 
   return {
-    text: "No tengo una respuesta protocolizada para eso. Puedo avisarle a la Dra. Solano para que te responda directamente.",
-    escalate: { label: "Escribirle a la Dra. Solano", to: "" },
+    text: "No tengo una respuesta protocolizada para eso. Escribile a tu profesional y te responde directamente.",
+    escalate: { label: "Escribirle a tu profesional", to: "/app/ayuda?tab=profesional" },
   };
 }

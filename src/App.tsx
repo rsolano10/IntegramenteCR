@@ -30,12 +30,10 @@ import { Hoy } from "./pages/familiar/Hoy";
 import { Actividad } from "./pages/familiar/Actividad";
 import { ActividadPasos } from "./pages/familiar/ActividadPasos";
 import { Plan } from "./pages/familiar/Plan";
-import { Actividades } from "./pages/familiar/Actividades";
-import { Asistente } from "./pages/familiar/Asistente";
 import { Revision } from "./pages/familiar/Revision";
 import { Resumen } from "./pages/familiar/Resumen";
 import { Emergencia } from "./pages/familiar/Emergencia";
-import { Mensajes } from "./pages/familiar/Mensajes";
+import { Ayuda as AyudaFamiliar } from "./pages/familiar/Ayuda";
 
 import { ParticipanteHoy } from "./pages/participante/Hoy";
 import { ParticipanteActividad } from "./pages/participante/Actividad";
@@ -222,10 +220,15 @@ function AppLayout() {
           <Route path="hoy" element={<Hoy />} />
           <Route path="hoy/actividad/:taskId" element={<Actividad />} />
           <Route path="plan" element={<Plan />} />
-          <Route path="actividades" element={<Actividades />} />
-          <Route path="asistente" element={<Asistente />} />
+          {/* Reorganización del menú familiar: Plan+Semana → Mi semana,
+              Dudas+Mensajes → Ayuda, Actividades → dentro de Mi semana
+              (filtradas por perfil). Las rutas viejas redirigen para no
+              romper enlaces ya enviados (WhatsApp, correos). */}
+          <Route path="actividades" element={<Navigate to="/app/plan" replace />} />
+          <Route path="asistente" element={<Navigate to="/app/ayuda?tab=dudas" replace />} />
+          <Route path="ayuda" element={<AyudaFamiliar />} />
           <Route path="emergencia" element={<Emergencia />} />
-          <Route path="mensajes" element={<Mensajes />} />
+          <Route path="mensajes" element={<Navigate to="/app/ayuda?tab=profesional" replace />} />
           <Route path="revision" element={<Revision />} />
           <Route path="resumen" element={<Resumen />} />
         </Route>

@@ -7,23 +7,20 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { AccountMenu } from "../ui/AccountMenu";
 import { Modal } from "../ui/Modal";
 import { MiPerfilModal } from "../ui/MiPerfilModal";
-import { SettingsModal } from "../ui/SettingsModal";
-import { EmergencyContactsModal } from "../ui/EmergencyContactsModal";
+import { ContactanosModal } from "../ui/ContactanosModal";
 
 const crumbs: [string, string][] = [
   ["/app/login", "Ingreso"],
   ["/app/consent", "Consentimiento"],
   ["/app/perfil/resumen", "Tu cuestionario"],
   ["/app/perfil", "Perfil funcional"],
-  ["/app/mensajes", "Mensajes"],
+  ["/app/ayuda", "Ayuda"],
   ["/app/emergencia", "Emergencia"],
   ["/app/hoy/actividad", "Actividad"],
   ["/app/hoy", "Hoy"],
-  ["/app/plan", "Plan"],
-  ["/app/actividades", "Actividades"],
-  ["/app/asistente", "Dudas"],
-  ["/app/revision", "Revisión"],
-  ["/app/resumen", "Resumen"],
+  ["/app/plan", "Mi semana"],
+  ["/app/revision", "Evaluación semanal"],
+  ["/app/resumen", "Resumen de la semana"],
   ["/app/participante/hoy", "Hoy"],
   ["/app/participante/actividad", "Actividad"],
   ["/app/participante/ayuda", "Pidió ayuda"],
@@ -48,7 +45,7 @@ function crumbFor(pathname: string): string {
   return hit ? hit[1] : "";
 }
 
-type OpenModal = "mi-perfil" | "configuraciones" | "emergencia" | "auditoria" | null;
+type OpenModal = "mi-perfil" | "contacto" | "auditoria" | null;
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -111,6 +108,19 @@ export function AppHeader() {
       </div>
 
       {(role === "familiar" || (role === "paciente" && myPatient?.vista_completa)) && (
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Siempre visible: en una urgencia nadie debería tener que buscar
+            en un menú. Lleva a la orientación por situación + teléfonos. */}
+        {pathname !== "/app/emergencia" && !pathname.startsWith("/app/alerta") && (
+          <Link
+            to="/app/emergencia"
+            aria-label="Emergencia"
+            className="inline-flex items-center gap-1.5 min-h-10 px-3 sm:px-3.5 rounded-full border-[1.5px] border-alerta-borde bg-alerta text-alerta-texto font-sans text-[13.5px] font-bold no-underline hover:bg-[#f7e2db]"
+          >
+            <span aria-hidden="true" className="w-2 h-2 rounded-full bg-semaforo-rojo" />
+            SOS<span className="hidden sm:inline font-semibold">· Emergencia</span>
+          </Link>
+        )}
         <AccountMenu
           initials={
             nombre
@@ -130,14 +140,14 @@ export function AppHeader() {
           }
           items={[
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
-            { label: "Ver el cuestionario completo", onClick: () => navigate("/app/perfil/resumen") },
-            { label: "Mensajes de tu profesional", onClick: () => navigate("/app/mensajes") },
-            { label: "Configuraciones", onClick: () => setModal("configuraciones") },
-            { label: "Contactos de emergencia", onClick: () => setModal("emergencia") },
+            ...(myPatient
+              ? [{ label: role === "paciente" ? "Mi perfil" : `Perfil de ${myPatient.nombre.split(" ")[0]}`, onClick: () => navigate("/app/perfil/resumen") }]
+              : []),
+            { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
-            { label: "Cerrar sesión en todos los dispositivos", onClick: () => doLogout("global"), danger: true },
           ]}
         />
+        </div>
       )}
 
       {role === "profesional" && (
@@ -156,7 +166,6 @@ export function AppHeader() {
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
             { label: "Historial de auditoría", onClick: () => setModal("auditoria") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
-            { label: "Cerrar sesión en todos los dispositivos", onClick: () => doLogout("global"), danger: true },
           ]}
         />
       )}
@@ -172,11 +181,10 @@ export function AppHeader() {
       )}
 
       {modal === "mi-perfil" && (role === "familiar" || role === "paciente" || role === "profesional") && (
-        <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} />
+        <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} onLogoutAll={() => doLogout("global")} />
       )}
 
-      {modal === "configuraciones" && <SettingsModal onClose={() => setModal(null)} />}
-      {modal === "emergencia" && <EmergencyContactsModal onClose={() => setModal(null)} />}
+      {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
 
       {modal === "auditoria" && (
         <Modal onClose={() => setModal(null)}>
