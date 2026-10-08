@@ -38,33 +38,60 @@ export interface Testimonio {
 // Vacío hasta tener testimonios reales con permiso de publicarlos.
 export const testimonios: Testimonio[] = [];
 
+// Textos de los programas para el home (los de la app hablan a quien ya
+// completó el cuestionario; acá hablamos a quien todavía no empezó).
+// El precio sale de programas.ts / planTiers, la misma fuente de la app.
+export const programasHome: Record<"autoguiado" | "orientado", { lema: string; descripcion: string; incluye: string[] }> = {
+  autoguiado: {
+    lema: "A su propio ritmo",
+    descripcion: "Un plan semanal de actividades preparado según el perfil de su familiar, para realizar en casa con total independencia.",
+    incluye: [
+      "Plan semanal personalizado",
+      "Actividades paso a paso, con videos y materiales",
+      "Recordatorios por WhatsApp y en su calendario",
+      "Respuestas rápidas para las dudas más frecuentes",
+    ],
+  },
+  orientado: {
+    lema: "Con una profesional a su lado",
+    descripcion: "Todo lo del programa Autoguiado, más una profesional que revisa cómo les fue cada semana y ajusta el plan junto con ustedes.",
+    incluye: [
+      "Todo lo del programa Autoguiado",
+      "Una profesional que revisa cada semana",
+      "Ajustes al plan según cómo les fue",
+      "Mensajes directos con su profesional",
+      "Consulta inicial de orientación",
+    ],
+  },
+};
+
 export const preguntas: { p: string; r: string }[] = [
   {
     p: "¿Cuánto cuesta?",
-    r: "Crear el perfil y completar el cuestionario es gratis. Al terminar ves los dos programas con su precio — Autoguiado y Orientado — y elegís el que te sirva. No se cobra nada sin avisarte antes.",
+    r: "Crear el perfil y completar el cuestionario es gratis. Al terminar, usted ve los dos programas con su precio, Autoguiado y Orientado, y elige el que más le convenga. No se cobra nada sin avisarle antes.",
   },
   {
     p: "¿Necesito un diagnóstico?",
-    r: "No. El programa sirve tanto si hay un diagnóstico como si solo notaste cambios, o si querés cuidar la memoria de forma preventiva. IntegraMente no diagnostica: si algo en el cuestionario lo amerita, te recomendamos una valoración profesional.",
+    r: "No. El programa sirve si hay un diagnóstico, si solo ha notado algunos cambios o si desea cuidar la memoria de forma preventiva. IntegraMente no diagnostica: si algo en el cuestionario lo amerita, le recomendamos una valoración profesional.",
   },
   {
     p: "¿Sirve si mi familiar no usa celular?",
-    r: "Sí. La app la usa quien acompaña: ahí ve las actividades del día, cómo hacerlas y registra cómo les fue. Si la persona sí usa celular, puede tener su propia vista simple, con letra grande y una cosa a la vez.",
+    r: "Sí. La aplicación la usa la persona que acompaña: ahí ve las actividades del día, cómo realizarlas y registra cómo les fue. Si su familiar sí usa celular, puede tener su propia vista sencilla, con letra grande y una cosa a la vez.",
   },
   {
-    p: "¿Quién arma el plan?",
-    r: "Una profesional del equipo clínico revisa el perfil y arma la semana con actividades de nuestra biblioteca, elegidas según sus intereses y lo que es seguro para su movilidad. En el programa Orientado, además, revisa cómo les fue cada semana y ajusta el plan.",
+    p: "¿Quién prepara el plan?",
+    r: "Una profesional de nuestro equipo clínico revisa el perfil y prepara la semana con actividades de nuestra biblioteca, elegidas según los gustos de su familiar y lo que es seguro para su movilidad. En el programa Orientado, además, revisa cada semana cómo les fue y ajusta el plan.",
   },
   {
     p: "¿Qué pasa si hay una emergencia?",
-    r: "Ante una urgencia médica, llamá al 9-1-1. Dentro de la app, el botón SOS te orienta según lo que esté pasando (una caída, un cambio repentino, si no la encontrás) y te permite avisarle a tu profesional al instante.",
+    r: "Ante una emergencia médica, llame al 9-1-1. Dentro de la aplicación, el botón SOS le orienta según lo que esté pasando (una caída, un cambio repentino, si no encuentra a su familiar) y le permite avisar a su profesional de inmediato.",
   },
   {
     p: "¿Quién ve mi información?",
-    r: "Solo tu familia vinculada y el equipo clínico de IntegraMente. Se usa para armar y ajustar el plan. Podés leer el detalle en Privacidad y datos.",
+    r: "Solamente su familia vinculada y el equipo clínico de IntegraMente. La información se usa para preparar y ajustar el plan. Puede leer el detalle en Privacidad y datos.",
   },
   {
     p: "¿Puedo cambiar de programa?",
-    r: "Sí. Escribinos desde la app o a info@integramente.com y lo coordinamos.",
+    r: "Sí. Escríbanos desde la aplicación o a info@integramente.com y con gusto lo coordinamos.",
   },
 ];

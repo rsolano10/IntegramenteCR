@@ -6,7 +6,7 @@ import { ModuloIcon } from "../components/ui/ModuloIcon";
 import { useScrolled } from "../lib/useScrollFx";
 import { moduloLabel, moduloTheme, type ResourceModulo } from "../lib/mediaResources";
 import { programas } from "../lib/programas";
-import { contacto, equipo, preguntas, testimonios } from "../lib/landingContenido";
+import { contacto, equipo, preguntas, programasHome, testimonios } from "../lib/landingContenido";
 
 const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -79,7 +79,7 @@ function HeroPhone() {
               </span>
             </div>
             <div className="px-5 pt-2 pb-4">
-              <p className="m-0 text-[11px] text-[#c4dbdb]">Esta semana · 12 – 18 de octubre</p>
+              <p className="m-0 text-[11px] text-[#c4dbdb]">Esta semana · 12 al 18 de octubre</p>
               <p className="m-0 font-serif text-[20px] leading-tight">Hola, Marcela</p>
             </div>
           </div>
@@ -134,7 +134,7 @@ function HeroPhone() {
               );
             })}
             <div className="rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue px-3 py-2.5">
-              <p className="m-0 text-[8.5px] uppercase tracking-[0.1em] font-semibold text-verde-profundo">Mensaje de tu profesional</p>
+              <p className="m-0 text-[8.5px] uppercase tracking-[0.1em] font-semibold text-verde-profundo">Mensaje de su profesional</p>
               <p className="m-0 mt-0.5 text-[11.5px] leading-snug text-tinta">¡Qué buena semana! Esta vez sumamos más música, que tanto le gusta.</p>
             </div>
           </div>
@@ -247,9 +247,9 @@ function Icono({ name, className = "w-7 h-7" }: { name: string; className?: stri
 }
 
 const pasos = [
-  { icono: "charla", t: "Contanos de su día", d: "Unos 10 minutos" },
-  { icono: "elegir", t: "Elegí el programa", d: "Con o sin profesional" },
-  { icono: "profesional", t: "Lo revisamos", d: "Una profesional arma su semana" },
+  { icono: "charla", t: "Cuéntenos de su día", d: "Unos 10 minutos" },
+  { icono: "elegir", t: "Elija su programa", d: "Con o sin acompañamiento profesional" },
+  { icono: "profesional", t: "Lo revisamos", d: "Una profesional prepara su semana" },
   { icono: "semana", t: "¡A disfrutar!", d: "Actividades y recordatorios" },
 ];
 
@@ -263,26 +263,26 @@ const modulosInfo: Record<ResourceModulo, { frase: string; ejemplos: string[] }>
 const ordenModulos: ResourceModulo[] = ["movimiento", "musica", "reminiscencia", "sentidos"];
 
 const loQueRecibis: { icono: string; t: string; d: string; modulo: ResourceModulo | "sos" }[] = [
-  { icono: "sol", t: "Una cosa a la vez", d: "Pasos claros, sin apuro", modulo: "movimiento" },
-  { icono: "campana", t: "Recordatorios", d: "Por WhatsApp y calendario", modulo: "sentidos" },
-  { icono: "check", t: "Registro en segundos", d: "Sin culpas, sin presión", modulo: "reminiscencia" },
+  { icono: "sol", t: "Una cosa a la vez", d: "Pasos claros y sin prisa", modulo: "movimiento" },
+  { icono: "campana", t: "Recordatorios", d: "Por WhatsApp y en su calendario", modulo: "sentidos" },
+  { icono: "check", t: "Registro en segundos", d: "Sin presiones ni culpas", modulo: "reminiscencia" },
   { icono: "ajuste", t: "Se ajusta cada semana", d: "Según cómo les fue", modulo: "musica" },
-  { icono: "corazon", t: "Ayuda a mano", d: "Respuestas y tu profesional", modulo: "movimiento" },
+  { icono: "corazon", t: "Ayuda a mano", d: "Respuestas y su profesional", modulo: "movimiento" },
   { icono: "escudo", t: "Botón SOS", d: "Por si algo pasa", modulo: "sos" },
 ];
 
 const seguridad = [
   {
     t: "Solo lo que es seguro para su movilidad",
-    d: "Las actividades de movimiento se eligen según cómo camina y se sostiene. Si algo no es seguro, no se sugiere.",
+    d: "Las actividades de movimiento se eligen según cómo camina y su equilibrio. Si algo no es seguro, no se recomienda.",
   },
   {
     t: "Si algo cambia, primero la revisión",
-    d: "Ante una caída o un cambio repentino, la app pausa lo físico, muestra qué hacer y avisa al equipo clínico.",
+    d: "Ante una caída o un cambio repentino, la aplicación pausa las actividades físicas, le indica qué hacer y avisa al equipo clínico.",
   },
   {
     t: "Acompaña, no diagnostica",
-    d: "No interpreta pruebas ni cambia tratamientos médicos. Cuando hace falta, te recomendamos una valoración profesional.",
+    d: "No interpreta exámenes ni cambia tratamientos médicos. Cuando hace falta, le recomendamos una valoración profesional.",
   },
 ];
 
@@ -353,10 +353,10 @@ export function Landing() {
             Saber qué hacer hoy, <em className="italic text-verde-profundo">sin improvisar.</em>
           </h1>
           <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-3">
-            Para quienes cuidan a alguien que quieren: un plan semanal de actividades para la memoria, el movimiento y el ánimo — armado
-            por una profesional, adaptado a su día a día.
+            Para quienes cuidan a un ser querido: un plan semanal de actividades para la memoria, el movimiento y el ánimo, preparado
+            por una profesional y adaptado a su día a día.
           </p>
-          <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
+          <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservar lo que nos hace ser quienes somos.</p>
           <div className="flex flex-wrap gap-3">
             <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
             <Button variant="secondary" to="#como-funciona">
@@ -375,13 +375,13 @@ export function Landing() {
           <Reveal>
             <SectionTitle className="text-[28px] sm:text-[32px] lg:text-[38px]">¿Para quién es?</SectionTitle>
             <p className="m-0 mt-3 text-[16.5px] leading-relaxed text-tinta-suave max-w-[28em]">
-              Para personas mayores que quieren mantener su mente activa — haya o no un diagnóstico — y para las familias que las acompañan.
+              Para personas adultas mayores que desean mantener su mente activa, con o sin diagnóstico, y para las familias que las acompañan.
             </p>
           </Reveal>
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { t: "Cuido a un familiar", d: "Mamá, papá, abuela o pareja. Te decimos qué hacer cada día y cómo hacerlo, y vos registrás cómo les fue.", e: "🤝" },
-              { t: "Quiero cuidar mi propia mente", d: "Respondés el cuestionario por vos y recibís actividades pensadas para tus gustos y tu ritmo.", e: "🌱" },
+              { t: "Cuido a un familiar", d: "Mamá, papá, abuelita o su pareja. Le indicamos qué hacer cada día y cómo hacerlo, y usted registra cómo les fue.", e: "🤝" },
+              { t: "Quiero cuidar mi propia mente", d: "Usted mismo responde el cuestionario y recibe actividades pensadas para sus gustos y su ritmo.", e: "🌱" },
             ].map((c, i) => (
               <Reveal key={c.t} delay={i * 100}>
                 <Link
@@ -478,7 +478,7 @@ export function Landing() {
       <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
         <Reveal className="text-center">
           <Eyebrow>Una semana, no una aplicación llena de tareas</Eyebrow>
-          <SectionTitle className="max-w-[14em] mx-auto mb-12 lg:mb-14">Todo lo que necesitás, nada que sobre.</SectionTitle>
+          <SectionTitle className="max-w-[14em] mx-auto mb-12 lg:mb-14">Todo lo que necesita, nada que sobre.</SectionTitle>
         </Reveal>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 max-w-[1040px] mx-auto">
           {loQueRecibis.map((f, i) => {
@@ -511,8 +511,8 @@ export function Landing() {
             <Eyebrow>Seguridad primero</Eyebrow>
             <SectionTitle className="mb-4">Antes de sugerir algo, revisamos que sea seguro.</SectionTitle>
             <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
-              Cada recomendación pasa por un filtro de seguridad basado en lo que nos contaste, y una profesional revisa el plan antes de que
-              llegue a tu casa.
+              Cada recomendación pasa por un filtro de seguridad basado en lo que usted nos cuenta, y una profesional revisa el plan antes de
+              que llegue a su casa.
             </p>
           </Reveal>
           <div className="grid gap-3.5">
@@ -539,31 +539,32 @@ export function Landing() {
       <section id="programas" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
         <Reveal>
           <Eyebrow>Programas</Eyebrow>
-          <SectionTitle className="max-w-[15em] mb-3">Elegís cuánta compañía profesional necesitás.</SectionTitle>
+          <SectionTitle className="max-w-[15em] mb-3">Usted elige cuánto acompañamiento profesional necesita.</SectionTitle>
           <p className="m-0 mb-10 lg:mb-12 text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-            Crear el perfil es gratis. El programa lo elegís al final del cuestionario — con una sugerencia según lo que nos contaste.
+            Crear el perfil es gratis. El programa se elige al final del cuestionario, con una recomendación según sus respuestas.
           </p>
         </Reveal>
         <div className="grid gap-5 md:grid-cols-2 max-w-[980px]">
           {programas.map((p, i) => {
             const destacado = p.id === "orientado";
+            const txt = programasHome[p.id];
             return (
               <Reveal key={p.id} delay={i * 100}>
                 <article className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col gap-5 border-[1.5px] ${destacado ? "border-verde-serenidad bg-verde-tenue" : "border-borde bg-white"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{p.nombre}</h3>
-                      <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{p.lema}</p>
+                      <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{txt.lema}</p>
                     </div>
                     {destacado && <span className="shrink-0 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">Más acompañamiento</span>}
                   </div>
-                  <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{p.descripcion}</p>
+                  <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{txt.descripcion}</p>
                   <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
                     <span className="font-serif text-[40px] leading-none">{p.precio}</span>
                     <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
                   </p>
                   <ul className="list-none m-0 p-0 grid gap-2.5">
-                    {p.incluye.map((x) => (
+                    {txt.incluye.map((x) => (
                       <li key={x} className="flex gap-2.5 text-[15.5px] text-tinta">
                         <span aria-hidden="true" className="text-verde-serenidad font-bold">✓</span>
                         {x}
@@ -579,9 +580,9 @@ export function Landing() {
           })}
         </div>
         <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
-          ¿Ya sos paciente de la clínica IntegraMente? Tu cuenta la crea el equipo —{" "}
+          ¿Ya es paciente de la clínica IntegraMente? Su cuenta la crea nuestro equipo:{" "}
           <Link to="/ingresar?mode=login" className="text-verde-profundo font-semibold">
-            entrá con el correo que registraste en consulta
+            ingrese con el correo que registró en consulta
           </Link>
           .
         </p>
@@ -592,10 +593,10 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-center">
           <Reveal>
             <Eyebrow>Quiénes estamos detrás</Eyebrow>
-            <SectionTitle className="mb-4">Un equipo clínico, no solo una app.</SectionTitle>
+            <SectionTitle className="mb-4">Un equipo clínico, no solo una aplicación.</SectionTitle>
             <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
               IntegraMente en Casa es parte del programa integral de estimulación cognitiva y acompañamiento emocional de IntegraMente. Cada
-              plan lo revisa una profesional del equipo.
+              plan lo revisa una profesional de nuestro equipo.
             </p>
           </Reveal>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -656,7 +657,7 @@ export function Landing() {
         </Reveal>
         <Faq />
         <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
-          ¿Otra duda? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
+          ¿Tiene otra consulta? Escríbanos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
           <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold">
             WhatsApp
           </a>
@@ -671,7 +672,7 @@ export function Landing() {
           <div>
             <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 mb-3 text-white">Cuidar la mente es cuidar la vida.</h2>
             <p className="m-0 text-[17px] lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
-              Empezá con el cuestionario: unos 10 minutos, se guarda solo y podés seguir cuando quieras.
+              Empiece con el cuestionario: toma unos 10 minutos, se guarda solo y puede continuar cuando guste.
             </p>
           </div>
           <Link
@@ -725,7 +726,7 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto px-5 pb-8 sm:px-8 lg:px-12 lg:pb-11">
           <p className="m-0 text-[13.5px] leading-relaxed text-[#a9b9bb] max-w-[60em]">
             IntegraMente en Casa es un servicio de educación, organización y acompañamiento. No sustituye la consulta médica ni la valoración
-            neuropsicológica. Ante una urgencia, llamá al 9-1-1.
+            neuropsicológica. Ante una emergencia, llame al 9-1-1.
           </p>
         </div>
       </footer>
@@ -736,7 +737,7 @@ export function Landing() {
           href={contacto.instagram}
           target="_blank"
           rel="noreferrer"
-          aria-label="Seguinos en Instagram"
+          aria-label="Síganos en Instagram"
           title="Instagram"
           className="w-14 h-14 rounded-full text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
           style={{ background: "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%)" }}
@@ -751,7 +752,7 @@ export function Landing() {
           href={waUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label="Escribinos por WhatsApp"
+          aria-label="Escríbanos por WhatsApp"
           title="WhatsApp"
           className="w-14 h-14 rounded-full bg-[#25d366] text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
         >
