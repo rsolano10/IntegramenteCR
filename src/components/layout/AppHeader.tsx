@@ -8,6 +8,7 @@ import { AccountMenu } from "../ui/AccountMenu";
 import { Modal } from "../ui/Modal";
 import { MiPerfilModal } from "../ui/MiPerfilModal";
 import { ContactanosModal } from "../ui/ContactanosModal";
+import { CalendarModal } from "../ui/CalendarSyncCard";
 
 const crumbs: [string, string][] = [
   ["/app/login", "Ingreso"],
@@ -45,7 +46,7 @@ function crumbFor(pathname: string): string {
   return hit ? hit[1] : "";
 }
 
-type OpenModal = "mi-perfil" | "contacto" | "auditoria" | null;
+type OpenModal = "mi-perfil" | "contacto" | "calendario" | "auditoria" | null;
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -143,6 +144,9 @@ export function AppHeader() {
             ...(myPatient
               ? [{ label: role === "paciente" ? "Mi perfil" : `Perfil de ${myPatient.nombre.split(" ")[0]}`, onClick: () => navigate("/app/perfil/resumen") }]
               : []),
+            ...(myPatient && myPatient.plan_status !== "pendiente"
+              ? [{ label: "Calendario en tu teléfono", onClick: () => setModal("calendario") }]
+              : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
@@ -185,6 +189,9 @@ export function AppHeader() {
       )}
 
       {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
+      {modal === "calendario" && myPatient && session.status === "authed" && (
+        <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />
+      )}
 
       {modal === "auditoria" && (
         <Modal onClose={() => setModal(null)}>

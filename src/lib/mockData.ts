@@ -118,6 +118,7 @@ export interface PlanTask {
   materiales?: string | null;
   adaptacion?: string | null;
   ciencia?: { gancho: string; evidencia: string; cierre: string } | null;
+  modulo?: "sentidos" | "movimiento" | "musica" | "reminiscencia" | null;
 }
 
 export interface PlanDay {

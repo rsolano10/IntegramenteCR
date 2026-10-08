@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
@@ -12,6 +12,9 @@ import { Button } from "../ui/Button";
 import { ProductTour } from "../ui/ProductTour";
 import { familiarTourSteps } from "../../lib/tourSteps";
 import { useProductTour } from "../../lib/useProductTour";
+import { useCurrentPlanMeta, usePlan } from "../../lib/usePlan";
+import { NuevaSemanaModal } from "../ui/NuevaSemanaModal";
+import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
 
 const pasosRevision = [
   { titulo: "Cuestionario recibido", detalle: "Ya tenemos toda la información que nos compartiste.", estado: "hecho" },
@@ -106,6 +109,9 @@ export function FamiliarShell() {
   // The tour walks through Hoy/Plan/Semana — none of which exist yet while
   // the program is still being prepared, so it waits for the real dashboard.
   const tour = useProductTour(!!myPatient && !pendiente);
+  const { data: planMeta } = useCurrentPlanMeta(!pendiente ? myPatient?.id : undefined);
+  const { data: planDias } = usePlan(!pendiente ? myPatient?.id : undefined);
+  const [semanaCerrada, setSemanaCerrada] = useState<string | null>(null);
 
   // PerfilResumen / "editar módulo" still only read/write the local
   // onboarding2 copy — this is what makes them show the account's real
@@ -156,6 +162,28 @@ export function FamiliarShell() {
         // very first dashboard visit.
         if (tour.pending) return <ProductTour steps={familiarTourSteps} onFinish={tour.dismiss} />;
         if (!pendiente && myPatient?.welcome_message_pending) return <WelcomeMessageModal patientId={myPatient.id} />;
+        // One full-screen thing at a time: tour → welcome message → new week.
+        const userId = session.status === "authed" ? session.session.user.id : null;
+        if (
+          myPatient &&
+          userId &&
+          planMeta &&
+          planDias &&
+          planDias.some((d) => d.tasks.length > 0) &&
+          semanaCerrada !== planMeta.id &&
+          semanaNuevaPendiente(userId, planMeta.id)
+        ) {
+          return (
+            <NuevaSemanaModal
+              userId={userId}
+              planId={planMeta.id}
+              patientId={myPatient.id}
+              patientNombre={myPatient.nombre}
+              plan={planDias}
+              onClose={() => setSemanaCerrada(planMeta.id)}
+            />
+          );
+        }
         return null;
       })()}
     </div>

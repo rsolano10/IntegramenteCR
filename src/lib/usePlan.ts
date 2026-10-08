@@ -36,6 +36,7 @@ interface PlanTaskRow {
 }
 
 interface MediaResourceJoin {
+  modulo?: "sentidos" | "movimiento" | "musica" | "reminiscencia" | null;
   media_kind: "video" | "imagen" | "audio" | "documento" | "enlace" | null;
   storage_path: string | null;
   external_url: string | null;
@@ -86,6 +87,7 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     materiales: resource?.materiales ?? null,
     adaptacion: resource?.adaptacion ?? null,
     ciencia: resource?.ciencia ?? null,
+    modulo: resource?.modulo ?? null,
   };
 }
 
@@ -122,7 +124,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, modulo)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });

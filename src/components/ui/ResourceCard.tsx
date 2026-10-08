@@ -3,26 +3,14 @@ import { ClockIcon, MediaKindIcon, RepeatIcon } from "./Icons";
 import { ModuloIcon } from "./ModuloIcon";
 import {
   moduloLabel,
+  moduloTheme,
   nivelCognitivoShort,
   nivelMotorClass,
   nivelMotorLabel,
   resourceUrl,
   tipoLabel,
   type MediaResource,
-  type ResourceModulo,
 } from "../../lib/mediaResources";
-
-// One mood per módulo so the grid reads by color before it reads by text —
-// sentidos (calma/teal), movimiento (energía/ámbar), música (calidez/
-// terracota), reminiscencia (nostalgia/sepia, como una foto antigua). Reuses
-// hues already in the brand palette (verde-serenidad, mostaza-vital, los
-// semáforo) instead of inventing new ones — just stretched into a gradient.
-const moduloTheme: Record<ResourceModulo, { from: string; to: string; chip: string }> = {
-  sentidos: { from: "#89c0c6", to: "#3f6a70", chip: "bg-verde-profundo/85" },
-  movimiento: { from: "#fadfa9", to: "#e8b857", chip: "bg-[#8a6a2a]/80" },
-  musica: { from: "#e8b5a1", to: "#c0664f", chip: "bg-[#8c3f2a]/80" },
-  reminiscencia: { from: "#ece3c4", to: "#b7a06d", chip: "bg-[#6b5726]/80" },
-};
 
 const tagClass = "inline-flex items-center px-2 py-0.5 rounded-full bg-beige-serenidad text-tinta text-[11px] font-semibold";
 
