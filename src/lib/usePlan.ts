@@ -259,6 +259,10 @@ export function useSubmitWeekReview(patientId: string | undefined) {
       p_preocupacion: preocupacion,
     });
     if (error) throw error;
+    // The week just closed from the family's side — have the clinic's AI
+    // case overview (seguimiento-ia) ready before they open the patient.
+    // Fire-and-forget: the family never sees or waits on it.
+    if (patientId) supabase.functions.invoke("seguimiento-ia", { body: { patientId } }).catch(() => {});
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["plan-meta", patientId] }),
       queryClient.invalidateQueries({ queryKey: ["plan-meta-by-id", planId] }),

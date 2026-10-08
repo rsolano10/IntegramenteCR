@@ -10,7 +10,8 @@ import { questions, type Answers } from "../../lib/onboardingSchema";
 import { rolRespondente } from "../../lib/respondentVoice";
 import { planTiers } from "../../lib/mockData";
 import { EvaluacionTab } from "../../components/profesional/paciente/EvaluacionTab";
-import { SemanaTab, type PlanSummary } from "../../components/profesional/paciente/SemanaTab";
+import { type PlanSummary } from "../../components/profesional/paciente/SemanaTab";
+import { SeguimientoTab } from "../../components/profesional/paciente/SeguimientoTab";
 import { PlanificadorTab } from "../../components/profesional/paciente/PlanificadorTab";
 import { MensajesTab } from "../../components/profesional/paciente/MensajesTab";
 import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
@@ -101,7 +102,7 @@ export function Paciente() {
         { id: "cuentas", label: "Cuentas" },
       ]
     : [
-        { id: "semana", label: "Semana", dot: patient.needs_review },
+        { id: "semana", label: "Seguimiento", dot: patient.needs_review },
         { id: "planificar", label: "Planificar", dot: patient.needs_assignment },
         { id: "mensajes", label: "Mensajes" },
         { id: "evaluacion", label: "Perfil inicial" },
@@ -241,7 +242,7 @@ export function Paciente() {
         ))}
 
       {tab === "semana" && (
-        <SemanaTab patientId={patient.id} patientNombre={patient.nombre} plans={plans ?? []} loadingPlans={loadingPlans} onPlanNext={() => setTab("planificar")} />
+        <SeguimientoTab patientId={patient.id} patientNombre={patient.nombre} plans={plans ?? []} loadingPlans={loadingPlans} onPlanNext={() => setTab("planificar")} />
       )}
 
       {tab === "planificar" &&
