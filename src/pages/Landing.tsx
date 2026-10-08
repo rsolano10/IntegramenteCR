@@ -242,13 +242,6 @@ function Faq() {
 
 export function Landing() {
   const scrolled = useScrolled(24);
-  const [menu, setMenu] = useState(false);
-  const nav = [
-    { href: "#como-funciona", t: "Cómo funciona" },
-    { href: "#programas", t: "Programas" },
-    { href: "#equipo", t: "Equipo" },
-    { href: "#preguntas", t: "Preguntas" },
-  ];
   const waUrl = `https://wa.me/${contacto.whatsapp}?text=${encodeURIComponent("Hola, quiero información sobre IntegraMente en Casa.")}`;
 
   return (
@@ -256,25 +249,18 @@ export function Landing() {
       {/* ─── Header ─── */}
       <header
         className={`sticky top-0 z-30 transition-[background-color,box-shadow,border-color] duration-300 ${
-          scrolled || menu ? "bg-fondo-papel/90 backdrop-blur-md border-b border-borde shadow-[0_8px_24px_-20px_rgba(31,51,56,.5)]" : "border-b border-transparent"
+          scrolled ? "bg-fondo-papel/90 backdrop-blur-md border-b border-borde shadow-[0_8px_24px_-20px_rgba(31,51,56,.5)]" : "border-b border-transparent"
         }`}
       >
         <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-8 lg:px-12 lg:py-4.5 max-w-[1280px] mx-auto">
-          <a href="#top" className="flex items-baseline gap-2.5 no-underline shrink-0" onClick={() => setMenu(false)}>
+          <a href="#top" className="flex items-baseline gap-2.5 no-underline shrink-0">
             <span className="font-serif text-xl sm:text-2xl lg:text-[27px] text-tinta">
               Integra<em className="italic text-verde-profundo">Mente</em>
             </span>
             <span className="text-[10px] lg:text-xs tracking-[0.16em] uppercase text-tinta-suave pb-0.5 whitespace-nowrap">en Casa</span>
           </a>
-          <nav className="hidden lg:flex items-center gap-7 text-[15.5px]">
-            {nav.map((n) => (
-              <a key={n.href} href={n.href} className="text-tinta-suave hover:text-verde-profundo no-underline">
-                {n.t}
-              </a>
-            ))}
-          </nav>
           <div className="flex items-center gap-2">
-            <Link to="/ingresar?mode=login" className="hidden sm:inline-flex items-center min-h-10 px-4 rounded-full text-[15px] font-semibold text-tinta no-underline hover:bg-white">
+            <Link to="/ingresar?mode=login" className="inline-flex items-center min-h-10 px-3 sm:px-4 rounded-full text-[15px] font-semibold text-tinta no-underline hover:bg-white whitespace-nowrap">
               Iniciar sesión
             </Link>
             <span className="hidden sm:inline-flex">
@@ -282,40 +268,8 @@ export function Landing() {
                 Crear perfil gratis
               </Button>
             </span>
-            <button
-              type="button"
-              onClick={() => setMenu((m) => !m)}
-              aria-expanded={menu}
-              aria-label={menu ? "Cerrar menú" : "Abrir menú"}
-              className="lg:hidden w-11 h-11 rounded-full bg-white border border-borde flex items-center justify-center cursor-pointer"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                {menu ? (
-                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                ) : (
-                  <path d="M3.5 6h13M3.5 10h13M3.5 14h13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                )}
-              </svg>
-            </button>
           </div>
         </div>
-        {menu && (
-          <div className="lg:hidden border-t border-borde px-5 sm:px-8 pb-6 pt-3 grid gap-1">
-            {nav.map((n) => (
-              <a key={n.href} href={n.href} onClick={() => setMenu(false)} className="py-3 text-[18px] font-serif text-tinta no-underline border-b border-borde-suave">
-                {n.t}
-              </a>
-            ))}
-            <div className="grid gap-2.5 mt-4">
-              <Button to="/ingresar?mode=register" fullWidth>
-                Crear mi perfil gratuito
-              </Button>
-              <Button variant="secondary" to="/ingresar?mode=login" fullWidth>
-                Iniciar sesión
-              </Button>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* ─── Hero ─── */}
