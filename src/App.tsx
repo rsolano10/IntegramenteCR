@@ -15,7 +15,6 @@ import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
 import { CompletarCuenta } from "./pages/CompletarCuenta";
 import { ConfirmarCorreo } from "./pages/ConfirmarCorreo";
-import { PlanCheckout } from "./pages/PlanCheckout";
 import { LegalPage } from "./pages/LegalPage";
 import { Login } from "./pages/Login";
 import { CambiarPassword } from "./pages/CambiarPassword";
@@ -324,7 +323,9 @@ export function App() {
       <Route path="/restablecer-contrasena" element={<ResetPassword />} />
       <Route path="/completar-cuenta" element={<CompletarCuenta />} />
       <Route path="/confirmar-correo" element={<ConfirmarCorreo />} />
-      <Route path="/planes/:plan" element={<PlanCheckout />} />
+      {/* La vieja pantalla de "checkout" por plan era un registro falso —
+          los programas se eligen dentro de la app, al final del cuestionario. */}
+      <Route path="/planes/*" element={<Navigate to="/ingresar?mode=register" replace />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
       <Route path="/app/*" element={<AppLayout />} />
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,149 +1,180 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { PlanRow } from "../components/ui/PlanRow";
 import { Reveal } from "../components/ui/Reveal";
 import { Button } from "../components/ui/Button";
-import { LoginSignupCard } from "../components/auth/LoginSignupCard";
-import { clamp, easeOut, useScrolled, useScrollProgress, useTypewriterLoop } from "../lib/useScrollFx";
+import { ModuloIcon } from "../components/ui/ModuloIcon";
+import { useScrolled } from "../lib/useScrollFx";
+import { moduloLabel, moduloTheme, type ResourceModulo } from "../lib/mediaResources";
+import { programas } from "../lib/programas";
+import { contacto, equipo, preguntas, testimonios } from "../lib/landingContenido";
 
-const weekPreview: { dia: string; titulo: string; estado: "realizado" | "parcial" }[] = [
-  { dia: "Lunes", titulo: "Movilidad sentado · 12 min", estado: "realizado" },
-  { dia: "Martes", titulo: "Organizar cinco fotografías y conversar", estado: "parcial" },
-  { dia: "Miércoles", titulo: "Preparar juntos una merienda sencilla", estado: "realizado" },
-  { dia: "Jueves", titulo: "Repetir movilidad sentado · 12 min", estado: "parcial" },
-  { dia: "Viernes", titulo: "Paseo breve o actividad elegida", estado: "realizado" },
+const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ─── Hero: la pantalla real "Mi semana", animada ───────────────────────
+// El mismo diseño de tarjetas por módulo que ve la familia en la app; las
+// actividades se van marcando como hechas en bucle para contar "así de
+// simple es una semana" sin una sola palabra. Sin animación si el sistema
+// pide reducir movimiento.
+const semanaDemo: { dia: string; n: number; hora: string; titulo: string; modulo: ResourceModulo }[] = [
+  { dia: "Lun", n: 12, hora: "9:00", titulo: "Caminata con música", modulo: "movimiento" },
+  { dia: "Mar", n: 13, hora: "10:30", titulo: "Álbum de recuerdos", modulo: "reminiscencia" },
+  { dia: "Mié", n: 14, hora: "4:00", titulo: "Boleros de siempre", modulo: "musica" },
+  { dia: "Jue", n: 15, hora: "9:30", titulo: "Texturas del jardín", modulo: "sentidos" },
 ];
 
-// The signature scroll piece: a phone mockup that rotates up out of a 3D
-// perspective and settles into place as it enters view, then the same real
-// weekly-plan rows cascade in on its "Plan" screen — a reversible analogue
-// of "the laptop opens as you scroll," now framed as an actual app preview
-// instead of a flat card.
-function PhoneWeekPreview() {
-  const { ref, progress } = useScrollProgress<HTMLDivElement>();
-
-  // Wider, slower window than a plain 0→1: starts a little before the
-  // phone is even on screen and only finishes a little past the viewport's
-  // center, instead of settling well before it gets there.
-  const rise = easeOut(clamp((progress + 0.15) / 1.3));
-  const rotX = 26 * (1 - rise);
-  const rotY = -16 * (1 - rise);
-  const scale = 0.88 + rise * 0.12;
-  const lift = 40 * (1 - rise);
+function HeroPhone() {
+  const [hechas, setHechas] = useState(prefersReducedMotion() ? 2 : 0);
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const id = window.setInterval(() => setHechas((h) => (h >= semanaDemo.length ? 0 : h + 1)), 1400);
+    return () => window.clearInterval(id);
+  }, []);
 
   return (
-    <div ref={ref} className="flex justify-center" style={{ perspective: "1500px" }}>
-      <div
-        style={{
-          transform: `translate3d(0, ${lift.toFixed(1)}px, 0) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
-          transformOrigin: "50% 100%",
-          filter: `drop-shadow(0 30px 46px rgba(31, 51, 56, ${(0.08 + rise * 0.2).toFixed(3)}))`,
-        }}
-      >
-        <div className="relative w-[280px] sm:w-[310px] rounded-[42px] bg-tinta p-2.5">
-          {/* Side buttons — mute switch, volume rocker, power button */}
-          <span className="absolute -left-[3px] top-[76px] w-[3px] h-[22px] rounded-l-full bg-[#5a7278] shadow-[-1px_0_2px_rgba(0,0,0,.35)]" />
-          <span className="absolute -left-[3px] top-[108px] w-[3px] h-[44px] rounded-l-full bg-[#5a7278] shadow-[-1px_0_2px_rgba(0,0,0,.35)]" />
-          <span className="absolute -right-[3px] top-[124px] w-[3px] h-[62px] rounded-r-full bg-[#5a7278] shadow-[1px_0_2px_rgba(0,0,0,.35)]" />
-
-          <div className="relative w-full rounded-[32px] overflow-hidden bg-white">
-            {/* Dynamic island */}
-            <div className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[84px] h-[22px] rounded-full bg-tinta z-10" />
-
-            <div className="bg-verde-profundo text-white px-5 pt-9 pb-3.5">
-              <p className="m-0 mb-0.5 text-[11px] text-[#c4dbdb]">Miércoles 12 de agosto</p>
-              <h3 className="font-serif font-normal text-[19px] m-0 text-white">Hola, Marcela</h3>
+    <div className="relative mx-auto w-[300px] sm:w-[330px]" aria-hidden="true">
+      <div aria-hidden="true" className="absolute -inset-10 rounded-full bg-beige-serenidad/70 blur-2xl" />
+      <div className="relative rounded-[44px] bg-tinta p-2.5 shadow-[0_40px_80px_-40px_rgba(31,51,56,0.6)]">
+        <div className="rounded-[36px] overflow-hidden bg-fondo-papel">
+          <div className="bg-verde-profundo text-white px-5 pt-9 pb-4">
+            <div className="mx-auto mb-3 w-20 h-5 rounded-full bg-tinta -mt-6" />
+            <p className="m-0 text-[11px] text-[#c4dbdb]">Esta semana · 12 – 18 de octubre</p>
+            <p className="m-0 font-serif text-[20px]">Hola, Marcela</p>
+          </div>
+          <div className="px-3.5 py-3.5 grid gap-2.5">
+            <div className="flex items-center justify-between bg-white border border-borde rounded-2xl px-3.5 py-2.5">
+              <span className="font-serif text-[15px] text-tinta">La semana de doña Rosa</span>
+              <span className="text-[12px] text-tinta-suave">
+                <strong className="font-serif text-[17px] text-tinta">{hechas}</strong>/{semanaDemo.length} hechas
+              </span>
             </div>
-            <div className="grid grid-cols-4 border-b border-borde bg-white">
-              {["Hoy", "Plan", "Actividades", "Dudas"].map((tab) => (
-                <span
-                  key={tab}
-                  className={`min-h-9 flex items-center justify-center text-center leading-tight px-0.5 text-[9px] font-semibold ${
-                    tab === "Plan" ? "text-tinta border-b-2 border-verde-profundo" : "text-tinta-tenue"
-                  }`}
-                >
-                  {tab}
-                </span>
-              ))}
-            </div>
-            <div className="bg-fondo-papel px-3.5 pt-3.5 pb-4">
-              <div className="flex items-baseline justify-between mb-2.5">
-                <span className="font-serif text-[15px]">Semana del 10 al 16</span>
-                <span className="text-[8px] tracking-[0.1em] uppercase text-tinta-tenue">Participación</span>
-              </div>
-              <div className="grid gap-1.5">
-                {weekPreview.map((row, i) => {
-                  const t = easeOut(clamp((progress - (0.4 + i * 0.095)) / 0.18));
-                  return (
-                    <div key={row.dia} style={{ opacity: t, transform: `translateX(${(1 - t) * -18}px)` }}>
-                      <PlanRow dia={row.dia} titulo={row.titulo} estado={row.estado} dense />
+            {semanaDemo.map((a, i) => {
+              const hecha = i < hechas;
+              const t = moduloTheme[a.modulo];
+              return (
+                <div key={a.titulo} className="grid grid-cols-[38px_1fr] gap-2 items-stretch">
+                  <div className={`rounded-xl text-center py-1.5 ${i === hechas ? "bg-verde-profundo text-white" : "bg-white border border-borde text-tinta"}`}>
+                    <span className={`block text-[9px] uppercase font-semibold ${i === hechas ? "text-[#c4dbdb]" : "text-tinta-tenue"}`}>{a.dia}</span>
+                    <span className="block font-serif text-[16px] leading-tight">{a.n}</span>
+                  </div>
+                  <div className="flex rounded-2xl bg-white border border-borde overflow-hidden">
+                    <div
+                      className="relative w-[52px] shrink-0 flex flex-col items-center justify-center text-white transition-colors duration-500"
+                      style={{ backgroundImage: hecha ? "none" : `linear-gradient(160deg, ${t.from}, ${t.to})`, backgroundColor: hecha ? "#5f8b5f" : undefined }}
+                    >
+                      {hecha ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M5 12.5l4.2 4.2L19 7" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        <>
+                          <ModuloIcon modulo={a.modulo} className="w-3.5 h-3.5" />
+                          <span className="font-serif text-[13px] mt-0.5">{a.hora}</span>
+                        </>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-              <div className="mt-2.5 p-3 rounded-xl bg-mostaza-vital" style={{ opacity: easeOut(clamp((progress - 0.85) / 0.15)) }}>
-                <p className="m-0 text-[11px] leading-relaxed text-semaforo-amarillo-texto">
-                  <strong>Estrategia:</strong> una instrucción por vez.
-                </p>
-              </div>
-            </div>
-            {/* Home indicator */}
-            <div className="flex justify-center bg-fondo-papel pt-1 pb-2.5">
-              <span className="w-[86px] h-[4px] rounded-full bg-tinta/25" />
-            </div>
+                    <div className="px-2.5 py-2 min-w-0">
+                      <p className="m-0 text-[9px] font-semibold uppercase tracking-[0.08em]" style={{ color: t.ink }}>
+                        {moduloLabel[a.modulo]}
+                      </p>
+                      <p className="m-0 font-serif text-[14px] leading-snug text-tinta truncate">{a.titulo}</p>
+                      {hecha && <span className="inline-block mt-0.5 text-[9.5px] font-semibold rounded-full px-1.5 bg-[#e3efe3] text-semaforo-verde-texto">Hecha</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-3 border-t border-borde bg-white text-[10px] font-semibold text-center">
+            {["Hoy", "Mi semana", "Ayuda"].map((t) => (
+              <span key={t} className={`py-2.5 ${t === "Mi semana" ? "text-verde-profundo" : "text-tinta-tenue"}`}>
+                {t}
+              </span>
+            ))}
           </div>
         </div>
+      </div>
+      {/* Notificación flotante: el recordatorio que llega al teléfono */}
+      <div className="absolute -right-3 sm:-right-16 -top-5 w-[200px] rounded-2xl bg-white border border-borde shadow-elevada px-3.5 py-3">
+        <p className="m-0 text-[10px] font-semibold text-[#2f8f5b] uppercase tracking-wide">Recordatorio · 9:00</p>
+        <p className="m-0 mt-0.5 text-[12.5px] leading-snug text-tinta">Hoy toca “Caminata con música” con doña Rosa 🎶</p>
       </div>
     </div>
   );
 }
 
-// Types and deletes the heading in a perpetual loop, at a slow steady pace,
-// regardless of scroll position or how long it's been on screen. The full
-// text is rendered invisibly underneath to reserve its final box size, so
-// the endless grow/shrink of the animated copy on top never reflows the
-// paragraph below it. The accessible name stays static via aria-label.
-function TypedHeading({ text, className }: { text: string; className: string }) {
-  const display = useTypewriterLoop(text);
+// ─── Piezas reutilizables ───────────────────────────────────────────────
+function Eyebrow({ children }: { children: ReactNode }) {
+  return <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-suave font-semibold">{children}</p>;
+}
+
+function SectionTitle({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <h2 aria-label={text} className={`relative ${className}`}>
-      <span className="invisible" aria-hidden="true">
-        {text}
-      </span>
-      <span className="absolute inset-0" aria-hidden="true">
-        {display}
-        <span className="inline-block w-[3px] h-[0.85em] -mb-[0.05em] ml-1 align-middle bg-verde-serenidad im-caret" />
-      </span>
+    <h2 className={`font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 ${className}`} style={{ textWrap: "balance" }}>
+      {children}
     </h2>
   );
 }
 
-const seguridadItems = [
-  { color: "bg-verde-serenidad", t: "Verde · seguimiento en casa", d: "Situación estable y apoyo disponible. Se habilita el plan autoguiado completo." },
-  { color: "bg-semaforo-amarillo", t: "Amarillo · con acompañamiento", d: "Mayor dependencia o dudas de seguridad. Se limitan ciertas actividades y se ofrece revisión profesional." },
-  { color: "bg-semaforo-rojo", t: "Rojo · atención ahora", d: "Cambio agudo, caída o riesgo. Se detienen las recomendaciones y se muestra la ruta de atención de tu país." },
+const pasos = [
+  { t: "Nos contás cómo está", d: "Un cuestionario de unos 10 minutos sobre su día a día, sus gustos y lo que le cuesta. Se guarda solo, sin términos clínicos." },
+  { t: "Elegís el programa", d: "Autoguiado u Orientado, según cuánto acompañamiento profesional querés. Ves el precio antes de decidir." },
+  { t: "Una profesional lo revisa", d: "El equipo clínico revisa el perfil y arma la primera semana con actividades seguras para su movilidad y pensadas para sus intereses." },
+  { t: "La semana llega a tu celular", d: "Actividades paso a paso, recordatorios por WhatsApp y calendario, y al final de la semana tres preguntas para ajustar la siguiente." },
 ];
 
-// Same technique as the plan-preview card's cascading rows: one continuous
-// scroll-linked progress value, sliced into a threshold per item, so each
-// semáforo state appears on its own as you scroll — not all at once.
-function SeguridadRows() {
-  const { ref, progress } = useScrollProgress<HTMLDivElement>();
+const modulosInfo: Record<ResourceModulo, { frase: string; ejemplos: string[] }> = {
+  movimiento: { frase: "Mover el cuerpo con seguridad, a su ritmo.", ejemplos: ["Caminata con música", "Movilidad sentado"] },
+  musica: { frase: "Canciones que despiertan recuerdos y ánimo.", ejemplos: ["Boleros de siempre", "Ritmo con las manos"] },
+  reminiscencia: { frase: "Conversar sobre su historia, fotos y lugares.", ejemplos: ["Álbum de recuerdos", "Recetas de la familia"] },
+  sentidos: { frase: "Texturas, aromas y sabores que conectan.", ejemplos: ["Texturas del jardín", "Aromas de la cocina"] },
+};
+
+const ordenModulos: ResourceModulo[] = ["movimiento", "musica", "reminiscencia", "sentidos"];
+
+const loQueRecibis = [
+  { icono: "☀", t: "Hoy, una cosa a la vez", d: "La actividad del día con su “por qué”, los materiales y un modo paso a paso a pantalla completa." },
+  { icono: "⏰", t: "Recordatorios", d: "Por WhatsApp y en el calendario de tu teléfono, a la hora de cada actividad." },
+  { icono: "✓", t: "Registro en segundos", d: "Hecha, en parte o no se hizo — sin culpas. Un día difícil nunca se marca como un fracaso." },
+  { icono: "✦", t: "Ajustes cada semana", d: "Tres preguntas al cerrar la semana y el plan siguiente se adapta a cómo les fue." },
+  { icono: "💬", t: "Ayuda cuando la necesitás", d: "Respuestas rápidas a dudas del cuidado y, en el programa Orientado, mensajes con tu profesional." },
+  { icono: "SOS", t: "Botón SOS", d: "Si algo pasa — una caída, un cambio repentino — te orienta paso a paso y te permite avisar a tu profesional." },
+];
+
+const seguridad = [
+  {
+    t: "Solo lo que es seguro para su movilidad",
+    d: "Las actividades de movimiento se eligen según cómo camina y se sostiene. Si algo no es seguro, no se sugiere.",
+  },
+  {
+    t: "Si algo cambia, primero la revisión",
+    d: "Ante una caída o un cambio repentino, la app pausa lo físico, muestra qué hacer y avisa al equipo clínico.",
+  },
+  {
+    t: "Acompaña, no diagnostica",
+    d: "No interpreta pruebas ni cambia tratamientos médicos. Cuando hace falta, te recomendamos una valoración profesional.",
+  },
+];
+
+function Faq() {
+  const [abierta, setAbierta] = useState<number | null>(0);
   return (
-    <div ref={ref} className="grid gap-3 lg:gap-4">
-      {seguridadItems.map((s, i) => {
-        const t = easeOut(clamp((progress - (0.05 + i * 0.26)) / 0.22));
+    <div className="grid gap-2.5">
+      {preguntas.map((q, i) => {
+        const open = abierta === i;
         return (
-          <div
-            key={s.t}
-            style={{ opacity: t, transform: `translateY(${(1 - t) * 26}px)` }}
-            className="grid grid-cols-[14px_1fr] gap-4 lg:gap-5 items-start bg-white border border-borde rounded-2xl px-5 py-5 lg:px-7 lg:py-6.5"
-          >
-            <span className={`w-3.5 h-3.5 rounded-full mt-2 im-pulse ${s.color}`} />
-            <div>
-              <h3 className="m-0 mb-2 text-[17px] lg:text-[19px] font-bold">{s.t}</h3>
-              <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">{s.d}</p>
-            </div>
+          <div key={q.p} className={`rounded-2xl border bg-white transition-colors ${open ? "border-verde-serenidad" : "border-borde"}`}>
+            <button
+              type="button"
+              aria-expanded={open}
+              onClick={() => setAbierta(open ? null : i)}
+              className="w-full flex items-center justify-between gap-4 text-left px-5 sm:px-6 py-4.5 bg-transparent border-none cursor-pointer font-sans"
+            >
+              <span className="text-[16.5px] sm:text-[17.5px] font-semibold text-tinta">{q.p}</span>
+              <span aria-hidden="true" className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[18px] transition-transform ${open ? "rotate-45 bg-verde-serenidad text-white" : "bg-campo text-tinta-suave"}`}>
+                +
+              </span>
+            </button>
+            {open && <p className="m-0 px-5 sm:px-6 pb-5 -mt-1 text-[16px] leading-relaxed text-tinta-suave max-w-[60em]">{q.r}</p>}
           </div>
         );
       })}
@@ -152,276 +183,470 @@ function SeguridadRows() {
 }
 
 export function Landing() {
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const scrolled = useScrolled(24);
-
-  // Desktop: scroll to the inline card, pre-set to the register tab. Mobile
-  // doesn't render this card at all — its own CTA buttons link to /ingresar
-  // instead (see the hero section below).
-  function goToRegister() {
-    setAuthMode("register");
-    document.getElementById("acceso")?.scrollIntoView({ behavior: "smooth" });
-  }
+  const [menu, setMenu] = useState(false);
+  const nav = [
+    { href: "#como-funciona", t: "Cómo funciona" },
+    { href: "#programas", t: "Programas" },
+    { href: "#equipo", t: "Equipo" },
+    { href: "#preguntas", t: "Preguntas" },
+  ];
+  const waUrl = `https://wa.me/${contacto.whatsapp}?text=${encodeURIComponent("Hola, quiero información sobre IntegraMente en Casa.")}`;
 
   return (
     <div className="font-sans text-tinta bg-fondo-papel min-h-full">
+      {/* ─── Header ─── */}
       <header
         className={`sticky top-0 z-30 transition-[background-color,box-shadow,border-color] duration-300 ${
-          scrolled ? "bg-fondo-papel/85 backdrop-blur-md border-b border-borde shadow-[0_8px_24px_-20px_rgba(31,51,56,.5)]" : "border-b border-transparent"
+          scrolled || menu ? "bg-fondo-papel/90 backdrop-blur-md border-b border-borde shadow-[0_8px_24px_-20px_rgba(31,51,56,.5)]" : "border-b border-transparent"
         }`}
       >
-        <div className="relative flex items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:gap-8 lg:px-12 lg:py-5.5 max-w-[1280px] mx-auto">
-          <div className="flex items-baseline gap-2.5">
+        <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-8 lg:px-12 lg:py-4.5 max-w-[1280px] mx-auto">
+          <a href="#top" className="flex items-baseline gap-2.5 no-underline shrink-0" onClick={() => setMenu(false)}>
             <span className="font-serif text-xl sm:text-2xl lg:text-[27px] text-tinta">
               Integra<em className="italic text-verde-profundo">Mente</em>
             </span>
-            <span className="text-[10px] lg:text-xs tracking-[0.16em] uppercase text-tinta-tenue pb-0.5">en Casa</span>
-          </div>
-
-          {/* Desktop nav — mobile shows no menu at all, there's nothing to
-              navigate to besides scrolling this one page. */}
-          <nav className="hidden lg:flex items-center gap-8.5 text-[16px]">
-            <a href="#como-funciona" className="text-verde-profundo">Cómo funciona</a>
-            <a href="#planes" className="text-verde-profundo">Planes</a>
-            <a href="#seguridad" className="text-verde-profundo">Seguridad</a>
+            <span className="text-[10px] lg:text-xs tracking-[0.16em] uppercase text-tinta-suave pb-0.5 whitespace-nowrap">en Casa</span>
+          </a>
+          <nav className="hidden lg:flex items-center gap-7 text-[15.5px]">
+            {nav.map((n) => (
+              <a key={n.href} href={n.href} className="text-tinta-suave hover:text-verde-profundo no-underline">
+                {n.t}
+              </a>
+            ))}
           </nav>
+          <div className="flex items-center gap-2">
+            <Link to="/ingresar?mode=login" className="hidden sm:inline-flex items-center min-h-10 px-4 rounded-full text-[15px] font-semibold text-tinta no-underline hover:bg-white">
+              Iniciar sesión
+            </Link>
+            <span className="hidden sm:inline-flex">
+              <Button dense to="/ingresar?mode=register">
+                Crear perfil gratis
+              </Button>
+            </span>
+            <button
+              type="button"
+              onClick={() => setMenu((m) => !m)}
+              aria-expanded={menu}
+              aria-label={menu ? "Cerrar menú" : "Abrir menú"}
+              className="lg:hidden w-11 h-11 rounded-full bg-white border border-borde flex items-center justify-center cursor-pointer"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                {menu ? (
+                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                ) : (
+                  <path d="M3.5 6h13M3.5 10h13M3.5 14h13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+        {menu && (
+          <div className="lg:hidden border-t border-borde px-5 sm:px-8 pb-6 pt-3 grid gap-1">
+            {nav.map((n) => (
+              <a key={n.href} href={n.href} onClick={() => setMenu(false)} className="py-3 text-[18px] font-serif text-tinta no-underline border-b border-borde-suave">
+                {n.t}
+              </a>
+            ))}
+            <div className="grid gap-2.5 mt-4">
+              <Button to="/ingresar?mode=register" fullWidth>
+                Crear mi perfil gratuito
+              </Button>
+              <Button variant="secondary" to="/ingresar?mode=login" fullWidth>
+                Iniciar sesión
+              </Button>
+            </div>
+          </div>
+        )}
       </header>
 
-      <section
-        className="max-w-[1280px] mx-auto px-5 pt-6 pb-12 sm:px-8 sm:pt-8 sm:pb-16 lg:px-12 lg:pt-10 lg:pb-22 grid grid-cols-1 gap-10 items-start lg:grid-cols-[1.05fr_0.95fr] lg:gap-18"
-      >
-        <Reveal className="lg:pt-6">
-          <p className="m-0 mb-3 sm:mb-4 lg:mb-5.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">
-            Estimulación cognitiva y acompañamiento en el hogar
-          </p>
-          <h1
-            className="font-serif font-normal text-[36px] sm:text-[48px] lg:text-[68px] leading-[1.1] lg:leading-[1.06] tracking-[-0.015em] m-0 mb-4 lg:mb-6.5"
-            style={{ textWrap: "pretty" }}
-          >
-            Saber qué hacer hoy,
-            <br />
-            <em className="italic text-verde-profundo">sin improvisar.</em>
+      {/* ─── Hero ─── */}
+      <section id="top" className="max-w-[1280px] mx-auto px-5 pt-8 pb-14 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-14 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
+        <Reveal>
+          <Eyebrow>Estimulación cognitiva en el hogar · Costa Rica</Eyebrow>
+          <h1 className="font-serif font-normal text-[42px] sm:text-[56px] lg:text-[72px] leading-[1.02] tracking-[-0.01em] m-0 mb-5" style={{ textWrap: "balance" }}>
+            Saber qué hacer hoy, <em className="italic text-verde-profundo">sin improvisar.</em>
           </h1>
-          <p className="text-base sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[30em] m-0 mb-6 lg:mb-9" style={{ textWrap: "pretty" }}>
-            Un plan semanal breve y adaptado para acompañar en casa a una persona con cambios cognitivos: qué actividad hacer, cómo
-            hacerla y cuándo pedir ayuda profesional.
+          <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-3">
+            Para quienes cuidan a alguien que quieren: un plan semanal de actividades para la memoria, el movimiento y el ánimo — armado
+            por una profesional, adaptado a su día a día.
           </p>
-          {/* Desktop: scrolls to the inline card below. Mobile: no inline
-              card exists (hidden further down), so these go to a dedicated
-              full-page screen instead — see Ingresar.tsx. */}
-          <div className="hidden lg:flex flex-wrap gap-3 lg:gap-3.5 mb-6 lg:mb-10">
-            <Button onClick={goToRegister}>Crear mi perfil gratuito</Button>
+          <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
+          <div className="flex flex-wrap gap-3 mb-8">
+            <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
             <Button variant="secondary" to="#como-funciona">
               Ver cómo funciona
             </Button>
           </div>
-          <div className="flex lg:hidden flex-wrap gap-3 mb-6">
-            <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
-            <Button variant="secondary" to="/ingresar?mode=login">
-              Iniciar sesión
-            </Button>
-          </div>
+          <ul className="list-none m-0 p-0 flex flex-wrap gap-x-6 gap-y-2.5 text-[14.5px] text-tinta-suave">
+            {["Cuestionario de unos 10 minutos", "Revisado por una profesional", "Recordatorios por WhatsApp"].map((t) => (
+              <li key={t} className="inline-flex items-center gap-2">
+                <span aria-hidden="true" className="w-5 h-5 rounded-full bg-verde-tenue border border-borde text-verde-profundo text-[11px] flex items-center justify-center">
+                  ✓
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
         </Reveal>
-
-        <Reveal delay={140} id="acceso" className="hidden lg:block bg-white border border-borde rounded-3xl p-6 sm:p-8 lg:p-9 shadow-elevada">
-          <LoginSignupCard key={authMode} defaultMode={authMode} />
+        <Reveal delay={150}>
+          <HeroPhone />
         </Reveal>
       </section>
 
+      {/* ─── Para quién ─── */}
       <section className="bg-beige-serenidad">
-        <Reveal className="max-w-[1280px] mx-auto px-5 py-5 sm:px-8 lg:px-12 lg:py-6.5 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 lg:gap-5">
-          <p className="m-0 font-serif text-xl sm:text-2xl italic text-verde-profundo">Preservá lo que te hace ser vos.</p>
-          <p className="m-0 text-sm lg:text-[15px] text-[#5d6e72] max-w-[46em]">
-            IntegraMente en Casa acompaña, educa y organiza el cuidado. No diagnostica, no interpreta pruebas y no modifica tratamientos
-            médicos.
-          </p>
-        </Reveal>
+        <div className="max-w-[1280px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-16 grid gap-6 lg:grid-cols-[0.8fr_1.2fr] items-center">
+          <Reveal>
+            <SectionTitle className="text-[28px] sm:text-[32px] lg:text-[38px]">¿Para quién es?</SectionTitle>
+            <p className="m-0 mt-3 text-[16.5px] leading-relaxed text-tinta-suave max-w-[28em]">
+              Para personas mayores que quieren mantener su mente activa — haya o no un diagnóstico — y para las familias que las acompañan.
+            </p>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { t: "Cuido a un familiar", d: "Mamá, papá, abuela o pareja. Te decimos qué hacer cada día y cómo hacerlo, y vos registrás cómo les fue.", e: "🤝" },
+              { t: "Quiero cuidar mi propia mente", d: "Respondés el cuestionario por vos y recibís actividades pensadas para tus gustos y tu ritmo.", e: "🌱" },
+            ].map((c, i) => (
+              <Reveal key={c.t} delay={i * 100}>
+                <Link
+                  to="/ingresar?mode=register"
+                  className="group h-full flex flex-col gap-2 rounded-3xl bg-white border border-borde p-6 no-underline text-tinta hover:-translate-y-0.5 hover:shadow-elevada transition-all"
+                >
+                  <span aria-hidden="true" className="text-[26px]">{c.e}</span>
+                  <span className="font-serif text-[23px]">{c.t}</span>
+                  <span className="text-[15.5px] leading-relaxed text-tinta-suave">{c.d}</span>
+                  <span className="mt-auto pt-2 text-[14.5px] font-semibold text-verde-profundo group-hover:underline">Empezar →</span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 pt-14 pb-8 sm:px-8 lg:px-12 lg:pt-24 lg:pb-10">
+      {/* ─── Cómo funciona ─── */}
+      <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
         <Reveal>
-          <p className="m-0 mb-2.5 lg:mb-3.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">Cómo funciona</p>
-          <h2 className="font-serif font-normal text-[28px] sm:text-[34px] lg:text-[44px] leading-[1.16] lg:leading-[1.12] m-0 mb-8 lg:mb-14 max-w-[16em]">
-            De la recomendación general a una semana posible de cumplir.
-          </h2>
+          <Eyebrow>Cómo funciona</Eyebrow>
+          <SectionTitle className="max-w-[17em] mb-10 lg:mb-14">De “no sé por dónde empezar” a una semana posible de cumplir.</SectionTitle>
         </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
-          {[
-            {
-              n: "01",
-              t: "Contanos cómo está hoy",
-              d: "Preguntas simples sobre autonomía, movilidad, comprensión e intereses. Sin términos clínicos y con avance guardado.",
-            },
-            {
-              n: "02",
-              t: "Revisamos la seguridad",
-              d: "Un filtro de seguridad define qué actividades corresponden y cuándo conviene una revisión profesional antes de continuar.",
-            },
-            {
-              n: "03",
-              t: "Recibís la semana",
-              d: "Entre tres y cinco acciones repartidas por día, con video, instrucciones y un registro que toma segundos.",
-            },
-          ].map((c, i) => (
-            <Reveal key={c.n} delay={i * 110} className="bg-white border border-borde rounded-3xl p-6 lg:p-8">
-              <div className="font-serif text-2xl lg:text-[30px] text-verde-serenidad mb-3 lg:mb-4.5">{c.n}</div>
-              <h3 className="text-lg lg:text-xl m-0 mb-2 lg:mb-3 font-bold">{c.t}</h3>
-              <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">{c.d}</p>
+        <ol className="list-none m-0 p-0 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 relative">
+          {pasos.map((p, i) => (
+            <Reveal key={p.t} delay={i * 90} className="relative">
+              <li className="h-full rounded-3xl bg-white border border-borde p-6 lg:p-7">
+                <span className="inline-flex w-11 h-11 rounded-full bg-verde-profundo text-white font-serif text-[20px] items-center justify-center mb-4">{i + 1}</span>
+                <h3 className="m-0 mb-2 text-[18px] font-bold">{p.t}</h3>
+                <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{p.d}</p>
+              </li>
+            </Reveal>
+          ))}
+        </ol>
+      </section>
+
+      {/* ─── Los cuatro módulos ─── */}
+      <section className="bg-white border-y border-borde-suave">
+        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+          <Reveal>
+            <Eyebrow>Las actividades</Eyebrow>
+            <SectionTitle className="max-w-[16em] mb-3">Cuatro formas de estimular la mente.</SectionTitle>
+            <p className="m-0 mb-10 lg:mb-14 text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
+              Cada semana combina actividades de estos módulos, elegidas según sus intereses y lo que es seguro para su movilidad.
+            </p>
+          </Reveal>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {ordenModulos.map((m, i) => {
+              const t = moduloTheme[m];
+              const info = modulosInfo[m];
+              return (
+                <Reveal key={m} delay={i * 90}>
+                  <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
+                    <div className="relative h-36 flex items-end p-5" style={{ backgroundImage: `linear-gradient(140deg, ${t.from}, ${t.to})` }}>
+                      <ModuloIcon modulo={m} className="absolute right-4 top-4 w-16 h-16 text-white/35" />
+                      <h3 className="m-0 font-serif font-normal text-[28px] text-white drop-shadow-sm">{moduloLabel[m]}</h3>
+                    </div>
+                    <div className="p-5 flex flex-col gap-3 flex-1">
+                      <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{info.frase}</p>
+                      <ul className="list-none m-0 p-0 grid gap-1.5 mt-auto">
+                        {info.ejemplos.map((e) => (
+                          <li key={e} className="flex items-center gap-2 text-[14px] text-tinta">
+                            <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full" style={{ background: t.to }} />
+                            {e}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </article>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Lo que recibís ─── */}
+      <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+        <Reveal>
+          <Eyebrow>Una semana, no una aplicación llena de tareas</Eyebrow>
+          <SectionTitle className="max-w-[15em] mb-10 lg:mb-14">Todo lo que necesitás, nada que sobre.</SectionTitle>
+        </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {loQueRecibis.map((f, i) => (
+            <Reveal key={f.t} delay={(i % 3) * 80}>
+              <div className="h-full rounded-3xl bg-white border border-borde p-6 flex gap-4">
+                <span
+                  aria-hidden="true"
+                  className={`shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center font-bold ${
+                    f.icono === "SOS" ? "bg-alerta text-alerta-texto text-[12px] border border-alerta-borde" : "bg-verde-tenue text-verde-profundo text-[20px] border border-borde-suave"
+                  }`}
+                >
+                  {f.icono}
+                </span>
+                <div>
+                  <h3 className="m-0 mb-1.5 text-[17.5px] font-bold">{f.t}</h3>
+                  <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{f.d}</p>
+                </div>
+              </div>
             </Reveal>
           ))}
         </div>
       </section>
 
-      <section className="max-w-[1280px] mx-auto px-5 pt-10 pb-12 sm:px-8 lg:px-12 lg:pt-16 lg:pb-24 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-center lg:grid-cols-[0.85fr_1.15fr]">
-        <Reveal>
-          <TypedHeading
-            text="Una semana, no una aplicación llena de tareas."
-            className="font-serif font-normal text-[26px] sm:text-[32px] lg:text-[40px] leading-[1.2] lg:leading-[1.14] m-0 mb-3 lg:mb-5"
-          />
-          <p className="text-base lg:text-lg leading-relaxed text-tinta-suave m-0 mb-4 lg:mb-6">
-            Cada plan combina movimiento, una actividad significativa, una estrategia para la familia y un cuidado neuroprotector. Nada
-            más.
-          </p>
-          <p className="text-base lg:text-lg leading-relaxed text-tinta-suave m-0">
-            La vista <strong>Hoy</strong> muestra una sola cosa a la vez, con letra grande y audio opcional para la persona participante.
-          </p>
-        </Reveal>
-        <PhoneWeekPreview />
-      </section>
-
-      <section id="planes" className="bg-white border-y border-borde-suave">
-        <div className="max-w-[1280px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-24">
+      {/* ─── Seguridad ─── */}
+      <section id="seguridad" className="bg-verde-tenue border-y border-borde-suave scroll-mt-20">
+        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-start">
           <Reveal>
-            <p className="m-0 mb-2.5 lg:mb-3.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">Tres formas de acompañarte</p>
-            <h2 className="font-serif font-normal text-[28px] sm:text-[34px] lg:text-[44px] leading-[1.16] lg:leading-[1.12] m-0 mb-8 lg:mb-14 max-w-[15em]">
-              Elegís cuánta compañía profesional necesitás.
-            </h2>
+            <Eyebrow>Seguridad primero</Eyebrow>
+            <SectionTitle className="mb-4">Antes de sugerir algo, revisamos que sea seguro.</SectionTitle>
+            <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
+              Cada recomendación pasa por un filtro de seguridad basado en lo que nos contaste, y una profesional revisa el plan antes de que
+              llegue a tu casa.
+            </p>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
-            <Reveal className="border border-borde rounded-3xl p-6 lg:p-8.5 flex flex-col gap-4">
-              <h3 className="font-serif font-normal text-2xl lg:text-[28px] m-0">Autoguiado</h3>
-              <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">
-                Perfil funcional, plan semanal, biblioteca de videos y asistente guiado para las dudas más frecuentes.
-              </p>
-              <p className="m-0 text-sm lg:text-[15px] text-tinta-tenue">Para familias que empiezan hoy.</p>
-              <Button variant="secondary" to="/planes/autoguiado" className="mt-auto self-start">
-                Empezar
-              </Button>
-            </Reveal>
-            <Reveal delay={110} className="border-[1.5px] border-verde-serenidad rounded-3xl p-6 lg:p-8.5 flex flex-col gap-4 bg-verde-tenue">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-serif font-normal text-2xl lg:text-[28px] m-0">Orientado</h3>
-                <span className="text-xs tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">
-                  Recomendado
-                </span>
-              </div>
-              <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">
-                Todo lo anterior más una consulta inicial y ajustes periódicos hechos por el equipo clínico.
-              </p>
-              <p className="m-0 text-sm lg:text-[15px] text-tinta-tenue">Para quienes necesitan mayor personalización.</p>
-              <Button to="/planes/orientado" className="mt-auto self-start">
-                Solicitar
-              </Button>
-            </Reveal>
-            <Reveal delay={220} className="border border-borde rounded-3xl p-6 lg:p-8.5 flex flex-col gap-4">
-              <h3 className="font-serif font-normal text-2xl lg:text-[28px] m-0">Clínico</h3>
-              <p className="m-0 text-base lg:text-[17px] leading-relaxed text-tinta-suave">
-                Continuidad entre sesiones para pacientes del programa: el plan lo define el equipo tratante.
-              </p>
-              <p className="m-0 text-sm lg:text-[15px] text-tinta-tenue">Para pacientes actuales de IntegraMente.</p>
-              <Button variant="secondary" to="/planes/clinico" className="mt-auto self-start">
-                Ingresar
-              </Button>
-            </Reveal>
+          <div className="grid gap-3.5">
+            {seguridad.map((s, i) => (
+              <Reveal key={s.t} delay={i * 90}>
+                <div className="flex gap-4 rounded-2xl bg-white border border-borde px-5 py-5 lg:px-6">
+                  <span aria-hidden="true" className="shrink-0 w-9 h-9 rounded-full bg-verde-profundo text-white flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h3 className="m-0 mb-1 text-[17.5px] font-bold">{s.t}</h3>
+                    <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{s.d}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      <section
-        id="seguridad"
-        className="max-w-[1280px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-24 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start lg:grid-cols-[0.9fr_1.1fr]"
-      >
+      {/* ─── Programas ─── */}
+      <section id="programas" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
         <Reveal>
-          <p className="m-0 mb-2.5 lg:mb-3.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">Seguridad primero</p>
-          <h2 className="font-serif font-normal text-[26px] sm:text-[32px] lg:text-[40px] leading-[1.2] lg:leading-[1.14] m-0 mb-3 lg:mb-5">
-            Antes de sugerir algo, revisamos si es seguro.
-          </h2>
-          <p className="text-base lg:text-lg leading-relaxed text-tinta-suave m-0">
-            El semáforo no clasifica la demencia ni sustituye una valoración: define qué funciones del programa pueden usarse con
-            tranquilidad y cuándo hay que hablar con un profesional.
+          <Eyebrow>Programas</Eyebrow>
+          <SectionTitle className="max-w-[15em] mb-3">Elegís cuánta compañía profesional necesitás.</SectionTitle>
+          <p className="m-0 mb-10 lg:mb-12 text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
+            Crear el perfil es gratis. El programa lo elegís al final del cuestionario — con una sugerencia según lo que nos contaste.
           </p>
         </Reveal>
-        <SeguridadRows />
+        <div className="grid gap-5 md:grid-cols-2 max-w-[980px]">
+          {programas.map((p, i) => {
+            const destacado = p.id === "orientado";
+            return (
+              <Reveal key={p.id} delay={i * 100}>
+                <article className={`h-full rounded-[28px] p-6 sm:p-8 flex flex-col gap-5 border-[1.5px] ${destacado ? "border-verde-serenidad bg-verde-tenue" : "border-borde bg-white"}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{p.nombre}</h3>
+                      <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{p.lema}</p>
+                    </div>
+                    {destacado && <span className="shrink-0 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">Más acompañamiento</span>}
+                  </div>
+                  <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{p.descripcion}</p>
+                  <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
+                    <span className="font-serif text-[40px] leading-none">{p.precio}</span>
+                    <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
+                  </p>
+                  <ul className="list-none m-0 p-0 grid gap-2.5">
+                    {p.incluye.map((x) => (
+                      <li key={x} className="flex gap-2.5 text-[15.5px] text-tinta">
+                        <span aria-hidden="true" className="text-verde-serenidad font-bold">✓</span>
+                        {x}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button to="/ingresar?mode=register" variant={destacado ? "primary" : "secondary"} className="mt-auto self-start">
+                    Empezar gratis
+                  </Button>
+                </article>
+              </Reveal>
+            );
+          })}
+        </div>
+        <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
+          ¿Ya sos paciente de la clínica IntegraMente? Tu cuenta la crea el equipo —{" "}
+          <Link to="/ingresar?mode=login" className="text-verde-profundo font-semibold">
+            entrá con el correo que registraste en consulta
+          </Link>
+          .
+        </p>
       </section>
 
-      <section className="bg-verde-profundo text-white">
-        <Reveal className="max-w-[1280px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-22 grid grid-cols-1 gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
+      {/* ─── Equipo ─── */}
+      <section id="equipo" className="bg-beige-serenidad scroll-mt-20">
+        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-center">
+          <Reveal>
+            <Eyebrow>Quiénes estamos detrás</Eyebrow>
+            <SectionTitle className="mb-4">Un equipo clínico, no solo una app.</SectionTitle>
+            <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
+              IntegraMente en Casa es parte del programa integral de estimulación cognitiva y acompañamiento emocional de IntegraMente. Cada
+              plan lo revisa una profesional del equipo.
+            </p>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {equipo.map((m) => (
+              <Reveal key={m.nombre}>
+                <div className="rounded-3xl bg-white border border-borde p-6 flex flex-col items-start gap-4">
+                  {m.foto ? (
+                    <img src={m.foto} alt={m.nombre} className="w-24 h-24 rounded-full object-cover" />
+                  ) : (
+                    <span className="w-24 h-24 rounded-full bg-verde-profundo text-white font-serif text-[32px] flex items-center justify-center">
+                      {m.nombre
+                        .replace(/^Dr[a]?\.\s*/, "")
+                        .split(" ")
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </span>
+                  )}
+                  <div>
+                    <p className="m-0 font-serif text-[24px] leading-tight">{m.nombre}</p>
+                    <p className="m-0 mt-1 text-[15px] text-verde-profundo font-semibold">{m.rol}</p>
+                  </div>
+                  {m.bio && <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{m.bio}</p>}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Testimonios (solo si hay reales) ─── */}
+      {testimonios.length > 0 && (
+        <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+          <Reveal>
+            <Eyebrow>Familias que nos acompañan</Eyebrow>
+            <SectionTitle className="mb-10">Lo que nos cuentan.</SectionTitle>
+          </Reveal>
+          <div className="grid gap-5 md:grid-cols-3">
+            {testimonios.map((t, i) => (
+              <Reveal key={t.nombre} delay={i * 90}>
+                <figure className="m-0 h-full rounded-3xl bg-white border border-borde p-6 flex flex-col gap-4">
+                  <blockquote className="m-0 font-serif text-[20px] leading-snug text-tinta">“{t.cita}”</blockquote>
+                  <figcaption className="mt-auto text-[14.5px] text-tinta-suave">
+                    <strong className="text-tinta">{t.nombre}</strong> · {t.relacion}
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Preguntas frecuentes ─── */}
+      <section id="preguntas" className="max-w-[980px] mx-auto px-5 py-16 sm:px-8 lg:py-24 scroll-mt-20">
+        <Reveal>
+          <Eyebrow>Preguntas frecuentes</Eyebrow>
+          <SectionTitle className="mb-8 lg:mb-10">Lo que suelen preguntarnos.</SectionTitle>
+        </Reveal>
+        <Faq />
+        <p className="m-0 mt-6 text-[15.5px] text-tinta-suave">
+          ¿Otra duda? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
+          <a href={waUrl} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold">
+            WhatsApp
+          </a>
+          .
+        </p>
+      </section>
+
+      {/* ─── CTA final ─── */}
+      <section className="bg-verde-profundo text-white relative overflow-hidden">
+        <div aria-hidden="true" className="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-verde-serenidad/40" />
+        <Reveal className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-22 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
           <div>
-            <h2 className="font-serif font-normal text-[26px] sm:text-[32px] lg:text-[42px] leading-[1.22] lg:leading-[1.14] m-0 mb-3 lg:mb-4 text-white">
-              Cuidar la mente es cuidar la vida.
-            </h2>
-            <p className="m-0 text-base lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
-              Empezá con el perfil funcional. Toma menos de quince minutos, se guarda solo y podés continuar cuando querás.
+            <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 mb-3 text-white">Cuidar la mente es cuidar la vida.</h2>
+            <p className="m-0 text-[17px] lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
+              Empezá con el cuestionario: unos 10 minutos, se guarda solo y podés seguir cuando quieras.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={goToRegister}
-            className="inline-flex items-center justify-center min-h-13 lg:min-h-[58px] px-7 lg:px-8.5 rounded-full bg-mostaza-vital text-semaforo-amarillo-texto font-bold text-base lg:text-lg whitespace-nowrap hover:bg-white hover:text-tinta transition-colors w-full sm:w-auto mx-auto lg:mx-0 cursor-pointer"
+          <Link
+            to="/ingresar?mode=register"
+            className="inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-mostaza-vital text-semaforo-amarillo-texto font-bold text-[17px] whitespace-nowrap hover:bg-white hover:text-tinta transition-colors no-underline mx-auto lg:mx-0"
           >
             Crear mi perfil gratuito
-          </button>
+          </Link>
         </Reveal>
       </section>
 
-      <footer className="bg-tinta text-[#c6d2d3]">
-        <div className="max-w-[1280px] mx-auto px-5 py-10 sm:px-8 lg:px-12 lg:py-14 grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 lg:grid-cols-[1.4fr_1fr_1fr]">
+      {/* ─── Footer ─── */}
+      <footer className="bg-tinta text-[#d3dcdd]">
+        <div className="max-w-[1280px] mx-auto px-5 py-10 sm:px-8 lg:px-12 lg:py-14 grid gap-8 md:grid-cols-3 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div>
             <div className="font-serif text-xl lg:text-2xl text-white mb-3 flex items-baseline gap-2">
               <span>
-                Integra<em className="italic text-verde-profundo">Mente</em>
+                Integra<em className="italic text-[#9cc2c6]">Mente</em>
               </span>
-              <span className="text-[11px] tracking-[0.16em] uppercase text-[#7e9294]">en Casa</span>
+              <span className="text-[11px] tracking-[0.16em] uppercase text-[#a9b9bb]">en Casa</span>
             </div>
-            <p className="m-0 text-sm lg:text-[15px] leading-relaxed max-w-[26em]">
+            <p className="m-0 text-[15px] leading-relaxed max-w-[26em]">
               Programa integral de estimulación cognitiva y acompañamiento emocional. Dra. Guiselle Solano · Neuropsicología.
             </p>
           </div>
-          <div className="grid gap-2.5 text-sm lg:text-[15px]">
-            <span className="text-[#7e9294] text-xs tracking-[0.14em] uppercase">Contacto</span>
-            <a href="tel:+50683435772" className="text-[#c6d2d3]">+506 8343 5772</a>
-            <a href="mailto:info@integramente.com" className="text-[#c6d2d3]">info@integramente.com</a>
+          <div className="grid gap-2.5 text-[15px] content-start">
+            <span className="text-[#a9b9bb] text-xs tracking-[0.14em] uppercase">Contacto</span>
+            <span>{contacto.telefono}</span>
+            <a href={waUrl} target="_blank" rel="noreferrer" className="text-[#d3dcdd]">
+              WhatsApp
+            </a>
+            <span>{contacto.correo}</span>
             <span>Costa Rica</span>
           </div>
-          <div className="grid gap-2.5 text-sm lg:text-[15px] content-start">
-            <span className="text-[#7e9294] text-xs tracking-[0.14em] uppercase">Legal</span>
-            <Link to="/legal/condiciones" className="text-[#c6d2d3]">Condiciones de uso</Link>
-            <Link to="/legal/privacidad" className="text-[#c6d2d3]">Privacidad y datos</Link>
-            <Link to="/legal/emergencias" className="text-[#c6d2d3]">Emergencias</Link>
+          <div className="grid gap-2.5 text-[15px] content-start">
+            <span className="text-[#a9b9bb] text-xs tracking-[0.14em] uppercase">Legal</span>
+            <Link to="/legal/condiciones" className="text-[#d3dcdd]">
+              Condiciones de uso
+            </Link>
+            <Link to="/legal/privacidad" className="text-[#d3dcdd]">
+              Privacidad y datos
+            </Link>
+            <Link to="/legal/emergencias" className="text-[#d3dcdd]">
+              Emergencias
+            </Link>
           </div>
         </div>
         <div className="max-w-[1280px] mx-auto px-5 pb-8 sm:px-8 lg:px-12 lg:pb-11">
-          <p className="m-0 text-xs lg:text-[13px] leading-relaxed text-[#7e9294] max-w-[60em]">
-            IntegraMente en Casa es un servicio de educación, organización y acompañamiento. No sustituye la consulta médica ni la
-            valoración neuropsicológica. Ante una urgencia, comunicate con los servicios de emergencia de tu país.
+          <p className="m-0 text-[13.5px] leading-relaxed text-[#a9b9bb] max-w-[60em]">
+            IntegraMente en Casa es un servicio de educación, organización y acompañamiento. No sustituye la consulta médica ni la valoración
+            neuropsicológica. Ante una urgencia, llamá al 9-1-1.
           </p>
         </div>
       </footer>
 
-      {/* Mobile-only: with no nav menu, this is the way back up. */}
-      {scrolled && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="Volver arriba"
-          className="lg:hidden fixed bottom-5 right-5 z-30 w-13 h-13 rounded-full bg-tinta text-white shadow-elevada flex items-center justify-center cursor-pointer"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M10 15V5M10 5l-5 5M10 5l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      )}
+      {/* WhatsApp flotante — el canal natural en Costa Rica */}
+      <a
+        href={waUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Escribinos por WhatsApp"
+        className="fixed z-30 right-4 sm:right-6 w-14 h-14 rounded-full bg-[#25d366] text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
+        style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
+        </svg>
+      </a>
     </div>
   );
 }
