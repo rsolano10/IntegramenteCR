@@ -260,7 +260,7 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
               ¿Olvidaste tu contraseña?
             </Link>
             {isRegister ? (
-              <span className="text-tinta-tenue">Gratis, sin tarjeta</span>
+              <span className="text-tinta-tenue"></span>
             ) : (
               <button type="button" onClick={() => switchMode("register")} className="text-tinta-tenue underline decoration-dotted cursor-pointer">
                 ¿Primera vez? Creá tu cuenta
