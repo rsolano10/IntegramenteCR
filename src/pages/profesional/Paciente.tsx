@@ -14,6 +14,7 @@ import { SemanaTab, type PlanSummary } from "../../components/profesional/pacien
 import { PlanificadorTab } from "../../components/profesional/paciente/PlanificadorTab";
 import { MensajesTab } from "../../components/profesional/paciente/MensajesTab";
 import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
+import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 
 type Tab = "evaluacion" | "semana" | "planificar" | "mensajes" | "cuentas";
 
@@ -184,6 +185,8 @@ export function Paciente() {
           />
         </div>
       </header>
+
+      <AlertasRiesgoBanner patientId={patient.id} />
 
       {statusMsg && (
         <div className={`flex items-center justify-between gap-4 px-5 py-3 rounded-2xl mb-5 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-verde-tenue text-verde-profundo"}`}>

@@ -8,7 +8,6 @@ import { uploadAvatar } from "../../lib/avatar";
 import { normalizeCrPhone } from "../../lib/phone";
 import { useChangePassword } from "../../lib/useChangePassword";
 import { planTiers } from "../../lib/mockData";
-import { useAppStore } from "../../lib/store";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
 import { PasswordInput } from "./PasswordInput";
@@ -300,7 +299,12 @@ function MiPerfilContent({
           </div>
         )}
 
-        {tab === "avisos" && <AvisosTab userId={user.id} hasPhone={!!profile.whatsapp_phone} initialWhatsapp={profile.whatsapp_notifications_enabled} />}
+        {tab === "avisos" && <AvisosTab
+            userId={user.id}
+            hasPhone={!!profile.whatsapp_phone}
+            initialWhatsapp={profile.whatsapp_notifications_enabled}
+            initialRiesgoAuto={profile.avisar_riesgo_auto}
+          />}
 
         {tab === "seguridad" && (
           <SeguridadTab email={email} lastSignIn={user.last_sign_in_at} createdAt={user.created_at} onLogoutAll={onLogoutAll} />
@@ -481,21 +485,29 @@ function SeguridadTab({
 
 // Lo que antes era "Configuraciones" (una sola opción) más el interruptor
 // de recordatorios por WhatsApp, que sí se guarda en la cuenta.
-function AvisosTab({ userId, hasPhone, initialWhatsapp }: { userId: string; hasPhone: boolean; initialWhatsapp: boolean }) {
-  const notify = useAppStore((s) => s.notify);
-  const setNotify = useAppStore((s) => s.setNotify);
-  const [whatsapp, setWhatsapp] = useState(initialWhatsapp);
+function AvisosTab({
+  userId,
+  hasPhone,
+  initialWhatsapp,
+  initialRiesgoAuto,
+}: {
+  userId: string;
+  hasPhone: boolean;
+  initialWhatsapp: boolean;
+  initialRiesgoAuto: boolean;
+}) {
+  const [prefs, setPrefs] = useState({ whatsapp_notifications_enabled: initialWhatsapp, avisar_riesgo_auto: initialRiesgoAuto });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  async function toggleWhatsapp(next: boolean) {
+  async function save(field: keyof typeof prefs, next: boolean) {
     setError("");
-    setWhatsapp(next);
+    setPrefs((p) => ({ ...p, [field]: next }));
     setSaving(true);
-    const { error: updateError } = await supabase.from("profiles").update({ whatsapp_notifications_enabled: next }).eq("id", userId);
+    const { error: updateError } = await supabase.from("profiles").update({ [field]: next }).eq("id", userId);
     setSaving(false);
     if (updateError) {
-      setWhatsapp(!next);
+      setPrefs((p) => ({ ...p, [field]: !next }));
       setError("No pudimos guardar el cambio. Probá de nuevo.");
       return;
     }
@@ -507,15 +519,16 @@ function AvisosTab({ userId, hasPhone, initialWhatsapp }: { userId: string; hasP
       <SwitchRow
         title="Recordatorios por WhatsApp"
         detail={hasPhone ? "Preparación, inicio y cierre de las actividades del día." : "Agregá tu número en Mi perfil para activarlos."}
-        checked={whatsapp && hasPhone}
+        checked={prefs.whatsapp_notifications_enabled && hasPhone}
         disabled={!hasPhone || saving}
-        onChange={toggleWhatsapp}
+        onChange={(v) => save("whatsapp_notifications_enabled", v)}
       />
       <SwitchRow
-        title="Avisar a tu profesional ante una señal de riesgo"
-        detail="Si en la app aparece una situación de riesgo, tu profesional recibe un aviso para contactarte."
-        checked={notify === "si"}
-        onChange={(v) => setNotify(v ? "si" : "no")}
+        title="Avisar automáticamente ante una caída, un cambio repentino o un extravío"
+        detail="Al abrir esa guía en la app, tu profesional recibe el aviso sin que tengas que tocar nada más. Siempre podés avisar a mano con el botón."
+        checked={prefs.avisar_riesgo_auto}
+        disabled={saving}
+        onChange={(v) => save("avisar_riesgo_auto", v)}
       />
       {error && <p className="m-0 text-[13.5px] text-alerta-texto">{error}</p>}
     </div>

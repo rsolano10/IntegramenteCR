@@ -35,7 +35,7 @@ export function Cambio() {
             atienda.
           </p>
           <div className="border-t border-borde-suave pt-5 flex gap-3 flex-wrap items-center">
-            <NotifyButton />
+            <NotifyButton tipo="cambio" />
             <Link
               to="/app/hoy"
               className="min-h-13 px-5.5 inline-flex items-center border-[1.5px] border-borde rounded-full font-sans text-[16px] font-semibold text-tinta hover:border-verde-serenidad"
@@ -43,7 +43,7 @@ export function Cambio() {
               Volver a Hoy
             </Link>
           </div>
-          <NotifyState />
+          <NotifyState tipo="cambio" />
         </div>
       </div>
     </div>

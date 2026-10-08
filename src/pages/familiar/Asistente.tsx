@@ -17,10 +17,8 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   const messages = useAppStore((s) => s.chatMessages);
   const sendChatMessage = useAppStore((s) => s.sendChatMessage);
-  const notifyNow = useAppStore((s) => s.notifyNow);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [notified, setNotified] = useState<Set<string>>(new Set());
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,13 +36,8 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
     }, 500);
   }
 
-  function handleEscalate(messageId: string, to: string) {
-    if (to) {
-      navigate(to);
-    } else {
-      notifyNow();
-      setNotified((prev) => new Set(prev).add(messageId));
-    }
+  function handleEscalate(to: string) {
+    navigate(to);
   }
 
   return (
@@ -66,17 +59,13 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
               {m.text}
               {m.escalate && (
                 <div className="mt-2.5">
-                  {notified.has(m.id) ? (
-                    <span className="text-[13px] font-semibold text-semaforo-verde-texto">✓ Aviso enviado a tu profesional</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleEscalate(m.id, m.escalate!.to)}
-                      className="min-h-9 px-3.5 rounded-full bg-semaforo-rojo text-white text-[13px] font-bold cursor-pointer"
-                    >
-                      {m.escalate.label}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleEscalate(m.escalate!.to)}
+                    className="min-h-9 px-3.5 rounded-full bg-semaforo-rojo text-white text-[13px] font-bold cursor-pointer"
+                  >
+                    {m.escalate.label}
+                  </button>
                 </div>
               )}
             </ChatBubble>

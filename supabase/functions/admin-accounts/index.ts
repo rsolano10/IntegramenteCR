@@ -182,6 +182,21 @@ Deno.serve(async (req) => {
   // invite_counterpart is the one action a familiar/paciente caller can take
   // themselves (inviting their own missing familiar/participante) — every
   // other action stays profesional-only, checked here before dispatch.
+  // notify_risk_alert: a family/participant just raised a risk alert
+  // (enviar_alerta_riesgo) — email the whole clinical team. Authorization
+  // and anti-spam are re-derived server-side in the handler.
+  if (payload.action === "notify_risk_alert") {
+    if (callerProfile?.role !== "familiar" && callerProfile?.role !== "paciente") {
+      return json({ error: "No autorizado." }, 403);
+    }
+    try {
+      return await handleNotifyRiskAlert(admin, user.id, payload);
+    } catch (err) {
+      console.error(err);
+      return json({ error: err instanceof Error ? err.message : "Error inesperado." }, 500);
+    }
+  }
+
   if (payload.action === "invite_counterpart") {
     if (callerProfile?.role !== "familiar" && callerProfile?.role !== "paciente") {
       return json({ error: "No autorizado." }, 403);
@@ -604,6 +619,77 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
     return json({ ok: true, canales: [...canales], warning: `El plan se asignó, pero no pudimos enviar el correo de aviso: ${failures[0]}` });
   }
   return json({ ok: true, canales: [...canales] });
+}
+
+const ALERTA_ETIQUETA: Record<string, string> = {
+  ideacion: "Posible riesgo de autolesión",
+  maltrato: "Sospecha de maltrato o abandono",
+  caida: "Caída",
+  cambio: "Cambio repentino de salud",
+  extravio: "Riesgo de extravío",
+};
+
+async function handleNotifyRiskAlert(admin: ReturnType<typeof createClient>, callerId: string, payload: Record<string, unknown>) {
+  const alertaId = String(payload.alertaId ?? "");
+  if (!alertaId) return json({ error: "Falta el aviso." }, 400);
+
+  const { data: alerta } = await admin
+    .from("alertas_riesgo")
+    .select("id, patient_id, tipo, automatica, created_at, correo_enviado_at")
+    .eq("id", alertaId)
+    .maybeSingle();
+  if (!alerta) return json({ error: "Aviso no encontrado." }, 404);
+
+  // The caller must be linked to this patient as family/participant.
+  const { data: link } = await admin
+    .from("patient_links")
+    .select("profile_id")
+    .eq("patient_id", alerta.patient_id)
+    .eq("profile_id", callerId)
+    .in("relation", ["familiar_admin", "participante"])
+    .maybeSingle();
+  if (!link) return json({ error: "No autorizado." }, 403);
+
+  // One email per alert, ever — claimed atomically so a double tap can't
+  // race two sends.
+  const { data: claimed } = await admin
+    .from("alertas_riesgo")
+    .update({ correo_enviado_at: new Date().toISOString() })
+    .eq("id", alertaId)
+    .is("correo_enviado_at", null)
+    .select("id");
+  if (!claimed || claimed.length === 0) return json({ ok: true, skipped: true });
+
+  const [{ data: patient }, { data: caller }, { data: staff }] = await Promise.all([
+    admin.from("patients").select("nombre").eq("id", alerta.patient_id).maybeSingle(),
+    admin.from("profiles").select("nombre").eq("id", callerId).maybeSingle(),
+    admin.from("profiles").select("id").eq("role", "profesional").eq("is_active", true),
+  ]);
+  const etiqueta = ALERTA_ETIQUETA[alerta.tipo as string] ?? "Aviso de riesgo";
+  const patientNombre = patient?.nombre ?? "un paciente";
+  const hora = new Date(alerta.created_at as string).toLocaleString("es-CR", { timeZone: "America/Costa_Rica", dateStyle: "medium", timeStyle: "short" });
+
+  const html = brandedEmail(
+    `⚠ ${escapeHtml(etiqueta)}`,
+    `<p style="margin:0 0 14px 0;"><strong style="color:#1f3338;">${escapeHtml(caller?.nombre ?? "La familia")}</strong> envió un aviso de riesgo desde la app${alerta.automatica ? " (aviso automático)" : ""}.</p>
+     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#fbefeb;border:1px solid #e3b7aa;border-radius:12px;">
+       <tr><td style="padding:16px 18px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#8c3f2a;">
+         <strong>Paciente:</strong> ${escapeHtml(patientNombre)}<br><strong>Situación:</strong> ${escapeHtml(etiqueta)}<br><strong>Enviado:</strong> ${escapeHtml(hora)}
+       </td></tr>
+     </table>
+     <p style="margin:18px 0 0 0;">Contactá a la familia lo antes posible y marcá el aviso como atendido en el panel.</p>`,
+    { label: "Abrir el paciente", url: `${SITE_URL}/app/profesional/paciente/${alerta.patient_id}?tab=mensajes` },
+  );
+
+  let sent = 0;
+  for (const s of staff ?? []) {
+    const { data: found } = await admin.auth.admin.getUserById(s.id as string);
+    const email = found?.user?.email;
+    if (!email) continue;
+    const err = await sendMail(email, `⚠ Aviso de riesgo: ${etiqueta} — ${patientNombre}`, html);
+    if (!err) sent++;
+  }
+  return json({ ok: true, sent });
 }
 
 // Self-service counterpart invite: a familiar_admin can invite the missing

@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { semaforoData } from "../../lib/rules";
 import { patientPath, usePatients } from "../../lib/patients";
+import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 import { planTiers, type Semaforo } from "../../lib/mockData";
 
 interface PendingThread {
@@ -114,6 +115,8 @@ export function Panel() {
           </button>
         </div>
       )}
+
+      <AlertasRiesgoBanner />
 
       <div className="bg-white border border-borde rounded-3xl overflow-hidden shadow-elevada mb-6">
         <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-borde-suave">

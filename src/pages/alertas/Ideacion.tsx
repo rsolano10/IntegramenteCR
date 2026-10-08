@@ -35,7 +35,7 @@ export function Ideacion() {
           <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">
             Definiste en el consentimiento que se avise a la profesional asignada. Podés cambiarlo ahora.
           </p>
-          <NotifyBar />
+          <NotifyBar tipo="ideacion" />
           <Link to="/app/hoy" className="justify-self-start border-none bg-transparent font-sans text-[15px] text-verde-profundo">
             Volver a la aplicación
           </Link>

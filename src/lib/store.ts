@@ -160,7 +160,6 @@ interface AppState {
 
   c1: boolean;
   c2: boolean;
-  notify: "si" | "no";
 
   onboarding2: Answers;
   modalidad: Modalidad;
@@ -201,7 +200,6 @@ interface AppState {
   reg: RegistroEstado;
   noCount: number;
 
-  notifySent: boolean;
 
   weekMood: "better" | "same" | "worse";
 
@@ -220,7 +218,6 @@ interface AppState {
 
   toggleConsent1: () => void;
   toggleConsent2: () => void;
-  setNotify: (v: "si" | "no") => void;
 
   answerQuestion: (id: string, value: string) => void;
   toggleMultiAnswer: (id: string, value: string, exclusive?: string[], maxSelect?: number) => void;
@@ -256,8 +253,6 @@ interface AppState {
   markRegistro: (taskId: string, v: Exclude<RegistroEstado, null>, comentario?: string) => void;
   setWeekMood: (v: "better" | "same" | "worse") => void;
 
-  notifyNow: () => void;
-  notifySkip: () => void;
 
   sendChatMessage: (text: string) => void;
 
@@ -273,7 +268,6 @@ export const useAppStore = create<AppState>()(
 
   c1: true,
   c2: true,
-  notify: "si",
 
   onboarding2: { ...defaultOnboarding },
   modalidad: "orientado",
@@ -300,7 +294,6 @@ export const useAppStore = create<AppState>()(
   reg: null,
   noCount: 0,
 
-  notifySent: false,
 
   weekMood: "same",
 
@@ -318,8 +311,7 @@ export const useAppStore = create<AppState>()(
       realUserName: "",
       c1: true,
       c2: true,
-      notify: "si",
-      // onboarding2/modalidad/onboardingComplete/planStatus/welcomeMessagePending
+          // onboarding2/modalidad/onboardingComplete/planStatus/welcomeMessagePending
       // /mensajes deliberately survive logout — they're the persisted
       // profile and its correspondence, not session state. A message the
       // clinic writes has to still be there the next time the family logs
@@ -334,14 +326,12 @@ export const useAppStore = create<AppState>()(
       perfilValidado: false,
       reg: null,
       noCount: 0,
-      notifySent: false,
       weekMood: "same",
       chatMessages: [],
     }),
 
   toggleConsent1: () => set((s) => ({ c1: !s.c1 })),
   toggleConsent2: () => set((s) => ({ c2: !s.c2 })),
-  setNotify: (v) => set({ notify: v }),
 
   answerQuestion: (id, value) => {
     set((s) => ({ onboarding2: { ...s.onboarding2, [id]: value } }));
@@ -449,11 +439,6 @@ export const useAppStore = create<AppState>()(
   },
   setWeekMood: (v) => set({ weekMood: v }),
 
-  notifyNow: () => {
-    set({ notifySent: true });
-    get().pushAudit("Alerta", "notifica a la profesional asignada", get().realUserName || "Familiar");
-  },
-  notifySkip: () => set({ notifySent: false }),
 
   sendChatMessage: (text) => {
     if (!text.trim()) return;
