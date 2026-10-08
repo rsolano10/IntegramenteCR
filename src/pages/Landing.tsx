@@ -20,7 +20,13 @@ const semanaDemo: { dia: string; n: number; hora: string; titulo: string; modulo
   { dia: "Mar", n: 13, hora: "10:30", titulo: "Álbum de recuerdos", modulo: "reminiscencia" },
   { dia: "Mié", n: 14, hora: "4:00", titulo: "Boleros de siempre", modulo: "musica" },
   { dia: "Jue", n: 15, hora: "9:30", titulo: "Texturas del jardín", modulo: "sentidos" },
+  { dia: "Vie", n: 16, hora: "10:00", titulo: "Movilidad sentado", modulo: "movimiento" },
 ];
+
+// Proporciones reales del teléfono (alto/ancho del cuerpo). Medidas del
+// iPhone 17 Pro (150 × 71,9 mm); el iPhone 18 Pro mantiene el formato —
+// si cambia, basta con actualizar estas dos cifras.
+const TELEFONO = { anchoMm: 71.9, altoMm: 150 };
 
 function HeroPhone() {
   const [hechas, setHechas] = useState(prefersReducedMotion() ? 2 : 0);
@@ -30,71 +36,117 @@ function HeroPhone() {
     return () => window.clearInterval(id);
   }, []);
 
+  // Tamaño fijo: ancho fijo + aspect-ratio real, y todo el contenido de
+  // la pantalla con alturas fijas — marcar una actividad como hecha nunca
+  // cambia el tamaño del teléfono, solo lo que se ve adentro.
   return (
-    <div className="relative mx-auto w-[300px] sm:w-[330px]" aria-hidden="true">
+    <div className="relative mx-auto w-[288px] sm:w-[312px]" aria-hidden="true">
       <div aria-hidden="true" className="absolute -inset-10 rounded-full bg-beige-serenidad/70 blur-2xl" />
-      <div className="relative rounded-[44px] bg-tinta p-2.5 shadow-[0_40px_80px_-40px_rgba(31,51,56,0.6)]">
-        <div className="rounded-[36px] overflow-hidden bg-fondo-papel">
-          <div className="bg-verde-profundo text-white px-5 pt-9 pb-4">
-            <div className="mx-auto mb-3 w-20 h-5 rounded-full bg-tinta -mt-6" />
-            <p className="m-0 text-[11px] text-[#c4dbdb]">Esta semana · 12 – 18 de octubre</p>
-            <p className="m-0 font-serif text-[20px]">Hola, Marcela</p>
+      <div
+        className="relative w-full rounded-[15.5%/7.4%] bg-tinta p-[3%] shadow-[0_40px_80px_-40px_rgba(31,51,56,0.6)]"
+        style={{ aspectRatio: `${TELEFONO.anchoMm} / ${TELEFONO.altoMm}` }}
+      >
+        {/* Botones laterales */}
+        <span className="absolute -left-[3px] top-[17%] w-[3px] h-[5%] rounded-l-full bg-[#5a7278]" />
+        <span className="absolute -left-[3px] top-[24%] w-[3px] h-[9%] rounded-l-full bg-[#5a7278]" />
+        <span className="absolute -right-[3px] top-[26%] w-[3px] h-[13%] rounded-r-full bg-[#5a7278]" />
+        <div className="relative h-full w-full rounded-[12.5%/6%] overflow-hidden bg-fondo-papel flex flex-col">
+          {/* Barra de estado + Dynamic Island */}
+          <div className="bg-verde-profundo text-white shrink-0">
+            <div className="relative h-[34px] flex items-center justify-between px-6 text-[11px] font-semibold">
+              <span>9:41</span>
+              <span className="absolute left-1/2 top-[9px] -translate-x-1/2 w-[30%] h-[22px] rounded-full bg-black" />
+              <span className="flex items-center gap-1">
+                <svg width="14" height="9" viewBox="0 0 14 9" fill="currentColor">
+                  <rect x="0" y="6" width="2.5" height="3" rx=".6" />
+                  <rect x="3.8" y="4" width="2.5" height="5" rx=".6" />
+                  <rect x="7.6" y="2" width="2.5" height="7" rx=".6" />
+                  <rect x="11.4" y="0" width="2.5" height="9" rx=".6" />
+                </svg>
+                <svg width="20" height="10" viewBox="0 0 20 10" fill="none">
+                  <rect x=".5" y=".5" width="16" height="9" rx="2.5" stroke="currentColor" opacity=".6" />
+                  <rect x="2" y="2" width="12" height="6" rx="1.4" fill="currentColor" />
+                  <rect x="17.5" y="3.2" width="1.6" height="3.6" rx=".8" fill="currentColor" opacity=".6" />
+                </svg>
+              </span>
+            </div>
+            <div className="px-5 pt-2 pb-4">
+              <p className="m-0 text-[11px] text-[#c4dbdb]">Esta semana · 12 – 18 de octubre</p>
+              <p className="m-0 font-serif text-[20px] leading-tight">Hola, Marcela</p>
+            </div>
           </div>
-          <div className="px-3.5 py-3.5 grid gap-2.5">
-            <div className="flex items-center justify-between bg-white border border-borde rounded-2xl px-3.5 py-2.5">
-              <span className="font-serif text-[15px] text-tinta">La semana de doña Rosa</span>
-              <span className="text-[12px] text-tinta-suave">
-                <strong className="font-serif text-[17px] text-tinta">{hechas}</strong>/{semanaDemo.length} hechas
+
+          <div className="flex-1 min-h-0 px-3 py-3 grid content-start gap-1.5 overflow-hidden">
+            <div className="h-[40px] flex items-center justify-between bg-white border border-borde rounded-2xl px-3.5">
+              <span className="font-serif text-[14.5px] text-tinta whitespace-nowrap">La semana de doña Rosa</span>
+              <span className="text-[11.5px] text-tinta-suave whitespace-nowrap">
+                <strong className="font-serif text-[16px] text-tinta">{hechas}</strong>/{semanaDemo.length} hechas
               </span>
             </div>
             {semanaDemo.map((a, i) => {
               const hecha = i < hechas;
+              const hoy = i === hechas;
               const t = moduloTheme[a.modulo];
               return (
-                <div key={a.titulo} className="grid grid-cols-[38px_1fr] gap-2 items-stretch">
-                  <div className={`rounded-xl text-center py-1.5 ${i === hechas ? "bg-verde-profundo text-white" : "bg-white border border-borde text-tinta"}`}>
-                    <span className={`block text-[9px] uppercase font-semibold ${i === hechas ? "text-[#c4dbdb]" : "text-tinta-tenue"}`}>{a.dia}</span>
-                    <span className="block font-serif text-[16px] leading-tight">{a.n}</span>
+                <div key={a.titulo} className="h-[58px] grid grid-cols-[36px_1fr] gap-2">
+                  <div className={`rounded-xl flex flex-col items-center justify-center transition-colors duration-500 ${hoy ? "bg-verde-profundo text-white" : "bg-white border border-borde text-tinta"}`}>
+                    <span className={`text-[8.5px] uppercase font-semibold ${hoy ? "text-[#c4dbdb]" : "text-tinta-tenue"}`}>{a.dia}</span>
+                    <span className="font-serif text-[16px] leading-tight">{a.n}</span>
                   </div>
-                  <div className="flex rounded-2xl bg-white border border-borde overflow-hidden">
+                  <div className="relative flex rounded-2xl bg-white border border-borde overflow-hidden">
                     <div
-                      className="relative w-[52px] shrink-0 flex flex-col items-center justify-center text-white transition-colors duration-500"
-                      style={{ backgroundImage: hecha ? "none" : `linear-gradient(160deg, ${t.from}, ${t.to})`, backgroundColor: hecha ? "#5f8b5f" : undefined }}
+                      className="relative w-[50px] shrink-0 flex flex-col items-center justify-center text-white"
+                      style={{ backgroundImage: `linear-gradient(160deg, ${t.from}, ${t.to})` }}
                     >
-                      {hecha ? (
+                      <ModuloIcon modulo={a.modulo} className="w-3.5 h-3.5" />
+                      <span className="font-serif text-[13px] mt-0.5">{a.hora}</span>
+                      <span
+                        className="absolute inset-0 bg-[#5f8b5f] flex items-center justify-center transition-opacity duration-500"
+                        style={{ opacity: hecha ? 1 : 0 }}
+                      >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <path d="M5 12.5l4.2 4.2L19 7" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                      ) : (
-                        <>
-                          <ModuloIcon modulo={a.modulo} className="w-3.5 h-3.5" />
-                          <span className="font-serif text-[13px] mt-0.5">{a.hora}</span>
-                        </>
-                      )}
+                      </span>
                     </div>
-                    <div className="px-2.5 py-2 min-w-0">
-                      <p className="m-0 text-[9px] font-semibold uppercase tracking-[0.08em]" style={{ color: t.ink }}>
+                    <div className="px-2.5 min-w-0 flex flex-col justify-center">
+                      <p className="m-0 text-[8.5px] font-semibold uppercase tracking-[0.08em]" style={{ color: t.ink }}>
                         {moduloLabel[a.modulo]}
                       </p>
-                      <p className="m-0 font-serif text-[14px] leading-snug text-tinta truncate">{a.titulo}</p>
-                      {hecha && <span className="inline-block mt-0.5 text-[9.5px] font-semibold rounded-full px-1.5 bg-[#e3efe3] text-semaforo-verde-texto">Hecha</span>}
+                      <p className="m-0 font-serif text-[13.5px] leading-snug text-tinta truncate">{a.titulo}</p>
                     </div>
+                    <span
+                      className="absolute right-2 bottom-1.5 text-[9px] font-semibold rounded-full px-1.5 bg-[#e3efe3] text-semaforo-verde-texto transition-opacity duration-500"
+                      style={{ opacity: hecha ? 1 : 0 }}
+                    >
+                      Hecha
+                    </span>
                   </div>
                 </div>
               );
             })}
+            <div className="rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue px-3 py-2.5">
+              <p className="m-0 text-[8.5px] uppercase tracking-[0.1em] font-semibold text-verde-profundo">Mensaje de tu profesional</p>
+              <p className="m-0 mt-0.5 text-[11.5px] leading-snug text-tinta">¡Qué buena semana! Esta vez sumamos más música, que tanto le gusta.</p>
+            </div>
           </div>
-          <div className="grid grid-cols-3 border-t border-borde bg-white text-[10px] font-semibold text-center">
-            {["Hoy", "Mi semana", "Ayuda"].map((t) => (
-              <span key={t} className={`py-2.5 ${t === "Mi semana" ? "text-verde-profundo" : "text-tinta-tenue"}`}>
-                {t}
-              </span>
-            ))}
+
+          <div className="shrink-0 bg-white border-t border-borde">
+            <div className="grid grid-cols-3 text-[10px] font-semibold text-center">
+              {["Hoy", "Mi semana", "Ayuda"].map((t) => (
+                <span key={t} className={`pt-2.5 pb-1 ${t === "Mi semana" ? "text-verde-profundo" : "text-tinta-tenue"}`}>
+                  {t}
+                </span>
+              ))}
+            </div>
+            <div className="flex justify-center pb-2 pt-1">
+              <span className="w-[35%] h-[4px] rounded-full bg-tinta/80" />
+            </div>
           </div>
         </div>
       </div>
       {/* Notificación flotante: el recordatorio que llega al teléfono */}
-      <div className="absolute -right-3 sm:-right-16 -top-5 w-[200px] rounded-2xl bg-white border border-borde shadow-elevada px-3.5 py-3">
+      <div className="absolute -right-3 sm:-right-16 top-[7%] w-[200px] rounded-2xl bg-white border border-borde shadow-elevada px-3.5 py-3">
         <p className="m-0 text-[10px] font-semibold text-[#2f8f5b] uppercase tracking-wide">Recordatorio · 9:00</p>
         <p className="m-0 mt-0.5 text-[12.5px] leading-snug text-tinta">Hoy toca “Caminata con música” con doña Rosa 🎶</p>
       </div>
