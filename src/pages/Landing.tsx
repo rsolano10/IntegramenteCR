@@ -481,58 +481,6 @@ function FaqCarousel() {
   );
 }
 
-// Celular: barra fija abajo con el botón principal y WhatsApp. Aparece al
-// pasar los botones del hero y se oculta al llegar al cierre (que ya tiene
-// su propio botón). Reemplaza a los dos botones flotantes, que en pantallas
-// angostas tapaban contenido.
-function BarraMovil({ waUrl }: { waUrl: string }) {
-  const [heroVisible, setHeroVisible] = useState(true);
-  const [finalVisible, setFinalVisible] = useState(false);
-  useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") return;
-    const hero = document.getElementById("hero-cta");
-    const fin = document.getElementById("cta-final");
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.target === hero) setHeroVisible(e.isIntersecting || e.boundingClientRect.top > 0);
-        if (e.target === fin) setFinalVisible(e.isIntersecting);
-      }
-    });
-    if (hero) io.observe(hero);
-    if (fin) io.observe(fin);
-    return () => io.disconnect();
-  }, []);
-  const visible = !heroVisible && !finalVisible;
-  return (
-    <div
-      aria-hidden={!visible}
-      className={`md:hidden fixed inset-x-0 bottom-0 z-30 transition-transform duration-300 ${visible ? "translate-y-0" : "translate-y-full"}`}
-    >
-      <div className="bg-fondo-papel/95 backdrop-blur-md border-t border-borde px-4 pt-3 flex items-center gap-3" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}>
-        <Link
-          to="/ingresar?mode=register"
-          tabIndex={visible ? 0 : -1}
-          className="flex-1 inline-flex items-center justify-center min-h-[52px] rounded-full bg-verde-serenidad text-white font-semibold text-[16.5px] no-underline active:bg-verde-profundo"
-        >
-          Crear mi perfil gratuito
-        </Link>
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noreferrer"
-          tabIndex={visible ? 0 : -1}
-          aria-label="Escribinos por WhatsApp"
-          className="shrink-0 w-[52px] h-[52px] rounded-full bg-[#25d366] text-white flex items-center justify-center"
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
-          </svg>
-        </a>
-      </div>
-    </div>
-  );
-}
-
 // Celular: un programa a la vez, con selector arriba — así se comparan sin
 // bajar casi dos pantallas de tarjetas apiladas.
 function ProgramasMovil() {
@@ -638,7 +586,7 @@ export function Landing() {
             por nuestro equipo de salud y adaptado a su día a día.
           </p>
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
-          <div id="hero-cta" className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button to="/ingresar?mode=register">Crear mi perfil gratuito</Button>
             <Button variant="secondary" onClick={() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" })}>
               Ver cómo funciona
@@ -982,7 +930,7 @@ export function Landing() {
       </section>
 
       {/* ─── CTA final ─── */}
-      <section id="cta-final" className="bg-verde-profundo text-white relative overflow-hidden">
+      <section className="bg-verde-profundo text-white relative overflow-hidden">
         <div aria-hidden="true" className="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-verde-serenidad/40" />
         <Reveal className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-22 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
           <div>
@@ -1040,7 +988,7 @@ export function Landing() {
             </Link>
           </div>
         </div>
-        <div className="max-w-[1280px] mx-auto px-5 pb-28 md:pb-8 sm:px-8 lg:px-12 lg:pb-11">
+        <div className="max-w-[1280px] mx-auto px-5 pb-8 sm:px-8 lg:px-12 lg:pb-11">
           <p className="m-0 text-[13.5px] leading-relaxed text-[#a9b9bb] max-w-[60em]">
             IntegraMente en Casa es un servicio de educación, organización y acompañamiento. No sustituye la consulta médica ni la valoración
             neuropsicológica. Ante una emergencia, llamá al 9-1-1.
@@ -1049,7 +997,7 @@ export function Landing() {
       </footer>
 
       {/* Redes flotantes — WhatsApp (el canal natural en Costa Rica) e Instagram */}
-      <div className="fixed z-30 right-4 sm:right-6 hidden md:flex flex-col gap-3" style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}>
+      <div className="fixed z-30 right-4 sm:right-6 flex flex-col gap-3" style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}>
         <a
           href={contacto.instagram}
           target="_blank"
@@ -1078,7 +1026,6 @@ export function Landing() {
           </svg>
         </a>
       </div>
-      <BarraMovil waUrl={waUrl} />
     </div>
   );
 }
