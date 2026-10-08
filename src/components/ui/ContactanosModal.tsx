@@ -3,6 +3,7 @@ import { Modal } from "./Modal";
 const canales: { titulo: string; valor: string }[] = [
   { titulo: "Correo", valor: "info@integramente.com" },
   { titulo: "Teléfono", valor: "+506 8343 5772" },
+  { titulo: "WhatsApp", valor: "+506 8346 4703" },
 ];
 
 // Dudas sobre la cuenta, el programa o pagos — no clínicas (esas van a tu

@@ -666,7 +666,10 @@ export function Landing() {
             <span className="text-[#a9b9bb] text-xs tracking-[0.14em] uppercase">Contacto</span>
             <span>{contacto.telefono}</span>
             <a href={waUrl} target="_blank" rel="noreferrer" className="text-[#d3dcdd]">
-              WhatsApp
+              WhatsApp · +506 8346 4703
+            </a>
+            <a href={contacto.instagram} target="_blank" rel="noreferrer" className="text-[#d3dcdd]">
+              Instagram · @integramentecr
             </a>
             <span>{contacto.correo}</span>
             <span>Costa Rica</span>
@@ -692,19 +695,36 @@ export function Landing() {
         </div>
       </footer>
 
-      {/* WhatsApp flotante — el canal natural en Costa Rica */}
-      <a
-        href={waUrl}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Escribinos por WhatsApp"
-        className="fixed z-30 right-4 sm:right-6 w-14 h-14 rounded-full bg-[#25d366] text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
-        style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
-        </svg>
-      </a>
+      {/* Redes flotantes — WhatsApp (el canal natural en Costa Rica) e Instagram */}
+      <div className="fixed z-30 right-4 sm:right-6 flex flex-col gap-3" style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}>
+        <a
+          href={contacto.instagram}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Seguinos en Instagram"
+          title="Instagram"
+          className="w-14 h-14 rounded-full text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
+          style={{ background: "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%)" }}
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="5.5" stroke="currentColor" strokeWidth="2" />
+            <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="2" />
+            <circle cx="17.4" cy="6.6" r="1.3" fill="currentColor" />
+          </svg>
+        </a>
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Escribinos por WhatsApp"
+          title="WhatsApp"
+          className="w-14 h-14 rounded-full bg-[#25d366] text-white shadow-elevada flex items-center justify-center hover:scale-105 transition-transform"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
+          </svg>
+        </a>
+      </div>
     </div>
   );
 }

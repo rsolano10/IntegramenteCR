@@ -6,8 +6,8 @@
 export const contacto = {
   telefono: "+506 8343 5772",
   // Número de WhatsApp en formato internacional sin "+" (para wa.me).
-  // Confirmar que es la línea de WhatsApp Business de la clínica.
-  whatsapp: "50683435772",
+  whatsapp: "50683464703",
+  instagram: "https://instagram.com/integramentecr",
   correo: "info@integramente.com",
 };
 
