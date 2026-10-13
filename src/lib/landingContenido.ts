@@ -12,21 +12,22 @@ export const contacto = {
 };
 
 export interface MiembroEquipo {
-  nombre: string;
+  // null mientras no tengamos el nombre: se muestra el área como título.
+  nombre: string | null;
   rol: string;
-  bio: string | null;
   // Ruta pública de la foto (ej. "/equipo/guiselle.jpg" dentro de public/).
-  // Sin foto se muestran las iniciales.
+  // Sin foto se muestra un retrato provisional con el color del área.
   foto: string | null;
 }
 
+// Fotos y nombres provisionales: reemplazar `foto` (y `nombre`) por los
+// reales cuando estén. El orden es el orden en que aparecen.
 export const equipo: MiembroEquipo[] = [
-  {
-    nombre: "Dra. Guiselle Solano",
-    rol: "Neuropsicología",
-    bio: null,
-    foto: null,
-  },
+  { nombre: "Dra. Guiselle Solano", rol: "Neuropsicología", foto: null },
+  { nombre: null, rol: "Nutrición", foto: null },
+  { nombre: null, rol: "Gerontogimnasia", foto: null },
+  { nombre: null, rol: "Fisioterapia", foto: null },
+  { nombre: null, rol: "Experto del programa", foto: null },
 ];
 
 export interface Testimonio {
@@ -56,9 +57,10 @@ export const programasHome: Record<"autoguiado" | "orientado", { lema: string; d
   orientado: {
     lema: "Con el equipo de salud a su lado",
     descripcion:
-      "Todo lo del Autoguiado, más sesiones en vivo con nuestros profesionales y el acompañamiento cercano de un experto del programa.",
+      "Todo lo del Autoguiado, más una evaluación neuropsicológica, sesiones en vivo con nuestros profesionales y el acompañamiento cercano de un experto del programa.",
     incluye: [
       "Todo lo del programa Autoguiado",
+      "Evaluación neuropsicológica profesional",
       "Sesiones en vivo, presenciales o virtuales",
       "Con profesionales en neuropsicología, nutrición y fisioterapia",
       "Acompañamiento cercano de un experto del programa",
@@ -67,14 +69,50 @@ export const programasHome: Record<"autoguiado" | "orientado", { lema: string; d
   },
 };
 
+// Las grandes áreas del programa (sección "Cuatro áreas…" del home).
+export const areas: { icono: string; t: string; frase: string; ejemplos: string[]; from: string; to: string }[] = [
+  {
+    icono: "cerebro",
+    t: "Neuropsicología",
+    frase: "Estimulación de la memoria, la atención y el lenguaje.",
+    ejemplos: ["Actividades de memoria y atención", "Reminiscencia y música"],
+    from: "#89c0c6",
+    to: "#3f6a70",
+  },
+  {
+    icono: "manzana",
+    t: "Nutrición",
+    frase: "Una alimentación que cuida el cerebro y la energía del día.",
+    ejemplos: ["Comidas sencillas y nutritivas", "Hidratación diaria"],
+    from: "#e8b5a1",
+    to: "#c0664f",
+  },
+  {
+    icono: "fisio",
+    t: "Gerontogimnasia",
+    frase: "Ejercicio adaptado para mantenerse en movimiento.",
+    ejemplos: ["Movilidad sentado", "Caminatas con música"],
+    from: "#fadfa9",
+    to: "#d9a441",
+  },
+  {
+    icono: "equilibrio",
+    t: "Fisioterapia",
+    frase: "Fuerza, equilibrio y prevención de caídas.",
+    ejemplos: ["Ejercicios de equilibrio", "Movilidad segura en casa"],
+    from: "#ece3c4",
+    to: "#b7a06d",
+  },
+];
+
 export const preguntas: { p: string; r: string }[] = [
   {
     p: "¿Cuál es la diferencia entre los programas?",
-    r: "En los dos, profesionales de la salud revisan y ajustan las actividades. El Orientado suma sesiones en vivo, presenciales o virtuales, con profesionales en neuropsicología, nutrición y fisioterapia, y el acompañamiento cercano de un experto del programa que da seguimiento a los resultados.",
+    r: "En los dos, profesionales de la salud revisan y ajustan las actividades. El Orientado suma una evaluación neuropsicológica profesional, sesiones en vivo (presenciales o virtuales) con nuestro equipo y el acompañamiento cercano de un experto del programa que da seguimiento a los resultados.",
   },
   {
     p: "¿Cuánto cuesta?",
-    r: "Crear el perfil y completar el cuestionario es gratis. Al terminar ves los dos programas con su precio, Autoguiado y Orientado, y elegís el que más te convenga. No se cobra nada sin avisarte antes.",
+    r: "Crear el perfil y completar el cuestionario es gratis. El Autoguiado tiene un precio mensual fijo, que ves en la sección de programas. Para conocer el precio del Orientado, escribinos por WhatsApp y te contamos los detalles. No se cobra nada sin avisarte antes.",
   },
   {
     p: "¿Necesito un diagnóstico?",

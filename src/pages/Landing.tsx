@@ -6,7 +6,7 @@ import { ModuloIcon } from "../components/ui/ModuloIcon";
 import { useScrolled } from "../lib/useScrollFx";
 import { moduloLabel, moduloTheme, type ResourceModulo } from "../lib/modulos";
 import { programas } from "../lib/programasData";
-import { contacto, equipo, preguntas, programasHome, testimonios } from "../lib/landingContenido";
+import { areas, contacto, equipo, preguntas, programasHome, testimonios } from "../lib/landingContenido";
 
 const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -261,6 +261,12 @@ function Icono({ name, className = "w-7 h-7" }: { name: string; className?: stri
         <path {...p} d="M8 11l3-3.5h3l2.5 3M11 7.5l-1 6 3.5 2.5V21M10 13.5L7 21" />
       </>
     ),
+    equilibrio: (
+      <>
+        <circle {...p} cx="12" cy="4.5" r="1.8" />
+        <path {...p} d="M12 7v7M12 14l-3 6.5M12 14h4.5M5.5 9.5l6.5-1 6.5 1" />
+      </>
+    ),
     estrella: <path {...p} d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.4l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" />,
     escudo: (
       <>
@@ -276,12 +282,6 @@ function Icono({ name, className = "w-7 h-7" }: { name: string; className?: stri
   );
 }
 
-const disciplinas = [
-  { icono: "cerebro", t: "Neuropsicología", d: "Memoria, atención y estado de ánimo", from: "#89c0c6", to: "#3f6a70" },
-  { icono: "manzana", t: "Nutrición", d: "Una alimentación que cuida el cerebro", from: "#e8b5a1", to: "#c0664f" },
-  { icono: "fisio", t: "Fisioterapia", d: "Movimiento seguro y equilibrio", from: "#fadfa9", to: "#d9a441" },
-  { icono: "estrella", t: "Expertos del programa", d: "Acompañamiento y seguimiento de resultados", from: "#ece3c4", to: "#b7a06d" },
-];
 
 // Ilustraciones propias para "Para quién es" (en lugar de emojis).
 function IlustracionAcompanar() {
@@ -319,30 +319,9 @@ const pasos = [
   { icono: "semana", t: "¡A disfrutar!", d: "Actividades y recordatorios" },
 ];
 
-const modulosInfo: Record<ResourceModulo, { frase: string; ejemplos: string[] }> = {
-  movimiento: { frase: "Mover el cuerpo con seguridad, a su ritmo.", ejemplos: ["Caminata con música", "Movilidad sentado"] },
-  musica: { frase: "Canciones que despiertan recuerdos y ánimo.", ejemplos: ["Boleros de siempre", "Ritmo con las manos"] },
-  reminiscencia: { frase: "Conversar sobre su historia, fotos y lugares.", ejemplos: ["Álbum de recuerdos", "Recetas de la familia"] },
-  sentidos: { frase: "Texturas, aromas y sabores que conectan.", ejemplos: ["Texturas del jardín", "Aromas de la cocina"] },
-};
-
-const ordenModulos: ResourceModulo[] = ["movimiento", "musica", "reminiscencia", "sentidos"];
 
 
-const seguridad = [
-  {
-    t: "Solo lo que es seguro para su movilidad",
-    d: "Las actividades de movimiento se eligen según cómo camina y su equilibrio. Si algo no es seguro, no se recomienda.",
-  },
-  {
-    t: "Si algo cambia, primero la revisión",
-    d: "Ante una caída o un cambio repentino, la aplicación pausa las actividades físicas, te indica qué hacer y avisa al equipo clínico.",
-  },
-  {
-    t: "Acompaña, no diagnostica",
-    d: "No interpreta exámenes ni cambia tratamientos médicos. Cuando hace falta, te recomendamos una valoración profesional.",
-  },
-];
+
 
 // Preguntas frecuentes como carrusel: cada pregunta es una tarjeta con la
 // respuesta ya visible (nada que abrir). Desplazamiento nativo con
@@ -481,6 +460,38 @@ function FaqCarousel() {
   );
 }
 
+const waOrientado = `https://wa.me/${contacto.whatsapp}?text=${encodeURIComponent("Hola, quiero información sobre el programa Orientado de IntegraMente en Casa.")}`;
+
+function WhatsAppIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.7-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.3-.5v-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z" />
+    </svg>
+  );
+}
+
+// Retrato provisional mientras no esté la foto real del equipo.
+const tonosEquipo = [
+  { from: "#89c0c6", to: "#3f6a70" },
+  { from: "#e8b5a1", to: "#c0664f" },
+  { from: "#fadfa9", to: "#d9a441" },
+  { from: "#ece3c4", to: "#b7a06d" },
+  { from: "#a9c5c8", to: "#5f8b8f" },
+];
+
+function FotoEquipo({ foto, alt, i }: { foto: string | null; alt: string; i: number }) {
+  if (foto) return <img src={foto} alt={alt} className="absolute inset-0 w-full h-full object-cover" />;
+  const t = tonosEquipo[i % tonosEquipo.length];
+  return (
+    <div className="absolute inset-0 flex items-end justify-center" style={{ backgroundImage: `linear-gradient(160deg, ${t.from}55, ${t.to}aa)` }} aria-hidden="true">
+      <svg viewBox="0 0 120 120" className="w-[78%] h-[78%]">
+        <circle cx="60" cy="44" r="22" fill="#f7f4e9" opacity=".9" />
+        <path d="M18 120c0-26 19-44 42-44s42 18 42 44z" fill="#f7f4e9" opacity=".9" />
+      </svg>
+    </div>
+  );
+}
+
 // Celular: un programa a la vez, con selector arriba — así se comparan sin
 // bajar casi dos pantallas de tarjetas apiladas.
 function ProgramasMovil() {
@@ -503,7 +514,7 @@ function ProgramasMovil() {
             }`}
           >
             {x.nombre}
-            <span className="block text-[12px] font-normal text-tinta-tenue -mt-0.5">{x.precio}</span>
+            <span className="block text-[12px] font-normal text-tinta-tenue -mt-0.5">{x.id === "orientado" ? "A tu medida" : x.precio}</span>
           </button>
         ))}
       </div>
@@ -519,10 +530,17 @@ function ProgramasMovil() {
             </span>
           )}
         </div>
-        <p className="m-0 flex items-baseline gap-2">
-          <span className="font-serif text-[38px] leading-none">{p.precio}</span>
-          <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
-        </p>
+        {destacado ? (
+          <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
+            <span className="block font-serif text-[26px] leading-tight text-tinta">Plan a tu medida</span>
+            Escribinos y te contamos el precio y los detalles.
+          </p>
+        ) : (
+          <p className="m-0 flex items-baseline gap-2">
+            <span className="font-serif text-[38px] leading-none">{p.precio}</span>
+            <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
+          </p>
+        )}
         <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{txt.descripcion}</p>
         <ul className="list-none m-0 p-0 grid gap-2.5 pt-4 border-t border-borde-suave">
           {txt.incluye.map((x) => (
@@ -532,9 +550,20 @@ function ProgramasMovil() {
             </li>
           ))}
         </ul>
-        <Button to="/ingresar?mode=register" variant={destacado ? "primary" : "secondary"} fullWidth>
-          Empezar gratis
-        </Button>
+        {destacado ? (
+          <a
+            href={waOrientado}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2.5 min-h-[56px] rounded-full bg-verde-serenidad text-white font-sans font-semibold text-[17px] no-underline active:bg-verde-profundo"
+          >
+            <WhatsAppIcon /> Consultar por WhatsApp
+          </a>
+        ) : (
+          <Button to="/ingresar?mode=register" variant="secondary" fullWidth>
+            Empezar gratis
+          </Button>
+        )}
       </article>
     </div>
   );
@@ -696,86 +725,48 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── Los cuatro módulos ─── */}
+      {/* ─── Las grandes áreas del programa ─── */}
       <section className="bg-white border-y border-borde-suave">
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
           <Reveal>
-            <Eyebrow>Las actividades</Eyebrow>
-            <SectionTitle className="max-w-[16em] mb-3">Cuatro formas de estimular la mente.</SectionTitle>
+            <Eyebrow>Las áreas del programa</Eyebrow>
+            <SectionTitle className="max-w-[16em] mb-3">Cuatro áreas para cuidar la mente y el cuerpo.</SectionTitle>
             <p className="m-0 mb-10 lg:mb-14 text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-              Cada semana combina actividades de estos módulos, elegidas según sus intereses y lo que es seguro para su movilidad.
+              Cada semana combina actividades de estas áreas, elegidas según sus intereses y lo que es seguro para su movilidad.
             </p>
           </Reveal>
           {/* Celular: 2 × 2 compacto */}
           <div className="md:hidden grid grid-cols-2 gap-3">
-            {ordenModulos.map((m) => {
-              const t = moduloTheme[m];
-              return (
-                <article key={m} className="rounded-[22px] overflow-hidden border border-borde bg-white flex flex-col">
-                  <div className="relative h-[86px] flex items-end px-3.5 pb-2.5" style={{ backgroundImage: `linear-gradient(140deg, ${t.from}, ${t.to})` }}>
-                    <ModuloIcon modulo={m} className="absolute right-2.5 top-2.5 w-9 h-9 text-white/45" />
-                    <h3 className="m-0 font-serif font-normal text-[20px] text-white drop-shadow-sm">{moduloLabel[m]}</h3>
-                  </div>
-                  <p className="m-0 px-3.5 py-3 text-[13.5px] leading-snug text-tinta-suave">{modulosInfo[m].frase}</p>
-                </article>
-              );
-            })}
+            {areas.map((a) => (
+              <article key={a.t} className="rounded-[22px] overflow-hidden border border-borde bg-white flex flex-col">
+                <div className="relative h-[86px] flex items-end px-3.5 pb-2.5" style={{ backgroundImage: `linear-gradient(140deg, ${a.from}, ${a.to})` }}>
+                  <Icono name={a.icono} className="absolute right-2.5 top-2.5 w-9 h-9 text-white/55" />
+                  <h3 className="m-0 font-serif font-normal text-[18px] leading-tight text-white drop-shadow-sm">{a.t}</h3>
+                </div>
+                <p className="m-0 px-3.5 py-3 text-[13.5px] leading-snug text-tinta-suave">{a.frase}</p>
+              </article>
+            ))}
           </div>
           <div className="hidden md:grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {ordenModulos.map((m, i) => {
-              const t = moduloTheme[m];
-              const info = modulosInfo[m];
-              return (
-                <Reveal key={m} delay={i * 90}>
-                  <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
-                    <div className="relative h-36 flex items-end p-5" style={{ backgroundImage: `linear-gradient(140deg, ${t.from}, ${t.to})` }}>
-                      <ModuloIcon modulo={m} className="absolute right-4 top-4 w-16 h-16 text-white/35" />
-                      <h3 className="m-0 font-serif font-normal text-[28px] text-white drop-shadow-sm">{moduloLabel[m]}</h3>
-                    </div>
-                    <div className="p-5 flex flex-col gap-3 flex-1">
-                      <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{info.frase}</p>
-                      <ul className="list-none m-0 p-0 grid gap-1.5 mt-auto">
-                        {info.ejemplos.map((e) => (
-                          <li key={e} className="flex items-center gap-2 text-[14px] text-tinta">
-                            <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full" style={{ background: t.to }} />
-                            {e}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </article>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Seguridad ─── */}
-      <section id="seguridad" className="bg-verde-tenue border-y border-borde-suave scroll-mt-20">
-        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] items-start">
-          <Reveal>
-            <Eyebrow>Seguridad primero</Eyebrow>
-            <SectionTitle className="mb-4">Antes de sugerir algo, revisamos que sea seguro.</SectionTitle>
-            <p className="m-0 text-[17px] leading-relaxed text-tinta-suave max-w-[30em]">
-              Cada recomendación pasa por un filtro de seguridad basado en lo que nos contás, y nuestro equipo de salud revisa el plan
-              antes de que llegue a tu casa.
-            </p>
-          </Reveal>
-          <div className="grid gap-3.5">
-            {seguridad.map((s, i) => (
-              <Reveal key={s.t} delay={i * 90}>
-                <div className="flex gap-4 rounded-2xl bg-white border border-borde px-5 py-5 lg:px-6">
-                  <span aria-hidden="true" className="shrink-0 w-9 h-9 rounded-full bg-verde-profundo text-white flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  <div>
-                    <h3 className="m-0 mb-1 text-[17.5px] font-bold">{s.t}</h3>
-                    <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{s.d}</p>
+            {areas.map((a, i) => (
+              <Reveal key={a.t} delay={i * 90}>
+                <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
+                  <div className="relative h-36 flex items-end p-5" style={{ backgroundImage: `linear-gradient(140deg, ${a.from}, ${a.to})` }}>
+                    <Icono name={a.icono} className="absolute right-4 top-4 w-16 h-16 text-white/40" />
+                    <h3 className="m-0 font-serif font-normal text-[26px] leading-tight text-white drop-shadow-sm">{a.t}</h3>
                   </div>
-                </div>
+                  <div className="p-5 flex flex-col gap-3 flex-1">
+                    <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{a.frase}</p>
+                    <ul className="list-none m-0 p-0 grid gap-1.5 mt-auto">
+                      {a.ejemplos.map((e) => (
+                        <li key={e} className="flex items-center gap-2 text-[14px] text-tinta">
+                          <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full" style={{ background: a.to }} />
+                          {e}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </article>
               </Reveal>
             ))}
           </div>
@@ -788,8 +779,8 @@ export function Landing() {
           <Eyebrow>Programas</Eyebrow>
           <SectionTitle className="max-w-[15em] mx-auto mb-3">Los dos con nuestro equipo de salud. Vos elegís qué tan cerca.</SectionTitle>
           <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-            En ambos, profesionales de la salud revisan y ajustan las actividades. La diferencia: el Orientado suma sesiones en vivo y un
-            acompañamiento cercano. Crear el perfil es gratis y el programa se elige al final del cuestionario.
+            En ambos, profesionales de la salud revisan y ajustan las actividades. La diferencia: el Orientado suma una evaluación
+            neuropsicológica, sesiones en vivo y un acompañamiento cercano. Crear el perfil es gratis y el programa se elige al final del cuestionario.
           </p>
         </Reveal>
         <ProgramasMovil />
@@ -808,10 +799,17 @@ export function Landing() {
                     {destacado && <span className="shrink-0 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-semaforo-amarillo-texto px-3 py-1.5 rounded-full font-bold">Con sesiones en vivo</span>}
                   </div>
                   <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{txt.descripcion}</p>
-                  <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
-                    <span className="font-serif text-[40px] leading-none">{p.precio}</span>
-                    <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
-                  </p>
+                  {destacado ? (
+                    <p className="m-0 pb-5 border-b border-borde-suave text-[15.5px] leading-relaxed text-tinta-suave">
+                      <span className="block font-serif text-[28px] leading-tight text-tinta">Plan a tu medida</span>
+                      Escribinos y te contamos el precio y los detalles.
+                    </p>
+                  ) : (
+                    <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
+                      <span className="font-serif text-[40px] leading-none">{p.precio}</span>
+                      <span className="text-[15px] text-tinta-suave">{p.periodo}</span>
+                    </p>
+                  )}
                   <ul className="list-none m-0 p-0 grid gap-2.5">
                     {txt.incluye.map((x) => (
                       <li key={x} className="flex gap-2.5 text-[15.5px] text-tinta">
@@ -820,9 +818,20 @@ export function Landing() {
                       </li>
                     ))}
                   </ul>
-                  <Button to="/ingresar?mode=register" variant={destacado ? "primary" : "secondary"} className="mt-auto self-start">
-                    Empezar gratis
-                  </Button>
+                  {destacado ? (
+                    <a
+                      href={waOrientado}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-auto self-start inline-flex items-center gap-2.5 min-h-[56px] px-8 rounded-full bg-verde-serenidad text-white font-sans font-semibold text-[17px] no-underline hover:bg-verde-profundo transition-colors"
+                    >
+                      <WhatsAppIcon /> Consultar por WhatsApp
+                    </a>
+                  ) : (
+                    <Button to="/ingresar?mode=register" variant="secondary" className="mt-auto self-start">
+                      Empezar gratis
+                    </Button>
+                  )}
                 </article>
               </Reveal>
             );
@@ -847,45 +856,31 @@ export function Landing() {
               Profesionales de distintas áreas revisan y ajustan cada plan, para cuidar la mente, el cuerpo y la alimentación de tu familiar.
             </p>
           </Reveal>
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            {disciplinas.map((d, i) => (
-              <Reveal key={d.t} delay={i * 90}>
-                <div className="h-full rounded-[28px] bg-white border border-borde p-5 sm:p-6 flex flex-col items-center text-center">
-                  <span
-                    className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-white mb-4 shadow-[0_14px_30px_-16px_rgba(31,51,56,0.6)]"
-                    style={{ backgroundImage: `linear-gradient(145deg, ${d.from}, ${d.to})` }}
-                  >
-                    <Icono name={d.icono} className="w-9 h-9" />
-                  </span>
-                  <h3 className="m-0 font-serif font-normal text-[21px] sm:text-[23px] leading-tight">{d.t}</h3>
-                  <p className="m-0 mt-1.5 text-[14px] sm:text-[15px] leading-relaxed text-tinta-suave">{d.d}</p>
-                </div>
+          <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            {equipo.map((m, i) => (
+              <Reveal
+                key={(m.nombre ?? "") + m.rol}
+                delay={i * 80}
+                // Celular: si queda una tarjeta sola en la última fila, va centrada.
+                className={i === equipo.length - 1 && equipo.length % 2 === 1 ? "col-span-2 w-[calc(50%-0.5rem)] justify-self-center sm:col-span-1 sm:w-auto sm:justify-self-stretch" : ""}
+              >
+                <figure className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
+                  <div className="relative aspect-[4/5] bg-campo">
+                    <FotoEquipo foto={m.foto} alt={m.nombre ?? m.rol} i={i} />
+                    {!m.foto && (
+                      <span className="absolute top-3 left-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/90 bg-tinta/25 rounded-full px-2 py-0.5">
+                        Foto pronto
+                      </span>
+                    )}
+                  </div>
+                  <figcaption className="px-4 py-3.5 text-center">
+                    <p className="m-0 font-serif text-[19px] sm:text-[20px] leading-tight text-tinta">{m.nombre ?? m.rol}</p>
+                    <p className="m-0 mt-0.5 text-[13.5px] text-verde-profundo font-semibold">{m.nombre ? m.rol : "Nuestro equipo"}</p>
+                  </figcaption>
+                </figure>
               </Reveal>
             ))}
           </div>
-          {equipo.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3 mt-8">
-              {equipo.map((m) => (
-                <span key={m.nombre} className="inline-flex items-center gap-3 rounded-full bg-white border border-borde pl-1.5 pr-4 py-1.5">
-                  {m.foto ? (
-                    <img src={m.foto} alt="" className="w-9 h-9 rounded-full object-cover" />
-                  ) : (
-                    <span className="w-9 h-9 rounded-full bg-verde-profundo text-white font-serif text-[14px] flex items-center justify-center">
-                      {m.nombre
-                        .replace(/^Dr[a]?\.\s*/, "")
-                        .split(" ")
-                        .map((w) => w[0])
-                        .slice(0, 2)
-                        .join("")}
-                    </span>
-                  )}
-                  <span className="text-[14.5px] text-tinta">
-                    <strong className="font-semibold">{m.nombre}</strong> <span className="text-tinta-suave">· {m.rol}</span>
-                  </span>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
