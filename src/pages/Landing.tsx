@@ -477,6 +477,7 @@ const tonosEquipo = [
   { from: "#fadfa9", to: "#d9a441" },
   { from: "#ece3c4", to: "#b7a06d" },
   { from: "#a9c5c8", to: "#5f8b8f" },
+  { from: "#d8c9b4", to: "#8f7a5e" },
 ];
 
 function FotoEquipo({ foto, alt, i }: { foto: string | null; alt: string; i: number }) {
@@ -856,7 +857,7 @@ export function Landing() {
               Profesionales de distintas áreas revisan y ajustan cada plan, para cuidar la mente, el cuerpo y la alimentación de tu familiar.
             </p>
           </Reveal>
-          <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             {equipo.map((m, i) => (
               <Reveal
                 key={(m.nombre ?? "") + m.rol}

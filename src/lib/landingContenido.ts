@@ -23,7 +23,8 @@ export interface MiembroEquipo {
 // Fotos y nombres provisionales: reemplazar `foto` (y `nombre`) por los
 // reales cuando estén. El orden es el orden en que aparecen.
 export const equipo: MiembroEquipo[] = [
-  { nombre: "Dra. Guiselle Solano", rol: "Neuropsicología", foto: null },
+  { nombre: "Dra. Guiselle Solano", rol: "Directora del programa", foto: null },
+  { nombre: null, rol: "Neuropsicología", foto: null },
   { nombre: null, rol: "Nutrición", foto: null },
   { nombre: null, rol: "Gerontogimnasia", foto: null },
   { nombre: null, rol: "Fisioterapia", foto: null },
