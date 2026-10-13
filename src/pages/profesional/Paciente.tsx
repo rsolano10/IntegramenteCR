@@ -13,11 +13,11 @@ import { EvaluacionTab } from "../../components/profesional/paciente/EvaluacionT
 import { type PlanSummary } from "../../components/profesional/paciente/SemanaTab";
 import { SeguimientoTab } from "../../components/profesional/paciente/SeguimientoTab";
 import { PlanificadorTab } from "../../components/profesional/paciente/PlanificadorTab";
-import { MensajesTab } from "../../components/profesional/paciente/MensajesTab";
+import { ContactoWhatsApp } from "../../components/profesional/paciente/ContactoWhatsApp";
 import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 
-type Tab = "evaluacion" | "semana" | "planificar" | "mensajes" | "cuentas";
+type Tab = "evaluacion" | "semana" | "planificar" | "cuentas";
 
 const respondenteLabel: Record<string, string> = {
   propia_persona: "la propia persona",
@@ -98,13 +98,11 @@ export function Paciente() {
     ? [
         { id: "evaluacion", label: "Evaluación inicial", dot: true },
         { id: "planificar", label: "Armar primer plan" },
-        { id: "mensajes", label: "Mensajes" },
         { id: "cuentas", label: "Cuentas" },
       ]
     : [
         { id: "semana", label: "Seguimiento", dot: patient.needs_review },
         { id: "planificar", label: "Planificar", dot: patient.needs_assignment },
-        { id: "mensajes", label: "Mensajes" },
         { id: "evaluacion", label: "Perfil inicial" },
         { id: "cuentas", label: "Cuentas" },
       ];
@@ -114,7 +112,6 @@ export function Paciente() {
 
   function done(message: string, isError?: boolean) {
     queryClient.invalidateQueries({ queryKey: ["patients"] });
-    queryClient.invalidateQueries({ queryKey: ["pending-threads"] });
     navigate("/app/profesional/panel", { state: { statusMsg: { text: message, error: isError } } });
   }
 
@@ -168,6 +165,7 @@ export function Paciente() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ContactoWhatsApp patientId={patient.id} patientNombre={patient.nombre} />
           {attention && (
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold ${attentionMeta[attention].bg} ${attentionMeta[attention].text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${attentionMeta[attention].dot}`} />
@@ -266,7 +264,6 @@ export function Paciente() {
           )
         ))}
 
-      {tab === "mensajes" && <MensajesTab patient={patient} myUserId={myUserId} />}
       {tab === "cuentas" && <VinculosTab patient={patient} onChanged={changed} />}
     </div>
   );

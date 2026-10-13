@@ -3,12 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { usePlanMeta } from "../../lib/usePlan";
 import { Metric } from "../../components/ui/Metric";
-import { Button } from "../../components/ui/Button";
+import { BotonWhatsApp } from "../../components/ui/BotonWhatsApp";
+import { useMyPatient } from "../../lib/useMyPatient";
+import { waEquipo } from "../../lib/whatsapp";
 
 const moodLabel: Record<string, string> = { better: "Mejor", same: "Igual", worse: "Peor" };
 
 export function Resumen() {
   const location = useLocation();
+  const { data: myPatient } = useMyPatient();
   const [searchParams] = useSearchParams();
   const planId = searchParams.get("plan") ?? undefined;
   // Right after submitting, router state has the freshest values — the
@@ -69,14 +72,14 @@ export function Resumen() {
         )}
         {planMeta?.feedback_mensaje && (
           <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4">
-            <p className="m-0 mb-1 text-[13px] tracking-[0.1em] uppercase text-verde-profundo">Feedback de tu equipo clínico</p>
+            <p className="m-0 mb-1 text-[13px] tracking-[0.1em] uppercase text-verde-profundo">Comentario de tu equipo clínico</p>
             <p className="m-0 text-[16px] leading-relaxed text-tinta">{planMeta.feedback_mensaje}</p>
           </div>
         )}
       </div>
-      <Button variant="secondary" fullWidth to="/app/mensajes">
-        Escribile a tu equipo clínico
-      </Button>
+      <BotonWhatsApp variant="outline" fullWidth href={waEquipo("Tengo una consulta sobre la semana.", myPatient?.nombre)}>
+        Escribile al equipo por WhatsApp
+      </BotonWhatsApp>
       <p className="m-0 mt-3.5 text-[15px] leading-relaxed text-tinta-tenue">
         {planMeta?.reviewed_at
           ? "Tu equipo clínico ya revisó esta semana."

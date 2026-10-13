@@ -524,7 +524,7 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
         `<p style="margin:0 0 14px 0;">Hola${c.nombre ? `, ${escapeHtml(c.nombre)}` : ""}.</p>
          <p style="margin:0;">Gracias por confiar en IntegraMente en Casa. Revisamos con cuidado la información de <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong> y, por ahora, el programa en casa no es la mejor opción. Te dejamos el mensaje del equipo clínico:</p>
          ${quoteBlock(mensaje)}
-         <p style="margin:18px 0 0 0;">Si tenés preguntas o querés conversar otras alternativas, respondé a este correo o llamanos.</p>`,
+         <p style="margin:18px 0 0 0;">Si tenés preguntas o querés conversar otras alternativas, escribinos por WhatsApp al +506 8346 4703.</p>`,
       );
       const err = await sendMail(c.email, "Sobre tu solicitud en IntegraMente en Casa", html);
       if (err) fallos.push(err);
@@ -569,7 +569,9 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
     return json({ ok: true, warning: "El plan se asignó, pero no encontramos cuentas vinculadas para avisar." });
   }
 
-  const canales = new Set<string>(["chat de la app"]);
+  // Sin chat en la app (WhatsApp es el único canal): la bienvenida se ve
+  // al entrar, como aviso de una sola vía.
+  const canales = new Set<string>(primeraVez ? ["la app"] : []);
   const failures: string[] = [];
   for (const profileId of profileIds) {
     const [{ data: found }, { data: prof }] = await Promise.all([
@@ -587,7 +589,8 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
              ? `Nuestro equipo clínico revisó el perfil de <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong> y armó su programa personalizado. Desde hoy vas a ver las actividades de cada día en la app.`
              : `Ya preparamos las actividades de la próxima semana para <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong>, tomando en cuenta cómo les fue.`
          }</p>
-         ${mensaje ? `<p style="margin:18px 0 0 0;">Un mensaje de tu profesional:</p>${quoteBlock(mensaje)}` : ""}`,
+         ${mensaje ? `<p style="margin:18px 0 0 0;">Un mensaje de nuestro equipo:</p>${quoteBlock(mensaje)}` : ""}
+         <p style="margin:18px 0 0 0;">¿Tenés alguna duda? Escribinos por WhatsApp al +506 8346 4703.</p>`,
         { label: primeraVez ? "Ver el programa" : "Ver la semana", url: `${SITE_URL}/app/login` },
       );
       const mailError = await sendMail(
@@ -678,7 +681,7 @@ async function handleNotifyRiskAlert(admin: ReturnType<typeof createClient>, cal
        </td></tr>
      </table>
      <p style="margin:18px 0 0 0;">Contactá a la familia lo antes posible y marcá el aviso como atendido en el panel.</p>`,
-    { label: "Abrir el paciente", url: `${SITE_URL}/app/profesional/paciente/${alerta.patient_id}?tab=mensajes` },
+    { label: "Abrir el paciente", url: `${SITE_URL}/app/profesional/paciente/${alerta.patient_id}?tab=semana` },
   );
 
   let sent = 0;

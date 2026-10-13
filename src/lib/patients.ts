@@ -40,6 +40,6 @@ export function usePatients() {
   });
 }
 
-export function patientPath(id: string, tab?: "evaluacion" | "semana" | "planificar" | "mensajes" | "cuentas") {
+export function patientPath(id: string, tab?: "evaluacion" | "semana" | "planificar" | "cuentas") {
   return `/app/profesional/paciente/${id}${tab ? `?tab=${tab}` : ""}`;
 }

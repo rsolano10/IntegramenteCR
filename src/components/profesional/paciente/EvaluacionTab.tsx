@@ -66,7 +66,7 @@ export function EvaluacionTab({
             <>
               <h3 className="font-serif font-normal text-[22px] m-0 mb-2">¿Aceptamos a {patient.nombre.split(" ")[0]}?</h3>
               <p className="m-0 mb-5 text-[14px] leading-relaxed text-tinta-suave">
-                Al aceptar armás su primera semana en el planificador. La familia recibe el aviso por el chat de la app, correo y WhatsApp.
+                Al aceptar armás su primera semana en el planificador. La familia recibe el aviso por correo y WhatsApp, y lo ve al entrar a la app.
               </p>
               <div className="grid gap-2.5">
                 <Button variant="ink" fullWidth onClick={onAccept} disabled={!hasAnswers}>

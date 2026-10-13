@@ -1,12 +1,15 @@
 import { assistantAnswers } from "./mockData";
+import { waEquipo } from "./whatsapp";
 
 // The assistant never improvises clinical content (Handoff §7 · CLAUDE.md rules).
 // It is a fixed lookup/decision tree presented as chat: risk keywords escalate to
 // the matching alert screen, known topics return the pre-approved canned answer,
-// anything else offers to loop in the assigned professional.
+// anything else offers to write to the health team on WhatsApp (the only
+// channel with the clinic; the app has no family ↔ clinic chat).
 
 export interface ChatReply {
   text: string;
+  // `to`: ruta interna de la app, o un link https (WhatsApp) que se abre afuera.
   escalate?: { label: string; to: string };
 }
 
@@ -86,7 +89,7 @@ export function classifyMessage(raw: string): ChatReply {
   }
 
   return {
-    text: "No tengo una respuesta protocolizada para eso. Escribile a tu profesional y te responde directamente.",
-    escalate: { label: "Escribirle a tu profesional", to: "/app/ayuda?tab=profesional" },
+    text: "No tengo una respuesta protocolizada para eso. Escribile a nuestro equipo de salud por WhatsApp y te responde directamente.",
+    escalate: { label: "Escribir por WhatsApp", to: waEquipo(`Tengo una consulta: ${raw.trim()}`) },
   };
 }

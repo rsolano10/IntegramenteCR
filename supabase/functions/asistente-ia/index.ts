@@ -7,7 +7,9 @@
 //      depende del modelo.
 //   2. El modelo clasifica cada mensaje en una de cuatro categorías:
 //        responder        → consejo práctico de cuidado, sin riesgo para la salud
-//        profesional      → necesita criterio profesional: se deriva a su profesional
+//        profesional      → necesita criterio profesional: se deriva al equipo
+//                           por WhatsApp (único canal con la clínica; no hay
+//                           chat en la app)
 //        emergencia       → señales de urgencia que se escaparon de las reglas
 //        fuera_de_alcance → nada que ver con el cuidado ni con la app
 //   3. Validación del lado del servidor: una "respuesta" que hable de dosis
@@ -36,9 +38,9 @@ type Categoria = "responder" | "profesional" | "emergencia" | "fuera_de_alcance"
 const TEXTO_FUERA =
   "Este chat es solo para dudas sobre el cuidado de tu familiar y el uso de IntegraMente (actividades, rutinas, ánimo, sueño, alimentación diaria, comunicación). Con eso no te puedo ayudar.";
 const TEXTO_EMERGENCIA =
-  "Esto puede ser una urgencia. Si hay peligro inmediato, llamá al 9-1-1. Te muestro qué hacer paso a paso y cómo avisar a tu profesional.";
+  "Esto puede ser una urgencia. Si hay peligro inmediato, llamá al 9-1-1. Te muestro qué hacer paso a paso y cómo avisarle a nuestro equipo.";
 const TEXTO_PROFESIONAL_SEGURO =
-  "Esta pregunta necesita el criterio de un profesional de la salud que conozca el caso de tu familiar. Te recomiendo escribirle a tu profesional.";
+  "Esta pregunta necesita el criterio de un profesional de la salud que conozca el caso de tu familiar. Escribile a nuestro equipo por WhatsApp con el botón de abajo.";
 
 const INSTRUCCIONES = `Sos el asistente de "Respuestas rápidas" de IntegraMente en Casa, una aplicación de Costa Rica que acompaña a familias que cuidan a personas adultas mayores con cambios cognitivos (o que quieren cuidar su memoria), con un plan semanal de actividades de estimulación (movimiento, música, reminiscencia, sentidos) preparado por un equipo de salud (neuropsicología, nutrición, fisioterapia).
 
@@ -54,9 +56,9 @@ Reglas para "responder":
 - Español de Costa Rica con voseo (vos tenés, podés, probá), cálido y práctico. Nunca uses "usted" ni "tú".
 - Máximo 110 palabras. Podés usar hasta 4 puntos que empiecen con "•". Sin guiones largos.
 - Nunca diagnostiques, nunca menciones medicamentos ni dosis, nunca contradigas indicaciones médicas.
-- Si es útil, cerrá con una línea breve de cuándo conviene consultar a su profesional.
+- Si es útil, cerrá con una línea breve de cuándo conviene consultar a nuestro equipo de salud por WhatsApp.
 
-Para "profesional": escribí 1 o 2 frases empáticas que validen la duda y expliquen por qué conviene preguntarle a su profesional. No des la respuesta clínica.
+Para "profesional": escribí 1 o 2 frases empáticas que validen la duda y expliquen por qué conviene consultarla con nuestro equipo de salud por WhatsApp (la app muestra un botón para escribirles; no hay chat con profesionales dentro de la app). No des la respuesta clínica.
 Para "emergencia" y "fuera_de_alcance": la respuesta puede quedar vacía.
 
 Devolvé solo JSON con "categoria" y "respuesta".`;
@@ -138,7 +140,7 @@ Deno.serve(async (req) => {
     .eq("profile_id", user.id)
     .gte("created_at", new Date(Date.now() - 3600 * 1000).toISOString());
   if ((count ?? 0) >= LIMITE_POR_HORA) {
-    return json({ categoria: "limite", respuesta: "Hiciste muchas consultas en la última hora. Probá de nuevo en un rato, o escribile a tu profesional." });
+    return json({ categoria: "limite", respuesta: "Hiciste muchas consultas en la última hora. Probá de nuevo en un rato, o escribile a nuestro equipo por WhatsApp." });
   }
 
   const r = await preguntarGemini(mensaje, historial);

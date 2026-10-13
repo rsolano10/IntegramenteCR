@@ -151,7 +151,6 @@ function RevisionClinica({
     }
     queryClient.invalidateQueries({ queryKey: ["patient-plans", patientId] });
     queryClient.invalidateQueries({ queryKey: ["patients"] });
-    queryClient.invalidateQueries({ queryKey: ["mensajes", patientId] });
   }
 
   return (
@@ -173,7 +172,7 @@ function RevisionClinica({
             aria-label="Mensaje para la familia"
             className="w-full rounded-xl border-[1.5px] border-borde-campo bg-campo px-3 py-2.5 font-sans text-[13.5px] leading-relaxed text-tinta resize-y focus:border-verde-serenidad"
           />
-          <p className="m-0 -mt-1 text-[12px] text-tinta-tenue">Le llega a la familia por el chat. Podés dejarlo vacío.</p>
+          <p className="m-0 -mt-1 text-[12px] text-tinta-tenue">La familia lo ve en el resumen de la semana. Podés dejarlo vacío.</p>
           {error && <p className="m-0 text-[13px] text-alerta-texto">{error}</p>}
           <Button variant="ink" dense onClick={markReviewed} disabled={saving}>
             {saving ? "Guardando…" : "Marcar como revisada"}

@@ -3,10 +3,12 @@
 // una lista vacía NO se muestran — nunca se publican testimonios, fotos o
 // biografías inventadas en un sitio de salud.
 
+import { WHATSAPP_EQUIPO } from "./whatsapp";
+
 export const contacto = {
   telefono: "+506 8343 5772",
   // Número de WhatsApp en formato internacional sin "+" (para wa.me).
-  whatsapp: "50683464703",
+  whatsapp: WHATSAPP_EQUIPO,
   instagram: "https://instagram.com/integramentecr",
   correo: "info@integramente.com",
 };
@@ -129,7 +131,7 @@ export const preguntas: { p: string; r: string }[] = [
   },
   {
     p: "¿Qué pasa si hay una emergencia?",
-    r: "Ante una emergencia médica, llamá al 9-1-1. Dentro de la aplicación, el botón SOS te orienta según lo que esté pasando (una caída, un cambio repentino, si no encontrás a tu familiar) y te permite avisar a tu profesional de inmediato.",
+    r: "Ante una emergencia médica, llamá al 9-1-1. Dentro de la aplicación, el botón SOS te orienta según lo que esté pasando (una caída, un cambio repentino, si no encontrás a tu familiar) y te permite avisarle al equipo de inmediato.",
   },
   {
     p: "¿Quién ve mi información?",
@@ -137,6 +139,6 @@ export const preguntas: { p: string; r: string }[] = [
   },
   {
     p: "¿Puedo cambiar de programa?",
-    r: "Sí. Escribinos desde la aplicación o a info@integramente.com y con gusto lo coordinamos.",
+    r: "Sí. Escribinos por WhatsApp o a info@integramente.com y con gusto lo coordinamos.",
   },
 ];

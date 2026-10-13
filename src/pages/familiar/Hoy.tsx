@@ -1,9 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import type { PlanTask } from "../../lib/mockData";
 import { ImagePlaceholder } from "../../components/ui/ImagePlaceholder";
-import { supabase } from "../../lib/supabase";
-import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
 import { Button } from "../../components/ui/Button";
@@ -42,30 +39,9 @@ function TaskRow({ task, onOpen }: { task: PlanTask; onOpen: () => void }) {
 
 export function Hoy() {
   const navigate = useNavigate();
-  const session = useSession();
-  const myUserId = session.status === "authed" ? session.session.user.id : null;
   const { data: myPatient } = useMyPatient();
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const { data: planMeta } = useCurrentPlanMeta(myPatient?.id);
-
-  const { data: recentMensajes } = useQuery({
-    queryKey: ["mensajes-preview", myPatient?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mensajes")
-        .select("id, texto, autor_id, created_at")
-        .eq("patient_id", myPatient!.id)
-        .order("created_at", { ascending: false })
-        .limit(2);
-      if (error) throw error;
-      return data as { id: string; texto: string; autor_id: string | null; created_at: string }[];
-    },
-    enabled: !!myPatient,
-  });
-  // Only surface the preview when the clinic spoke last — if the family sent
-  // the last message, there's nothing new for them to see here.
-  const ultimoMensaje = recentMensajes?.[0]?.autor_id !== myUserId ? recentMensajes?.[0] : undefined;
-  const hasMoreMensajes = (recentMensajes?.length ?? 0) > 1;
 
   const today = days?.find((d) => d.isToday);
   // Registered tasks (any outcome) drop to a separate "Realizado" section so
@@ -80,17 +56,6 @@ export function Hoy() {
 
   return (
     <div>
-      {ultimoMensaje && (
-        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4.5 mb-4.5">
-          <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
-          <p className="m-0 text-[16px] leading-relaxed text-tinta">{ultimoMensaje.texto}</p>
-          {hasMoreMensajes && (
-            <Link to="/app/ayuda?tab=profesional" className="inline-block mt-2 text-[13px] font-semibold text-verde-profundo">
-              Ver mensajes anteriores ›
-            </Link>
-          )}
-        </div>
-      )}
 
       <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Actividades de hoy</p>
 

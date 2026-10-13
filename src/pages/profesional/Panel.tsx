@@ -8,14 +8,6 @@ import { patientPath, usePatients } from "../../lib/patients";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 import { planTiers, type Semaforo } from "../../lib/mockData";
 
-interface PendingThread {
-  patient_id: string;
-  patient_nombre: string;
-  last_message: string;
-  last_author_nombre: string | null;
-  last_at: string;
-}
-
 const modalidadLabel = Object.fromEntries(planTiers.map((t) => [t.id, t.nombre]));
 
 function timeAgo(iso: string) {
@@ -58,15 +50,6 @@ export function Panel() {
   }, []);
 
   const { data: patients, isLoading: loadingPatients } = usePatients();
-
-  const { data: pendingThreads, isLoading: loadingThreads } = useQuery({
-    queryKey: ["pending-threads"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_pending_threads");
-      if (error) throw error;
-      return data as PendingThread[];
-    },
-  });
 
   const porEvaluar = useMemo(
     () =>
@@ -124,8 +107,8 @@ export function Panel() {
           <h2 className="font-serif font-normal text-2xl m-0">Lo que necesita atención hoy</h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 border-b border-borde-suave">
-          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-borde-suave">
+        <div className="border-b border-borde-suave">
+          <div className="px-5 py-6 sm:px-8 sm:py-7">
             <div className="flex items-center justify-between mb-3.5">
               <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Pacientes por evaluar</p>
               {porEvaluar.length > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{porEvaluar.length}</span>}
@@ -168,42 +151,6 @@ export function Panel() {
             )}
           </div>
 
-          <div className="px-5 py-6 sm:px-8 sm:py-7">
-            <div className="flex items-center justify-between mb-3.5">
-              <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Mensajes sin responder</p>
-              {(pendingThreads?.length ?? 0) > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{pendingThreads?.length}</span>}
-            </div>
-
-            {loadingThreads && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
-
-            {!loadingThreads && (pendingThreads?.length ?? 0) === 0 && (
-              <p className="m-0 text-[15px] text-tinta-tenue">No hay mensajes de familias sin responder.</p>
-            )}
-
-            {!loadingThreads && (pendingThreads?.length ?? 0) > 0 && (
-              <div className="grid gap-2">
-                {pendingThreads!.slice(0, 5).map((t) => (
-                  <button
-                    key={t.patient_id}
-                    type="button"
-                    onClick={() => navigate(patientPath(t.patient_id, "mensajes"))}
-                    className="grid gap-1 bg-campo rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full"
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="text-[15px] font-bold text-tinta">{t.patient_nombre}</span>
-                      <span className="text-[12px] text-tinta-tenue shrink-0">{timeAgo(t.last_at)}</span>
-                    </span>
-                    <span className="text-[13px] text-tinta-suave truncate">
-                      {t.last_author_nombre ?? "Familia"}: {t.last_message}
-                    </span>
-                  </button>
-                ))}
-                {(pendingThreads?.length ?? 0) > 5 && (
-                  <p className="m-0 text-[13px] text-tinta-tenue">y {pendingThreads!.length - 5} más</p>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 border-t border-borde-suave">

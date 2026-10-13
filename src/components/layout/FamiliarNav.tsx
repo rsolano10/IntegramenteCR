@@ -1,6 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { useMyPatient } from "../../lib/useMyPatient";
-import { useUnreadMensajes } from "../../lib/useMensajes";
 
 interface NavItem {
   label: string;
@@ -57,18 +55,10 @@ const items: NavItem[] = [
 ];
 
 // Tres pestañas (antes cinco): Hoy, Mi semana (plan + evaluación +
-// actividades sugeridas) y Ayuda (respuestas rápidas + tu profesional).
+// actividades sugeridas) y Ayuda (respuestas rápidas + WhatsApp con el equipo).
 // Menos destinos = botones más grandes en la barra inferior del teléfono.
 export function FamiliarNav() {
   const { pathname } = useLocation();
-  const { data: myPatient } = useMyPatient();
-  const unread = useUnreadMensajes(myPatient?.id);
-  const badge = (to: string) =>
-    to === "/app/ayuda" && unread > 0 ? (
-      <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-semaforo-rojo text-white text-[10.5px] font-bold inline-flex items-center justify-center" aria-label={`${unread} mensajes sin leer`}>
-        {unread}
-      </span>
-    ) : null;
 
   return (
     <>
@@ -87,10 +77,7 @@ export function FamiliarNav() {
                 active ? "text-verde-profundo" : "text-tinta-tenue"
               }`}
             >
-              <span className="relative">
-                {item.icon(active)}
-                {badge(item.to)}
-              </span>
+              {item.icon(active)}
               <span className={`text-[12px] ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
               <span className={`h-[3px] w-6 rounded-full ${active ? "bg-verde-serenidad" : "bg-transparent"}`} />
             </Link>
@@ -112,11 +99,6 @@ export function FamiliarNav() {
             >
               {item.icon(active)}
               {item.label}
-              {item.to === "/app/ayuda" && unread > 0 && (
-                <span className="min-w-5 h-5 px-1.5 rounded-full bg-semaforo-rojo text-white text-[11.5px] font-bold inline-flex items-center justify-center" aria-label={`${unread} mensajes sin leer`}>
-                  {unread}
-                </span>
-              )}
             </Link>
           );
         })}

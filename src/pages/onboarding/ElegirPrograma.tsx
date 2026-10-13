@@ -183,7 +183,7 @@ export function ElegirPrograma() {
 
       <p className="m-0 mt-6 text-center text-[14px] leading-relaxed text-tinta-tenue max-w-[560px] mx-auto">
         <strong className="text-tinta-suave">Hoy no se cobra nada.</strong> Te vamos a avisar antes de cualquier cobro. Si más adelante
-        querés cambiar de programa, solo escribile a tu clínica.
+        querés cambiar de programa, solo escribinos por WhatsApp.
       </p>
 
       <div className="fixed inset-x-0 bottom-0 z-10 bg-white/95 backdrop-blur border-t border-borde" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>

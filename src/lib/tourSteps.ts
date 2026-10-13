@@ -15,7 +15,7 @@ export const familiarTourSteps: TourStep[] = [
   },
   {
     title: "Ayuda",
-    body: "Respuestas rápidas a las dudas más comunes del cuidado y, si tu programa lo incluye, la conversación con tu profesional. Un número rojo te avisa si te escribieron.",
+    body: "Respuestas rápidas a las dudas más comunes del cuidado. Si necesitás hablar con un profesional, desde acá le escribís a nuestro equipo por WhatsApp.",
   },
   {
     title: "SOS, siempre a mano",
@@ -49,7 +49,7 @@ export const profesionalTourSteps: TourStep[] = [
   },
   {
     title: "Lo que necesita atención hoy",
-    body: "Esta tarjeta agrupa lo pendiente en cuatro listas: pacientes por evaluar, mensajes sin responder, semanas esperando tu revisión, y pacientes esperando que les asignes la próxima semana. Tocá cualquier fila para abrir el detalle.",
+    body: "Esta tarjeta agrupa lo pendiente en tres listas: pacientes por evaluar, semanas esperando tu revisión, y pacientes esperando que les asignes la próxima semana. Tocá cualquier fila para abrir el detalle. Con las familias se habla por WhatsApp, desde la ficha de cada paciente.",
   },
   {
     title: "El programa en conjunto",
@@ -61,6 +61,6 @@ export const profesionalTourSteps: TourStep[] = [
   },
   {
     title: "Ya podés empezar",
-    body: "Eso es todo por ahora. Cualquier paciente o mensaje pendiente lo vas a ver reflejado acá mismo.",
+    body: "Eso es todo por ahora. Cualquier paciente pendiente lo vas a ver reflejado acá mismo.",
   },
 ];

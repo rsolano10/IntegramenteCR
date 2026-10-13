@@ -15,6 +15,8 @@ import { useProductTour } from "../../lib/useProductTour";
 import { useCurrentPlanMeta, usePlan } from "../../lib/usePlan";
 import { NuevaSemanaModal } from "../ui/NuevaSemanaModal";
 import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
+import { waEquipo } from "../../lib/whatsapp";
+import { BotonWhatsApp } from "../ui/BotonWhatsApp";
 
 const pasosRevision = [
   { titulo: "Cuestionario recibido", detalle: "Ya tenemos toda la información que nos compartiste.", estado: "hecho" },
@@ -25,12 +27,12 @@ const pasosRevision = [
   },
   {
     titulo: "Programa personalizado",
-    detalle: "Te avisamos por correo en cuanto esté listo. Ese día se habilitan las actividades, el plan semanal y los mensajes.",
+    detalle: "Te avisamos por correo en cuanto esté listo. Ese día se habilitan las actividades y el plan semanal.",
     estado: "pendiente",
   },
 ] as const;
 
-function PendienteRevision({ nombre, desdeMensajes, programaElegido }: { nombre: string; desdeMensajes: boolean; programaElegido: boolean }) {
+function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: string; desdeAyuda: boolean; programaElegido: boolean }) {
   return (
     <div className="max-w-[560px] mx-auto pt-4 pb-16">
       {!programaElegido && (
@@ -46,14 +48,13 @@ function PendienteRevision({ nombre, desdeMensajes, programaElegido }: { nombre:
           </Button>
         </div>
       )}
-      {desdeMensajes && (
-        <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl p-5 mb-8">
-          <p className="m-0 mb-1.5 text-[12px] tracking-[0.14em] uppercase text-riesgo-texto font-semibold">Mensajes con tu profesional</p>
-          <p className="m-0 text-[15px] leading-relaxed text-riesgo-texto">
-            Esta conversación se abre cuando el programa de {nombre} esté asignado — así la profesional que te escriba ya conoce su caso
-            y puede responderte con contexto. Mientras tanto, si tenés una duda urgente, escribinos a{" "}
-            <strong>info@integramente.com</strong> o llamanos al <strong>+506 8343 5772</strong>.
-          </p>
+      {desdeAyuda && (
+        <div className="bg-white border border-borde rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1">
+            <p className="m-0 mb-1 text-[16px] font-semibold text-tinta">¿Tenés una duda mientras tanto?</p>
+            <p className="m-0 text-[14px] leading-relaxed text-tinta-suave">Nuestro equipo de salud te atiende por WhatsApp.</p>
+          </div>
+          <BotonWhatsApp href={waEquipo(undefined, nombre)} className="shrink-0" />
         </div>
       )}
       <div className="text-center mb-8">
@@ -153,7 +154,7 @@ export function FamiliarShell() {
       )}
 
       <div className="max-w-3xl mx-auto px-5 py-6 sm:px-8 lg:px-12 lg:py-8">
-        {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeMensajes={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}
+        {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeAyuda={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}
       </div>
 
       {(() => {

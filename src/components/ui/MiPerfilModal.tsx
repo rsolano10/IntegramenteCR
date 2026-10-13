@@ -10,6 +10,8 @@ import { useChangePassword } from "../../lib/useChangePassword";
 import { planTiers } from "../../lib/mockData";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
+import { BotonWhatsApp } from "./BotonWhatsApp";
+import { waEquipo } from "../../lib/whatsapp";
 import { PasswordInput } from "./PasswordInput";
 import { PasswordRequirements } from "./PasswordRequirements";
 
@@ -357,8 +359,11 @@ function ProgramaCard({ patient, onChoose }: { patient: MyPatient; onChoose: () 
       <p className="m-0 mt-3 text-[13.5px] leading-relaxed text-tinta-suave">
         {pendiente
           ? "El equipo clínico está armando el plan. Mientras tanto podés cambiar de programa."
-          : "Para cambiar de programa, escribile a tu clínica desde Mensajes."}
+          : "Para cambiar de programa, escribinos por WhatsApp."}
       </p>
+      {!pendiente && (
+        <BotonWhatsApp variant="outline" href={waEquipo("Quiero cambiar de programa.", patient.nombre)} className="mt-3" />
+      )}
       {pendiente && (
         <Button variant="secondary" size="sm" onClick={onChoose} className="mt-3">
           {patient.programa_elegido ? "Ver o cambiar programa" : "Elegir programa"}
@@ -525,7 +530,7 @@ function AvisosTab({
       />
       <SwitchRow
         title="Avisar automáticamente ante una caída, un cambio repentino o un extravío"
-        detail="Al abrir esa guía en la app, tu profesional recibe el aviso sin que tengas que tocar nada más. Siempre podés avisar a mano con el botón."
+        detail="Al abrir esa guía en la app, el equipo recibe el aviso sin que tengas que tocar nada más. Siempre podés avisar a mano con el botón."
         checked={prefs.avisar_riesgo_auto}
         disabled={saving}
         onChange={(v) => save("avisar_riesgo_auto", v)}

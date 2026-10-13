@@ -220,10 +220,10 @@ export default function AppLayout() {
               (filtradas por perfil). Las rutas viejas redirigen para no
               romper enlaces ya enviados (WhatsApp, correos). */}
           <Route path="actividades" element={<Navigate to="/app/plan" replace />} />
-          <Route path="asistente" element={<Navigate to="/app/ayuda?tab=dudas" replace />} />
+          <Route path="asistente" element={<Navigate to="/app/ayuda" replace />} />
           <Route path="ayuda" element={<AyudaFamiliar />} />
           <Route path="emergencia" element={<Emergencia />} />
-          <Route path="mensajes" element={<Navigate to="/app/ayuda?tab=profesional" replace />} />
+          <Route path="mensajes" element={<Navigate to="/app/ayuda" replace />} />
           <Route path="revision" element={<Revision />} />
           <Route path="resumen" element={<Resumen />} />
         </Route>

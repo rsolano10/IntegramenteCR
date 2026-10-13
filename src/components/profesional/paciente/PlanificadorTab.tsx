@@ -37,7 +37,8 @@ type EditorState = { mode: "new"; dia: string; hora: string } | { mode: "edit"; 
 // vistazo qué días y horas ya tienen actividades (ya publicadas o en este
 // borrador) y cuáles quedan vacíos. Tocar una celda abre el editor con el
 // día y la hora ya puestos. Publicar asigna el plan y avisa a la familia
-// por chat, correo y WhatsApp con el mensaje de abajo.
+// por correo y WhatsApp con el mensaje de abajo (la primera vez, además,
+// como bienvenida al entrar a la app). No hay chat en la app.
 export function PlanificadorTab({
   patientId,
   patientNombre,
@@ -85,7 +86,7 @@ export function PlanificadorTab({
   const [editor, setEditor] = useState<EditorState>(null);
   const [mensaje, setMensaje] = useState(
     isFirstAssignment
-      ? `¡Hola! Ya revisamos con cuidado el perfil de ${nombre} y armamos su programa personalizado. Esta semana empezamos suave, con actividades pensadas para sus gustos. Cualquier duda, escribinos por acá — estamos para acompañarles.`
+      ? `¡Hola! Ya revisamos con cuidado el perfil de ${nombre} y armamos su programa personalizado. Esta semana empezamos suave, con actividades pensadas para sus gustos. Cualquier duda, escribinos por WhatsApp. Estamos para acompañarles.`
       : `¡Hola! Ya está lista la próxima semana de ${nombre}. Tomamos en cuenta cómo les fue para ajustar las actividades. ¡Adelante!`,
   );
   const [avisar, setAvisar] = useState(true);
@@ -177,7 +178,7 @@ export function PlanificadorTab({
     }
     const conMensaje = target.kind === "nueva" || avisar;
     if (conMensaje && !mensaje.trim()) {
-      setError("Escribí el mensaje para la familia — es lo que reciben por chat, correo y WhatsApp.");
+      setError("Escribí el mensaje para la familia: es lo que reciben por correo y WhatsApp.");
       return;
     }
     setSaving(true);
@@ -218,18 +219,14 @@ export function PlanificadorTab({
     }
     let canales = "";
     if (conMensaje) {
-      if (!isFirstAssignment) {
-        const { data: s } = await supabase.auth.getUser();
-        await supabase.from("mensajes").insert({ patient_id: patientId, texto: mensaje.trim(), autor_id: s.user?.id ?? null });
-      }
-      canales = "el chat de la app";
+      if (isFirstAssignment) canales = "la app";
       try {
         const res = (await callAdminAccounts("notify_plan_assigned", { patientId, mensaje: mensaje.trim(), primeraVez: isFirstAssignment })) as {
           canales?: string[];
         };
         if (res.canales?.length) canales = res.canales.join(", ");
       } catch {
-        // already published; the chat message is the fallback channel
+        // already published; the welcome card in the app is the fallback
       }
     }
     queryClient.invalidateQueries({ queryKey: ["patient-plans", patientId] });
@@ -455,7 +452,7 @@ export function PlanificadorTab({
           )}
           {(target.kind === "nueva" || avisar) && (
           <div className="flex flex-wrap gap-2">
-            {["Chat de la app", "Correo", "WhatsApp"].map((c) => (
+            {[...(target.kind === "nueva" && isFirstAssignment ? ["Bienvenida en la app"] : []), "Correo", "WhatsApp"].map((c) => (
               <span key={c} className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-verde-profundo bg-fila-fria rounded-full px-2.5 py-1">
                 ✓ {c}
               </span>

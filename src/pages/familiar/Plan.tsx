@@ -90,7 +90,7 @@ function WeekTaskCard({ task, isToday, onOpen }: { task: PlanTask; isToday: bool
             {task.notaClinica && (
               <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-verde-profundo">
                 <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-verde-serenidad" />
-                Nota de tu profesional
+                Nota del equipo
               </span>
             )}
           </div>

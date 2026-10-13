@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { patientPath } from "../../lib/patients";
+import { ContactoWhatsApp } from "./paciente/ContactoWhatsApp";
 import { Button } from "../ui/Button";
 
 interface AlertaAbierta {
@@ -93,9 +94,10 @@ export function AlertasRiesgoBanner({ patientId }: { patientId?: string }) {
                 {!a.vista_at && " · sin ver"}
               </p>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex flex-wrap gap-2 shrink-0">
+              {!patientId && <ContactoWhatsApp patientId={a.patient_id} patientNombre={a.patient_nombre} size="sm" />}
               {!patientId && (
-                <Button variant="urgency" size="sm" onClick={() => navigate(patientPath(a.patient_id, "mensajes"))}>
+                <Button variant="urgency" size="sm" onClick={() => navigate(patientPath(a.patient_id, "semana"))}>
                   Ver paciente
                 </Button>
               )}
@@ -107,7 +109,7 @@ export function AlertasRiesgoBanner({ patientId }: { patientId?: string }) {
         ))}
       </div>
       {patientId && (
-        <p className="m-0 mt-3 text-[13px] text-alerta-texto-suave">Contactá a la familia (Mensajes o por teléfono) y marcá el aviso como atendido.</p>
+        <p className="m-0 mt-3 text-[13px] text-alerta-texto-suave">Contactá a la familia por WhatsApp (botón de arriba) o por teléfono y marcá el aviso como atendido.</p>
       )}
     </section>
   );

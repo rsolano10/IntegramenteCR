@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { useSession } from "../../lib/useSession";
+import { waEquipo } from "../../lib/whatsapp";
+import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { BigActionButton } from "../../components/ui/BigActionButton";
 
@@ -10,10 +11,8 @@ export function Ayuda() {
   const navigate = useNavigate();
   const location = useLocation();
   // Coming from "No pude" on an activity pre-fills the reason instead of
-  // making the person retype what already happened — still fully editable.
+  // making the person retype what already happened — editable in WhatsApp.
   const draft = (location.state as { draft?: string } | null)?.draft ?? "";
-  const session = useSession();
-  const myUserId = session.status === "authed" ? session.session.user.id : null;
   const { data: myPatient } = useMyPatient();
 
   // Only when there's no familiar to relay through does this screen need to
@@ -29,31 +28,14 @@ export function Ayuda() {
   });
 
   const [confirmed, setConfirmed] = useState(false);
-  const [texto, setTexto] = useState(draft);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
-
-  async function enviar() {
-    if (!texto.trim() || !myPatient || !myUserId) return;
-    setError("");
-    setSending(true);
-    const { error: sendError } = await supabase.from("mensajes").insert({ patient_id: myPatient.id, texto: texto.trim(), autor_id: myUserId });
-    setSending(false);
-    if (sendError) {
-      setError("No pudimos enviar el mensaje. Probá de nuevo.");
-      return;
-    }
-    setSent(true);
-  }
 
   if (loadingHasFamiliar) return <div className="flex-1" />;
 
-  if (!confirmed && !sent) {
+  if (!confirmed) {
     return (
       <div className="flex flex-col gap-6 flex-1 justify-center text-center">
         <p className="m-0 text-[30px] leading-snug font-serif">
-          {hasFamiliar ? "Vamos a avisarle a tu familiar" : "Vamos a escribirle a tu equipo clínico"}
+          {hasFamiliar ? "Vamos a avisarle a tu familiar" : "Vamos a escribirle a tu equipo por WhatsApp"}
         </p>
         <p className="m-0 text-[20px] leading-relaxed text-tinta-suave">¿Querés continuar?</p>
         <div className="grid gap-3">
@@ -68,11 +50,11 @@ export function Ayuda() {
     );
   }
 
-  if (sent || hasFamiliar) {
+  if (hasFamiliar) {
     return (
       <div className="flex flex-col gap-6 flex-1 justify-center text-center">
         <p className="m-0 text-[32px] leading-snug font-serif">
-          {sent ? "Ya le avisamos a tu equipo clínico" : "Ya le avisamos a tu familiar"}
+          Ya le avisamos a tu familiar
         </p>
         <p className="m-0 text-[22px] leading-relaxed text-tinta-suave">Esperá tranquilo. No hace falta hacer nada más.</p>
         <BigActionButton variant="primary" size="md" onClick={() => navigate("/app/participante/hoy")}>
@@ -82,19 +64,24 @@ export function Ayuda() {
     );
   }
 
+  // Sin familiar que haga de puente: WhatsApp, el único canal con el
+  // equipo. El mensaje ya va escrito (con lo que pasó en la actividad, si
+  // viene de "No pude"); solo falta tocar enviar en WhatsApp.
+  const texto = draft.trim() ? `Necesito ayuda. ${draft.trim()}` : "Necesito ayuda.";
   return (
-    <div className="flex flex-col gap-6 flex-1 justify-center">
-      <p className="m-0 text-[28px] leading-snug font-serif text-center">¿Qué necesitás?</p>
-      <textarea
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        rows={5}
-        placeholder="Contanos qué pasa…"
-        className="w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] leading-relaxed text-tinta resize-y"
-      />
-      {error && <p className="m-0 text-[16px] text-alerta-texto text-center">{error}</p>}
-      <BigActionButton variant="primary" size="md" disabled={sending || !texto.trim()} onClick={enviar}>
-        {sending ? "Enviando…" : "Enviar a mi equipo clínico"}
+    <div className="flex flex-col gap-6 flex-1 justify-center text-center">
+      <p className="m-0 text-[30px] leading-snug font-serif">Escribile a tu equipo por WhatsApp</p>
+      <p className="m-0 text-[20px] leading-relaxed text-tinta-suave">Se abre WhatsApp con el mensaje listo. Solo tocá enviar.</p>
+      <a
+        href={waEquipo(texto, myPatient?.nombre)}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-3 min-h-[72px] rounded-3xl bg-[#25d366] text-white font-sans font-bold text-[22px] no-underline"
+      >
+        <WhatsAppIcon size={28} /> Abrir WhatsApp
+      </a>
+      <BigActionButton variant="secondary" size="md" onClick={() => navigate("/app/participante/hoy")}>
+        Volver
       </BigActionButton>
     </div>
   );

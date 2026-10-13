@@ -49,7 +49,6 @@ export function useAlertaRiesgo(tipo: TipoAlerta) {
       callAdminAccounts("notify_risk_alert", { alertaId: row.id }).catch(() => {});
     }
     await queryClient.invalidateQueries({ queryKey });
-    queryClient.invalidateQueries({ queryKey: ["mensajes", myPatient?.id] });
     return true;
   }
 

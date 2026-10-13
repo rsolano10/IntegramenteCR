@@ -5,8 +5,8 @@ import { Button } from "./Button";
 
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit" });
 
-// Aviso real a la clínica (alertas_riesgo + correo al equipo + mensaje en
-// el chat). Si la cuenta tiene "avisar automáticamente" activado, se envía
+// Aviso real a la clínica (alertas_riesgo + correo al equipo). No es un
+// chat: la clínica le responde a la familia por WhatsApp o teléfono. Si la cuenta tiene "avisar automáticamente" activado, se envía
 // solo al abrir la pantalla — una vez: el servidor reutiliza un aviso del
 // mismo tipo de los últimos 30 min en vez de duplicarlo.
 function useAviso(tipo: TipoAlerta, auto: boolean) {
@@ -46,10 +46,10 @@ function Estado({ alerta, reciente, error, prefAuto, omitido }: ReturnType<typeo
   } else if (alerta && reciente) {
     tone = "text-semaforo-verde-texto";
     texto = alerta.vista_at
-      ? `✓ Tu profesional ya vio el aviso (enviado a las ${hora(alerta.created_at)}). Te va a contactar.`
-      : `✓ Aviso enviado a tu profesional (${hora(alerta.created_at)}). También quedó en tus mensajes.`;
+      ? `✓ El equipo ya vio el aviso (enviado a las ${hora(alerta.created_at)}). Te va a contactar por WhatsApp o por teléfono.`
+      : `✓ Aviso enviado al equipo (${hora(alerta.created_at)}). Te va a contactar por WhatsApp o por teléfono.`;
   } else if (alerta?.atendida_at) {
-    texto = `Tu profesional atendió el último aviso (${hora(alerta.atendida_at)}).`;
+    texto = `El equipo atendió el último aviso (${hora(alerta.atendida_at)}).`;
   } else if (omitido) {
     texto = "No se envió ningún aviso. Podés hacerlo cuando quieras con el botón.";
   } else {
@@ -68,7 +68,7 @@ function Boton({ aviso }: { aviso: ReturnType<typeof useAviso> }) {
       disabled={aviso.sending || enviado}
       className={enviado ? "!bg-semaforo-verde-texto hover:!bg-semaforo-verde-texto !opacity-100" : ""}
     >
-      {aviso.sending ? "Enviando…" : enviado ? "Aviso enviado" : aviso.error ? "Reintentar aviso" : "Avisar a tu profesional"}
+      {aviso.sending ? "Enviando…" : enviado ? "Aviso enviado" : aviso.error ? "Reintentar aviso" : "Avisar al equipo"}
     </Button>
   );
 }

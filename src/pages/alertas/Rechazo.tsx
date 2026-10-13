@@ -43,7 +43,7 @@ export function Rechazo() {
           </button>
         </div>
         <p className="m-0 text-[15px] leading-relaxed text-tinta-tenue">
-          Tu profesional verá este ajuste en su próxima revisión. Nada de esto se registra como incumplimiento.
+          El equipo verá este ajuste en su próxima revisión. Nada de esto se registra como incumplimiento.
         </p>
       </div>
     </div>

@@ -72,7 +72,7 @@ function SolicitudRechazada({ rechazo, onContinuar }: { rechazo: Rechazo; onCont
       <div className="bg-campo border border-borde-suave rounded-3xl p-5 sm:p-6 mb-6">
         <p className="m-0 mb-1 text-[15px] font-semibold text-tinta">¿Querés conversarlo?</p>
         <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
-          Escribinos a <strong>info@integramente.com</strong> o llamanos al <strong>+506 8343 5772</strong> — con gusto vemos otras
+          Escribinos por WhatsApp al <strong>+506 8346 4703</strong> o a <strong>info@integramente.com</strong> — con gusto vemos otras
           alternativas juntos.
         </p>
       </div>

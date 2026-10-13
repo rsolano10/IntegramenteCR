@@ -5,6 +5,9 @@ import { supabase } from "../../lib/supabase";
 import { classifyMessage, detectarRiesgo } from "../../lib/chatbot";
 import { useSession } from "../../lib/useSession";
 import { ChatBubble } from "../../components/ui/ChatBubble";
+import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
+import { useMyPatient } from "../../lib/useMyPatient";
+import { waEquipo } from "../../lib/whatsapp";
 
 const suggestions = [
   { label: "Repite la misma pregunta", text: "Repite la misma pregunta muchas veces" },
@@ -19,6 +22,7 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   const messages = useAppStore((s) => s.chatMessages);
   const pushChatMessage = useAppStore((s) => s.pushChatMessage);
+  const { data: myPatient } = useMyPatient();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -28,7 +32,8 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
   }, [messages, typing]);
 
   // 1) reglas de riesgo locales (sin IA) → guía de emergencia;
-  // 2) si no, la IA (asistente-ia) responde, deriva a su profesional, o
+  // 2) si no, la IA (asistente-ia) responde, deriva al equipo por WhatsApp
+  //    (el único canal con la clínica, con la pregunta ya escrita), o
   //    avisa que la pregunta está fuera del alcance del chat;
   // 3) si la IA no está disponible, las respuestas fijas de siempre.
   async function submit(text: string) {
@@ -56,8 +61,8 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
       return;
     }
     const escalate =
-      data.categoria === "profesional"
-        ? { label: "Preguntarle a tu profesional", to: `/app/ayuda?tab=profesional&borrador=${encodeURIComponent(pregunta)}` }
+      data.categoria === "profesional" || data.categoria === "limite"
+        ? { label: "Preguntar por WhatsApp", to: waEquipo(`Tengo una consulta: ${pregunta}`, myPatient?.nombre) }
         : data.categoria === "emergencia"
           ? { label: "Ver qué hacer ahora", to: "/app/emergencia" }
           : undefined;
@@ -65,14 +70,15 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
   }
 
   function handleEscalate(to: string) {
-    navigate(to);
+    if (/^https?:/.test(to)) window.open(to, "_blank", "noopener,noreferrer");
+    else navigate(to);
   }
 
   return (
     <div className="flex flex-col" style={{ minHeight: "min(60vh, 520px)" }}>
       {!embedded && <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Asistente guiado</p>}
       <p className="m-0 mb-4 text-[14px] text-tinta-tenue">
-        Dudas del cuidado diario, respondidas al momento. Lo que necesite criterio clínico se lo pasamos a tu profesional.
+        Dudas del cuidado diario, respondidas al momento. Si algo necesita criterio clínico, te llevamos a WhatsApp con nuestro equipo de salud.
       </p>
 
       {/* No independent scroll region here — the page itself scrolls, so
@@ -90,10 +96,11 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
                   <button
                     type="button"
                     onClick={() => handleEscalate(m.escalate!.to)}
-                    className={`min-h-9 px-3.5 rounded-full text-white text-[13px] font-bold cursor-pointer border-none ${
-                      m.escalate.to.startsWith("/app/ayuda") ? "bg-verde-profundo hover:bg-tinta" : "bg-semaforo-rojo"
+                    className={`inline-flex items-center gap-1.5 min-h-9 px-3.5 rounded-full text-white text-[13px] font-bold cursor-pointer border-none ${
+                      /^https?:/.test(m.escalate.to) ? "bg-[#25d366] hover:brightness-95" : "bg-semaforo-rojo"
                     }`}
                   >
+                    {/^https?:/.test(m.escalate.to) && <WhatsAppIcon size={15} />}
                     {m.escalate.label}
                   </button>
                 </div>
