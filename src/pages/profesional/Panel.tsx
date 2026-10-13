@@ -6,6 +6,7 @@ import { useSession } from "../../lib/useSession";
 import { semaforoData } from "../../lib/rules";
 import { patientPath, usePatients } from "../../lib/patients";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
+import { motivoLabel, usePendientesAsistente } from "../../lib/asistenteRevision";
 import { planTiers, type Semaforo } from "../../lib/mockData";
 
 const modalidadLabel = Object.fromEntries(planTiers.map((t) => [t.id, t.nombre]));
@@ -50,6 +51,7 @@ export function Panel() {
   }, []);
 
   const { data: patients, isLoading: loadingPatients } = usePatients();
+  const { data: pendientesAsistente } = usePendientesAsistente();
 
   const porEvaluar = useMemo(
     () =>
@@ -107,8 +109,8 @@ export function Panel() {
           <h2 className="font-serif font-normal text-2xl m-0">Lo que necesita atención hoy</h2>
         </div>
 
-        <div className="border-b border-borde-suave">
-          <div className="px-5 py-6 sm:px-8 sm:py-7">
+        <div className="grid grid-cols-1 lg:grid-cols-2 border-b border-borde-suave">
+          <div className="px-5 py-6 sm:px-8 sm:py-7 lg:border-r border-borde-suave">
             <div className="flex items-center justify-between mb-3.5">
               <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Pacientes por evaluar</p>
               {porEvaluar.length > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{porEvaluar.length}</span>}
@@ -151,6 +153,39 @@ export function Panel() {
             )}
           </div>
 
+          <div className="px-5 py-6 sm:px-8 sm:py-7">
+            <div className="flex items-center justify-between mb-3.5">
+              <p className="m-0 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Conversaciones del asistente</p>
+              {(pendientesAsistente?.length ?? 0) > 0 && <span className="text-[13px] font-bold text-tinta-tenue">{pendientesAsistente!.length}</span>}
+            </div>
+            {!pendientesAsistente && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
+            {pendientesAsistente && pendientesAsistente.length === 0 && (
+              <p className="m-0 text-[15px] text-tinta-tenue">No hay conversaciones con el asistente para revisar.</p>
+            )}
+            {pendientesAsistente && pendientesAsistente.length > 0 && (
+              <div className="grid gap-2">
+                {pendientesAsistente.slice(0, 5).map((p) => {
+                  const urgente = p.motivos.includes("emergencia") || p.motivos.includes("riesgo");
+                  return (
+                    <button
+                      key={p.patient_id}
+                      type="button"
+                      onClick={() => navigate(patientPath(p.patient_id, "asistente"))}
+                      className={`grid gap-1 rounded-xl px-4 py-3 text-left cursor-pointer border-none w-full ${urgente ? "bg-alerta" : "bg-campo"}`}
+                    >
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="text-[15px] font-bold text-tinta">{p.patient_nombre}</span>
+                        <span className="text-[12px] text-tinta-tenue shrink-0">{timeAgo(p.ultimo_at)}</span>
+                      </span>
+                      <span className={`text-[13px] ${urgente ? "text-alerta-texto" : "text-tinta-suave"}`}>
+                        {p.motivos.map((m) => motivoLabel[m] ?? m).join(" · ")}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 border-t border-borde-suave">

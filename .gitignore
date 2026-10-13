@@ -27,3 +27,4 @@ dist-ssr
 .claude/
 .vercel
 .env*
+scripts/asistente-eval/resultados.json

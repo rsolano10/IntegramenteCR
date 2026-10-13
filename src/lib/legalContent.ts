@@ -58,7 +58,8 @@ export const legalContent: Record<"condiciones" | "privacidad" | "emergencias", 
       {
         heading: "Qué datos recopilamos",
         body: [
-          "Datos de la cuenta (nombre, correo), del perfil funcional de la persona participante (autonomía, movilidad, comprensión, intereses) y del uso del plan (registros de actividad, respuestas del asistente, alertas generadas).",
+          "Datos de la cuenta (nombre, correo), del perfil funcional de la persona participante (autonomía, movilidad, comprensión, intereses) y del uso del plan (registros de actividad, conversaciones con el asistente, alertas generadas).",
+          "El Asistente IntegraMente es una inteligencia artificial. Para responder usa el perfil de la persona participante y las actividades de la semana, y guarda tus conversaciones y un resumen de lo importante para recordarlo después. Podés borrar ese historial cuando quieras desde el mismo chat.",
         ],
       },
       {
@@ -72,6 +73,7 @@ export const legalContent: Record<"condiciones" | "privacidad" | "emergencias", 
         heading: "Con quién se comparte",
         body: [
           "Con la profesional asignada, solo si tu modalidad incluye seguimiento clínico o activaste el aviso automático en una alerta.",
+          "El equipo clínico puede leer las conversaciones con el asistente que quedan marcadas para revisión: cuando se derivó algo al equipo, ante señales de riesgo o emergencia, cuando el filtro de seguridad reemplazó una respuesta o cuando calificaste una respuesta como que no te sirvió. El resto de la conversación es privada.",
           "Toda edición de plan, perfil o alerta queda registrada con autor, fecha y versión (bitácora de auditoría), visible para el equipo clínico responsable.",
         ],
       },

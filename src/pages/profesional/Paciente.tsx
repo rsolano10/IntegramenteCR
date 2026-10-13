@@ -14,10 +14,12 @@ import { type PlanSummary } from "../../components/profesional/paciente/SemanaTa
 import { SeguimientoTab } from "../../components/profesional/paciente/SeguimientoTab";
 import { PlanificadorTab } from "../../components/profesional/paciente/PlanificadorTab";
 import { ContactoWhatsApp } from "../../components/profesional/paciente/ContactoWhatsApp";
+import { AsistenteTab } from "../../components/profesional/paciente/AsistenteTab";
+import { usePendientesAsistente } from "../../lib/asistenteRevision";
 import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 
-type Tab = "evaluacion" | "semana" | "planificar" | "cuentas";
+type Tab = "evaluacion" | "semana" | "planificar" | "asistente" | "cuentas";
 
 const respondenteLabel: Record<string, string> = {
   propia_persona: "la propia persona",
@@ -43,6 +45,7 @@ export function Paciente() {
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
 
   const { data: patients, isLoading: loadingPatients } = usePatients();
+  const { data: pendientesAsistente } = usePendientesAsistente();
   const patient = patients?.find((p) => p.id === id) ?? null;
   const pendiente = patient?.plan_status === "pendiente";
 
@@ -94,15 +97,18 @@ export function Paciente() {
     );
   }
 
+  const asistentePendiente = !!pendientesAsistente?.some((p) => p.patient_id === patient.id);
   const tabs: { id: Tab; label: string; dot?: boolean }[] = pendiente
     ? [
         { id: "evaluacion", label: "Evaluación inicial", dot: true },
         { id: "planificar", label: "Armar primer plan" },
+        { id: "asistente", label: "Asistente", dot: asistentePendiente },
         { id: "cuentas", label: "Cuentas" },
       ]
     : [
         { id: "semana", label: "Seguimiento", dot: patient.needs_review },
         { id: "planificar", label: "Planificar", dot: patient.needs_assignment },
+        { id: "asistente", label: "Asistente", dot: asistentePendiente },
         { id: "evaluacion", label: "Perfil inicial" },
         { id: "cuentas", label: "Cuentas" },
       ];
@@ -264,6 +270,7 @@ export function Paciente() {
           )
         ))}
 
+      {tab === "asistente" && <AsistenteTab patientId={patient.id} />}
       {tab === "cuentas" && <VinculosTab patient={patient} onChanged={changed} />}
     </div>
   );

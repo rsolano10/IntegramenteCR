@@ -15,7 +15,7 @@ export const familiarTourSteps: TourStep[] = [
   },
   {
     title: "Ayuda",
-    body: "Respuestas rápidas a las dudas más comunes del cuidado. Si necesitás hablar con un profesional, desde acá le escribís a nuestro equipo por WhatsApp.",
+    body: "El Asistente IntegraMente, una IA que conoce a tu familiar y te ayuda con el día a día del cuidado. Si algo necesita a un profesional, te deja el mensaje listo para mandarle a nuestro equipo por WhatsApp.",
   },
   {
     title: "SOS, siempre a mano",
@@ -49,7 +49,7 @@ export const profesionalTourSteps: TourStep[] = [
   },
   {
     title: "Lo que necesita atención hoy",
-    body: "Esta tarjeta agrupa lo pendiente en tres listas: pacientes por evaluar, semanas esperando tu revisión, y pacientes esperando que les asignes la próxima semana. Tocá cualquier fila para abrir el detalle. Con las familias se habla por WhatsApp, desde la ficha de cada paciente.",
+    body: "Esta tarjeta agrupa lo pendiente en cuatro listas: pacientes por evaluar, conversaciones del asistente para revisar, semanas esperando tu revisión, y pacientes esperando que les asignes la próxima semana. Tocá cualquier fila para abrir el detalle. Con las familias se habla por WhatsApp, desde la ficha de cada paciente.",
   },
   {
     title: "El programa en conjunto",
