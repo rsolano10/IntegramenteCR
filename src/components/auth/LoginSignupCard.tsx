@@ -15,13 +15,20 @@ import { PasswordInput } from "../ui/PasswordInput";
 import { PillToggle } from "../ui/PillToggle";
 import { Button } from "../ui/Button";
 import { FormField } from "../ui/FormField";
+import { whatsappHome } from "../../lib/landingContenido";
 
 // The login/signup form — lifted out of Landing.tsx so it can render both
 // inline on desktop (scrolled to from the hero CTAs) and as the sole
 // content of a dedicated full-page route on mobile (see Ingresar.tsx).
 // Not to be confused with AuthCard.tsx, the generic auth-page shell used by
 // CompletarCuenta/ResetPassword — different component, same-sounding name.
-export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "login" | "register" }) {
+// `defaultPara` llega de los botones "Empezar para…" del home: deja la
+// modalidad elegida en el formulario (se puede cambiar) y viaja en los
+// metadatos de la cuenta para que el cuestionario arranque con esa
+// respuesta marcada (ver OnboardingStep.tsx). Sin él no se pregunta acá.
+export type ParaQuien = "ser-querido" | "mi";
+
+export function LoginSignupCard({ defaultMode = "login", defaultPara }: { defaultMode?: "login" | "register"; defaultPara?: ParaQuien }) {
   const navigate = useNavigate();
   const email = useAppStore((s) => s.email);
   const setEmail = useAppStore((s) => s.setEmail);
@@ -29,6 +36,7 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
   const setAuthError = useAppStore((s) => s.setAuthError);
   const [mode, setMode] = useState<"login" | "register">(defaultMode);
   const [nombre, setNombre] = useState("");
+  const [para, setPara] = useState<ParaQuien | undefined>(defaultPara);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
@@ -66,7 +74,7 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { role: "familiar", nombre: nombre.trim() }, emailRedirectTo: confirmEmailRedirect() },
+        options: { data: { role: "familiar", nombre: nombre.trim(), ...(para && { para }) }, emailRedirectTo: confirmEmailRedirect() },
       });
       setLoading(false);
       if (error) {
@@ -174,6 +182,19 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
         <>
           {isRegister && (
             <div className="grid gap-4.5 mb-1.5">
+              {para && (
+                <div className="grid gap-2">
+                  <span className="text-[15px] font-semibold text-tinta-suave">¿Para quién es la cuenta?</span>
+                  <PillToggle
+                    value={para}
+                    onChange={setPara}
+                    options={[
+                      { value: "ser-querido", label: "Acompaño a un ser querido" },
+                      { value: "mi", label: "Para mí" },
+                    ]}
+                  />
+                </div>
+              )}
               <FormField
                 label="Nombre completo"
                 type="text"
@@ -260,7 +281,9 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
               ¿Olvidaste tu contraseña?
             </Link>
             {isRegister ? (
-              <span className="text-tinta-tenue"></span>
+              <button type="button" onClick={() => switchMode("login")} className="text-tinta-tenue underline decoration-dotted cursor-pointer">
+                ¿Ya tenés cuenta? Iniciá sesión
+              </button>
             ) : (
               <button type="button" onClick={() => switchMode("register")} className="text-tinta-tenue underline decoration-dotted cursor-pointer">
                 ¿Primera vez? Creá tu cuenta
@@ -270,8 +293,10 @@ export function LoginSignupCard({ defaultMode = "login" }: { defaultMode?: "logi
 
           <div className="mt-6.5 pt-5.5 border-t border-borde-suave grid gap-2.5">
             <p className="m-0 text-sm leading-relaxed text-pastilla-texto">
-              ¿Sos paciente o familiar del programa IntegraMente? Tu cuenta la crea la clínica: entrá con el correo que registraste en
-              consulta.
+              ¿Ya sos paciente de IntegraMente? Consultá con nuestro equipo cómo acceder a tu cuenta.{" "}
+              <a href={whatsappHome.accesoPaciente} target="_blank" rel="noreferrer" className="font-semibold text-verde-profundo">
+                Consultar mi acceso
+              </a>
             </p>
           </div>
         </>

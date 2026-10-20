@@ -10,6 +10,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword").then((m) => (
 const ResetPassword = lazy(() => import("./pages/ResetPassword").then((m) => ({ default: m.ResetPassword })));
 const CompletarCuenta = lazy(() => import("./pages/CompletarCuenta").then((m) => ({ default: m.CompletarCuenta })));
 const ConfirmarCorreo = lazy(() => import("./pages/ConfirmarCorreo").then((m) => ({ default: m.ConfirmarCorreo })));
+const GuiaProfesionales = lazy(() => import("./pages/GuiaProfesionales").then((m) => ({ default: m.GuiaProfesionales })));
 const LegalPage = lazy(() => import("./pages/LegalPage").then((m) => ({ default: m.LegalPage })));
 
 // React Router doesn't reset scroll position on navigation by itself, and
@@ -66,6 +67,7 @@ export function App() {
           los programas se eligen dentro de la app, al final del cuestionario. */}
       <Route path="/planes/*" element={<Navigate to="/ingresar?mode=register" replace />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
+      <Route path="/guia-profesionales" element={<GuiaProfesionales />} />
       <Route path="/app/*" element={<AppLayout />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

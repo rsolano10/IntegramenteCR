@@ -20,7 +20,7 @@ export const planTiers: PlanTier[] = [
     id: "autoguiado",
     nombre: "Autoguiado",
     tagline: "Para familias que empiezan hoy.",
-    precio: "₡19,900",
+    precio: "₡30.000",
     periodo: "por mes",
     cta: "Empezar",
     features: [
@@ -32,10 +32,11 @@ export const planTiers: PlanTier[] = [
   },
   {
     id: "orientado",
-    nombre: "Orientado",
+    nombre: "Con sesiones profesionales",
     tagline: "Para quienes necesitan mayor personalización.",
-    precio: "₡34,900",
-    periodo: "por mes",
+    // Sin precio fijo: se presupuesta según el plan (ver programasData.ts).
+    precio: "Presupuesto según tu plan",
+    periodo: "",
     cta: "Solicitar",
     recomendado: true,
     features: [

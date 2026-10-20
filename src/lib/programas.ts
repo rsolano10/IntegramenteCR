@@ -17,11 +17,11 @@ export function programaSugerido(a: Answers): { id: ProgramaId; motivo: string }
   if (alertas > 0 || ejesAtencion > 0) {
     return {
       id: "orientado",
-      motivo: "Por lo que nos contaste, creemos que las sesiones en vivo con nuestros profesionales y un acompañamiento cercano les van a ayudar más.",
+      motivo: "Por lo que nos contaste, las sesiones profesionales les pueden ayudar más.",
     };
   }
   return {
     id: "autoguiado",
-    motivo: "Por lo que nos contaste, el programa autoguiado puede ser un muy buen punto de partida.",
+    motivo: "Por lo que nos contaste, el Autoguiado es un buen punto de partida.",
   };
 }

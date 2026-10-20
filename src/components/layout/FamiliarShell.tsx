@@ -40,7 +40,7 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
           <div className="flex-1">
             <p className="m-0 mb-1 text-[16px] font-semibold text-tinta">Falta un paso: elegir el programa</p>
             <p className="m-0 text-[14px] leading-relaxed text-tinta-suave">
-              Autoguiado u Orientado — te mostramos qué incluye cada uno para que decidas con calma.
+              Autoguiado o con sesiones profesionales: te mostramos qué incluye cada uno para que decidas con calma.
             </p>
           </div>
           <Button variant="ink" dense to="/app/perfil/programa" className="shrink-0">

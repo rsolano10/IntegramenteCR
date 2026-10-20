@@ -34,7 +34,7 @@ export function Ficha() {
   const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
 
-  const rosaModalidad = planTiers.find((t) => t.id === modalidad)?.nombre ?? "Orientado";
+  const rosaModalidad = planTiers.find((t) => t.id === modalidad)?.nombre ?? "Con sesiones profesionales";
   const perfil = summarizeProfile(onboarding2);
   const nombrePaciente = getPatientName(onboarding2);
 

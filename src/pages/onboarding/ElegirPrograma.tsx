@@ -9,7 +9,8 @@ import { comparacion, programaSugerido, programas, type ProgramaId } from "../..
 import { nombreConTratamiento, participanteEsRespondente } from "../../lib/respondentVoice";
 import { Button } from "../../components/ui/Button";
 
-// Después del cuestionario: la familia elige entre Autoguiado y Orientado.
+// Después del cuestionario: la familia elige entre Autoguiado y el programa
+// con sesiones profesionales (id "orientado").
 // Es a la vez una decisión y la explicación de qué trae cada programa —
 // precios incluidos. Todavía no se cobra (la elección solo queda
 // registrada con elegir_programa); el cobro se conecta acá más adelante.
@@ -58,8 +59,7 @@ export function ElegirPrograma() {
           {esPropia ? "¿Cómo querés que te acompañemos?" : `¿Cómo querés acompañar a ${nombre}?`}
         </h1>
         <p className="m-0 text-base sm:text-[17px] leading-relaxed text-tinta-suave">
-          Los dos programas parten del perfil que acabás de completar. La diferencia está en cuánto acompañamiento profesional van a tener
-          en el camino.
+          La diferencia es cuánto acompañamiento profesional van a tener.
         </p>
       </div>
 
@@ -112,10 +112,17 @@ export function ElegirPrograma() {
 
               <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{p.descripcion}</p>
 
-              <div className="flex items-baseline gap-2 pb-5 border-b border-borde-suave">
-                <span className="font-serif text-[36px] leading-none text-tinta">{p.precio}</span>
-                <span className="text-[14px] text-tinta-tenue">{p.periodo}</span>
-              </div>
+              {p.periodo ? (
+                <div className="flex items-baseline gap-2 pb-5 border-b border-borde-suave">
+                  <span className="font-serif text-[36px] leading-none text-tinta">{p.precio}</span>
+                  <span className="text-[14px] text-tinta-tenue">{p.periodo}</span>
+                </div>
+              ) : (
+                <div className="pb-5 border-b border-borde-suave">
+                  <span className="block font-serif text-[26px] leading-tight text-tinta">{p.precio}</span>
+                  {p.notaPrecio && <span className="block mt-1 text-[14px] leading-relaxed text-tinta-suave">{p.notaPrecio}</span>}
+                </div>
+              )}
 
               <div>
                 <p className="m-0 mb-2.5 text-[12px] tracking-[0.12em] uppercase text-tinta-tenue font-semibold">Incluye</p>
@@ -128,6 +135,14 @@ export function ElegirPrograma() {
                   ))}
                 </ul>
               </div>
+
+              {p.aclaracion && <p className="m-0 text-[14.5px] leading-relaxed text-tinta bg-campo border border-borde-suave rounded-2xl px-4 py-3">{p.aclaracion}</p>}
+              {p.requisito && (
+                <div className="rounded-2xl bg-white border-[1.5px] border-mostaza-vital px-4 py-3.5">
+                  <p className="m-0 mb-1 text-[14.5px] font-bold text-tinta">Requisito de ingreso</p>
+                  <p className="m-0 text-[14.5px] leading-relaxed text-tinta">{p.requisito}</p>
+                </div>
+              )}
 
               <div className="mt-auto bg-white/70 border border-borde-suave rounded-2xl p-4">
                 <p className="m-0 mb-2 text-[12px] tracking-[0.12em] uppercase text-tinta-tenue font-semibold">Ideal si…</p>
@@ -156,7 +171,7 @@ export function ElegirPrograma() {
               <tr className="text-left text-[12px] tracking-[0.1em] uppercase text-tinta-tenue">
                 <th className="py-2.5 pr-3 font-semibold"></th>
                 <th className="py-2.5 px-3 font-semibold text-center">Autoguiado</th>
-                <th className="py-2.5 pl-3 font-semibold text-center">Orientado</th>
+                <th className="py-2.5 pl-3 font-semibold text-center">Con sesiones</th>
               </tr>
             </thead>
             <tbody>
@@ -182,8 +197,7 @@ export function ElegirPrograma() {
       </details>
 
       <p className="m-0 mt-6 text-center text-[14px] leading-relaxed text-tinta-tenue max-w-[560px] mx-auto">
-        <strong className="text-tinta-suave">Hoy no se cobra nada.</strong> Te vamos a avisar antes de cualquier cobro. Si más adelante
-        querés cambiar de programa, solo escribinos por WhatsApp.
+        <strong className="text-tinta-suave">Hoy no se cobra nada.</strong> Para cambiar de programa después, escribinos por WhatsApp.
       </p>
 
       <div className="fixed inset-x-0 bottom-0 z-10 bg-white/95 backdrop-blur border-t border-borde" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>

@@ -90,6 +90,17 @@ export function OnboardingStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepId]);
 
+  // Modalidad elegida en el home ("Empezar para mí" / "para un ser querido",
+  // guardada al crear la cuenta): la primera pregunta arranca marcada con
+  // esa respuesta y se puede cambiar. Depende de la respuesta actual porque
+  // AppLayout vacía las respuestas al entrar una cuenta nueva.
+  const paraHome = session.status === "authed" ? session.session.user.user_metadata?.para : undefined;
+  useEffect(() => {
+    if (assistedPatientId || question?.id !== "rol_respondente" || answers.rol_respondente) return;
+    if (paraHome === "mi") answerQuestion("rol_respondente", "propia_persona");
+    else if (paraHome === "ser-querido") answerQuestion("rol_respondente", "familiar");
+  }, [question?.id, answers.rol_respondente, paraHome, assistedPatientId, answerQuestion]);
+
   // Once the duplicate question is answered (via the confirmation panel
   // below), automatically resume the submission that paused for it —
   // goNext reads duplicateResolved via closure, so this needs the value to

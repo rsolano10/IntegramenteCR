@@ -10,7 +10,7 @@ import { questions, resolveOptions } from "../../lib/onboardingSchema";
 
 const modalidadOptions: { value: Modalidad; label: string }[] = [
   { value: "autoguiado", label: "Autoguiado" },
-  { value: "orientado", label: "Orientado" },
+  { value: "orientado", label: "Con sesiones profesionales" },
   { value: "clinico", label: "Clínico" },
 ];
 

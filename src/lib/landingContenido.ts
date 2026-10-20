@@ -3,7 +3,7 @@
 // una lista vacía NO se muestran — nunca se publican testimonios, fotos o
 // biografías inventadas en un sitio de salud.
 
-import { WHATSAPP_EQUIPO } from "./whatsapp";
+import { WHATSAPP_EQUIPO, waLink } from "./whatsapp";
 
 export const contacto = {
   telefono: "+506 8343 5772",
@@ -13,24 +13,90 @@ export const contacto = {
   correo: "info@integramente.com",
 };
 
+// Guía para profesionales de la salud (GuiaProfesionales.tsx). Se abre en
+// otra pestaña y se puede imprimir o guardar como PDF.
+export const guiaProfesionales = "/guia-profesionales";
+
+// Precio de la valoración neuropsicológica cuando se hace con IntegraMente.
+// Se contrata aparte: nunca se muestra como precio del programa.
+export const precioValoracion = "₡170.000";
+
+// Cada botón de WhatsApp del home abre el chat con su mensaje ya escrito.
+export const whatsappHome = {
+  general: waLink(WHATSAPP_EQUIPO, "Hola, quiero información sobre IntegraMente en Casa."),
+  programaSesiones: waLink(
+    WHATSAPP_EQUIPO,
+    "Hola, me interesa el programa con sesiones profesionales. Quisiera conocer las opciones, los costos y cómo presentar mi valoración neuropsicológica.",
+  ),
+  profesional: waLink(
+    WHATSAPP_EQUIPO,
+    "Hola, soy profesional de la salud y me gustaría conocer más sobre IntegraMente en Casa para recomendarlo a mis pacientes.",
+  ),
+  accesoPaciente: waLink(WHATSAPP_EQUIPO, "Hola, ya soy paciente de IntegraMente y quisiera saber cómo acceder a mi cuenta."),
+};
+
 export interface MiembroEquipo {
-  // null mientras no tengamos el nombre: se muestra el área como título.
-  nombre: string | null;
-  rol: string;
-  // Ruta pública de la foto (ej. "/equipo/guiselle.jpg" dentro de public/).
-  // Sin foto se muestra un retrato provisional con el color del área.
-  foto: string | null;
+  nombre: string;
+  // Cargo dentro del programa, si lo tiene (ej. "Directora clínica del programa").
+  cargo?: string;
+  area: string;
+  descripcion: string;
+  // Foto en public/equipo/, en webp con respaldo jpg. Sin foto se muestra
+  // un retrato provisional con el color del área.
+  foto: FotoEquipo | null;
 }
 
-// Fotos y nombres provisionales: reemplazar `foto` (y `nombre`) por los
-// reales cuando estén. El orden es el orden en que aparecen.
+export interface FotoEquipo {
+  webp: string;
+  jpg: string;
+  // Tamaño real del archivo, para reservar el espacio y evitar saltos.
+  ancho: number;
+  alto: number;
+}
+
+// Todas las fotos del equipo son horizontales, de 1600 × 1067.
+const foto = (archivo: string): FotoEquipo => ({
+  webp: `/equipo/${archivo}.webp`,
+  jpg: `/equipo/${archivo}.jpg`,
+  ancho: 1600,
+  alto: 1067,
+});
+
+// Nombres, grados y áreas tal como los indicó IntegraMente. El orden es el
+// orden en que aparecen.
 export const equipo: MiembroEquipo[] = [
-  { nombre: "Dra. Guiselle Solano", rol: "Directora del programa", foto: null },
-  { nombre: null, rol: "Neuropsicología", foto: null },
-  { nombre: null, rol: "Nutrición", foto: null },
-  { nombre: null, rol: "Gerontogimnasia", foto: null },
-  { nombre: null, rol: "Fisioterapia", foto: null },
-  { nombre: null, rol: "Experto del programa", foto: null },
+  {
+    nombre: "MSc. Guiselle Solano Asenjo",
+    cargo: "Directora clínica del programa",
+    area: "Neuropsicología",
+    descripcion: "Dirige el enfoque clínico del programa y participa en la valoración y la intervención neuropsicológica.",
+    foto: foto("guiselle-solano-asenjo"),
+  },
+  {
+    nombre: "Nancy Navarro Araya",
+    area: "Neuropsicología",
+    descripcion: "Participa en las valoraciones neuropsicológicas y en la orientación de los objetivos de intervención.",
+    foto: foto("nancy-navarro-araya"),
+  },
+  {
+    nombre: "Silvia Obregón",
+    area: "Nutrición",
+    descripcion: "Desarrolla orientaciones de alimentación e hidratación para personas mayores.",
+    foto: foto("silvia-obregon"),
+  },
+  {
+    nombre: "Pablo Jiménez Meza",
+    area: "Gerontogimnasia y fisioterapia",
+    descripcion: "Desarrolla propuestas de movimiento y ejercicios de doble tarea, que combinan actividad física y retos cognitivos.",
+    foto: foto("pablo-jimenez-meza"),
+  },
+  {
+    // Apellidos pendientes de confirmar con IntegraMente.
+    nombre: "María Laura",
+    area: "Facilitadora de estimulación cognitiva",
+    descripcion: "Acompaña la realización de actividades de estimulación cognitiva.",
+    foto: foto("maria-laura"),
+  },
 ];
 
 export interface Testimonio {
@@ -42,103 +108,113 @@ export interface Testimonio {
 // Vacío hasta tener testimonios reales con permiso de publicarlos.
 export const testimonios: Testimonio[] = [];
 
-// Textos de los programas para el home (los de la app hablan a quien ya
-// completó el cuestionario; acá hablamos a quien todavía no empezó).
-// El precio sale de programas.ts / planTiers, la misma fuente de la app.
-export const programasHome: Record<"autoguiado" | "orientado", { lema: string; descripcion: string; incluye: string[] }> = {
+// Textos de los programas para el home. Las dos tarjetas siguen el mismo
+// orden: nombre, descripción, precio o presupuesto, beneficios, condiciones
+// y botón. El precio del Autoguiado sale de programas.ts / planTiers, la
+// misma fuente que usa la app.
+export const programasHome = {
   autoguiado: {
-    lema: "A su propio ritmo",
-    descripcion:
-      "Un plan semanal de actividades para realizar en casa, preparado y ajustado por nuestros profesionales de la salud según el perfil de tu familiar.",
+    nombre: "Autoguiado",
+    subtitulo: "Actividades para hacer en casa, a tu ritmo.",
+    descripcion: "Un plan semanal con recursos seleccionados por nuestro equipo a partir de las respuestas sobre vos o tu ser querido.",
     incluye: [
-      "Plan semanal personalizado",
-      "Revisión y ajuste por profesionales de la salud",
-      "Actividades paso a paso, con videos y materiales",
-      "Recordatorios por WhatsApp y en tu calendario",
+      "Plan semanal de actividades.",
+      "Recursos de estimulación cognitiva, movimiento y orientaciones de nutrición.",
+      "Instrucciones paso a paso, videos y materiales.",
+      "Registro de las actividades realizadas.",
     ],
+    aclaracion: "No incluye sesiones profesionales ni valoración neuropsicológica.",
   },
-  orientado: {
-    lema: "Con el equipo de salud a su lado",
-    descripcion:
-      "Todo lo del Autoguiado, más una evaluación neuropsicológica, sesiones en vivo con nuestros profesionales y el acompañamiento cercano de un experto del programa.",
+  sesiones: {
+    nombre: "Con sesiones profesionales",
+    etiqueta: "En línea o presenciales",
+    subtitulo: "Objetivos individualizados a partir de una valoración.",
+    // Versión corta del texto del PO, para que la tarjeta mida lo mismo que
+    // la del Autoguiado.
+    descripcion: "Sesiones profesionales y actividades para el hogar, orientadas por una valoración neuropsicológica.",
+    presupuesto: "Presupuesto según tu plan",
     incluye: [
-      "Todo lo del programa Autoguiado",
-      "Evaluación neuropsicológica profesional",
-      "Sesiones en vivo, presenciales o virtuales",
-      "Con profesionales en neuropsicología, nutrición y fisioterapia",
-      "Acompañamiento cercano de un experto del programa",
-      "Seguimiento de los resultados",
+      "Acceso a los recursos de la aplicación.",
+      "Objetivos de intervención individualizados.",
+      "Sesiones en línea o presenciales, según el plan contratado.",
+      "Seguimiento de la evolución y ajustes del programa.",
     ],
   },
 };
 
-// Las grandes áreas del programa (sección "Cuatro áreas…" del home).
-export const areas: { icono: string; t: string; frase: string; ejemplos: string[]; from: string; to: string }[] = [
+// Las áreas del programa (sección "Cuidamos la mente…" del home). Colores
+// de la paleta oficial; `tinta` es el color del texto sobre ese fondo (nunca
+// blanco sobre mostaza o beige).
+export const areas: {
+  icono: string;
+  t: string;
+  destacado?: string;
+  frase: string;
+  puntos: string[];
+  fondo: string;
+  tinta: string;
+}[] = [
   {
     icono: "cerebro",
-    t: "Neuropsicología",
-    frase: "Estimulación de la memoria, la atención y el lenguaje.",
-    ejemplos: ["Actividades de memoria y atención", "Reminiscencia y música"],
-    from: "#89c0c6",
-    to: "#3f6a70",
-  },
-  {
-    icono: "manzana",
-    t: "Nutrición",
-    frase: "Una alimentación que cuida el cerebro y la energía del día.",
-    ejemplos: ["Comidas sencillas y nutritivas", "Hidratación diaria"],
-    from: "#e8b5a1",
-    to: "#c0664f",
-  },
-  {
-    icono: "fisio",
-    t: "Gerontogimnasia",
-    frase: "Ejercicio adaptado para mantenerse en movimiento.",
-    ejemplos: ["Movilidad sentado", "Caminatas con música"],
-    from: "#fadfa9",
-    to: "#d9a441",
+    t: "Estimulación cognitiva",
+    frase: "Actividades para trabajar distintas capacidades cognitivas y conectarlas con la vida cotidiana.",
+    puntos: ["Atención, memoria y lenguaje.", "Planificación, orientación y habilidades visoespaciales."],
+    fondo: "#6a969c",
+    tinta: "#ffffff",
   },
   {
     icono: "equilibrio",
-    t: "Fisioterapia",
-    frase: "Fuerza, equilibrio y prevención de caídas.",
-    ejemplos: ["Ejercicios de equilibrio", "Movilidad segura en casa"],
-    from: "#ece3c4",
-    to: "#b7a06d",
+    t: "Gerontogimnasia",
+    frase: "Ejercicios que combinan movimiento y retos cognitivos, según las capacidades de cada persona.",
+    puntos: ["Fuerza, equilibrio y coordinación.", "Propuestas sentadas o de pie, según corresponda."],
+    fondo: "#f4d096",
+    tinta: "#1f3338",
+  },
+  {
+    icono: "manzana",
+    t: "Nutrición para personas mayores",
+    frase: "Orientaciones prácticas sobre alimentación e hidratación para la vida cotidiana.",
+    puntos: ["Alimentación variada y hábitos cotidianos.", "Ideas para organizar comidas e hidratación."],
+    fondo: "#ebe6ce",
+    tinta: "#1f3338",
   },
 ];
 
 export const preguntas: { p: string; r: string }[] = [
   {
     p: "¿Cuál es la diferencia entre los programas?",
-    r: "En los dos, profesionales de la salud revisan y ajustan las actividades. El Orientado suma una evaluación neuropsicológica profesional, sesiones en vivo (presenciales o virtuales) con nuestro equipo y el acompañamiento cercano de un experto del programa que da seguimiento a los resultados.",
+    r: "El Autoguiado es un plan semanal de actividades para hacer en casa. El programa con sesiones suma encuentros profesionales, objetivos individualizados y seguimiento.",
   },
   {
     p: "¿Cuánto cuesta?",
-    r: "Crear el perfil y completar el cuestionario es gratis. El Autoguiado tiene un precio mensual fijo, que ves en la sección de programas. Para conocer el precio del Orientado, escribinos por WhatsApp y te contamos los detalles. No se cobra nada sin avisarte antes.",
+    r: `Crear tu cuenta es gratis. El Autoguiado tiene un precio mensual fijo y el programa con sesiones se presupuesta según tu plan. La valoración con IntegraMente cuesta ${precioValoracion} y se paga aparte.`,
+  },
+  {
+    p: "¿El cuestionario inicial es una valoración neuropsicológica?",
+    r: "No. Sirve para conocer el día a día y los intereses de la persona y elegir actividades. La valoración la hace un profesional y solo se pide para el programa con sesiones.",
   },
   {
     p: "¿Necesito un diagnóstico?",
-    r: "No. El programa sirve si hay un diagnóstico, si solo notaste algunos cambios o si querés cuidar la memoria de forma preventiva. IntegraMente no diagnostica: si algo en el cuestionario lo amerita, te recomendamos una valoración profesional.",
+    r: "No. La aplicación sirve con o sin diagnóstico. IntegraMente no diagnostica: si hace falta, te recomendamos una valoración.",
   },
   {
     p: "¿Sirve si mi familiar no usa celular?",
-    r: "Sí. La aplicación la usa la persona que acompaña: ahí ve las actividades del día, cómo realizarlas y registra cómo les fue. Si tu familiar sí usa celular, puede tener su propia vista sencilla, con letra grande y una cosa a la vez.",
+    r: "Sí. La aplicación la usa quien acompaña. Si tu familiar usa celular, también puede tener su propia vista, sencilla y con letra grande.",
   },
   {
-    p: "¿Quién prepara el plan?",
-    r: "Nuestro equipo de salud, con profesionales en neuropsicología, nutrición y fisioterapia, revisa el perfil y prepara la semana con actividades elegidas según los gustos de tu familiar y lo que es seguro para su movilidad. En los dos programas, el plan se revisa y ajusta según cómo les va.",
+    p: "¿Quién selecciona las actividades?",
+    r: "Nuestro equipo, a partir de tus respuestas, intereses y necesidades.",
   },
   {
     p: "¿Qué pasa si hay una emergencia?",
-    r: "Ante una emergencia médica, llamá al 9-1-1. Dentro de la aplicación, el botón SOS te orienta según lo que esté pasando (una caída, un cambio repentino, si no encontrás a tu familiar) y te permite avisarle al equipo de inmediato.",
+    r: "Llamá al 9-1-1. En la aplicación, el botón SOS te orienta y te permite avisarle al equipo.",
   },
   {
     p: "¿Quién ve mi información?",
-    r: "Solamente tu familia vinculada y el equipo clínico de IntegraMente. La información se usa para preparar y ajustar el plan. Podés leer el detalle en Privacidad y datos.",
+    r: "Solo tu familia vinculada y el equipo de IntegraMente. El detalle está en Privacidad y datos.",
   },
   {
     p: "¿Puedo cambiar de programa?",
-    r: "Sí. Escribinos por WhatsApp o a info@integramente.com y con gusto lo coordinamos.",
+    r: "Sí. Escribinos por WhatsApp y lo coordinamos.",
   },
 ];

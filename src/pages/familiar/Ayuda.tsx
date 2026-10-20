@@ -32,15 +32,15 @@ function HablarConEquipo({ paciente }: { paciente?: string }) {
   );
 }
 
-// Los dos programas tienen al equipo de salud revisando el plan. Lo que
-// suma Orientado son la evaluación, las sesiones en vivo y el
-// acompañamiento cercano: se cuenta acá, sin interrumpir el chat.
+// Lo que suma el programa con sesiones profesionales (id "orientado") sobre
+// el Autoguiado, con su requisito de ingreso: se cuenta acá, sin
+// interrumpir el chat.
 function SesionesEnVivo({ paciente }: { paciente?: string }) {
   const orientado = programas.find((p) => p.id === "orientado")!;
   return (
     <details className="mb-5 rounded-2xl border border-borde bg-white px-4.5 py-3.5">
       <summary className="cursor-pointer text-[14.5px] font-semibold text-tinta">
-        ¿Querés sesiones en vivo con nuestros profesionales? <span className="text-verde-profundo">Conocé el programa {orientado.nombre}</span>
+        ¿Querés sesiones con nuestro equipo? <span className="text-verde-profundo">Conocé el programa con sesiones profesionales</span>
       </summary>
       <ul className="list-none m-0 mt-3 p-0 grid gap-2">
         {orientado.incluye.slice(1).map((i) => (
@@ -50,10 +50,11 @@ function SesionesEnVivo({ paciente }: { paciente?: string }) {
           </li>
         ))}
       </ul>
+      {orientado.requisito && <p className="m-0 mt-3 text-[13.5px] leading-relaxed text-tinta-suave">{orientado.requisito}</p>}
       <p className="m-0 mt-3 text-[13.5px] text-tinta-tenue">
         Para cambiarte,{" "}
         <a
-          href={waEquipo(`Quiero información para pasarnos al programa ${orientado.nombre}.`, paciente)}
+          href={waEquipo("Quiero información para pasarnos al programa con sesiones profesionales.", paciente)}
           target="_blank"
           rel="noreferrer"
           className="font-semibold text-verde-profundo"

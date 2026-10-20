@@ -9,10 +9,17 @@ export interface Programa {
   nombre: string;
   lema: string;
   descripcion: string;
+  // Con sesiones no tiene precio fijo: `precio` es el texto del presupuesto,
+  // `periodo` queda vacío y `notaPrecio` lo explica.
   precio: string;
   periodo: string;
+  notaPrecio?: string;
   idealSi: string[];
   incluye: string[];
+  // Lo que el programa no incluye, dicho sin rodeos.
+  aclaracion?: string;
+  // Condición para ingresar, visible antes de elegir.
+  requisito?: string;
 }
 
 // Precios: la misma fuente que la sección "Planes" del landing (planTiers en
@@ -23,18 +30,20 @@ function precioDe(id: ProgramaId) {
   return { precio: tier.precio, periodo: tier.periodo };
 }
 
-// Los dos programas incluyen la revisión y el ajuste de las actividades por
-// el equipo de salud (neuropsicología, nutrición, fisioterapia). La
-// diferencia real es que Orientado suma sesiones en vivo —presenciales o
-// virtuales— con esos profesionales y el acompañamiento cercano de un
-// experto del programa que da seguimiento a los resultados.
+// Mismos textos que el home (landingContenido.ts / programasHome). El
+// Autoguiado da acceso a los recursos que selecciona el equipo; el programa
+// con sesiones suma sesiones en línea o presenciales, objetivos
+// individualizados a partir de una valoración neuropsicológica (requisito
+// de ingreso, se contrata aparte) y seguimiento, según el plan contratado.
+// No prometer acá servicios que todavía no estén definidos (ajustes
+// semanales, recordatorios por WhatsApp, áreas fijas de profesionales).
+// El id "orientado" se mantiene: es el valor guardado en la base.
 export const programas: Programa[] = [
   {
     id: "autoguiado",
     nombre: "Autoguiado",
-    lema: "Ustedes llevan el ritmo",
-    descripcion:
-      "Un plan semanal de actividades para hacer en casa, preparado y ajustado por nuestro equipo de salud a partir del perfil que completaste.",
+    lema: "Actividades para hacer en casa, a tu ritmo.",
+    descripcion: "Un plan semanal con recursos seleccionados por nuestro equipo a partir de las respuestas sobre vos o tu ser querido.",
     ...precioDe("autoguiado"),
     idealSi: [
       "Tienen tiempo y confianza para organizar las actividades en casa",
@@ -42,41 +51,46 @@ export const programas: Programa[] = [
       "Prefieren un costo más bajo",
     ],
     incluye: [
-      "Plan semanal personalizado según el perfil",
-      "Actividades revisadas y ajustadas por profesionales de la salud",
-      "Actividades paso a paso con videos y materiales",
-      "Recordatorios por WhatsApp y calendario",
+      "Plan semanal de actividades",
+      "Recursos de estimulación cognitiva, movimiento y orientaciones de nutrición",
+      "Instrucciones paso a paso, videos y materiales",
+      "Registro de las actividades realizadas",
     ],
+    aclaracion: "No incluye sesiones profesionales ni valoración neuropsicológica.",
   },
   {
     id: "orientado",
-    nombre: "Orientado",
-    lema: "Con el equipo de salud a su lado",
+    nombre: "Con sesiones profesionales",
+    lema: "Objetivos individualizados a partir de una valoración.",
     descripcion:
-      "Todo lo del Autoguiado, más sesiones en vivo con nuestros profesionales de la salud y el acompañamiento cercano de un experto del programa.",
-    ...precioDe("orientado"),
+      "Un programa de intervención que integra sesiones profesionales y actividades para el hogar, orientado por los resultados de una valoración neuropsicológica y las necesidades de cada persona.",
+    precio: "Presupuesto según tu plan",
+    periodo: "",
+    notaPrecio: "El costo depende de las sesiones y los servicios que se definan para tu programa.",
     idealSi: [
       "Han notado cambios recientes en la memoria, el ánimo o la movilidad",
       "Quieren sesiones con profesionales, además de las actividades en casa",
-      "Buscan un seguimiento cercano de los resultados",
+      "Buscan objetivos individualizados y seguimiento de la evolución",
     ],
     incluye: [
-      "Todo lo del programa Autoguiado",
-      "Sesiones en vivo, presenciales o virtuales",
-      "Con profesionales en neuropsicología, nutrición y fisioterapia",
-      "Acompañamiento cercano de un experto del programa",
-      "Seguimiento de los resultados",
+      "Acceso a los recursos de la aplicación",
+      "Objetivos de intervención individualizados",
+      "Sesiones en línea o presenciales, según el plan contratado",
+      "Seguimiento de la evolución y ajustes del programa",
     ],
+    requisito:
+      "Valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional. Podés elegir el programa sin tenerla: te indicamos cómo compartirla. Si la hacés con IntegraMente, se paga aparte.",
   },
 ];
 
 // Fila por fila, para la tabla "Compará en detalle". `true` = incluido,
 // `false` = no incluido, texto = incluido con matiz.
 export const comparacion: { aspecto: string; autoguiado: boolean | string; orientado: boolean | string }[] = [
-  { aspecto: "Plan semanal personalizado", autoguiado: true, orientado: true },
-  { aspecto: "Revisión y ajuste por profesionales de la salud", autoguiado: true, orientado: true },
-  { aspecto: "Actividades paso a paso y recordatorios", autoguiado: true, orientado: true },
-  { aspecto: "Sesiones en vivo (presenciales o virtuales)", autoguiado: false, orientado: true },
-  { aspecto: "Neuropsicología, nutrición y fisioterapia", autoguiado: "En la revisión del plan", orientado: "También en sesiones en vivo" },
-  { aspecto: "Acompañamiento cercano de un experto", autoguiado: false, orientado: true },
+  { aspecto: "Plan semanal de actividades", autoguiado: true, orientado: true },
+  { aspecto: "Recursos seleccionados por nuestro equipo", autoguiado: true, orientado: true },
+  { aspecto: "Instrucciones paso a paso, videos y materiales", autoguiado: true, orientado: true },
+  { aspecto: "Objetivos de intervención individualizados", autoguiado: false, orientado: true },
+  { aspecto: "Sesiones en línea o presenciales", autoguiado: false, orientado: "Según el plan contratado" },
+  { aspecto: "Seguimiento de la evolución y ajustes", autoguiado: false, orientado: true },
+  { aspecto: "Valoración neuropsicológica (últimos 12 meses)", autoguiado: "No se requiere", orientado: "Requisito de ingreso" },
 ];
