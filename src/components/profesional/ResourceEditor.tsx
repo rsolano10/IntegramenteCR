@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
+import { fetchResourceInterno, saveResourceInterno } from "../../lib/mediaResources";
 import { useBodyScrollLock } from "../../lib/useBodyScrollLock";
 import { Button } from "../ui/Button";
 import { ChipToggle } from "../ui/ChipToggle";
@@ -8,6 +10,7 @@ import { LightbulbIcon } from "../ui/Icons";
 import { ModuloIcon } from "../ui/ModuloIcon";
 import { ResourceCard } from "../ui/ResourceCard";
 import { ResourceDetailView } from "../ui/ResourceDetailView";
+import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
 import {
   moduloLabel,
   moduloTheme,
@@ -196,6 +199,28 @@ function Bloque({
   );
 }
 
+function camposDeFicha(r: MediaResource | null | undefined) {
+  return {
+    sabias_que: r?.sabias_que ?? null,
+    actividad: r?.actividad ?? null,
+    dosis: r?.dosis ?? null,
+    ten_en_cuenta: r?.ten_en_cuenta ?? null,
+    para_cerrar: r?.para_cerrar ?? null,
+    ayuda: r?.ayuda ?? null,
+    adaptacion_por_etapa: r?.adaptacion_por_etapa ?? null,
+    poster_path: r?.poster_path ?? null,
+    drive_file_id: r?.drive_file_id ?? null,
+    permite_doble_tarea: r?.permite_doble_tarea ?? false,
+    requiere_plan_individual: r?.requiere_plan_individual ?? false,
+    requiere_supervision: r?.requiere_supervision ?? null,
+    alergenos: r?.alergenos ?? null,
+    exclusiones: r?.exclusiones ?? null,
+    grupo_rotacion: r?.grupo_rotacion ?? null,
+    estado_clinico: r?.estado_clinico ?? "aprobado",
+    orden: r?.orden ?? null,
+  } satisfies Partial<MediaResource>;
+}
+
 export function ResourceEditor({
   resource,
   onClose,
@@ -210,6 +235,24 @@ export function ResourceEditor({
   useBodyScrollLock();
   const isNew = resource === null;
   const [f, setF] = useState<Form>(() => fromResource(resource));
+
+  // Objetivo, progresión, requisito y dominios son notas internas: viven en
+  // media_resources_interno (solo la clínica), no en la tabla que lee la familia.
+  const { data: interno } = useQuery({
+    queryKey: ["recurso-interno", resource?.id],
+    enabled: !!resource?.id,
+    queryFn: () => fetchResourceInterno(resource!.id),
+  });
+  useEffect(() => {
+    if (!interno) return;
+    setF((prev) => ({
+      ...prev,
+      objetivo: prev.objetivo || interno.objetivo || "",
+      progresion: prev.progresion || interno.progresion || "",
+      requisito: prev.requisito || interno.reglas || "",
+      dominios: prev.dominios || (interno.areas_trabajo ?? []).join(", "),
+    }));
+  }, [interno]);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
 
   const [source, setSource] = useState<"upload" | "link" | "none">(
@@ -263,8 +306,10 @@ export function ResourceEditor({
   const pasosLimpios = f.pasos.map((p) => p.trim()).filter(Boolean);
   const duracion = duracionTexto(f);
 
-  // Lo mismo que va a guardar — alimenta las dos vistas previas.
+  // Lo mismo que va a guardar — alimenta las dos vistas previas. Los campos
+  // de ficha (GER/PRE/COG) no se editan acá: se conservan del recurso.
   const preview: MediaResource = {
+    ...camposDeFicha(resource),
     id: resource?.id ?? "preview",
     codigo: f.codigo || null,
     titulo: f.titulo || "Título de la actividad",
@@ -372,7 +417,6 @@ export function ResourceEditor({
         modulo: f.modulo,
         tipo: f.tipo,
         tipo_intervencion: f.tipoIntervencion.trim() || null,
-        dominios: preview.dominios,
         niveles_cognitivos: preview.niveles_cognitivos,
         niveles_motores: preview.niveles_motores,
         duracion_min: preview.duracion_min,
@@ -380,11 +424,8 @@ export function ResourceEditor({
         duracion: duracion || null,
         frecuencia: f.frecuencia.trim() || null,
         perfil: f.perfil.trim() || null,
-        requisito: f.requisito.trim() || null,
-        objetivo: f.objetivo.trim() || null,
         materiales: f.materiales.trim() || null,
         pasos: pasosLimpios.length ? pasosLimpios : null,
-        progresion: f.progresion.trim() || null,
         adaptacion: f.adaptacion.trim() || null,
         precaucion: f.precaucion.trim() || null,
         ciencia: preview.ciencia ? { gancho: f.gancho.trim(), evidencia: f.evidencia.trim(), cierre: f.cierre.trim() } : null,
@@ -393,13 +434,21 @@ export function ResourceEditor({
         external_url: source === "link" ? externalUrl.trim() : null,
         media_kind: mediaKind,
       };
+      let resourceId = resource?.id ?? null;
       if (isNew) {
-        const { error: insertError } = await supabase.from("media_resources").insert(row);
+        const { data: inserted, error: insertError } = await supabase.from("media_resources").insert(row).select("id").single();
         if (insertError) throw insertError;
+        resourceId = inserted.id as string;
       } else {
         const { error: updateError } = await supabase.from("media_resources").update(row).eq("id", resource.id);
         if (updateError) throw updateError;
       }
+      await saveResourceInterno(resourceId!, {
+        objetivo: f.objetivo.trim() || null,
+        progresion: f.progresion.trim() || null,
+        reglas: f.requisito.trim() || null,
+        areas_trabajo: preview.dominios,
+      });
       // Remove the old file only after the DB stops referencing it.
       if (previousStoragePath && previousStoragePath !== storagePath) await removeResourceFile(previousStoragePath);
       setLoading(false);
@@ -749,18 +798,7 @@ export function ResourceEditor({
                         <h3 className="font-serif font-normal text-[22px] leading-tight m-0 mb-3.5">{preview.titulo}</h3>
                         <div className="grid gap-3.5">
                           <ResourceDetailView
-                            content={{
-                              mediaKind: preview.media_kind,
-                              storagePath: null,
-                              externalUrl: preview.external_url,
-                              materiales: preview.materiales,
-                              adaptacion: preview.adaptacion,
-                              ciencia: preview.ciencia,
-                              extras: preview.extras,
-                              porQue: preview.por_que,
-                              pasos: preview.pasos ?? undefined,
-                              fallbackLabel: `${tipoLabel[f.tipo]}${duracion ? ` · ${duracion}` : ""}`,
-                            }}
+                            content={contenidoDeRecurso(preview, `${tipoLabel[f.tipo]}${duracion ? ` · ${duracion}` : ""}`, null)}
                           />
                           {preview.precaucion && (
                             <p className="m-0 text-[14px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-3.5 py-2.5">{preview.precaucion}</p>

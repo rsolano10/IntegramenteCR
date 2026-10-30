@@ -17,6 +17,8 @@ import {
   type ResourceModulo,
 } from "../../lib/mediaResources";
 import { ResourceEditor } from "../../components/profesional/ResourceEditor";
+import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
+import { NotasDelEquipo } from "../../components/profesional/NotasDelEquipo";
 
 const modulos = Object.keys(moduloLabel) as ResourceModulo[];
 const nivelesCognitivos = Object.keys(nivelCognitivoLabel) as NivelCognitivo[];
@@ -184,43 +186,13 @@ export function Biblioteca() {
           <h3 className="font-serif font-normal text-2xl m-0 mb-4">{previewing.titulo}</h3>
           <div className="grid grid-cols-1 gap-4">
             <ResourceDetailView
-              content={{
-                mediaKind: previewing.media_kind,
-                storagePath: previewing.storage_path,
-                externalUrl: previewing.external_url,
-                materiales: previewing.materiales,
-                adaptacion: previewing.adaptacion,
-                ciencia: previewing.ciencia,
-                extras: previewing.extras,
-                porQue: previewing.por_que,
-                pasos: previewing.pasos ?? undefined,
-                fallbackLabel: `${tipoLabel[previewing.tipo]}${previewing.duracion ? ` · ${previewing.duracion}` : ""}`,
-              }}
+              content={contenidoDeRecurso(previewing, `${tipoLabel[previewing.tipo]}${previewing.duracion ? ` · ${previewing.duracion}` : ""}`, null)}
             />
             {previewing.precaucion && (
               <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3">{previewing.precaucion}</p>
             )}
           </div>
-          {(previewing.perfil || previewing.requisito || previewing.progresion) && (
-            <div className="mt-5 pt-4 border-t border-borde grid gap-3">
-              <p className="m-0 text-[12px] tracking-[0.1em] uppercase text-tinta-tenue">Solo visible para la clínica</p>
-              {previewing.perfil && (
-                <p className="m-0 text-[14px] text-tinta-suave">
-                  <strong className="text-tinta">¿Para quién?</strong> {previewing.perfil}
-                </p>
-              )}
-              {previewing.requisito && (
-                <p className="m-0 text-[14px] text-tinta-suave">
-                  <strong className="text-tinta">Requisito:</strong> {previewing.requisito}
-                </p>
-              )}
-              {previewing.progresion && (
-                <p className="m-0 text-[14px] text-tinta-suave">
-                  <strong className="text-tinta">Progresión:</strong> {previewing.progresion}
-                </p>
-              )}
-            </div>
-          )}
+          <NotasDelEquipo resourceId={previewing.id} />
         </Modal>
       )}
     </div>

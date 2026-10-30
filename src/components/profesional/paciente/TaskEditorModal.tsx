@@ -5,6 +5,8 @@ import { moduloLabel, tipoLabel, type MediaResource, type ResourceModulo } from 
 import { Modal } from "../../ui/Modal";
 import { Button } from "../../ui/Button";
 import { PillToggle } from "../../ui/PillToggle";
+import { evaluarAsignacion, gruposDeLaSemana, type Resultado } from "../../../lib/reglasRecursos";
+import { usePerfilRecursos } from "../../../lib/usePerfilRecursos";
 
 export interface DraftTask {
   key: string;
@@ -20,6 +22,8 @@ export interface DraftTask {
   notaClinica: string;
   mediaResourceId: string | null;
   modulo: ResourceModulo | null;
+  // Dosis (GER) o porción del plan individual (PRE) para esta persona.
+  indicacionIndividual?: string;
 }
 
 const TIPOS = ["actividad", "video", "estrategia", "neuroproteccion"] as const;
@@ -39,12 +43,16 @@ const inputCls = "w-full min-w-0 min-h-11 px-3 rounded-xl border-[1.5px] border-
 // mensaje de la clínica. "Crear nueva" es el caso para algo puntual.
 export function TaskEditorModal({
   days,
+  patientId,
+  recursosSemana = [],
   initial,
   onSave,
   onDelete,
   onClose,
 }: {
   days: { dia: string; date: Date }[];
+  patientId: string;
+  recursosSemana?: string[];
   initial: Partial<DraftTask> & { dia: string };
   onSave: (task: DraftTask) => void;
   onDelete?: () => void;
@@ -65,6 +73,8 @@ export function TaskEditorModal({
   const [pasos, setPasos] = useState(initial.mediaResourceId ? "" : (initial.pasos ?? ""));
   const [porQue, setPorQue] = useState(initial.mediaResourceId ? "" : (initial.porQue ?? ""));
   const [notaClinica, setNotaClinica] = useState(initial.notaClinica ?? "");
+  const [indicacion, setIndicacion] = useState(initial.indicacionIndividual ?? "");
+  const { data: perfil } = usePerfilRecursos(patientId);
   const [guardarEnBiblioteca, setGuardarEnBiblioteca] = useState(false);
   const [nuevoModulo, setNuevoModulo] = useState<ResourceModulo>("movimiento");
   const [nuevoEnlace, setNuevoEnlace] = useState("");
@@ -81,6 +91,15 @@ export function TaskEditorModal({
   });
 
   const selected = (resources ?? []).find((r) => r.id === resourceId) ?? null;
+
+  // Reglas de seguridad (src/lib/reglasRecursos.ts) con el perfil del
+  // paciente y lo que ya tiene esta semana.
+  const gruposSemana = gruposDeLaSemana((resources ?? []).filter((r) => recursosSemana.includes(r.id)));
+  function evaluar(r: MediaResource): Resultado {
+    if (!perfil) return { permitido: true };
+    return evaluarAsignacion(r, perfil, { gruposSemana, conIndicacionIndividual: !!indicacion.trim() });
+  }
+  const evaluacionSeleccionado = selected ? evaluar(selected) : null;
   const q = search.trim().toLowerCase();
   const filtered = (resources ?? []).filter(
     (r) => (moduloFiltro === "todos" || r.modulo === moduloFiltro) && (!q || r.titulo.toLowerCase().includes(q) || (r.codigo ?? "").toLowerCase().includes(q)),
@@ -91,6 +110,10 @@ export function TaskEditorModal({
     if (source === "biblioteca") {
       if (!selected) {
         setError("Elegí una actividad de la biblioteca.");
+        return;
+      }
+      if (evaluacionSeleccionado && !evaluacionSeleccionado.permitido) {
+        setError(`No se puede asignar: ${evaluacionSeleccionado.motivo}`);
         return;
       }
       onSave({
@@ -107,6 +130,7 @@ export function TaskEditorModal({
         notaClinica: notaClinica.trim(),
         mediaResourceId: selected.id,
         modulo: selected.modulo,
+        indicacionIndividual: indicacion.trim(),
       });
       return;
     }
@@ -215,6 +239,28 @@ export function TaskEditorModal({
                 <strong>Precaución:</strong> {selected.precaucion}
               </p>
             )}
+            {evaluacionSeleccionado && !evaluacionSeleccionado.permitido && (
+              <p role="alert" className="m-0 mt-2.5 text-[13.5px] leading-relaxed text-alerta-texto bg-alerta border border-alerta-borde rounded-xl px-3 py-2">
+                No se puede asignar: {evaluacionSeleccionado.motivo}
+              </p>
+            )}
+            {(selected.modulo === "gerontogimnasia" || selected.modulo === "nutricion" || selected.requiere_plan_individual) && (
+              <label className="grid gap-1.5 mt-3 text-[13px] font-semibold text-tinta-suave">
+                {selected.modulo === "gerontogimnasia" ? "Dosis individual autorizada (opcional)" : "Porción o cantidad del plan individual (opcional)"}
+                <input
+                  type="text"
+                  value={indicacion}
+                  onChange={(e) => setIndicacion(e.target.value)}
+                  placeholder={selected.dosis ? `Propuesta: ${selected.dosis}` : "Ej.: media taza"}
+                  className={inputCls}
+                />
+                <span className="font-normal text-[12.5px] text-tinta-tenue">
+                  {selected.requiere_plan_individual
+                    ? "Esta ficha usa cantidades del plan individual: si la persona tiene plan, cargá la porción. Si no, la familia ve la ficha tal cual."
+                    : "Si la dejás vacía, la familia ve la dosis propuesta del terapeuta."}
+                </span>
+              </label>
+            )}
           </div>
         ) : (
           <div className="mb-4">
@@ -236,21 +282,32 @@ export function TaskEditorModal({
             <div className="grid gap-1.5 max-h-60 overflow-y-auto pr-1">
               {isLoading && <p className="m-0 text-[13px] text-tinta-tenue">Cargando biblioteca…</p>}
               {!isLoading && filtered.length === 0 && <p className="m-0 text-[13px] text-tinta-tenue">Ninguna actividad coincide.</p>}
-              {filtered.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setResourceId(r.id)}
-                  className="text-left px-3.5 py-2.5 rounded-xl border-[1.5px] border-borde-campo bg-white cursor-pointer font-sans hover:border-verde-serenidad"
-                >
-                  <span className="block text-[14.5px] font-semibold text-tinta">{r.titulo}</span>
-                  <span className="block text-[12.5px] text-tinta-tenue">
-                    {moduloLabel[r.modulo]}
-                    {r.duracion ? ` · ${r.duracion}` : ""}
-                    {r.codigo ? ` · ${r.codigo}` : ""}
-                  </span>
-                </button>
-              ))}
+              {filtered.map((r) => {
+                const ev = evaluar(r);
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setResourceId(r.id)}
+                    aria-describedby={ev.permitido ? undefined : `motivo-${r.id}`}
+                    className={`text-left px-3.5 py-2.5 rounded-xl border-[1.5px] bg-white cursor-pointer font-sans ${
+                      ev.permitido ? "border-borde-campo hover:border-verde-serenidad" : "border-borde-suave opacity-60"
+                    }`}
+                  >
+                    <span className="block text-[14.5px] font-semibold text-tinta">{r.titulo}</span>
+                    <span className="block text-[12.5px] text-tinta-tenue">
+                      {moduloLabel[r.modulo]}
+                      {r.duracion ? ` · ${r.duracion}` : ""}
+                      {r.codigo ? ` · ${r.codigo}` : ""}
+                    </span>
+                    {!ev.permitido && (
+                      <span id={`motivo-${r.id}`} className="block mt-0.5 text-[12.5px] font-semibold text-alerta-texto">
+                        {ev.motivo}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )

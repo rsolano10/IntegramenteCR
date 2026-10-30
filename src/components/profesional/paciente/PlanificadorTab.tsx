@@ -27,6 +27,7 @@ interface ExistingTask {
   hora: string | null;
   titulo: string;
   estado: string;
+  media_resource_id: string | null;
 }
 
 type Target = { kind: "plan"; plan: PlanSummary } | { kind: "nueva"; date: Date };
@@ -99,7 +100,7 @@ export function PlanificadorTab({
   const { data: existing } = useQuery({
     queryKey: ["planner-plan-tasks", planId],
     queryFn: async () => {
-      const { data, error: tasksError } = await supabase.from("plan_tasks").select("id, plan_id, dia, hora, titulo, estado").eq("plan_id", planId!);
+      const { data, error: tasksError } = await supabase.from("plan_tasks").select("id, plan_id, dia, hora, titulo, estado, media_resource_id").eq("plan_id", planId!);
       if (tasksError) throw tasksError;
       return data as ExistingTask[];
     },
@@ -197,6 +198,7 @@ export function PlanificadorTab({
       if (t.porQue.trim()) task.por_que = t.porQue.trim();
       if (t.notaClinica.trim()) task.nota_clinica = t.notaClinica.trim();
       if (t.mediaResourceId) task.media_resource_id = t.mediaResourceId;
+      if (t.indicacionIndividual?.trim()) task.indicacion_individual = t.indicacionIndividual.trim();
       return task;
     });
 
@@ -483,6 +485,12 @@ export function PlanificadorTab({
       {editor && (
         <TaskEditorModal
           days={days}
+          patientId={patientId}
+          // Recursos ya en la semana (para la rotación), sin la tarea que se edita.
+          recursosSemana={[
+            ...existentes.map((t) => t.media_resource_id),
+            ...draftsInWeek.filter((d) => editor.mode !== "edit" || d.key !== editor.task.key).map((d) => d.mediaResourceId),
+          ].filter((x): x is string => !!x)}
           initial={editor.mode === "edit" ? editor.task : { dia: editor.dia, hora: editor.hora }}
           onSave={upsertDraft}
           onDelete={

@@ -22,5 +22,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Los tests corren con node --test (npm test), fuera del build de la app.
+  "exclude": ["src/**/*.test.ts"]
 }

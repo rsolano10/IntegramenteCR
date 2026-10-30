@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 
 import type { ResourceModulo } from "./modulos";
+import type { EstadoClinico, Supervision } from "./reglasRecursos";
 export type { ResourceModulo } from "./modulos";
 export type ResourceTipo = "video" | "actividad" | "estrategia" | "neuroproteccion";
 export type MediaKind = "video" | "imagen" | "audio" | "documento" | "enlace";
@@ -14,17 +15,15 @@ export interface ResourceCiencia {
 }
 
 // Material de apoyo estructurado del manual: "tabla" = ejemplos para el
-// familiar (actividades 10 y 12); "tarjetas" = una por vez, con la
-// continuación oculta hasta «Ver frase completa» (refranes, actividad 13).
-// En "tarjetas" las columnas son: inicio, continuación, pregunta.
-export interface ResourceExtras {
-  modo: "tabla" | "tarjetas";
-  titulo: string;
-  columnas: string[];
-  filas: string[][];
-  intro?: string;
-  cierre?: string;
-}
+// familiar (COG-010 y COG-012); "tarjetas" = una por vez, con la
+// continuación oculta hasta «Ver frase completa» (refranes, COG-013; las
+// columnas son inicio, continuación, pregunta); "temporizador" = ayuda
+// opcional con duraciones fijas, sin puntuación (COG-016).
+export type ResourceExtras =
+  | { modo: "tabla" | "tarjetas"; titulo: string; columnas: string[]; filas: string[][]; intro?: string; cierre?: string }
+  | { modo: "temporizador"; titulo: string; segundos: number[] };
+
+export type AdaptacionPorEtapa = Partial<Record<NivelCognitivo, string>>;
 
 export interface MediaResource {
   id: string;
@@ -53,6 +52,23 @@ export interface MediaResource {
   ciencia: ResourceCiencia | null;
   por_que: string | null;
   extras: ResourceExtras | null;
+  sabias_que: string | null;
+  actividad: string | null;
+  dosis: string | null;
+  ten_en_cuenta: string | null;
+  para_cerrar: string | null;
+  ayuda: string | null;
+  adaptacion_por_etapa: AdaptacionPorEtapa | null;
+  poster_path: string | null;
+  drive_file_id: string | null;
+  permite_doble_tarea: boolean;
+  requiere_plan_individual: boolean;
+  requiere_supervision: Supervision | null;
+  alergenos: string[] | null;
+  exclusiones: string[] | null;
+  grupo_rotacion: string | null;
+  estado_clinico: EstadoClinico;
+  orden: number | null;
   niveles_cognitivos: NivelCognitivo[] | null;
   niveles_motores: NivelMotor[] | null;
   activo: boolean;
@@ -62,6 +78,34 @@ export interface MediaResource {
 }
 
 export { moduloLabel, moduloTheme } from "./modulos";
+
+// Notas internas del equipo (tabla media_resources_interno, solo clínica).
+export interface ResourceInterno {
+  resource_id: string;
+  objetivo: string | null;
+  objetivo_esperado: string | null;
+  areas_trabajo: string[] | null;
+  fuente: string | null;
+  fuente_url: string | null;
+  progresion: string | null;
+  reglas: string | null;
+  etiquetas: string[] | null;
+  video_notas: string | null;
+  revision: string | null;
+  pendientes: string | null;
+}
+
+export async function fetchResourceInterno(resourceId: string): Promise<ResourceInterno | null> {
+  const { data, error } = await supabase.from("media_resources_interno").select("*").eq("resource_id", resourceId).maybeSingle();
+  if (error) throw error;
+  return data as ResourceInterno | null;
+}
+
+// Solo actualiza los campos que se pasan; el resto de las notas se conserva.
+export async function saveResourceInterno(resourceId: string, campos: Partial<Omit<ResourceInterno, "resource_id">>) {
+  const { error } = await supabase.from("media_resources_interno").upsert({ resource_id: resourceId, ...campos }, { onConflict: "resource_id" });
+  if (error) throw error;
+}
 
 
 export const tipoLabel: Record<ResourceTipo, string> = {

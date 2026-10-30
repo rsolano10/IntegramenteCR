@@ -18,6 +18,7 @@ import { AsistenteTab } from "../../components/profesional/paciente/AsistenteTab
 import { usePendientesAsistente } from "../../lib/asistenteRevision";
 import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
+import { PerfilRecursosCard } from "../../components/profesional/paciente/PerfilRecursosCard";
 
 type Tab = "evaluacion" | "semana" | "planificar" | "asistente" | "cuentas";
 
@@ -258,6 +259,8 @@ export function Paciente() {
           !pendiente && loadingPlans ? (
             <div className="bg-white border border-borde rounded-3xl p-8 text-center text-tinta-tenue">Cargando…</div>
           ) : (
+          <>
+          <PerfilRecursosCard patientId={patient.id} />
           <PlanificadorTab
             key={patient.id}
             patientId={patient.id}
@@ -267,6 +270,7 @@ export function Paciente() {
             plans={plans ?? []}
             onPublished={(msg) => done(msg)}
           />
+          </>
           )
         ))}
 
