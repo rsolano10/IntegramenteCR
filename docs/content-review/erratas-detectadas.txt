@@ -1,0 +1,62 @@
+COG-005: viñeta vacía en «¿Para quién?» → «Preventivo.» (corrección §5)
+GER-002: agregado punto final en «¿Sabías que…?» (corrección §5)
+GER-003: «Podés er el. video o demostrar» → «Podés ver el video o demostrar» (corrección §5)
+GER-003: «Tu actividad» estaba pegado al final de «¿Sabías que…?» y duplicado; se separó y quedó uno solo (corrección §5)
+GER-005: «Podés ver video o demostrarle » → «Podés ver el video o demostrar» (corrección §5)
+GER-009: corregido doble espacio o doble punto en «Para tocar una pelota con un pie, necesitamos coordinar lo que vemos c…»
+PRE-001: el título traía la audiencia entre paréntesis («Envejecimiento normal, deterioro cognitivo leve y demencia leve»); se dejó en notas internas
+PRE-002: sin «Fuente para el equipo» ni notas internas
+PRE-003: sin «Fuente para el equipo» ni notas internas
+PRE-004: sin «Fuente para el equipo» ni notas internas
+PRE-005: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-006: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-007: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-008: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-009: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-009: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-010: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con deterioro cognitivo leve …»
+PRE-010: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-011: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-011: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-012: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-013: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-014: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-015: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-016: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-016: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-019: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-021: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-022: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-022: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-024: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-024: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-026: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-026: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-027: agregado encabezado «Tu actividad» (corrección §5)
+PRE-027: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-027: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-028: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-029: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-031: agregado punto final en «¿Sabías que…?» (corrección §5)
+PRE-034: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-034: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-036: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-036: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-037: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-037: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-038: agregado punto final en «¿Sabías que…?» (corrección §5)
+PRE-039: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-039: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-042: agregado punto final en «¿Sabías que…?» (corrección §5)
+PRE-042: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-042: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-043: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-043: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-044: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-044: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-046: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con síndromes demenciales en …»
+PRE-046: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-048: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-048: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
+PRE-049: corregido doble espacio o doble punto en «Para familiares y cuidadores de personas con envejecimiento normal, de…»
+PRE-049: «leves y moderadas y severas» → «leves, moderadas y severas» (corrección §5)
