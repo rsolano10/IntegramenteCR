@@ -36,6 +36,19 @@ export function ResourceCard({
   return (
     <div
       onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.target !== e.currentTarget) return;
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       className={`group relative flex flex-col rounded-[22px] border overflow-hidden transition-all duration-200 ${
         r.activo ? "border-borde bg-white" : "border-borde-suave bg-campo/60 opacity-70"
       } ${onClick ? "cursor-pointer hover:-translate-y-[3px] hover:shadow-elevada" : "hover:shadow-[0_20px_44px_-32px_rgba(31,51,56,0.5)]"}`}

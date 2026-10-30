@@ -152,6 +152,7 @@ export function Biblioteca() {
               <ResourceCard
                 key={r.id}
                 resource={r}
+                onClick={() => setPreviewing(r)}
                 actions={
                   <RowMenu
                     items={[
