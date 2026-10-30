@@ -13,6 +13,19 @@ export interface ResourceCiencia {
   cierre: string;
 }
 
+// Material de apoyo estructurado del manual: "tabla" = ejemplos para el
+// familiar (actividades 10 y 12); "tarjetas" = una por vez, con la
+// continuación oculta hasta «Ver frase completa» (refranes, actividad 13).
+// En "tarjetas" las columnas son: inicio, continuación, pregunta.
+export interface ResourceExtras {
+  modo: "tabla" | "tarjetas";
+  titulo: string;
+  columnas: string[];
+  filas: string[][];
+  intro?: string;
+  cierre?: string;
+}
+
 export interface MediaResource {
   id: string;
   codigo: string | null;
@@ -39,6 +52,7 @@ export interface MediaResource {
   precaucion: string | null;
   ciencia: ResourceCiencia | null;
   por_que: string | null;
+  extras: ResourceExtras | null;
   niveles_cognitivos: NivelCognitivo[] | null;
   niveles_motores: NivelMotor[] | null;
   activo: boolean;

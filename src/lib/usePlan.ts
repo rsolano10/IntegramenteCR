@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { useSession } from "./useSession";
 import type { PlanDay, PlanTask, PlanDayStatus } from "./mockData";
+import type { ResourceExtras } from "./mediaResources";
+import type { ResourceModulo } from "./modulos";
 
 const DIAS_BY_WEEKDAY = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const DIAS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -36,13 +38,14 @@ interface PlanTaskRow {
 }
 
 interface MediaResourceJoin {
-  modulo?: "sentidos" | "movimiento" | "musica" | "reminiscencia" | null;
+  modulo?: ResourceModulo | null;
   media_kind: "video" | "imagen" | "audio" | "documento" | "enlace" | null;
   storage_path: string | null;
   external_url: string | null;
   materiales: string | null;
   adaptacion: string | null;
   ciencia: { gancho: string; evidencia: string; cierre: string } | null;
+  extras: ResourceExtras | null;
 }
 
 function joinedResource(value: PlanTaskRow["media_resources"]): MediaResourceJoin | null {
@@ -87,6 +90,7 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     materiales: resource?.materiales ?? null,
     adaptacion: resource?.adaptacion ?? null,
     ciencia: resource?.ciencia ?? null,
+    extras: resource?.extras ?? null,
     modulo: resource?.modulo ?? null,
   };
 }
@@ -124,7 +128,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, modulo)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });

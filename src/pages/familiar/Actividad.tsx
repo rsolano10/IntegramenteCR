@@ -159,6 +159,7 @@ export function Actividad() {
             materiales: task.materiales,
             adaptacion: task.adaptacion,
             ciencia: task.ciencia,
+            extras: task.extras,
             porQue: task.porQue,
             pasos,
             fallbackLabel: `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`,

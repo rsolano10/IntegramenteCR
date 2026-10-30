@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { ImagePlaceholder } from "./ImagePlaceholder";
 import { LightbulbIcon } from "./Icons";
-import { resourceUrl, type MediaKind } from "../../lib/mediaResources";
+import { resourceUrl, type MediaKind, type ResourceExtras } from "../../lib/mediaResources";
 
 export interface ResourceContent {
   mediaKind?: MediaKind | null;
@@ -11,7 +12,74 @@ export interface ResourceContent {
   ciencia?: { gancho: string; evidencia: string; cierre: string } | null;
   porQue?: string | null;
   pasos?: string[];
+  extras?: ResourceExtras | null;
   fallbackLabel: string;
+}
+
+// Ejemplos del manual (tabla de varias columnas): en vez de una tabla
+// ancha, cada fila es una tarjetita con sus etiquetas, para que se lea bien
+// en el celular.
+function EjemplosTabla({ ex, large }: { ex: ResourceExtras; large: boolean }) {
+  return (
+    <div className={`grid gap-2.5 ${large ? "text-[17px]" : "text-[15px]"}`}>
+      <p className={`m-0 tracking-[0.14em] uppercase text-tinta-tenue ${large ? "text-[15px]" : "text-[13px]"}`}>{ex.titulo}</p>
+      {ex.intro && <p className="m-0 leading-relaxed text-tinta">{ex.intro}</p>}
+      {ex.filas.map((fila, i) => (
+        <div key={i} className="grid gap-1.5 rounded-2xl bg-white border border-borde px-4 py-3">
+          {fila.map((celda, j) => (
+            <p key={j} className={`m-0 leading-relaxed ${j === 0 ? "font-semibold text-tinta" : "text-tinta-suave"}`}>
+              {j > 0 && ex.columnas[j] && <span className="block text-[12px] tracking-[0.06em] uppercase text-tinta-tenue">{ex.columnas[j]}</span>}
+              {celda}
+            </p>
+          ))}
+        </div>
+      ))}
+      {ex.cierre && <p className="m-0 leading-relaxed text-tinta-suave">{ex.cierre}</p>}
+    </div>
+  );
+}
+
+// Tarjetas del manual (refranes, actividad 13): una por vez, con la
+// continuación oculta hasta «Ver frase completa» y la pregunta para
+// conversar debajo. Columnas: inicio, continuación, pregunta.
+function TarjetasUnaPorVez({ ex, large }: { ex: ResourceExtras; large: boolean }) {
+  const [i, setI] = useState(0);
+  const [vista, setVista] = useState(false);
+  const total = ex.filas.length;
+  const [inicio, continuacion, pregunta] = ex.filas[i] ?? [];
+  function ir(n: number) {
+    setI(n);
+    setVista(false);
+  }
+  const boton = `min-h-12 px-5 rounded-full font-sans font-semibold cursor-pointer border-[1.5px] disabled:opacity-40 disabled:cursor-default ${large ? "text-[17px]" : "text-[15px]"}`;
+  return (
+    <div className="grid gap-3">
+      <p className={`m-0 tracking-[0.14em] uppercase text-tinta-tenue ${large ? "text-[15px]" : "text-[13px]"}`}>
+        {ex.titulo} · {i + 1} de {total}
+      </p>
+      <div className="rounded-[22px] bg-verde-tenue border border-borde-suave px-5 py-6 grid gap-3 text-center" aria-live="polite">
+        <p className={`m-0 font-serif text-tinta leading-snug ${large ? "text-[28px]" : "text-[24px]"}`}>{inicio}</p>
+        {vista ? (
+          <>
+            <p className={`m-0 font-serif italic text-verde-profundo leading-snug ${large ? "text-[24px]" : "text-[20px]"}`}>{continuacion}</p>
+            {pregunta && <p className={`m-0 text-tinta-suave ${large ? "text-[18px]" : "text-[15.5px]"}`}>{pregunta}</p>}
+          </>
+        ) : (
+          <button type="button" onClick={() => setVista(true)} className={`${boton} justify-self-center bg-white border-verde-serenidad text-verde-profundo`}>
+            Ver frase completa
+          </button>
+        )}
+      </div>
+      <div className="flex justify-between gap-3">
+        <button type="button" onClick={() => ir(i - 1)} disabled={i === 0} className={`${boton} bg-white border-borde text-tinta`}>
+          Anterior
+        </button>
+        <button type="button" onClick={() => ir(i + 1)} disabled={i === total - 1} className={`${boton} bg-white border-borde text-tinta`}>
+          Siguiente
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // Single source of truth for "how a resource looks" — used both for the
@@ -85,10 +153,14 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
         </>
       )}
 
+      {content.extras && content.extras.filas.length > 0 &&
+        (content.extras.modo === "tarjetas" ? <TarjetasUnaPorVez ex={content.extras} large={large} /> : <EjemplosTabla ex={content.extras} large={large} />)}
+
       {content.adaptacion && (
         <div className={`bg-campo border border-borde ${large ? "rounded-2xl px-4 py-3.5" : "rounded-2xl p-4"}`}>
           <p className={`m-0 mb-1.5 font-bold text-tinta ${large ? "text-[16px]" : "text-[15px]"}`}>Si necesita ayuda extra</p>
-          <p className={`m-0 leading-relaxed text-tinta-suave ${large ? "text-[18px]" : "text-[15px]"}`}>{content.adaptacion}</p>
+          {/* pre-line: la adaptación trae un párrafo por nivel (Preventivo, DCL…). */}
+          <p className={`m-0 leading-relaxed text-tinta-suave whitespace-pre-line ${large ? "text-[18px]" : "text-[15px]"}`}>{content.adaptacion}</p>
         </div>
       )}
     </>

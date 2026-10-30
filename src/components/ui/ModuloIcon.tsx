@@ -31,6 +31,12 @@ const paths: Record<ResourceModulo, React.ReactNode> = {
       <path d="M3.5 16.5 8 12l4 4 3-3 5.5 5" />
     </>
   ),
+  cognicion: (
+    <>
+      <path d="M9 18h6M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z" />
+    </>
+  ),
 };
 
 export function ModuloIcon({ modulo, className }: { modulo: ResourceModulo; className?: string }) {

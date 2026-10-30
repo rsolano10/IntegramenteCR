@@ -191,6 +191,7 @@ export function Biblioteca() {
                 materiales: previewing.materiales,
                 adaptacion: previewing.adaptacion,
                 ciencia: previewing.ciencia,
+                extras: previewing.extras,
                 porQue: previewing.por_que,
                 pasos: previewing.pasos ?? undefined,
                 fallbackLabel: `${tipoLabel[previewing.tipo]}${previewing.duracion ? ` · ${previewing.duracion}` : ""}`,

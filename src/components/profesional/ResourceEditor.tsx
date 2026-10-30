@@ -290,6 +290,8 @@ export function ResourceEditor({
     precaucion: f.precaucion || null,
     ciencia: f.gancho || f.evidencia || f.cierre ? { gancho: f.gancho, evidencia: f.evidencia, cierre: f.cierre } : null,
     por_que: f.porQue || null,
+    // No se edita acá (tablas y tarjetas del manual): se conserva tal cual.
+    extras: resource?.extras ?? null,
     niveles_cognitivos: f.nivelesCog.length ? f.nivelesCog : null,
     niveles_motores: f.nivelesMot.length ? f.nivelesMot : null,
     activo: resource?.activo ?? true,
@@ -754,6 +756,7 @@ export function ResourceEditor({
                               materiales: preview.materiales,
                               adaptacion: preview.adaptacion,
                               ciencia: preview.ciencia,
+                              extras: preview.extras,
                               porQue: preview.por_que,
                               pasos: preview.pasos ?? undefined,
                               fallbackLabel: `${tipoLabel[f.tipo]}${duracion ? ` · ${duracion}` : ""}`,

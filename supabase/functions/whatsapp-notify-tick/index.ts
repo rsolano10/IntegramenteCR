@@ -30,13 +30,6 @@ const QUIET_HOUR_END = 20;
 const DAILY_CAP = 3;
 const CLOSE_BUFFER_MINUTES = 30;
 
-const MODULO_EMOJI: Record<string, string> = {
-  sentidos: "👃",
-  movimiento: "🚶",
-  musica: "🎵",
-  reminiscencia: "📷",
-};
-
 // Duplicado a propósito de src/lib/respondentVoice.ts / generate-summary —
 // este runtime Deno no puede importar del bundle de la app (mismo patrón
 // ya usado en supabase/functions/generate-summary/index.ts).
@@ -267,21 +260,21 @@ Deno.serve(async (req) => {
       const eventUtc = taskEventUtc(publishDate, primary.dia, primary.hora!);
       if (eventUtc) {
         const res = Array.isArray(primary.media_resources) ? primary.media_resources[0] : primary.media_resources;
-        const modulo = res?.modulo as string | undefined;
-        const emoji = modulo ? MODULO_EMOJI[modulo] ?? "✨" : "✨";
         const ciencia = res?.ciencia as { gancho?: string } | null;
         const gancho = ciencia?.gancho ?? `Hoy toca "${primary.titulo}" — un paso a la vez, sin apuro.`;
 
         if (nowUtc >= eventUtc && remainingCap > 0 && !(await alreadyLogged("start", primary.id, eventUtc))) {
-          const header = `${emoji} ${primary.titulo} con ${tratamiento}`;
-          const startUrl = `/app/hoy/actividad/${primary.id}/pasos`;
+          // Sin emoji: Meta no acepta emojis en los encabezados de texto.
+          const header = `${primary.titulo} con ${tratamiento}`;
+          // Sufijo del botón: la plantilla tiene "https://<dominio>/{{1}}".
+          const startUrl = `app/hoy/actividad/${primary.id}/pasos`;
           const result = await sendWhatsappTemplate(phone, TEMPLATE_START, header, [gancho], startUrl);
           await logResult("start", primary.id, eventUtc, result);
         }
 
         const closeUtc = new Date(eventUtc.getTime() + (parseDurationMinutes(primary.duracion) + CLOSE_BUFFER_MINUTES) * 60 * 1000);
         if (nowUtc >= closeUtc && remainingCap > 0 && !(await alreadyLogged("close", primary.id, closeUtc))) {
-          const closeUrl = `/app/hoy/actividad/${primary.id}`;
+          const closeUrl = `app/hoy/actividad/${primary.id}`;
           const result = await sendWhatsappTemplate(phone, TEMPLATE_CLOSE, null, [tratamiento], closeUrl);
           await logResult("close", primary.id, closeUtc, result);
         }
