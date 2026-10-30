@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { useSession } from "./useSession";
 import type { PlanDay, PlanTask, PlanDayStatus } from "./mockData";
-import type { ResourceExtras } from "./mediaResources";
+import type { AdaptacionPorEtapa, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
 
 const DIAS_BY_WEEKDAY = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -31,6 +31,7 @@ interface PlanTaskRow {
   comentario: string | null;
   nota_clinica: string | null;
   media_resource_id: string | null;
+  indicacion_individual: string | null;
   // PostgREST embeds a to-one FK as a single object at runtime, but
   // supabase-js's generic (non-codegen'd) types infer embeds as arrays —
   // accept both shapes here and normalize in toPlanTask().
@@ -46,6 +47,18 @@ interface MediaResourceJoin {
   adaptacion: string | null;
   ciencia: { gancho: string; evidencia: string; cierre: string } | null;
   extras: ResourceExtras | null;
+  codigo: string | null;
+  poster_path: string | null;
+  detalle: string | null;
+  perfil: string | null;
+  sabias_que: string | null;
+  actividad: string | null;
+  dosis: string | null;
+  requiere_plan_individual: boolean | null;
+  adaptacion_por_etapa: AdaptacionPorEtapa | null;
+  ayuda: string | null;
+  ten_en_cuenta: string | null;
+  para_cerrar: string | null;
 }
 
 function joinedResource(value: PlanTaskRow["media_resources"]): MediaResourceJoin | null {
@@ -91,6 +104,19 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     adaptacion: resource?.adaptacion ?? null,
     ciencia: resource?.ciencia ?? null,
     extras: resource?.extras ?? null,
+    codigo: resource?.codigo ?? null,
+    posterPath: resource?.poster_path ?? null,
+    intro: resource?.detalle ?? null,
+    perfil: resource?.perfil ?? null,
+    sabiasQue: resource?.sabias_que ?? null,
+    actividad: resource?.actividad ?? null,
+    dosis: resource?.dosis ?? null,
+    indicacionIndividual: row.indicacion_individual ?? null,
+    requierePlanIndividual: resource?.requiere_plan_individual ?? null,
+    adaptacionPorEtapa: resource?.adaptacion_por_etapa ?? null,
+    ayuda: resource?.ayuda ?? null,
+    tenEnCuenta: resource?.ten_en_cuenta ?? null,
+    paraCerrar: resource?.para_cerrar ?? null,
     modulo: resource?.modulo ?? null,
   };
 }
@@ -128,7 +154,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });

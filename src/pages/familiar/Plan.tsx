@@ -13,6 +13,9 @@ import { useCurrentPlanMeta, usePendingReviews, usePlan } from "../../lib/usePla
 import { weekDays } from "../../lib/planWeek";
 import { ModuloIcon } from "../../components/ui/ModuloIcon";
 import type { PlanDay, PlanDayStatus, PlanTask } from "../../lib/mockData";
+import { contenidoDeRecurso, contenidoDeTarea } from "../../lib/contenidoRecurso";
+import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
+import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 
 const tipoLabel: Record<PlanTask["tipo"], string> = {
   video: "Video",
@@ -104,6 +107,8 @@ function WeekTaskCard({ task, isToday, onOpen }: { task: PlanTask; isToday: bool
 }
 
 function TaskDetail({ task }: { task: PlanTask }) {
+  const { data: perfilRecursos } = usePerfilRecursos();
+  const etapas = perfilRecursos?.etapas ?? null;
   const badge = estadoBadge[task.estado];
   return (
     <div>
@@ -121,19 +126,9 @@ function TaskDetail({ task }: { task: PlanTask }) {
         </div>
       )}
       <div className="grid grid-cols-1 gap-3 mb-3">
+        {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia />}
         <ResourceDetailView
-          content={{
-            mediaKind: task.mediaKind,
-            storagePath: task.storagePath,
-            externalUrl: task.externalUrl,
-            materiales: task.materiales,
-            adaptacion: task.adaptacion,
-            ciencia: task.ciencia,
-            extras: task.extras,
-            porQue: task.porQue,
-            pasos: task.pasos,
-            fallbackLabel: `${tipoLabel[task.tipo]}${task.duracion ? ` · ${task.duracion}` : ""}`,
-          }}
+          content={contenidoDeTarea(task, `${tipoLabel[task.tipo]}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas)}
         />
       </div>
       {task.precaucion && (
@@ -330,6 +325,8 @@ function SemanasAnteriores({ patientId }: { patientId: string }) {
 // filtra por nivel cognitivo informado y seguridad motora) — reemplaza a la
 // antigua pestaña Actividades, que mostraba el catálogo completo.
 function MasActividades() {
+  const { data: perfilRecursos } = usePerfilRecursos();
+  const etapas = perfilRecursos?.etapas ?? null;
   // Plegado por defecto: el plan de la semana es lo principal; esto es un
   // extra para quien lo busca. La consulta corre igual (para mostrar
   // cuántas hay en el botón), pero el catálogo solo se despliega a pedido.
@@ -434,19 +431,9 @@ function MasActividades() {
           </p>
           <h3 className="font-serif font-normal text-2xl m-0 mb-4">{opened.titulo}</h3>
           <div className="grid grid-cols-1 gap-4">
+            {opened.modulo === "gerontogimnasia" && opened.codigo !== "GER-010" && <IntroGerontogimnasia />}
             <ResourceDetailView
-              content={{
-                mediaKind: opened.media_kind,
-                storagePath: opened.storage_path,
-                externalUrl: opened.external_url,
-                materiales: opened.materiales,
-                adaptacion: opened.adaptacion,
-                ciencia: opened.ciencia,
-                extras: opened.extras,
-                porQue: opened.por_que,
-                pasos: opened.pasos ?? undefined,
-                fallbackLabel: `${resourceTipoLabel[opened.tipo]}${opened.duracion ? ` · ${opened.duracion}` : ""}`,
-              }}
+              content={contenidoDeRecurso(opened, `${resourceTipoLabel[opened.tipo]}${opened.duracion ? ` · ${opened.duracion}` : ""}`, etapas)}
             />
             {opened.precaucion && (
               <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3">{opened.precaucion}</p>

@@ -5,6 +5,9 @@ import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useMarkRegistro } from "../../lib/usePlan";
+import { contenidoDeTarea } from "../../lib/contenidoRecurso";
+import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
+import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 
 const estadoToReg: Record<string, "done" | "partial" | "no"> = {
   realizado: "done",
@@ -21,6 +24,8 @@ const regMessages: Record<string, string> = {
 const regLabel: Record<string, string> = { done: "Sí", partial: "En parte", no: "No" };
 
 export function Actividad() {
+  const { data: perfilRecursos } = usePerfilRecursos();
+  const etapas = perfilRecursos?.etapas ?? null;
   const navigate = useNavigate();
   const { taskId } = useParams();
   const { data: myPatient } = useMyPatient();
@@ -151,19 +156,9 @@ export function Actividad() {
       </div>
 
       <div className="grid gap-4.5 mb-4.5">
+        {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia />}
         <ResourceDetailView
-          content={{
-            mediaKind: task.mediaKind,
-            storagePath: task.storagePath,
-            externalUrl: task.externalUrl,
-            materiales: task.materiales,
-            adaptacion: task.adaptacion,
-            ciencia: task.ciencia,
-            extras: task.extras,
-            porQue: task.porQue,
-            pasos,
-            fallbackLabel: `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`,
-          }}
+          content={contenidoDeTarea(task, `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas, pasos)}
         />
       </div>
 

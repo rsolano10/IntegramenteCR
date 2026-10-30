@@ -31,6 +31,18 @@ const paths: Record<ResourceModulo, React.ReactNode> = {
       <path d="M3.5 16.5 8 12l4 4 3-3 5.5 5" />
     </>
   ),
+  gerontogimnasia: (
+    <>
+      <circle cx="13" cy="4.5" r="1.8" />
+      <path d="M9 21l2-6 3 2v4M7 12l3-4 4 1 3 3M11 15l1-6" />
+    </>
+  ),
+  nutricion: (
+    <>
+      <path d="M12 7c-1.5-2.5-6-2.5-6.5 2-.6 5 3 11 6.5 11s7.1-6 6.5-11C18 4.5 13.5 4.5 12 7Z" />
+      <path d="M12 7c0-2 1-3.5 3-4" />
+    </>
+  ),
   cognicion: (
     <>
       <path d="M9 18h6M10 21h4" />

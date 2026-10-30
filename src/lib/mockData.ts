@@ -1,7 +1,7 @@
 // Seed data for the prototype. No backend yet — this stands in for the
 // Participant / Caregiver / Professional / Content / Plan model described
 // in the Handoff (data model minimo).
-import type { ResourceExtras } from "./mediaResources";
+import type { AdaptacionPorEtapa, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
 
 export type Semaforo = "verde" | "amarillo" | "rojo";
@@ -123,6 +123,20 @@ export interface PlanTask {
   ciencia?: { gancho: string; evidencia: string; cierre: string } | null;
   extras?: ResourceExtras | null;
   modulo?: ResourceModulo | null;
+  // Campos públicos del recurso de origen (fichas GER/PRE y cognitivos).
+  codigo?: string | null;
+  posterPath?: string | null;
+  intro?: string | null;
+  perfil?: string | null;
+  sabiasQue?: string | null;
+  actividad?: string | null;
+  dosis?: string | null;
+  indicacionIndividual?: string | null;
+  requierePlanIndividual?: boolean | null;
+  adaptacionPorEtapa?: AdaptacionPorEtapa | null;
+  ayuda?: string | null;
+  tenEnCuenta?: string | null;
+  paraCerrar?: string | null;
 }
 
 export interface PlanDay {
