@@ -31,3 +31,4 @@ scripts/asistente-eval/resultados.json
 
 # Videos originales y transcodificados (scripts/recursos/videos.py)
 assets/
+docs/
