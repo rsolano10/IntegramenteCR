@@ -366,9 +366,7 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
         </>
       )}
 
-      {content.extras?.modo === "temporizador" && <Temporizador segundos={content.extras.segundos} titulo={content.extras.titulo} large={large} />}
-      {content.extras && content.extras.modo !== "temporizador" && content.extras.filas.length > 0 &&
-        (content.extras.modo === "tarjetas" ? <TarjetasUnaPorVez ex={content.extras} large={large} /> : <EjemplosTabla ex={content.extras} large={large} />)}
+      {content.extras && <MaterialDeApoyo extras={content.extras} large={large} />}
 
       {content.ayuda && (
         <Seccion titulo="Si necesita ayuda" tono="caja" large={large}>
@@ -421,4 +419,12 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
       )}
     </>
   );
+}
+
+// Ejemplos, tarjetas o temporizador de un recurso (campo extras). También lo
+// usa el modo paso a paso.
+export function MaterialDeApoyo({ extras, large = false }: { extras: ResourceExtras; large?: boolean }) {
+  if (extras.modo === "temporizador") return <Temporizador segundos={extras.segundos} titulo={extras.titulo} large={large} />;
+  if (extras.filas.length === 0) return null;
+  return extras.modo === "tarjetas" ? <TarjetasUnaPorVez ex={extras} large={large} /> : <EjemplosTabla ex={extras} large={large} />;
 }
