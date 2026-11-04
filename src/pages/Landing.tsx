@@ -18,7 +18,6 @@ import {
   fotosSesiones,
   type MiembroEquipo,
   guiaProfesionales,
-  precioValoracion,
   preguntas,
   programasHome,
   pruebaSocial,
@@ -1043,8 +1042,7 @@ export function Landing() {
                   <path d="M12 11v5.5M12 7.6v.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 <span>
-                  <span className="font-semibold text-tinta">Requisito de ingreso:</span> valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional. Con
-                  IntegraMente: {precioValoracion}, se contrata aparte.
+                  <span className="font-semibold text-tinta">Requisito de ingreso:</span> valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional.
                 </span>
               </p>
               <BotonWhatsApp href={whatsappHome.programaSesiones} primario className="mt-auto w-full sm:w-auto sm:self-start">
