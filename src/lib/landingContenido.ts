@@ -235,7 +235,6 @@ export const areas: {
     t: "Gerontogimnasia",
     frase: "Ejercicios que combinan movimiento y retos cognitivos, según las capacidades de cada persona.",
     etiquetas: ["Fuerza", "Equilibrio", "Coordinación", "Doble tarea"],
-    nota: "Adaptado a tu movilidad: sentado o de pie.",
     fondo: "#f4d096",
     tinta: "#1f3338",
     chip: "#f9e6c2",
