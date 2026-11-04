@@ -173,38 +173,88 @@ export const programasHome = {
 // Las áreas del programa (sección "Cuidamos la mente…" del home). Colores
 // de la paleta oficial; `tinta` es el color del texto sobre ese fondo (nunca
 // blanco sobre mostaza o beige).
+// Cada tarjeta lleva una foto real con el color del área encima en
+// degradé translúcido: casi sólido detrás del título (contraste del texto
+// igual que con el fondo plano) y más transparente arriba, para que se vea
+// la foto. Las de estimulación cognitiva y nutrición son de Wikimedia
+// Commons (CC BY 2.0, autor Shixart1985: el crédito va debajo de las
+// tarjetas, lo exige la licencia); la de gerontogimnasia es un cuadro de
+// nuestros propios videos (GER-004).
+export interface FotoArea {
+  webp: string;
+  jpg: string;
+  alt: string;
+  credito?: { autor: string; url: string; licencia: string; licenciaUrl: string };
+}
+
 export const areas: {
   icono: string;
   t: string;
   destacado?: string;
   frase: string;
-  puntos: string[];
+  tituloEtiquetas: string;
+  etiquetas: string[];
   fondo: string;
   tinta: string;
+  chip: string;
+  foto: FotoArea;
 }[] = [
   {
     icono: "cerebro",
     t: "Estimulación cognitiva",
     frase: "Actividades para trabajar distintas capacidades cognitivas y conectarlas con la vida cotidiana.",
-    puntos: ["Atención, memoria y lenguaje.", "Planificación, orientación y habilidades visoespaciales."],
-    fondo: "#6a969c",
+    tituloEtiquetas: "Trabaja",
+    etiquetas: ["Atención", "Memoria", "Lenguaje", "Planificación", "Orientación", "Habilidades visoespaciales"],
+    fondo: "#3f6a70",
     tinta: "#ffffff",
+    chip: "#dce8e9",
+    foto: {
+      webp: "/areas/estimulacion-cognitiva.webp",
+      jpg: "/areas/estimulacion-cognitiva.jpg",
+      alt: "Una mujer mayor lee un libro con atención en su sala.",
+      credito: {
+        autor: "Shixart1985",
+        url: "https://commons.wikimedia.org/wiki/File:Elderly_woman_with_curly_hair_and_glasses_reading_an_old_book.jpg",
+        licencia: "CC BY 2.0",
+        licenciaUrl: "https://creativecommons.org/licenses/by/2.0",
+      },
+    },
   },
   {
     icono: "equilibrio",
     t: "Gerontogimnasia",
     frase: "Ejercicios que combinan movimiento y retos cognitivos, según las capacidades de cada persona.",
-    puntos: ["Fuerza, equilibrio y coordinación.", "Propuestas sentadas o de pie, según corresponda."],
+    tituloEtiquetas: "Trabaja",
+    etiquetas: ["Fuerza", "Equilibrio", "Coordinación", "Sentado o de pie"],
     fondo: "#f4d096",
     tinta: "#1f3338",
+    chip: "#f9e6c2",
+    foto: {
+      webp: "/areas/gerontogimnasia.webp",
+      jpg: "/areas/gerontogimnasia.jpg",
+      alt: "Pablo Jiménez, del equipo de gerontogimnasia, guía a una participante durante un ejercicio.",
+    },
   },
   {
     icono: "manzana",
     t: "Nutrición para personas mayores",
     frase: "Orientaciones prácticas sobre alimentación e hidratación para la vida cotidiana.",
-    puntos: ["Alimentación variada y hábitos cotidianos.", "Ideas para organizar comidas e hidratación."],
+    tituloEtiquetas: "Incluye",
+    etiquetas: ["Alimentación variada", "Hábitos cotidianos", "Organización de comidas", "Hidratación"],
     fondo: "#ebe6ce",
     tinta: "#1f3338",
+    chip: "#ece5cb",
+    foto: {
+      webp: "/areas/nutricion.webp",
+      jpg: "/areas/nutricion.jpg",
+      alt: "Una mujer mayor corta verduras frescas en la cocina de su casa.",
+      credito: {
+        autor: "Shixart1985",
+        url: "https://commons.wikimedia.org/wiki/File:Elderly_woman_prepares_vegetables_while_cooking_in_a_home_kitchen_during_the_day.jpg",
+        licencia: "CC BY 2.0",
+        licenciaUrl: "https://creativecommons.org/licenses/by/2.0",
+      },
+    },
   },
 ];
 

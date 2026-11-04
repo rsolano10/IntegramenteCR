@@ -965,31 +965,66 @@ export function Landing() {
             {areas.map((a, i) => (
               <Reveal key={a.t} delay={i * 90} className="h-full">
                 <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
-                  <div className="relative p-5 sm:p-6 min-h-[130px] flex flex-col justify-end gap-2" style={{ background: a.fondo, color: a.tinta }}>
-                    <span className="absolute right-4 top-4 w-14 h-14 rounded-full flex items-center justify-center bg-white/25">
-                      <Icono name={a.icono} className="w-8 h-8" />
+                  <div className="relative aspect-[16/10] flex flex-col justify-end p-5 sm:p-6" style={{ color: a.tinta }}>
+                    <picture>
+                      <source srcSet={a.foto.webp} type="image/webp" />
+                      <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1120} height={630} className="absolute inset-0 w-full h-full object-cover object-top" />
+                    </picture>
+                    {/* Color del área en degradé: casi sólido detrás del título
+                        (mismo contraste que el fondo plano) y translúcido arriba. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-0"
+                      style={{ background: `linear-gradient(to top, ${a.fondo} 0%, ${a.fondo}f0 30%, ${a.fondo}5c 56%, ${a.fondo}1f 80%, ${a.fondo}1f 100%)` }}
+                    />
+                    <span className="absolute right-4 top-4 w-12 h-12 rounded-full flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(0,0,0,.5)]" style={{ background: a.fondo }}>
+                      <Icono name={a.icono} className="w-7 h-7" />
                     </span>
-                    <h3 className="m-0 pr-16 font-serif font-normal text-[25px] leading-tight">{a.t}</h3>
-                    {a.destacado && (
-                      <span className="self-start text-[13px] font-bold tracking-[0.04em] rounded-full px-3 py-1 bg-white text-tinta">{a.destacado}</span>
-                    )}
+                    <h3 className="relative m-0 font-serif font-normal text-[25px] leading-tight">{a.t}</h3>
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col gap-3 flex-1">
                     <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{a.frase}</p>
-                    <ul className="list-none m-0 p-0 grid gap-2">
-                      {a.puntos.map((e) => (
-                        <li key={e} className="flex gap-2.5 text-[15px] leading-snug text-tinta">
-                          <span aria-hidden="true" className="mt-[7px] w-1.5 h-1.5 shrink-0 rounded-full bg-verde-serenidad" />
-                          {e}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="mt-1 pt-4 border-t border-borde-suave">
+                      <p className="m-0 mb-2.5 text-[11.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{a.tituloEtiquetas}</p>
+                      <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
+                        {a.etiquetas.map((x) => (
+                          <li key={x} className="inline-flex items-center rounded-full px-3 py-1.5 text-[13.5px] font-semibold leading-none text-tinta" style={{ background: a.chip }}>
+                            {x}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </article>
               </Reveal>
             ))}
           </div>
-
+          <p className="m-0 mt-5 text-[12px] text-tinta-tenue">
+            Fotos de estimulación cognitiva y nutrición:{" "}
+            {areas
+              .filter((a) => a.foto.credito)
+              .slice(0, 1)
+              .map((a) => (
+                <span key={a.t}>
+                  {a.foto.credito!.autor},{" "}
+                  <a href={a.foto.credito!.licenciaUrl} target="_blank" rel="noopener noreferrer" className="text-tinta-tenue underline">
+                    {a.foto.credito!.licencia}
+                  </a>
+                </span>
+              ))}
+            , vía Wikimedia Commons (
+            {areas
+              .filter((a) => a.foto.credito)
+              .map((a, i) => (
+                <span key={a.t}>
+                  {i > 0 && " · "}
+                  <a href={a.foto.credito!.url} target="_blank" rel="noopener noreferrer" className="text-tinta-tenue underline">
+                    {a.t.split(" ")[0].toLowerCase()}
+                  </a>
+                </span>
+              ))}
+            ).
+          </p>
         </div>
       </section>
 
