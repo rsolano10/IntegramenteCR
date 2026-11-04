@@ -1035,13 +1035,18 @@ export function Landing() {
               </div>
               <p className="m-0 pb-5 border-b border-borde-suave font-serif text-[28px] leading-tight text-tinta">{ses.presupuesto}</p>
               <ListaIncluye items={ses.incluye} />
-              <div className="rounded-2xl bg-white border-[1.5px] border-mostaza-vital px-4 py-3">
-                <h4 className="m-0 text-[15px] font-bold text-tinta">Requisito de ingreso</h4>
-                <p className="m-0 mt-1 text-[14.5px] leading-relaxed text-tinta">
-                  Valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional. Con IntegraMente:{" "}
-                  <strong>{precioValoracion}</strong>, se contrata aparte.
-                </p>
-              </div>
+              {/* Requisito como nota al pie: discreto, sin caja ni color de
+                  aviso, con el mismo contraste legible del resto. */}
+              <p className="m-0 flex gap-2.5 pt-4 border-t border-borde-suave text-[14px] leading-relaxed text-tinta-suave">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 mt-[3px] text-verde-profundo">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M12 11v5.5M12 7.6v.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <span>
+                  <span className="font-semibold text-tinta">Requisito de ingreso:</span> valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional. Con
+                  IntegraMente: {precioValoracion}, se contrata aparte.
+                </span>
+              </p>
               <BotonWhatsApp href={whatsappHome.programaSesiones} primario className="mt-auto w-full sm:w-auto sm:self-start">
                 Consultar mi programa con sesiones
               </BotonWhatsApp>
