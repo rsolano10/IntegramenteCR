@@ -33,3 +33,19 @@ RESEND_API_KEY=… supabase config push
 `config push` sube **toda** la sección `[auth]` (no solo las plantillas):
 revisá el diff que muestra antes de confirmar. Alternativa manual: pegar el
 HTML de cada archivo en Dashboard → Authentication → Email Templates.
+
+## Hook de envío (HTML + texto plano)
+
+`supabase/functions/auth-email` manda los mismos correos por la API de
+Resend con versión en texto plano y Reply-To. Usa una copia de estas
+plantillas: después de editar cualquier `.html`, regenerala con
+
+```sh
+python3 scripts/email/generar-plantillas.py
+supabase functions deploy auth-email --no-verify-jwt
+```
+
+Se activa en Dashboard → Authentication → Hooks → Send Email (HTTPS,
+`…/functions/v1/auth-email`) y guardando el secreto generado con
+`supabase secrets set SEND_EMAIL_HOOK_SECRET='v1,whsec_…'`. Con el hook
+activo, Auth deja de usar el SMTP.

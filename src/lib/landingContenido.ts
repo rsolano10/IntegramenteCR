@@ -17,7 +17,33 @@ export const contacto = {
 
 // Guía para profesionales de la salud (GuiaProfesionales.tsx). Se abre en
 // otra pestaña y se puede imprimir o guardar como PDF.
-export const guiaProfesionales = "/guia-profesionales";
+export const guiaProfesionales = "/medicos";
+
+// Videos del home (y del correo de bienvenida). youtubeId null = todavía no
+// está grabado: se muestra la miniatura y, al tocarla, "muy pronto".
+// TODO(IntegraMente): cargar el id de YouTube de cada video cuando esté listo
+// (lo que va después de "watch?v=" en el enlace).
+export const videos = {
+  introduccion: { youtubeId: null as string | null, titulo: "Conocé IntegraMente en Casa" },
+  asiDeFacil: { youtubeId: null as string | null, titulo: "Así de fácil se usa" },
+  profesionales: { youtubeId: null as string | null, titulo: "Conocé a nuestro equipo" },
+};
+
+// Prueba social. Solo datos verificables: un valor null NO se publica (en
+// desarrollo se ve marcado como TODO para saber dónde va).
+export const pruebaSocial: { valor: string | null; etiqueta: string }[] = [
+  // TODO(IntegraMente): cantidad real de personas atendidas por el equipo.
+  { valor: null, etiqueta: "personas atendidas por nuestro equipo" },
+  // TODO(IntegraMente): años de trabajo clínico del equipo.
+  { valor: null, etiqueta: "años de experiencia clínica" },
+  // TODO(IntegraMente): programa o canal de la aparición en TV nacional (ej. "Teletica, Buen Día").
+  { valor: null, etiqueta: "Visto en televisión nacional" },
+];
+
+// Fotos reales de las sesiones (abril 2026), en public/sesiones/ en webp con
+// respaldo jpg. Vacío = la galería no se muestra.
+// TODO(IntegraMente): pasar las fotos de las sesiones de abril 2026.
+export const fotosSesiones: { webp: string; jpg: string; alt: string }[] = [];
 
 // Precio de la valoración neuropsicológica cuando se hace con IntegraMente.
 // Se contrata aparte: nunca se muestra como precio del programa.
@@ -184,7 +210,31 @@ export const areas: {
 
 // Texto literal de IntegraMente. Los párrafos de una respuesta van separados
 // por \n (la tarjeta los respeta).
-export const preguntas: { p: string; r: string }[] = [
+// `video`: la respuesta lleva un botón que reproduce ese video del home.
+// Las cinco primeras responden la duda principal (si es fácil de usar);
+// las demás son el texto literal de IntegraMente.
+export const preguntas: { p: string; r: string; video?: "video-asi-de-facil" }[] = [
+  {
+    p: "¿Es difícil de usar para mí o mi familiar?",
+    r: "No. Cada día ves qué actividad toca y la seguís paso a paso, con una consigna por pantalla.",
+    video: "video-asi-de-facil",
+  },
+  {
+    p: "¿Necesito saber de tecnología?",
+    r: "No. Si usás WhatsApp, podés usar IntegraMente en Casa. Todo se hace tocando botones grandes y claros.",
+  },
+  {
+    p: "¿Puede ayudarme un familiar?",
+    r: "Sí. Un familiar puede crear la cuenta, responder el cuestionario y acompañar cada actividad. También puede invitarte para que tengas tu propio acceso.",
+  },
+  {
+    p: "¿Funciona en el celular?",
+    r: "Sí. Funciona en el celular, la tablet y la computadora, desde el navegador. No hace falta descargar nada.",
+  },
+  {
+    p: "¿Qué pasa después de la semana gratis?",
+    r: "La semana gratis empieza cuando nuestro equipo aprueba tu cuenta. Al terminar, te escribimos por WhatsApp para contarte las opciones y que decidas si querés seguir. No hay cobros automáticos.",
+  },
   {
     p: "¿Cuál es la diferencia entre los programas?",
     r: "El Autoguiado te ofrece actividades semanales explicadas paso a paso para saber qué hacer en casa.\nCon sesiones profesionales, además evaluamos qué capacidades necesita trabajar tu familiar, lo acompañamos en las sesiones y revisamos cómo evoluciona. Recibís un informe de seguimiento y ajustamos el programa según sus necesidades.",

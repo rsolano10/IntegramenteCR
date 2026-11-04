@@ -38,6 +38,29 @@ function AntesDeEmpezar() {
   );
 }
 
+// Consentimiento (antes era una pantalla aparte, /app/consent): ahora va en
+// la bienvenida del cuestionario, para que el enlace del correo lleve
+// directo al cuestionario sin pasos intermedios (Fase 1.6).
+function ConsentimientoInicial({ onListo }: { onListo: (ok: boolean) => void }) {
+  const [c1, setC1] = useState(false);
+  const [c2, setC2] = useState(false);
+  useEffect(() => onListo(c1 && c2), [c1, c2, onListo]);
+  return (
+    <div className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-4 text-left mb-8">
+      <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
+        Es un programa de estimulación con acompañamiento profesional. No es un diagnóstico ni reemplaza la atención médica. Ante una
+        urgencia, llamá al <strong className="text-tinta">9-1-1</strong>.
+      </p>
+      <CheckRow checked={c1} onToggle={() => setC1((v) => !v)}>
+        Entiendo el alcance del programa y que no sustituye la atención médica.
+      </CheckRow>
+      <CheckRow checked={c2} onToggle={() => setC2((v) => !v)}>
+        Autorizo el uso de los datos ingresados para generar el plan y compartirlo con el equipo tratante.
+      </CheckRow>
+    </div>
+  );
+}
+
 export function OnboardingStep() {
   const navigate = useNavigate();
   const { step: stepId } = useParams();
@@ -59,6 +82,7 @@ export function OnboardingStep() {
   const endQuestionEdit = useAppStore((s) => s.endQuestionEdit);
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
   const [text, setText] = useState("");
+  const [consentimiento, setConsentimiento] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   // integramente_flujos_interaccion_usuarios.md §3.1/§7.1: antes de crear un
@@ -280,7 +304,10 @@ export function OnboardingStep() {
         <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.16] lg:leading-[1.12] m-0 mb-4">{resolveText(question.title, answers)}</h1>
         <p className="m-0 mb-8 text-base sm:text-lg leading-relaxed text-tinta-suave">{resolveText(question.body, answers)}</p>
         {idx === 0 && !assistedPatientId && <AntesDeEmpezar />}
-        <Button onClick={goNext}>{question.cta}</Button>
+        {idx === 0 && !assistedPatientId && !myPatient && <ConsentimientoInicial onListo={setConsentimiento} />}
+        <Button onClick={goNext} disabled={idx === 0 && !assistedPatientId && !myPatient && !consentimiento}>
+          {question.cta}
+        </Button>
       </div>
     );
   }

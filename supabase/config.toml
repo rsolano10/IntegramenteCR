@@ -438,3 +438,9 @@ enabled = true
 # declarative_schema_path = "./schemas"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Hook de envío de correos (supabase/functions/auth-email): HTML + texto
+# plano por la API de Resend. En producción se activa desde el Dashboard
+# (Authentication → Hooks); ver el encabezado de la función.
+[functions.auth-email]
+verify_jwt = false

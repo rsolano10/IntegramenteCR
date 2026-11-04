@@ -7,7 +7,23 @@ import { useScrolled } from "../lib/useScrollFx";
 import { moduloLabel, moduloTheme, type ResourceModulo } from "../lib/modulos";
 import { programas } from "../lib/programasData";
 import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
-import { areas, contacto, equipo, type MiembroEquipo, guiaProfesionales, precioValoracion, preguntas, programasHome, testimonios, whatsappHome } from "../lib/landingContenido";
+import { VideoYouTube } from "../components/ui/VideoYouTube";
+import { reproducirVideo } from "../lib/video";
+import {
+  areas,
+  contacto,
+  equipo,
+  fotosSesiones,
+  type MiembroEquipo,
+  guiaProfesionales,
+  precioValoracion,
+  preguntas,
+  programasHome,
+  pruebaSocial,
+  testimonios,
+  videos,
+  whatsappHome,
+} from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO_VISIBLE } from "../lib/whatsapp";
 import { Logo } from "../components/ui/Logo";
 
@@ -343,164 +359,143 @@ function IlustracionProfesional() {
   );
 }
 
-// `ancla` enlaza el título a su sección del home, si la tiene. Cada línea de
-// `detalle` es un párrafo (las modalidades del paso 2 van en líneas aparte).
-const pasos: { icono: string; t: string; ancla?: string; detalle: ReactNode[] }[] = [
-  {
-    icono: "charla",
-    t: "Contanos sobre vos o tu ser querido",
-    detalle: ["Respondé preguntas sobre su día a día e intereses.", <span key="tiempo" className="font-semibold text-tinta">Tiempo estimado: 10 minutos.</span>],
-  },
-  {
-    icono: "elegir",
-    t: "Elegí tu programa",
-    ancla: "#programas",
-    detalle: [
-      <span key="auto"><strong className="font-semibold text-tinta">Autoguiado:</strong> actividades para hacer en casa.</span>,
-      <span key="ses"><strong className="font-semibold text-tinta">Con sesiones:</strong> en línea o presenciales.</span>,
-    ],
-  },
-  { icono: "profesional", t: "Preparamos tu plan", detalle: ["Nuestro equipo revisa tus respuestas y selecciona las actividades."] },
-  { icono: "semana", t: "Comenzá tu semana", detalle: ["Seguí las actividades paso a paso, a tu ritmo."] },
+// "Así de fácil se usa": los tres pasos de una semana, junto al video.
+const pasosUso: { icono: string; t: string; d: string }[] = [
+  { icono: "semana", t: "Recibís tu plan", d: "Cada semana, actividades elegidas para vos." },
+  { icono: "check", t: "Hacés la actividad del día", d: "Una consigna por pantalla, a tu ritmo." },
+  { icono: "profesional", t: "Tu equipo revisa tu avance", d: "Profesionales revisan tu semana y ajustan el plan." },
 ];
 
-
-
-
-
-// Preguntas frecuentes como carrusel: cada pregunta es una tarjeta con la
-// respuesta ya visible (nada que abrir). Desplazamiento nativo con
-// scroll-snap (dedo, trackpad, teclado) + flechas y puntos que también
-// sirven para saltar. La tarjeta siguiente asoma para invitar a seguir.
-const margenContenido = "max(1.25rem, calc((100vw - 1280px) / 2 + 3rem))";
-
-const tonosFaq = [
-  { from: "#4f7d83", to: "#3f6a70" },
-  { from: "#e8b5a1", to: "#c0664f" },
-  { from: "#fadfa9", to: "#d9a441" },
-  { from: "#89c0c6", to: "#4f8a91" },
-  { from: "#ece3c4", to: "#b7a06d" },
-];
-
-function FaqCarousel() {
-  const pista = useRef<HTMLDivElement>(null);
-  const [activa, setActiva] = useState(0);
-  const total = preguntas.length;
-
-  function irA(i: number) {
-    const el = pista.current;
-    const card = el?.children[i] as HTMLElement | undefined;
-    if (!el || !card) return;
-    el.scrollTo({ left: card.offsetLeft - el.offsetLeft, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-  }
-
-  useEffect(() => {
-    const el = pista.current;
-    if (!el) return;
-    const onScroll = () => {
-      const cards = Array.from(el.children) as HTMLElement[];
-      const x = el.scrollLeft;
-      let best = 0;
-      cards.forEach((c, i) => {
-        if (Math.abs(c.offsetLeft - el.offsetLeft - x) < Math.abs(cards[best].offsetLeft - el.offsetLeft - x)) best = i;
-      });
-      // Al llegar al final, la última se marca aunque no pueda alinearse a la izquierda.
-      if (x + el.clientWidth >= el.scrollWidth - 4) best = cards.length - 1;
-      setActiva(best);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
-
+// Preguntas frecuentes en acordeón: se ve solo la pregunta y la respuesta
+// se abre al tocarla (el home tenía demasiado texto a la vista).
+function FaqAcordeon() {
+  const [abierta, setAbierta] = useState<number | null>(0);
   return (
-    <div role="region" aria-roledescription="carrusel" aria-label="Preguntas frecuentes">
-      <div
-        ref={pista}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowRight") {
-            e.preventDefault();
-            irA(Math.min(total - 1, activa + 1));
-          }
-          if (e.key === "ArrowLeft") {
-            e.preventDefault();
-            irA(Math.max(0, activa - 1));
-          }
-        }}
-        // De borde a borde de la pantalla, pero alineado con el contenido:
-        // el relleno lateral replica el margen del contenedor de 1280px.
-        style={{ paddingInline: margenContenido, scrollPaddingInline: margenContenido }}
-        className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-6 pt-2 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-verde-serenidad/40"
-      >
-        {preguntas.map((q, i) => {
-          const t = tonosFaq[i % tonosFaq.length];
-          return (
-            <article
-              key={q.p}
-              aria-roledescription="tarjeta"
-              aria-label={`${i + 1} de ${total}`}
-              className={`snap-start shrink-0 w-[84%] sm:w-[400px] lg:w-[420px] rounded-[32px] bg-white border border-borde overflow-hidden flex flex-col transition-[transform,box-shadow,opacity] duration-500 ${
-                i === activa ? "shadow-elevada" : "opacity-[0.88]"
-              }`}
-            >
-              <div className="relative px-6 sm:px-7 pt-6 pb-7 text-white min-h-[184px] flex flex-col" style={{ backgroundImage: `linear-gradient(150deg, ${t.from}, ${t.to})` }}>
-                <span aria-hidden="true" className="absolute right-6 top-3 font-serif italic text-[96px] leading-none text-white/20 select-none">
-                  ?
-                </span>
-                <span aria-hidden="true" className="absolute right-10 bottom-[-46px] w-28 h-28 rounded-full bg-white/10" />
-                <span className="relative text-[12px] font-semibold tracking-[0.16em] text-white/80">
-                  {String(i + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
-                </span>
-                <h3 className="relative m-0 mt-auto pt-6 font-serif font-normal text-[26px] sm:text-[28px] leading-[1.15] drop-shadow-sm" style={{ textWrap: "balance" }}>
-                  {q.p}
-                </h3>
-              </div>
-              <p className="m-0 px-6 sm:px-7 py-6 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line">{q.r}</p>
-            </article>
-          );
-        })}
-      </div>
-
-      {/* Controles */}
-      <div className="flex items-center justify-between gap-4 max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 mt-2">
-        <div className="flex items-center gap-1.5" role="tablist" aria-label="Elegir pregunta">
-          {preguntas.map((q, i) => (
-            <button
-              key={q.p}
-              type="button"
-              role="tab"
-              aria-selected={i === activa}
-              aria-label={`Pregunta ${i + 1}: ${q.p}`}
-              onClick={() => irA(i)}
-              // El punto se ve igual, pero el área táctil mide 44 px de alto.
-              className={`relative h-2 rounded-full border-none cursor-pointer transition-all duration-300 after:absolute after:content-[''] after:-inset-y-[18px] after:-inset-x-[3px] ${i === activa ? "w-8 bg-verde-profundo" : "w-2 bg-borde-campo hover:bg-verde-serenidad"}`}
-            />
-          ))}
-        </div>
-        <div className="hidden sm:flex gap-2.5">
-          {[
-            { d: -1, label: "Pregunta anterior", path: "M12.5 4.5L7 10l5.5 5.5" },
-            { d: 1, label: "Pregunta siguiente", path: "M7.5 4.5L13 10l-5.5 5.5" },
-          ].map((b) => {
-            const destino = activa + b.d;
-            const off = destino < 0 || destino > total - 1;
-            return (
+    <ul className="list-none m-0 p-0 grid gap-3">
+      {preguntas.map((q, i) => {
+        const open = abierta === i;
+        const panel = `faq-${i}`;
+        return (
+          <li key={q.p} className={`rounded-3xl bg-white border transition-colors ${open ? "border-verde-serenidad" : "border-borde"}`}>
+            <h3 className="m-0">
               <button
-                key={b.d}
                 type="button"
-                aria-label={b.label}
-                onClick={() => irA(destino)}
-                disabled={off}
-                className="w-12 h-12 rounded-full bg-white border border-borde flex items-center justify-center text-tinta cursor-pointer transition-all hover:bg-verde-profundo hover:text-white hover:border-verde-profundo disabled:opacity-35 disabled:cursor-default disabled:hover:bg-white disabled:hover:text-tinta disabled:hover:border-borde"
+                aria-expanded={open}
+                aria-controls={panel}
+                onClick={() => setAbierta(open ? null : i)}
+                className="w-full flex items-center justify-between gap-4 text-left px-5 sm:px-7 py-5 bg-transparent border-0 cursor-pointer font-serif font-normal text-[19px] sm:text-[21px] leading-snug text-tinta"
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <path d={b.path} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                {q.p}
+                <span
+                  aria-hidden="true"
+                  className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-transform duration-300 ${open ? "rotate-45 bg-verde-profundo text-white" : "bg-verde-tenue text-verde-profundo"}`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </span>
               </button>
-            );
-          })}
+            </h3>
+            <div id={panel} hidden={!open} className="px-5 sm:px-7 pb-6 -mt-1">
+              <p className="m-0 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line max-w-[44em]">{q.r}</p>
+              {q.video && (
+                <button
+                  type="button"
+                  onClick={() => reproducirVideo(q.video!)}
+                  className="mt-4 inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                  </svg>
+                  Ver el video «Así de fácil se usa»
+                </button>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+// Miniatura del video de presentación: foto real de la directora del
+// programa, con la marca encima.
+function PosterIntro() {
+  const f = equipo[0].foto;
+  return (
+    <span className="absolute inset-0 block">
+      {f && (
+        <picture>
+          <source srcSet={f.webp} type="image/webp" />
+          <img src={f.jpg} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_30%]" />
+        </picture>
+      )}
+      <span className="absolute inset-0 bg-gradient-to-r from-verde-profundo/85 via-verde-profundo/35 to-transparent" />
+      <span className="absolute left-5 top-5 sm:left-8 sm:top-8 flex items-center gap-2 text-white">
+        <img src="/marca/isotipo.png" alt="" className="h-7 w-auto brightness-0 invert" />
+        <span className="text-[12px] font-semibold uppercase tracking-[0.16em]">Presentación del programa</span>
+      </span>
+    </span>
+  );
+}
+
+// Miniatura de "Así de fácil se usa": la pantalla real del paso a paso.
+function PosterAsiDeFacil() {
+  return (
+    <span className="absolute inset-0 block" style={{ backgroundImage: "linear-gradient(150deg, #6a969c, #3f6a70)" }}>
+      <span aria-hidden="true" className="absolute -right-10 -bottom-16 w-64 h-64 rounded-full bg-white/10" />
+      <span className="absolute right-[9%] top-[8%] h-[84%] aspect-[1/2] rounded-[22px] bg-[#1b2629] p-[1.2%] shadow-[0_24px_50px_-18px_rgba(0,0,0,.6)]">
+        <span className="flex h-full w-full flex-col rounded-[18px] bg-fondo-papel overflow-hidden">
+          <span className="h-1.5 bg-beige-serenidad">
+            <span className="block h-full w-1/2 bg-verde-serenidad" />
+          </span>
+          <span className="px-[9%] pt-[12%] text-[clamp(7px,1.1vw,10px)] font-semibold uppercase tracking-wider text-tinta-tenue">Paso 2 de 4</span>
+          <span className="px-[9%] pt-[6%] font-serif text-[clamp(10px,1.7vw,17px)] leading-tight text-tinta">Despegá un pie apenas del suelo.</span>
+          <span className="mt-auto mx-[9%] mb-[12%] rounded-full bg-verde-profundo text-white text-center text-[clamp(7px,1.1vw,11px)] font-semibold py-[7%]">Siguiente</span>
+        </span>
+      </span>
+    </span>
+  );
+}
+
+// Datos verificables. Los que todavía no están (null) no se publican; en
+// desarrollo se ven marcados como TODO para saber dónde van.
+function PruebaSocial() {
+  const datos = pruebaSocial.filter((d) => d.valor || import.meta.env.DEV);
+  if (datos.length === 0) return null;
+  return (
+    <dl className="m-0 mt-8 grid gap-3 sm:grid-cols-3 max-w-[960px] mx-auto">
+      {datos.map((d) => (
+        <div key={d.etiqueta} className={`rounded-3xl px-5 py-4 text-center ${d.valor ? "bg-white border border-borde" : "border-2 border-dashed border-mostaza-vital bg-fila-calida"}`}>
+          <dt className="font-serif text-[30px] leading-none text-verde-profundo">{d.valor ?? "TODO"}</dt>
+          <dd className="m-0 mt-1.5 text-[14.5px] text-tinta-suave">{d.etiqueta}</dd>
         </div>
+      ))}
+    </dl>
+  );
+}
+
+// Fotos reales de las sesiones. Sin fotos cargadas, en producción no se
+// muestra nada; en desarrollo, el lugar marcado como TODO.
+function GaleriaSesiones() {
+  if (fotosSesiones.length === 0) {
+    if (!import.meta.env.DEV) return null;
+    return (
+      <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 pb-16">
+        <p className="m-0 rounded-3xl border-2 border-dashed border-mostaza-vital bg-fila-calida px-5 py-8 text-center text-[15px] text-tinta">
+          TODO: galería con las fotos de las sesiones de abril 2026 (landingContenido.ts → fotosSesiones).
+        </p>
       </div>
+    );
+  }
+  return (
+    <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 pb-16 lg:pb-24 grid gap-3 grid-cols-2 lg:grid-cols-4">
+      {fotosSesiones.map((f, i) => (
+        <picture key={f.jpg} className={i === 0 ? "col-span-2 row-span-2" : ""}>
+          <source srcSet={f.webp} type="image/webp" />
+          <img src={f.jpg} alt={f.alt} loading="lazy" decoding="async" className="w-full h-full aspect-square object-cover rounded-3xl" />
+        </picture>
+      ))}
     </div>
   );
 }
@@ -660,7 +655,7 @@ function InstagramIcon({ size = 20 }: { size?: number }) {
 const caminos = [
   {
     t: "Acompaño a un ser querido",
-    d: "Encontrá actividades explicadas paso a paso para compartir con tu ser querido. Podés acompañarlo en su realización y registrar cómo les fue.",
+    d: "Actividades paso a paso para compartir y registrar cómo les fue.",
     etiquetas: ["Familiares", "Personas cuidadoras"],
     boton: "Empezar para un ser querido",
     to: registroPara("ser-querido"),
@@ -669,7 +664,7 @@ const caminos = [
   },
   {
     t: "Quiero cuidar mi salud cerebral",
-    d: "Respondé algunas preguntas sobre vos y encontrá actividades para mantenerte activo, disfrutar y cuidar tu bienestar, a tu ritmo.",
+    d: "Actividades para mantenerte activo y cuidar tu bienestar, a tu ritmo.",
     etiquetas: ["Estimulación cognitiva", "Movimiento", "Bienestar"],
     boton: "Empezar para mí",
     to: registroPara("mi"),
@@ -677,23 +672,27 @@ const caminos = [
     ilustracion: <IlustracionAutonomia />,
   },
   {
-    t: "¿Sos profesional de la salud?",
-    d: "Conocé cómo IntegraMente en Casa puede complementar las actividades que tus pacientes realizan en el hogar entre sesiones.",
-    etiquetas: ["Profesionales de la salud", "Guía informativa"],
-    boton: "Ver guía para profesionales",
-    href: guiaProfesionales,
+    t: "¿Sos médico o profesional de la salud?",
+    d: "Referí pacientes y recibí información de su seguimiento.",
+    etiquetas: ["Geriatría", "Medicina general", "Neurología"],
+    boton: "Información para médicos",
+    to: guiaProfesionales,
     fondo: "#3f6a70",
     ilustracion: <IlustracionProfesional />,
   },
 ];
 
-// Mismo aspecto que <Button> (primario, grande) para enlaces que no son
-// rutas internas con <Link>, como la guía (se abre en otra pestaña).
-const botonClase =
-  "inline-flex items-center justify-center min-h-[56px] px-8 rounded-full font-sans font-semibold text-[17px] no-underline bg-verde-serenidad text-white hover:bg-verde-profundo transition-colors";
-
 export function Landing() {
   const scrolled = useScrolled(24);
+  // El correo de bienvenida enlaza a /#video-introduccion: al llegar, el
+  // video arranca solo (o muestra "muy pronto" si todavía no está).
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (id === "video-introduccion" || id === "video-asi-de-facil") {
+      const t = window.setTimeout(() => reproducirVideo(id), 300);
+      return () => window.clearTimeout(t);
+    }
+  }, []);
   const autoguiado = programas.find((p) => p.id === "autoguiado")!;
   const auto = programasHome.autoguiado;
   const ses = programasHome.sesiones;
@@ -711,6 +710,9 @@ export function Landing() {
             <Logo />
           </a>
           <div className="flex items-center gap-2">
+            <Link to={guiaProfesionales} className="hidden md:inline-flex items-center min-h-10 px-4 rounded-full text-[15px] font-semibold text-tinta-suave no-underline hover:bg-white whitespace-nowrap">
+              Para médicos
+            </Link>
             <Link to="/ingresar?mode=login" className="inline-flex items-center min-h-10 px-3 sm:px-4 rounded-full text-[15px] font-semibold text-tinta no-underline hover:bg-white whitespace-nowrap">
               Iniciar sesión
             </Link>
@@ -724,7 +726,7 @@ export function Landing() {
       </header>
 
       {/* ─── Hero ─── */}
-      <section id="top" className="max-w-[1280px] mx-auto px-5 pt-8 pb-14 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-8 md:gap-14 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
+      <section id="top" className="max-w-[1280px] mx-auto px-5 pt-8 pb-10 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-8 md:gap-14 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
         <Reveal>
           <Eyebrow>Salud cerebral en casa</Eyebrow>
           <h1 className="font-serif font-normal text-[42px] sm:text-[56px] lg:text-[72px] leading-[1.02] tracking-[-0.01em] m-0 mb-5" style={{ textWrap: "balance" }}>
@@ -734,20 +736,33 @@ export function Landing() {
             Cuidá tu salud cerebral o acompañá a un ser querido con un plan semanal de estimulación cognitiva, movimiento y orientaciones de
             nutrición, elaborado por el equipo de IntegraMente.
           </p>
-          <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-4">
-            Actividades explicadas paso a paso para integrarlas a la vida cotidiana.
-          </p>
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
           <div className="flex flex-wrap gap-3">
             <Button to={registro}>Crear mi cuenta gratis</Button>
-            <Button variant="secondary" onClick={() => document.getElementById("como-funciona")?.scrollIntoView({ behavior: "smooth" })}>
-              Ver cómo funciona
+            <Button variant="secondary" onClick={() => reproducirVideo("video-introduccion")}>
+              Ver el video
             </Button>
           </div>
+          <p className="m-0 mt-6 flex items-center gap-2 text-[14.5px] text-tinta-suave">
+            <span aria-hidden="true" className="w-2 h-2 rounded-full bg-verde-serenidad" />
+            Plan personalizado y revisado por profesionales.
+          </p>
         </Reveal>
-        <Reveal delay={150}>
+        {/* En celular el video de presentación va justo después del texto:
+            la maqueta del teléfono se muestra desde escritorio. */}
+        <Reveal delay={150} className="hidden lg:block">
           <HeroPhone />
         </Reveal>
+      </section>
+
+      {/* ─── Video de presentación: el elemento principal del home ─── */}
+      <section className="max-w-[1280px] mx-auto px-5 pb-16 sm:px-8 lg:px-12 lg:pb-24">
+        <Reveal className="max-w-[960px] mx-auto">
+          <VideoYouTube id="video-introduccion" youtubeId={videos.introduccion.youtubeId} titulo={videos.introduccion.titulo}>
+            <PosterIntro />
+          </VideoYouTube>
+        </Reveal>
+        <PruebaSocial />
       </section>
 
       {/* ─── Para quién es ─── */}
@@ -777,18 +792,9 @@ export function Landing() {
                       ))}
                     </ul>
                     <div className="mt-auto pt-4">
-                      {"href" in c ? (
-                        <>
-                          {/* Guía en otra pestaña: la landing queda abierta. */}
-                          <a href={c.href} target="_blank" rel="noopener" className={`${botonClase} w-full sm:w-auto`}>
-                            {c.boton}
-                          </a>
-                        </>
-                      ) : (
-                        <Button to={c.to} className="w-full sm:w-auto">
-                          {c.boton}
-                        </Button>
-                      )}
+                      <Button to={c.to} variant={i === 2 ? "secondary" : "primary"} className="w-full sm:w-auto">
+                        {c.boton}
+                      </Button>
                     </div>
                   </div>
                 </article>
@@ -799,57 +805,38 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── Cómo funciona: cuatro pasos ─── */}
-      <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
-        <Reveal className="text-center">
-          <Eyebrow>Cómo funciona</Eyebrow>
-          <SectionTitle className="max-w-[16em] mx-auto mb-12 lg:mb-16">Empezá en cuatro pasos.</SectionTitle>
+      {/* ─── Así de fácil se usa: video + tres pasos ─── */}
+      <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20 grid gap-10 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
+        <Reveal>
+          <VideoYouTube id="video-asi-de-facil" youtubeId={videos.asiDeFacil.youtubeId} titulo={videos.asiDeFacil.titulo}>
+            <PosterAsiDeFacil />
+          </VideoYouTube>
         </Reveal>
-        <ol className="list-none m-0 p-0 relative grid gap-y-8 lg:grid-cols-4 lg:gap-6">
-          {/* Línea que une los pasos (escritorio) */}
-          <span aria-hidden="true" className="hidden lg:block absolute top-[52px] left-[12.5%] right-[12.5%] border-t-2 border-dashed border-borde-campo" />
-          {pasos.map((p, i) => {
-            const tonos = ["#3f6a70", "#6a969c", "#3f6a70", "#6a969c"];
-            return (
-              <Reveal key={p.t} delay={i * 110}>
-                {/* Celular: ícono a la izquierda y texto al lado. Escritorio: columna centrada. */}
-                <li className="relative grid grid-cols-[64px_1fr] gap-4 items-start text-left lg:flex lg:flex-col lg:items-center lg:text-center lg:gap-0">
-                  <span
-                    className="relative w-16 h-16 lg:w-[104px] lg:h-[104px] rounded-full flex items-center justify-center text-white shadow-[0_18px_40px_-18px_rgba(31,51,56,0.55)]"
-                    style={{ background: tonos[i] }}
-                  >
-                    <Icono name={p.icono} className="w-7 h-7 lg:w-11 lg:h-11" />
-                    <span className="absolute -top-1 -right-1 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-white border-2 border-fondo-papel text-tinta font-serif text-[15px] lg:text-[16px] flex items-center justify-center shadow-sm">
-                      {i + 1}
-                    </span>
-                  </span>
-                  <div className="min-w-0">
-                    {/* Alto mínimo de dos líneas: títulos y descripciones arrancan a la misma altura. */}
-                    <h3 className="m-0 lg:mt-5 font-serif font-normal text-[22px] lg:text-[24px] leading-tight lg:min-h-[2.5em]">
-                      {p.ancla ? (
-                        <a href={p.ancla} className="text-tinta underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad">
-                          {p.t}
-                        </a>
-                      ) : (
-                        p.t
-                      )}
-                    </h3>
-                    <div className="mt-1.5 grid gap-1.5 text-[15.5px] leading-snug text-tinta-suave">
-                      {p.detalle.map((linea, j) => (
-                        <p key={j} className="m-0">
-                          {linea}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </li>
-              </Reveal>
-            );
-          })}
-        </ol>
-        <div className="flex justify-center mt-12">
-          <Button to={registro}>Crear mi cuenta gratis</Button>
-        </div>
+        <Reveal delay={120}>
+          <Eyebrow>Así de fácil se usa</Eyebrow>
+          <SectionTitle className="mb-3">Tres pasos cada semana.</SectionTitle>
+          <p className="m-0 mb-8 text-[17px] leading-relaxed text-tinta-suave">Actividades explicadas paso a paso para integrarlas a la vida cotidiana.</p>
+          <ol className="list-none m-0 p-0 grid gap-5">
+            {pasosUso.map((p, i) => (
+              <li key={p.t} className="grid grid-cols-[56px_1fr] gap-4 items-center">
+                <span
+                  className="relative w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-[0_14px_30px_-16px_rgba(31,51,56,0.6)]"
+                  style={{ background: i === 1 ? "#6a969c" : "#3f6a70" }}
+                >
+                  <Icono name={p.icono} className="w-7 h-7" />
+                  <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-mostaza-vital text-tinta text-[12.5px] font-bold flex items-center justify-center">{i + 1}</span>
+                </span>
+                <div>
+                  <h3 className="m-0 font-serif font-normal text-[21px] leading-tight">{p.t}</h3>
+                  <p className="m-0 mt-0.5 text-[15.5px] leading-snug text-tinta-suave">{p.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-9">
+            <Button to={registro}>Crear mi cuenta gratis</Button>
+          </div>
+        </Reveal>
       </section>
 
       {/* ─── Las áreas del programa ─── */}
@@ -863,7 +850,7 @@ export function Landing() {
             {areas.map((a, i) => (
               <Reveal key={a.t} delay={i * 90} className="h-full">
                 <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
-                  <div className="relative p-5 sm:p-6 min-h-[150px] flex flex-col justify-end gap-2" style={{ background: a.fondo, color: a.tinta }}>
+                  <div className="relative p-5 sm:p-6 min-h-[130px] flex flex-col justify-end gap-2" style={{ background: a.fondo, color: a.tinta }}>
                     <span className="absolute right-4 top-4 w-14 h-14 rounded-full flex items-center justify-center bg-white/25">
                       <Icono name={a.icono} className="w-8 h-8" />
                     </span>
@@ -874,14 +861,23 @@ export function Landing() {
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col gap-3 flex-1">
                     <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{a.frase}</p>
-                    <ul className="list-none m-0 p-0 grid gap-2">
-                      {a.puntos.map((e) => (
-                        <li key={e} className="flex gap-2.5 text-[15px] leading-snug text-tinta">
-                          <span aria-hidden="true" className="mt-[7px] w-1.5 h-1.5 shrink-0 rounded-full bg-verde-serenidad" />
-                          {e}
-                        </li>
-                      ))}
-                    </ul>
+                    <details className="group mt-auto">
+                      <summary className="list-none [&::-webkit-details-marker]:hidden inline-flex items-center gap-1.5 min-h-10 cursor-pointer text-[14.5px] font-semibold text-verde-profundo">
+                        <span className="group-open:hidden">Ver más</span>
+                        <span className="hidden group-open:inline">Ver menos</span>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="transition-transform group-open:rotate-180">
+                          <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </summary>
+                      <ul className="list-none m-0 mt-1 p-0 grid gap-2">
+                        {a.puntos.map((e) => (
+                          <li key={e} className="flex gap-2.5 text-[15px] leading-snug text-tinta">
+                            <span aria-hidden="true" className="mt-[7px] w-1.5 h-1.5 shrink-0 rounded-full bg-verde-serenidad" />
+                            {e}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   </div>
                 </article>
               </Reveal>
@@ -907,7 +903,6 @@ export function Landing() {
                 <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{auto.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{auto.subtitulo}</p>
               </div>
-              <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{auto.descripcion}</p>
               <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
                 <span className="font-serif text-[40px] leading-none">{autoguiado.precio}</span>
                 <span className="text-[15px] text-tinta-suave">{autoguiado.periodo}</span>
@@ -929,7 +924,6 @@ export function Landing() {
                 <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{ses.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{ses.subtitulo}</p>
               </div>
-              <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{ses.descripcion}</p>
               <p className="m-0 pb-5 border-b border-borde-suave font-serif text-[28px] leading-tight text-tinta">{ses.presupuesto}</p>
               <ListaIncluye items={ses.incluye} />
               <div className="rounded-2xl bg-white border-[1.5px] border-mostaza-vital px-4 py-3">
@@ -958,9 +952,9 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
           <Reveal className="text-center">
             <Eyebrow>Conocé al equipo</Eyebrow>
-            <SectionTitle className="max-w-[17em] mx-auto mb-3">Personas que acompañan el cuidado de tu salud cerebral.</SectionTitle>
+            <SectionTitle className="max-w-[17em] mx-auto mb-3">Profesionales detrás de cada plan.</SectionTitle>
             <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-              Integramos neuropsicología, movimiento y nutrición para desarrollar los contenidos y orientar los programas de IntegraMente en Casa.
+              Neuropsicología, gerontogimnasia y nutrición. Este equipo revisa cada plan antes de que llegue a tu casa.
             </p>
           </Reveal>
           <div className="flex flex-wrap justify-center gap-5">
@@ -991,6 +985,62 @@ export function Landing() {
         </div>
       </section>
 
+      {/* ─── Fotos de las sesiones ─── */}
+      {fotosSesiones.length > 0 || import.meta.env.DEV ? <div className="bg-beige-serenidad"><GaleriaSesiones /></div> : null}
+
+      {/* ─── Para médicos ─── */}
+      <section id="medicos" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
+        <Reveal>
+          <div className="rounded-[32px] bg-tinta text-white overflow-hidden grid lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="p-7 sm:p-10 lg:p-14">
+              <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-[#a9c7ca] font-semibold">Para médicos y geriatras</p>
+              <h2 className="m-0 mb-6 font-serif font-normal text-[30px] sm:text-[38px] lg:text-[44px] leading-[1.1] text-white" style={{ textWrap: "balance" }}>
+                Un aliado entre consultas para tus pacientes.
+              </h2>
+              <ul className="list-none m-0 p-0 grid gap-3 mb-8">
+                {[
+                  "Evaluación funcional estandarizada y plan según etapa.",
+                  "Te avisamos si detectamos señales que requieren consulta.",
+                  "Podemos adaptar la aplicación a tu clínica.",
+                ].map((x) => (
+                  <li key={x} className="flex gap-3 text-[16px] leading-snug text-[#dce9e9]">
+                    <span aria-hidden="true" className="text-mostaza-vital font-bold">✓</span>
+                    {x}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to={`${guiaProfesionales}#referir`}
+                  className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-mostaza-vital text-tinta font-bold text-[16px] no-underline hover:bg-white"
+                >
+                  Referir un paciente
+                </Link>
+                <a
+                  href={whatsappHome.profesional}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2.5 min-h-[52px] px-6 rounded-full border-[1.5px] border-[#6f8a8e] text-white font-semibold text-[16px] no-underline hover:border-white"
+                >
+                  <WhatsAppIcon size={20} /> Hablar con el equipo
+                </a>
+              </div>
+              <Link to={guiaProfesionales} className="inline-block mt-6 text-[15px] font-semibold text-[#a9c7ca] hover:text-white">
+                Ver metodología y cómo trabajamos →
+              </Link>
+            </div>
+            <div className="relative min-h-[240px] bg-verde-profundo">
+              {equipo[1].foto && (
+                <picture>
+                  <source srcSet={equipo[1].foto.webp} type="image/webp" />
+                  <img src={equipo[1].foto.jpg} alt={`${equipo[1].nombre}, ${equipo[1].area}`} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_25%]" />
+                </picture>
+              )}
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ─── Testimonios (solo si hay reales) ─── */}
       {testimonios.length > 0 && (
         <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
@@ -1014,8 +1064,9 @@ export function Landing() {
       )}
 
       {/* ─── Preguntas frecuentes ─── */}
-      <section id="preguntas" className="py-16 lg:py-24 scroll-mt-20 overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
+      <section id="preguntas" className="bg-white border-y border-borde-suave scroll-mt-20">
+        <div className="max-w-[920px] mx-auto px-5 py-16 sm:px-8 lg:py-24">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
           <Reveal>
             <Eyebrow>Preguntas frecuentes</Eyebrow>
             <SectionTitle>Lo que suelen preguntarnos.</SectionTitle>
@@ -1028,7 +1079,8 @@ export function Landing() {
             .
           </p>
         </div>
-        <FaqCarousel />
+        <FaqAcordeon />
+        </div>
       </section>
 
       {/* ─── CTA final ─── */}
@@ -1098,6 +1150,9 @@ export function Landing() {
             </Link>
             <Link to="/legal/emergencias" className="text-[#d3dcdd] py-2 md:py-0">
               Emergencias
+            </Link>
+            <Link to={guiaProfesionales} className="text-[#d3dcdd] py-2 md:py-0">
+              Para médicos
             </Link>
           </div>
         </div>

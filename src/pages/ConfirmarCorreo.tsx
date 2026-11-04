@@ -12,7 +12,9 @@ import { FormField } from "../components/ui/FormField";
 // The link itself proves who the person is — so instead of a login form
 // asking for an email and password they just typed minutes ago, this page
 // verifies the token, signs them in, and hands off to RouteGuard, which
-// sends a brand-new account straight into consent → cuestionario.
+// sends a brand-new account straight into the questionnaire (Fase 1.6: sin
+// pantallas intermedias; el consentimiento está en la primera pantalla del
+// cuestionario).
 export function ConfirmarCorreo() {
   const navigate = useNavigate();
   const link = useEmailLinkVerification();
@@ -20,39 +22,15 @@ export function ConfirmarCorreo() {
   const signedIn = link.status === "ok" && session.status === "authed";
 
   useEffect(() => {
-    if (!signedIn) return;
-    const t = setTimeout(() => navigate("/app/login", { replace: true }), 1600);
-    return () => clearTimeout(t);
+    if (signedIn) navigate("/app/login", { replace: true });
   }, [signedIn, navigate]);
 
-  if (link.status === "verifying" || (link.status === "ok" && session.status === "loading")) {
+  if (signedIn || link.status === "verifying" || (link.status === "ok" && session.status === "loading")) {
     return (
       <AuthCard>
         <div className="py-6 text-center">
           <span className="inline-block w-8 h-8 rounded-full border-[3px] border-beige-serenidad border-t-verde-serenidad animate-spin mb-4" />
-          <p className="m-0 text-[16px] text-tinta-suave">Confirmando tu correo…</p>
-        </div>
-      </AuthCard>
-    );
-  }
-
-  if (signedIn) {
-    const nombre = session.profile.nombre.split(" ")[0];
-    return (
-      <AuthCard>
-        <div className="text-center py-2">
-          <div className="w-16 h-16 rounded-full bg-verde-tenue border border-borde mx-auto mb-5 flex items-center justify-center text-verde-profundo text-2xl">
-            ✓
-          </div>
-          <h1 className="font-serif font-normal text-[28px] sm:text-[32px] leading-tight m-0 mb-3">
-            ¡Listo{nombre ? `, ${nombre}` : ""}!
-          </h1>
-          <p className="text-base leading-relaxed text-tinta-suave m-0 mb-6">
-            Tu correo quedó confirmado y ya iniciaste sesión. Te llevamos a crear el perfil de tu familiar.
-          </p>
-          <Button variant="ink" fullWidth onClick={() => navigate("/app/login", { replace: true })}>
-            Continuar
-          </Button>
+          <p className="m-0 text-[16px] text-tinta-suave">{signedIn ? "¡Listo! Abriendo tu evaluación…" : "Confirmando tu correo…"}</p>
         </div>
       </AuthCard>
     );
