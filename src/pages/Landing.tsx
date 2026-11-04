@@ -14,6 +14,7 @@ import {
   areas,
   contacto,
   equipo,
+  type EjemploArea,
   fotosSesiones,
   type MiembroEquipo,
   guiaProfesionales,
@@ -574,6 +575,111 @@ function ModalVideo({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Actividad de ejemplo de un área: 20 segundos del video real
+// (gerontogimnasia) o la ficha real de la biblioteca (cognición, nutrición).
+function ModalEjemplo({ ejemplo, onClose }: { ejemplo: EjemploArea; onClose: () => void }) {
+  useBodyScrollLock();
+  const video = useRef<HTMLVideoElement>(null);
+  const [terminado, setTerminado] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const cerrar = (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Cerrar"
+      autoFocus
+      className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-white/95 border border-borde text-tinta text-[22px] leading-none cursor-pointer hover:bg-white"
+    >
+      ×
+    </button>
+  );
+  const cta = (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button to={registro}>Crear mi cuenta gratis</Button>
+      <span className="text-[13.5px] text-tinta-suave">Ejemplo real de la biblioteca ({ejemplo.codigo}).</span>
+    </div>
+  );
+  return (
+    <div role="dialog" aria-modal="true" aria-label={ejemplo.titulo} onClick={onClose} className="im-in fixed inset-0 z-50 bg-tinta/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8">
+      {ejemplo.tipo === "video" ? (
+        <div className="relative w-full max-w-[400px] rounded-[26px] overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
+          {cerrar}
+          <div className="relative bg-black">
+            <video
+              ref={video}
+              src={`${ejemplo.src}#t=${ejemplo.desde},${ejemplo.hasta}`}
+              poster={ejemplo.poster}
+              autoPlay
+              controls
+              playsInline
+              preload="metadata"
+              onTimeUpdate={(e) => {
+                const v = e.currentTarget;
+                if (v.currentTime >= ejemplo.hasta) {
+                  v.pause();
+                  setTerminado(true);
+                }
+              }}
+              className="block w-full max-h-[62vh] aspect-[9/16] object-cover"
+            />
+            {terminado && (
+              <button
+                type="button"
+                onClick={() => {
+                  const v = video.current;
+                  if (!v) return;
+                  v.currentTime = ejemplo.desde;
+                  setTerminado(false);
+                  v.play();
+                }}
+                className="absolute inset-x-0 bottom-14 mx-auto w-fit min-h-11 px-4 rounded-full bg-white border-0 text-tinta font-semibold text-[14.5px] cursor-pointer"
+              >
+                Ver de nuevo
+              </button>
+            )}
+          </div>
+          <div className="p-5 grid gap-3">
+            <h2 className="m-0 font-serif font-normal text-[22px] leading-tight">{ejemplo.titulo}</h2>
+            <p className="m-0 text-[14.5px] text-tinta-suave">Una muestra de 20 segundos. En la app, cada ejercicio trae el video completo y la guía paso a paso.</p>
+            {cta}
+          </div>
+        </div>
+      ) : (
+        <div className="relative w-full max-w-[620px] max-h-[88vh] overflow-y-auto rounded-[26px] bg-white p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
+          {cerrar}
+          <p className="m-0 mb-2 text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Actividad de ejemplo{ejemplo.duracion ? ` · ${ejemplo.duracion}` : ""}</p>
+          <h2 className="m-0 mb-4 pr-10 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{ejemplo.titulo}</h2>
+          {ejemplo.intro && <p className="m-0 mb-5 text-[16px] leading-relaxed text-tinta">{ejemplo.intro}</p>}
+          {ejemplo.pasos && (
+            <ol className="list-none m-0 mb-6 p-0 grid gap-3">
+              {ejemplo.pasos.map((x, i) => (
+                <li key={i} className="grid grid-cols-[32px_1fr] gap-3 items-start">
+                  <span className="w-8 h-8 rounded-full bg-verde-profundo text-white text-[14px] font-bold flex items-center justify-center">{i + 1}</span>
+                  <span className="pt-1 text-[16px] leading-relaxed text-tinta">{x}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {ejemplo.parrafos && (
+            <div className="grid gap-3 mb-6">
+              {ejemplo.parrafos.map((x, i) => (
+                <p key={i} className="m-0 text-[16px] leading-relaxed text-tinta">
+                  {x}
+                </p>
+              ))}
+            </div>
+          )}
+          {cta}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Miniatura de "Así de fácil se usa": la pantalla real del paso a paso.
 function PosterAsiDeFacil() {
   return (
@@ -800,6 +906,7 @@ export function Landing() {
   // El video de presentación no está en la página: se abre en un modal
   // desde «Ver el video» (y desde el enlace del correo de bienvenida).
   const [videoAbierto, setVideoAbierto] = useState(false);
+  const [ejemplo, setEjemplo] = useState<EjemploArea | null>(null);
   // El correo de bienvenida enlaza a /#video-introduccion: al llegar, el
   // video arranca solo (o muestra "muy pronto" si todavía no está).
   useEffect(() => {
@@ -956,52 +1063,83 @@ export function Landing() {
 
       {/* ─── Las áreas del programa ─── */}
       <section className="bg-seccion-fria">
-        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
-          <Reveal>
+        <div className="max-w-[1280px] mx-auto py-16 lg:py-24">
+          <Reveal className="px-5 sm:px-8 lg:px-12">
             <Eyebrow>Las áreas del programa</Eyebrow>
             <SectionTitle className="max-w-[16em] mb-10 lg:mb-14">Cuidamos la mente, el movimiento y la alimentación.</SectionTitle>
           </Reveal>
-          <div className="grid gap-5 md:grid-cols-3">
-            {areas.map((a, i) => (
-              <Reveal key={a.t} delay={i * 90} className="h-full">
-                <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
-                  {/* Imagen completa (16:9, sin recortar lo importante) con un
-                      velo suave del color del área, que se funde en la franja
-                      sólida del título: el texto siempre va sobre color pleno. */}
-                  <div className="relative aspect-video">
-                    <picture>
-                      <source srcSet={a.foto.webp} type="image/webp" />
-                      <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
-                    </picture>
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-0"
-                      style={{ background: `linear-gradient(to top, ${a.fondo} 0%, ${a.fondo}99 14%, ${a.fondo}26 38%, ${a.fondo}14 100%)` }}
-                    />
-                    <span className="absolute right-4 top-4 w-12 h-12 rounded-full flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(0,0,0,.5)]" style={{ background: a.fondo, color: a.tinta }}>
-                      <Icono name={a.icono} className="w-7 h-7" />
-                    </span>
-                  </div>
-                  <div className="px-5 sm:px-6 pb-4 pt-1 lg:min-h-[5.6rem] flex items-end" style={{ background: a.fondo, color: a.tinta }}>
-                    <h3 className="m-0 font-serif font-normal text-[25px] leading-tight">{a.t}</h3>
-                  </div>
-                  <div className="p-5 sm:p-6 flex flex-col gap-3 flex-1">
-                    <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{a.frase}</p>
-                    <div className="mt-1 pt-4 border-t border-borde-suave">
-                      <p className="m-0 mb-2.5 text-[11.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{a.tituloEtiquetas}</p>
-                      <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
-                        {a.etiquetas.map((x) => (
-                          <li key={x} className="inline-flex items-center rounded-full px-3 py-1.5 text-[13.5px] font-semibold leading-none text-tinta" style={{ background: a.chip }}>
-                            {x}
-                          </li>
-                        ))}
-                      </ul>
+          {/* Celular: carrusel horizontal (no una pared de tarjetas). Desde
+              tablet: tres columnas. */}
+          <ul
+            aria-label="Áreas del programa"
+            className="list-none m-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ scrollPaddingInline: "1.25rem" }}
+          >
+            {areas.map((a) => {
+              const persona = equipo[a.responsable.miembro];
+              return (
+                <li key={a.t} className="snap-start shrink-0 w-[84%] sm:w-[62%] md:w-auto">
+                  <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-elevada">
+                    <div className="relative aspect-video">
+                      <picture>
+                        <source srcSet={a.foto.webp} type="image/webp" />
+                        <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
+                      </picture>
+                      <span
+                        className="absolute right-3.5 top-3.5 w-11 h-11 rounded-full flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] ring-2 ring-white/70"
+                        style={{ background: a.fondo, color: a.tinta }}
+                      >
+                        <Icono name={a.icono} className="w-6 h-6" />
+                      </span>
                     </div>
-                  </div>
-                </article>
-              </Reveal>
-            ))}
-          </div>
+                    {/* Corte limpio entre la imagen y la franja del título. */}
+                    <div className="px-5 sm:px-6 py-3.5" style={{ background: a.fondo, color: a.tinta }}>
+                      <h3 className="m-0 font-serif font-normal text-[24px] leading-tight">{a.t}</h3>
+                    </div>
+                    <div className="px-5 sm:px-6 pt-5 pb-5 flex flex-col gap-4 flex-1">
+                      <p className="m-0 text-[16px] leading-relaxed text-tinta">{a.frase}</p>
+                      <div className="pt-4 border-t border-borde-suave">
+                        <p className="m-0 mb-2.5 text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Trabaja</p>
+                        <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
+                          {a.etiquetas.map((x) => (
+                            <li key={x} className="inline-flex items-center rounded-full px-3 py-1.5 text-[14px] font-semibold leading-none text-tinta" style={{ background: a.chip }}>
+                              {x}
+                            </li>
+                          ))}
+                        </ul>
+                        {a.nota && <p className="m-0 mt-3 text-[14px] text-tinta-suave">{a.nota}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEjemplo(a.ejemplo)}
+                        className="mt-auto self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad"
+                      >
+                        <span aria-hidden="true" className="w-7 h-7 rounded-full bg-verde-tenue flex items-center justify-center no-underline">
+                          {a.ejemplo.tipo === "video" ? (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                            </svg>
+                          ) : (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                              <path d="M7 4h10v16H7zM10 9h4M10 13h4" />
+                            </svg>
+                          )}
+                        </span>
+                        Ver una actividad de ejemplo
+                      </button>
+                    </div>
+                    {/* Respaldo profesional, sutil. */}
+                    <div className="flex items-center gap-2.5 px-5 sm:px-6 py-3 bg-campo border-t border-borde-suave">
+                      {persona?.foto && (
+                        <img src={persona.foto.jpg} alt={persona.nombre} className="w-8 h-8 rounded-full object-cover object-[center_25%] shrink-0" loading="lazy" />
+                      )}
+                      <p className="m-0 text-[13px] leading-snug text-tinta-suave">Diseñado por el área de {a.responsable.area} de IntegraMente</p>
+                    </div>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
 
@@ -1218,6 +1356,7 @@ export function Landing() {
       <SitioFooter />
 
       {videoAbierto && <ModalVideo onClose={() => setVideoAbierto(false)} />}
+      {ejemplo && <ModalEjemplo ejemplo={ejemplo} onClose={() => setEjemplo(null)} />}
       <RedesFlotantes />
       <AyudaWhatsApp />
     </div>

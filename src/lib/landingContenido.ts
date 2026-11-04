@@ -172,72 +172,107 @@ export const programasHome = {
 // Las áreas del programa (sección "Cuidamos la mente…" del home). Colores
 // de la paleta oficial; `tinta` es el color del texto sobre ese fondo (nunca
 // blanco sobre mostaza o beige).
-// Cada tarjeta lleva una imagen (las de IntegraMente, assets/img-home/) con
-// el color del área encima en degradé translúcido: casi sólido detrás del
-// título (contraste ≥ 3:1 en el peor caso) y más transparente arriba, para
-// que se vea la imagen.
+// Las tres áreas del home. Cada tarjeta: imagen de IntegraMente
+// (assets/img-home/), franja sólida con el título (contraste ≥ 7:1), cuatro
+// etiquetas, una actividad de ejemplo real y el área profesional que la
+// diseña (con la foto de quien la representa en `equipo`).
 export interface FotoArea {
   webp: string;
   jpg: string;
   alt: string;
 }
 
+// Muestra real de la biblioteca: un fragmento de video (gerontogimnasia) o
+// la ficha de una actividad (las de cognición y nutrición son de texto).
+export type EjemploArea =
+  | { tipo: "video"; codigo: string; titulo: string; src: string; poster: string; desde: number; hasta: number }
+  | { tipo: "ficha"; codigo: string; titulo: string; duracion?: string; intro?: string; pasos?: string[]; parrafos?: string[] };
+
+const almacen = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media-resources`;
+
 export const areas: {
   icono: string;
   t: string;
-  destacado?: string;
   frase: string;
-  tituloEtiquetas: string;
   etiquetas: string[];
+  nota?: string;
   fondo: string;
   tinta: string;
   chip: string;
   foto: FotoArea;
+  ejemplo: EjemploArea;
+  responsable: { area: string; miembro: number };
 }[] = [
   {
     icono: "cerebro",
     t: "Estimulación cognitiva",
     frase: "Actividades para trabajar distintas capacidades cognitivas y conectarlas con la vida cotidiana.",
-    tituloEtiquetas: "Trabaja",
-    etiquetas: ["Atención", "Memoria", "Lenguaje", "Planificación", "Orientación", "Habilidades visoespaciales"],
+    etiquetas: ["Atención", "Memoria", "Lenguaje", "Planificación"],
     fondo: "#3f6a70",
     tinta: "#ffffff",
     chip: "#dce8e9",
-    foto: {
-      webp: "/areas/estimulacion-cognitiva.webp",
-      jpg: "/areas/estimulacion-cognitiva.jpg",
-      alt: "Una señora arma un rompecabezas de piezas de colores sobre la mesa.",
+    foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora arma un rompecabezas de piezas de colores sobre la mesa." },
+    // Texto literal de COG-004 en la biblioteca.
+    ejemplo: {
+      tipo: "ficha",
+      codigo: "COG-004",
+      titulo: "Palabras y expresiones de mi época",
+      duracion: "10 a 15 minutos",
+      intro:
+        "Vamos a recordar palabras o expresiones que se escuchaban antes. No hace falta completar todos los dichos ni saber su origen; podemos conversar sobre lo que significan o cuándo se usaban.",
+      pasos: [
+        "Presentar una expresión familiar y leerla en voz alta si hace falta.",
+        "Preguntar si la había escuchado antes y qué cree que significa.",
+        "Invitar a recordar quién la decía o en qué situación se utilizaba, sin exigir que recuerde a una persona específica.",
+        "Si la persona disfruta el reto, comenzar un refrán conocido y dejar que lo complete; también puede elegir entre dos posibles finales.",
+        "Cerrar preguntando si hay otra palabra o expresión que le gustaría compartir.",
+      ],
     },
+    responsable: { area: "estimulación cognitiva", miembro: 1 },
   },
   {
     icono: "equilibrio",
     t: "Gerontogimnasia",
     frase: "Ejercicios que combinan movimiento y retos cognitivos, según las capacidades de cada persona.",
-    tituloEtiquetas: "Trabaja",
-    etiquetas: ["Fuerza", "Equilibrio", "Coordinación", "Sentado o de pie"],
+    etiquetas: ["Fuerza", "Equilibrio", "Coordinación", "Doble tarea"],
+    nota: "Adaptado a tu movilidad: sentado o de pie.",
     fondo: "#f4d096",
     tinta: "#1f3338",
     chip: "#f9e6c2",
-    foto: {
-      webp: "/areas/gerontogimnasia.webp",
-      jpg: "/areas/gerontogimnasia.jpg",
-      alt: "Una señora estira el brazo durante una clase de movimiento, con otras personas mayores detrás.",
+    foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora estira el brazo durante una clase de movimiento, con otras personas mayores detrás." },
+    // 20 segundos del video real de GER-003.
+    ejemplo: {
+      tipo: "video",
+      codigo: "GER-003",
+      titulo: "Sentarse y levantarse de una silla",
+      src: `${almacen}/gerontogimnasia/ger-003.mp4`,
+      poster: `${almacen}/gerontogimnasia/ger-003-poster.jpg`,
+      desde: 10,
+      hasta: 30,
     },
+    responsable: { area: "gerontogimnasia", miembro: 3 },
   },
   {
     icono: "manzana",
-    t: "Nutrición para personas mayores",
+    t: "Nutrición",
     frase: "Orientaciones prácticas sobre alimentación e hidratación para la vida cotidiana.",
-    tituloEtiquetas: "Incluye",
     etiquetas: ["Alimentación variada", "Hábitos cotidianos", "Organización de comidas", "Hidratación"],
-    fondo: "#ebe6ce",
+    fondo: "#a9c49f",
     tinta: "#1f3338",
-    chip: "#ece5cb",
-    foto: {
-      webp: "/areas/nutricion.webp",
-      jpg: "/areas/nutricion.jpg",
-      alt: "Una señora con delantal corta verduras frescas en su cocina, junto a su plan de nutrición.",
+    chip: "#e1ebdb",
+    foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a su plan de nutrición." },
+    // Texto literal de PRE-002 («Tu actividad») en la biblioteca.
+    ejemplo: {
+      tipo: "ficha",
+      codigo: "PRE-002",
+      titulo: "Sumá moras o fresas a la merienda",
+      parrafos: [
+        "Esta semana, te proponemos incluir moras o fresas en dos meriendas de tu familiar.",
+        "Lavá bien la fruta y serví media taza, sola o acompañada de yogur natural sin azúcar, si lo tolera. Podés ofrecerla picada, según sus necesidades y preferencias. Si tiene dificultades para tragar, utilizá únicamente la textura indicada por su equipo tratante.",
+        "Para conservarla por más tiempo, podés congelar la fruta que no vayás a utilizar pronto.",
+      ],
     },
+    responsable: { area: "nutrición", miembro: 4 },
   },
 ];
 
