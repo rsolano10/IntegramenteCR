@@ -1,108 +1,102 @@
-import { useState, type ReactNode } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../components/ui/Logo";
-import { SitioFooter } from "../components/layout/SitioFooter";
 import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
-import { contacto, equipo } from "../lib/landingContenido";
+import { Reveal } from "../components/ui/Reveal";
+import { SitioFooter } from "../components/layout/SitioFooter";
+import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
+import { useScrolled } from "../lib/useScrollFx";
+import { areas, contacto, equipo, type EjemploArea } from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsapp";
 
 // Página para médicos y geriatras (/medicos). Prioridad del negocio: que
-// refieran pacientes. Tono más técnico que el home, igual de breve.
+// refieran pacientes. Mismo lenguaje visual que el home (encabezado fijo,
+// secciones con fondos alternados, tarjetas, fotos reales del equipo y de
+// las áreas, animaciones de entrada), con un tono más técnico e igual de
+// breve. El formulario vive solo en /medicos/referir.
 //
 // "Referir un paciente" no guarda nada en la base: arma el mensaje con los
 // datos y abre WhatsApp del equipo. Así no hay un formulario público
-// recibiendo datos de salud de terceros sin autenticación, y la referencia
-// queda en el canal donde el equipo ya hace el seguimiento.
+// recibiendo datos de salud de terceros sin autenticación.
 
-const hablarConElEquipo = waLink(
-  WHATSAPP_EQUIPO,
-  "Hola, soy médico/a y quisiera conocer IntegraMente en Casa para referir pacientes.",
-);
+const EjemploActividad = lazy(() => import("../components/landing/EjemploActividad"));
 
-const metodologia: { t: string; d: string }[] = [
+const hablarConElEquipo = waLink(WHATSAPP_EQUIPO, "Hola, soy médico/a y quisiera conocer IntegraMente en Casa para referir pacientes.");
+const REFERIR = "/medicos/referir";
+
+const metodologia: { icono: string; t: string; d: string }[] = [
   {
+    icono: "check",
     t: "Evaluación inicial estandarizada",
     d: "Perfil funcional con puntuación determinista: cognición y comunicación, actividades instrumentales y básicas, ánimo y sueño, movilidad y caídas, alimentación.",
   },
   {
+    icono: "ajuste",
     t: "Plan según etapa",
     d: "Cada recurso trae su adaptación para envejecimiento saludable, deterioro cognitivo leve, demencia leve y moderada. Las etapas avanzadas requieren pauta individual.",
   },
   {
+    icono: "escudo",
     t: "Reglas de seguridad",
     d: "Ruta física por riesgo de caídas y nivel de supervisión. Exclusiones nutricionales por alergias, disfagia, enfermedad renal o anticoagulación, entre otras.",
   },
   {
+    icono: "profesional",
     t: "Revisión profesional",
     d: "Neuropsicología, gerontogimnasia y nutrición revisan el plan antes de publicarlo y el registro de cada semana.",
   },
 ];
 
-const recibe: { icono: string; t: string; d: string }[] = [
+const recibe: { icono: string; t: string; d: string; fondo: string; tinta: string }[] = [
   {
-    icono: "alerta",
+    icono: "campana",
     t: "Referencia de vuelta",
     d: "Si detectamos señales que requieren consulta (caídas, cambios cognitivos o conductuales, riesgo nutricional), orientamos a la familia a consultarte y, con su autorización, te avisamos.",
+    fondo: "#3f6a70",
+    tinta: "#ffffff",
   },
   {
-    icono: "informe",
+    icono: "semana",
     t: "Información de seguimiento",
     d: "Adherencia y evolución funcional de tu paciente, cuando el paciente o su familia lo autorizan.",
+    fondo: "#f4d096",
+    tinta: "#1f3338",
   },
   {
-    icono: "clinica",
+    icono: "corazon",
     t: "Adaptado a tu consulta",
     d: "Podemos preparar la aplicación con la identidad de tu clínica para tus pacientes.",
+    fondo: "#a9c49f",
+    tinta: "#1f3338",
   },
 ];
 
-const pasosReferir: { t: string; d: string }[] = [
-  { t: "Nos enviás la referencia", d: "Con el formulario de abajo o por WhatsApp." },
-  { t: "Contactamos a la familia", d: "Le explicamos el programa y la acompañamos a crear la cuenta." },
-  { t: "Evaluación y plan", d: "Responde la evaluación inicial y el equipo prepara su plan." },
+const pasosReferir: { icono: string; t: string; d: string }[] = [
+  { icono: "charla", t: "Nos enviás la referencia", d: "Con el formulario o por WhatsApp, en un minuto." },
+  { icono: "profesional", t: "Contactamos a la familia", d: "Le explicamos el programa y la acompañamos a crear la cuenta." },
+  { icono: "semana", t: "Evaluación y plan", d: "Responde la evaluación inicial y el equipo prepara su plan." },
 ];
 
-function Icono({ name }: { name: string }) {
-  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
-  const paths: Record<string, ReactNode> = {
-    alerta: (
-      <>
-        <path {...p} d="M12 3.5l9 15.5H3z" />
-        <path {...p} d="M12 9.5v4.5M12 16.8v.2" />
-      </>
-    ),
-    informe: (
-      <>
-        <rect {...p} x="5" y="3.5" width="14" height="17" rx="2.5" />
-        <path {...p} d="M8.5 15.5l2.5-3 2 2 2.5-3.5M8.5 8h7" />
-      </>
-    ),
-    clinica: (
-      <>
-        <path {...p} d="M4 20.5V9l8-5 8 5v11.5z" />
-        <path {...p} d="M12 10v6M9 13h6" />
-      </>
-    ),
-  };
-  return (
-    <svg viewBox="0 0 24 24" className="w-6 h-6" aria-hidden="true">
-      {paths[name]}
-    </svg>
-  );
-}
+const botonPrimario =
+  "inline-flex items-center justify-center gap-2.5 min-h-[56px] px-8 rounded-full font-sans font-semibold text-[17px] no-underline bg-verde-serenidad text-white hover:bg-verde-profundo transition-colors";
+const botonSecundario =
+  "inline-flex items-center justify-center gap-2.5 min-h-[56px] px-7 rounded-full font-sans font-semibold text-[17px] no-underline bg-white border-[1.5px] border-verde-serenidad text-verde-profundo hover:bg-verde-tenue transition-colors";
 
-function BotonWa({ href, children, claro = false }: { href: string; children: ReactNode; claro?: boolean }) {
+function Encabezado({ accion }: { accion: ReactNode }) {
+  const scrolled = useScrolled(24);
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`inline-flex items-center justify-center gap-2.5 min-h-[52px] px-6 rounded-full font-semibold text-[16px] no-underline transition-colors ${
-        claro ? "bg-white border-[1.5px] border-verde-serenidad text-verde-profundo hover:bg-verde-tenue" : "bg-verde-serenidad text-white hover:bg-verde-profundo"
+    <header
+      className={`sticky top-0 z-30 transition-[background-color,box-shadow,border-color] duration-300 ${
+        scrolled ? "bg-fondo-papel/90 backdrop-blur-md border-b border-borde shadow-[0_8px_24px_-20px_rgba(31,51,56,.5)]" : "border-b border-transparent"
       }`}
     >
-      <WhatsAppIcon size={20} /> {children}
-    </a>
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-8 lg:px-12 lg:py-4 max-w-[1280px] mx-auto">
+        <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="no-underline shrink-0">
+          <Logo />
+        </Link>
+        {accion}
+      </div>
+    </header>
   );
 }
 
@@ -210,191 +204,294 @@ function FormularioReferencia() {
   );
 }
 
-function Titulo({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
-  return (
-    <>
-      <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-suave font-semibold">{eyebrow}</p>
-      <h2 className="m-0 mb-8 font-serif font-normal text-[28px] sm:text-[36px] leading-[1.12]" style={{ textWrap: "balance" }}>
-        {children}
-      </h2>
-    </>
-  );
-}
-
 export function Medicos() {
+  const [ejemplo, setEjemplo] = useState<EjemploArea | null>(null);
+  const directora = equipo[0];
   const clinicos = equipo.filter((m) => m.foto);
-  return (
-    <div className="font-sans text-tinta bg-fondo-papel min-h-screen">
-      <header className="max-w-[1120px] mx-auto px-5 py-4 sm:px-8 flex items-center justify-between gap-4">
-        <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="no-underline">
-          <Logo size="sm" />
-        </Link>
-        <Link to="/medicos/referir" className="inline-flex items-center min-h-10 px-4 rounded-full bg-verde-profundo text-white text-[14.5px] font-semibold no-underline hover:bg-tinta">
-          Referir un paciente
-        </Link>
-      </header>
 
-      <main>
-        {/* Presentación */}
-        <section className="max-w-[1120px] mx-auto px-5 pt-8 pb-14 sm:px-8 lg:pt-14 lg:pb-20 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] items-center">
+  return (
+    <div className="font-sans text-tinta bg-fondo-papel min-h-full">
+      <Encabezado
+        accion={
+          <Link to={REFERIR} className="inline-flex items-center min-h-10 px-4 sm:px-5 rounded-full bg-verde-serenidad text-white text-[15px] font-semibold no-underline hover:bg-verde-profundo whitespace-nowrap">
+            Referir un paciente
+          </Link>
+        }
+      />
+
+      <main className="overflow-x-clip">
+        {/* ─── Hero ─── */}
+        <section className="max-w-[1280px] mx-auto px-5 pt-8 pb-16 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-12 lg:gap-16 items-center lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-suave font-semibold">Para médicos y geriatras</p>
-            <h1 className="m-0 mb-5 font-serif font-normal text-[36px] sm:text-[48px] lg:text-[56px] leading-[1.05]" style={{ textWrap: "balance" }}>
-              Estimulación cognitiva en casa, con seguimiento profesional.
+            <Eyebrow>Para médicos y geriatras</Eyebrow>
+            <h1 className="font-serif font-normal text-[40px] sm:text-[54px] lg:text-[64px] leading-[1.03] tracking-[-0.01em] m-0 mb-5" style={{ textWrap: "balance" }}>
+              Estimulación cognitiva en casa, <em className="italic text-verde-profundo">con seguimiento profesional.</em>
             </h1>
-            <p className="m-0 mb-8 text-[17px] sm:text-[19px] leading-relaxed text-tinta-suave max-w-[34em]">
-              Un programa domiciliario para personas mayores, del envejecimiento saludable a la demencia moderada. Vos referís, nosotros
-              acompañamos.
+            <p className="text-[17px] sm:text-lg lg:text-[20px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-8">
+              Un programa domiciliario para personas mayores, del envejecimiento saludable a la demencia moderada. Vos referís, nosotros acompañamos.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/medicos/referir" className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-verde-profundo text-white font-semibold text-[16px] no-underline hover:bg-tinta">
+              <Link to={REFERIR} className={botonPrimario}>
                 Referir un paciente
               </Link>
-              <BotonWa href={hablarConElEquipo} claro>
-                Hablar con el equipo
-              </BotonWa>
+              <a href={hablarConElEquipo} target="_blank" rel="noopener noreferrer" className={botonSecundario}>
+                <WhatsAppIcon size={20} /> Hablar con el equipo
+              </a>
             </div>
           </div>
-          <dl className="m-0 grid grid-cols-3 gap-3">
-            {[
-              { n: "3", t: "áreas de trabajo" },
-              { n: "5", t: "perfiles por etapa" },
-              { n: "100%", t: "planes revisados por profesionales" },
-            ].map((d) => (
-              <div key={d.t} className="rounded-3xl bg-white border border-borde p-4 sm:p-5">
-                <dt className="font-serif text-[30px] sm:text-[40px] leading-none text-verde-profundo">{d.n}</dt>
-                <dd className="m-0 mt-2 text-[13.5px] sm:text-[14.5px] leading-snug text-tinta-suave">{d.t}</dd>
+
+          {/* Foto real de la directora clínica con datos flotantes. */}
+          <div className="relative mx-auto w-full max-w-[520px]">
+            <div aria-hidden="true" className="absolute -inset-2 sm:-inset-6 rounded-[44px] bg-seccion-arena rotate-[-2deg] sm:rotate-[-3deg]" />
+            {directora.foto && (
+              <picture>
+                <source srcSet={directora.foto.webp} type="image/webp" />
+                <img
+                  src={directora.foto.jpg}
+                  alt={`${directora.nombre}, ${directora.area}`}
+                  className="relative block w-full aspect-[4/5] object-cover object-[center_25%] rounded-[36px] shadow-elevada"
+                />
+              </picture>
+            )}
+            <div className="absolute left-2 sm:-left-8 bottom-10 rounded-2xl bg-white border border-borde shadow-elevada px-4 py-3 max-w-[220px]">
+              <p className="m-0 font-serif text-[30px] leading-none text-verde-profundo">100%</p>
+              <p className="m-0 mt-1 text-[13.5px] leading-snug text-tinta">de los planes revisados por profesionales</p>
+            </div>
+            <div className="absolute right-2 sm:-right-6 top-8 rounded-2xl bg-white border border-borde shadow-elevada px-4 py-3">
+              <p className="m-0 text-[12px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">3 áreas</p>
+              <div className="mt-2 flex gap-1.5">
+                {areas.map((a) => (
+                  <span key={a.t} title={a.t} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: a.fondo, color: a.tinta }}>
+                    <Icono name={a.icono} className="w-5 h-5" />
+                  </span>
+                ))}
               </div>
-            ))}
-          </dl>
+            </div>
+            <p className="absolute right-4 bottom-4 m-0 rounded-full bg-white/90 backdrop-blur px-3.5 py-1.5 text-[13px] font-semibold text-tinta">
+              {directora.nombre} · {directora.area}
+            </p>
+          </div>
         </section>
 
-        {/* Metodología */}
-        <section className="bg-white border-y border-borde-suave">
-          <div className="max-w-[1120px] mx-auto px-5 py-14 sm:px-8 lg:py-20">
-            <Titulo eyebrow="Base y metodología">Cómo se construye cada plan.</Titulo>
-            <ol className="list-none m-0 p-0 grid gap-4 sm:grid-cols-2">
+        {/* ─── Metodología ─── */}
+        <section className="bg-white">
+          <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+            <Reveal className="text-center">
+              <Eyebrow>Base y metodología</Eyebrow>
+              <SectionTitle className="max-w-[16em] mx-auto mb-12 lg:mb-16">Cómo se construye cada plan.</SectionTitle>
+            </Reveal>
+            <ol className="list-none m-0 p-0 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {metodologia.map((m, i) => (
-                <li key={m.t} className="rounded-3xl border border-borde bg-fondo-papel p-5 sm:p-6 grid grid-cols-[40px_1fr] gap-4">
-                  <span className="w-10 h-10 rounded-full bg-verde-profundo text-white font-serif text-[18px] flex items-center justify-center">{i + 1}</span>
-                  <div>
-                    <h3 className="m-0 mb-1.5 text-[17px] font-bold text-tinta">{m.t}</h3>
-                    <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{m.d}</p>
-                  </div>
-                </li>
+                <Reveal key={m.t} delay={i * 90} className="h-full">
+                  <li className="h-full rounded-[26px] border border-borde bg-fondo-papel p-6 flex flex-col gap-3">
+                    <span className="relative w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-[0_14px_30px_-16px_rgba(31,51,56,0.6)]" style={{ background: i % 2 ? "#6a969c" : "#3f6a70" }}>
+                      <Icono name={m.icono} className="w-7 h-7" />
+                      <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-mostaza-vital text-tinta text-[12.5px] font-bold flex items-center justify-center">{i + 1}</span>
+                    </span>
+                    <h3 className="m-0 mt-2 font-serif font-normal text-[22px] leading-tight">{m.t}</h3>
+                    <p className="m-0 text-[15.5px] leading-relaxed text-tinta">{m.d}</p>
+                  </li>
+                </Reveal>
               ))}
             </ol>
-            <p className="m-0 mt-6 text-[14.5px] leading-relaxed text-tinta-tenue max-w-[52em]">
+            <p className="m-0 mt-8 text-center text-[15px] leading-relaxed text-tinta-suave">
               El programa no emite diagnósticos ni modifica tratamientos: complementa la atención médica entre consultas.
             </p>
           </div>
         </section>
 
-        {/* Qué recibe el médico */}
-        <section className="max-w-[1120px] mx-auto px-5 py-14 sm:px-8 lg:py-20">
-          <Titulo eyebrow="Qué recibís">Trabajamos con vos, no en paralelo.</Titulo>
-          <div className="grid gap-4 md:grid-cols-3">
-            {recibe.map((r) => (
-              <article key={r.t} className="rounded-3xl bg-white border border-borde p-6">
-                <span className="w-12 h-12 rounded-2xl bg-verde-tenue text-verde-profundo flex items-center justify-center mb-4">
-                  <Icono name={r.icono} />
-                </span>
-                <h3 className="m-0 mb-1.5 text-[17px] font-bold">{r.t}</h3>
-                <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{r.d}</p>
-              </article>
-            ))}
+        {/* ─── Qué recibís ─── */}
+        <section className="bg-seccion-fria">
+          <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+            <Reveal>
+              <Eyebrow>Qué recibís</Eyebrow>
+              <SectionTitle className="max-w-[16em] mb-10 lg:mb-14">Trabajamos con vos, no en paralelo.</SectionTitle>
+            </Reveal>
+            <div className="grid gap-5 md:grid-cols-3">
+              {recibe.map((r, i) => (
+                <Reveal key={r.t} delay={i * 90} className="h-full">
+                  <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
+                    <div className="flex items-center gap-3 px-6 py-4" style={{ background: r.fondo, color: r.tinta }}>
+                      <span className="w-11 h-11 rounded-full bg-white/25 flex items-center justify-center">
+                        <Icono name={r.icono} className="w-6 h-6" />
+                      </span>
+                      <h3 className="m-0 font-serif font-normal text-[22px] leading-tight">{r.t}</h3>
+                    </div>
+                    <p className="m-0 p-6 text-[16px] leading-relaxed text-tinta">{r.d}</p>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Equipo */}
-        {clinicos.length > 0 && (
-          <section className="bg-beige-serenidad">
-            <div className="max-w-[1120px] mx-auto px-5 py-14 sm:px-8 lg:py-18">
-              <Titulo eyebrow="Equipo clínico">Quiénes revisan cada plan.</Titulo>
-              <ul className="list-none m-0 p-0 grid gap-4 grid-cols-2 md:grid-cols-5">
-                {clinicos.map((m) => (
-                  <li key={m.nombre} className="rounded-3xl bg-white border border-borde overflow-hidden">
-                    <picture>
-                      <source srcSet={m.foto!.webp} type="image/webp" />
-                      <img src={m.foto!.jpg} alt={m.nombre} loading="lazy" className="block w-full aspect-[4/3] object-cover object-[center_25%]" />
-                    </picture>
-                    <div className="p-3.5">
-                      <p className="m-0 text-[11px] font-bold uppercase tracking-[0.1em] text-verde-profundo">{m.area}</p>
-                      <p className="m-0 mt-0.5 font-serif text-[16.5px] leading-tight">{m.nombre}</p>
+        {/* ─── Las áreas, con actividades reales ─── */}
+        <section className="max-w-[1280px] mx-auto py-16 lg:py-24">
+          <Reveal className="px-5 sm:px-8 lg:px-12">
+            <Eyebrow>Contenido del programa</Eyebrow>
+            <SectionTitle className="max-w-[18em] mb-3">Tres áreas, recursos diseñados por especialistas.</SectionTitle>
+            <p className="m-0 mb-10 lg:mb-12 text-[17px] leading-relaxed text-tinta-suave max-w-[40em]">Mirá una actividad real de cada área, tal como la ve la familia en la app.</p>
+          </Reveal>
+          <ul
+            aria-label="Áreas del programa"
+            className="list-none m-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {areas.map((a) => {
+              const persona = equipo[a.responsable.miembro];
+              return (
+                <li key={a.t} className="snap-start shrink-0 w-[84%] sm:w-[62%] md:w-auto">
+                  <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-elevada">
+                    <div className="relative aspect-video">
+                      <picture>
+                        <source srcSet={a.foto.webp} type="image/webp" />
+                        <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
+                      </picture>
+                    </div>
+                    <div className="px-5 sm:px-6 py-3.5" style={{ background: a.fondo, color: a.tinta }}>
+                      <h3 className="m-0 font-serif font-normal text-[24px] leading-tight">{a.t}</h3>
+                    </div>
+                    <div className="px-5 sm:px-6 pt-5 pb-5 flex flex-col gap-4 flex-1">
+                      <p className="m-0 text-[16px] leading-relaxed text-tinta">{a.frase}</p>
+                      <button
+                        type="button"
+                        onClick={() => setEjemplo(a.ejemplo)}
+                        className="mt-auto self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad"
+                      >
+                        Ver una actividad real
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2.5 px-5 sm:px-6 py-3 bg-campo border-t border-borde-suave">
+                      {persona?.foto && <img src={persona.foto.jpg} alt={persona.nombre} className="w-8 h-8 rounded-full object-cover object-[center_25%] shrink-0" loading="lazy" />}
+                      <p className="m-0 text-[13px] leading-snug text-tinta-suave">Diseñado por el área de {a.responsable.area} de IntegraMente</p>
+                    </div>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {/* ─── Equipo ─── */}
+        <section className="bg-seccion-arena">
+          <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
+            <Reveal className="text-center">
+              <Eyebrow>Equipo clínico</Eyebrow>
+              <SectionTitle className="max-w-[17em] mx-auto mb-10 lg:mb-12">Quiénes revisan cada plan.</SectionTitle>
+            </Reveal>
+            <div className="flex flex-wrap justify-center gap-5">
+              {clinicos.map((m, i) => (
+                <Reveal key={m.nombre} delay={i * 80} className="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
+                  <figure className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
+                    <div className="relative aspect-[16/10] bg-campo">
+                      <picture>
+                        <source srcSet={m.foto!.webp} type="image/webp" />
+                        <img src={m.foto!.jpg} alt={m.nombre} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_25%]" />
+                      </picture>
+                    </div>
+                    <figcaption className="px-5 py-4 grid gap-1">
+                      <p className="m-0 text-[12px] font-bold uppercase tracking-[0.12em] text-verde-profundo">{m.area}</p>
+                      <p className="m-0 font-serif text-[21px] leading-tight text-tinta">{m.nombre}</p>
+                      <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta">{m.descripcion}</p>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Cómo referir ─── */}
+        <section className="bg-white">
+          <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 grid gap-10 lg:gap-16 lg:grid-cols-[0.9fr_1.1fr] items-center">
+            <Reveal>
+              <Eyebrow>Cómo referir un paciente</Eyebrow>
+              <SectionTitle className="mb-4">Tres pasos, sin trámites.</SectionTitle>
+              <p className="m-0 mb-8 text-[17px] leading-relaxed text-tinta-suave">Completás un formulario corto y se abre WhatsApp con el mensaje listo para nuestro equipo.</p>
+              <Link to={REFERIR} className={botonPrimario}>
+                Referir un paciente
+              </Link>
+            </Reveal>
+            <Reveal delay={120}>
+              <ol className="list-none m-0 p-0 grid gap-4">
+                {pasosReferir.map((p, i) => (
+                  <li key={p.t} className="grid grid-cols-[56px_1fr] gap-4 items-center rounded-[24px] bg-fondo-papel border border-borde-suave p-4 sm:p-5">
+                    <span className="relative w-14 h-14 rounded-2xl flex items-center justify-center text-white" style={{ background: i === 1 ? "#6a969c" : "#3f6a70" }}>
+                      <Icono name={p.icono} className="w-7 h-7" />
+                      <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-mostaza-vital text-tinta text-[12.5px] font-bold flex items-center justify-center">{i + 1}</span>
+                    </span>
+                    <div>
+                      <h3 className="m-0 font-serif font-normal text-[21px] leading-tight">{p.t}</h3>
+                      <p className="m-0 mt-0.5 text-[15.5px] leading-snug text-tinta">{p.d}</p>
                     </div>
                   </li>
                 ))}
-              </ul>
-            </div>
-          </section>
-        )}
-
-        {/* Cómo referir */}
-        <section id="referir" className="max-w-[1120px] mx-auto px-5 py-14 sm:px-8 lg:py-20 scroll-mt-6">
-          <Titulo eyebrow="Cómo referir un paciente">Tres pasos, sin trámites.</Titulo>
-          <ol className="list-none m-0 p-0 grid gap-3 sm:grid-cols-3 mb-10">
-            {pasosReferir.map((p, i) => (
-              <li key={p.t} className="flex gap-3 items-start">
-                <span className="shrink-0 w-9 h-9 rounded-full bg-mostaza-vital text-tinta font-bold flex items-center justify-center">{i + 1}</span>
-                <div>
-                  <p className="m-0 font-bold text-[16px]">{p.t}</p>
-                  <p className="m-0 text-[15px] leading-snug text-tinta-suave">{p.d}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <div className="rounded-[28px] bg-white border border-borde p-5 sm:p-8">
-            <FormularioReferencia />
+              </ol>
+            </Reveal>
           </div>
         </section>
 
-        {/* Contacto */}
-        <section className="bg-verde-profundo text-white">
-          <div className="max-w-[1120px] mx-auto px-5 py-12 sm:px-8 lg:py-16 grid gap-6 lg:grid-cols-[1fr_auto] items-center">
+        {/* ─── Cierre ─── */}
+        <section className="bg-verde-profundo text-white relative overflow-hidden">
+          <div aria-hidden="true" className="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-verde-serenidad/40" />
+          <div className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-20 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
             <div>
-              <h2 className="m-0 mb-2 font-serif font-normal text-[28px] sm:text-[34px] leading-tight text-white">Contacto directo con el equipo</h2>
-              <p className="m-0 text-[16px] leading-relaxed text-[#dce9e9]">
-                WhatsApp {WHATSAPP_EQUIPO_VISIBLE} · {contacto.correo} · {contacto.telefono}
+              <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[44px] leading-[1.12] m-0 mb-3 text-white">Cuidemos juntos la salud cerebral de tus pacientes.</h2>
+              <p className="m-0 text-[17px] leading-relaxed text-[#dce9e9]">
+                WhatsApp {WHATSAPP_EQUIPO_VISIBLE} · {contacto.correo}
               </p>
             </div>
-            <a
-              href={hablarConElEquipo}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2.5 min-h-14 px-7 rounded-full bg-mostaza-vital text-tinta font-bold text-[16px] no-underline hover:bg-white"
-            >
-              <WhatsAppIcon size={20} /> Hablar con el equipo
-            </a>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link to={REFERIR} className="inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-mostaza-vital text-tinta font-bold text-[17px] whitespace-nowrap hover:bg-white transition-colors no-underline">
+                Referir un paciente
+              </Link>
+              <a
+                href={hablarConElEquipo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2.5 min-h-14 px-7 rounded-full border-[1.5px] border-[#8fb3b7] text-white font-semibold text-[17px] no-underline hover:border-white"
+              >
+                <WhatsAppIcon size={20} /> Hablar con el equipo
+              </a>
+            </div>
           </div>
         </section>
       </main>
 
       <SitioFooter />
+      <AyudaWhatsApp href={hablarConElEquipo} />
+      {ejemplo && (
+        <Suspense fallback={null}>
+          <EjemploActividad codigo={ejemplo.codigo} onClose={() => setEjemplo(null)} />
+        </Suspense>
+      )}
     </div>
   );
 }
 
-// /medicos/referir: solo el formulario (el botón «Referir un paciente» del
-// home y de /medicos lleva directo acá).
+// /medicos/referir: solo el formulario (los botones «Referir un paciente»
+// del home y de /medicos llevan directo acá).
 export function ReferirPaciente() {
   return (
-    <div className="font-sans text-tinta bg-fondo-papel min-h-screen">
-      <header className="max-w-[820px] mx-auto px-5 py-4 sm:px-8 flex items-center justify-between gap-4">
-        <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="no-underline">
-          <Logo size="sm" />
-        </Link>
-        <Link to="/medicos" className="text-[14.5px] font-semibold text-verde-profundo">
-          Información para médicos
-        </Link>
-      </header>
-      <main className="max-w-[820px] mx-auto px-5 pt-6 pb-16 sm:px-8">
-        <h1 className="m-0 mb-2 font-serif font-normal text-[32px] sm:text-[40px] leading-tight">Referir un paciente</h1>
-        <p className="m-0 mb-8 text-[16px] leading-relaxed text-tinta-suave">Completá los datos y se abre WhatsApp con el mensaje listo para enviar a nuestro equipo.</p>
-        <div className="rounded-[28px] bg-white border border-borde p-5 sm:p-8">
-          <FormularioReferencia />
+    <div className="font-sans text-tinta bg-fondo-papel min-h-full">
+      <Encabezado
+        accion={
+          <Link to="/medicos" className="inline-flex items-center min-h-10 px-4 rounded-full text-[15px] font-semibold text-verde-profundo no-underline hover:bg-white whitespace-nowrap">
+            Información para médicos
+          </Link>
+        }
+      />
+      <main className="bg-seccion-arena">
+        <div className="max-w-[880px] mx-auto px-5 pt-10 pb-16 sm:px-8 lg:pt-14 lg:pb-24">
+          <Eyebrow>Para médicos y geriatras</Eyebrow>
+          <h1 className="m-0 mb-3 font-serif font-normal text-[36px] sm:text-[46px] leading-[1.05]">Referir un paciente</h1>
+          <p className="m-0 mb-8 text-[17px] leading-relaxed text-tinta-suave max-w-[36em]">Completá los datos y se abre WhatsApp con el mensaje listo para enviar a nuestro equipo.</p>
+          <div className="rounded-[32px] bg-white border border-borde p-5 sm:p-9 shadow-[0_30px_60px_-40px_rgba(31,51,56,.45)]">
+            <FormularioReferencia />
+          </div>
         </div>
       </main>
       <SitioFooter />
+      <AyudaWhatsApp href={hablarConElEquipo} />
     </div>
   );
 }
