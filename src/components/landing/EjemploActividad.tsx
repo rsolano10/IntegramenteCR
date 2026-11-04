@@ -5,7 +5,6 @@ import type { MediaResource } from "../../lib/mediaResources";
 import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
 import { useBodyScrollLock } from "../../lib/useBodyScrollLock";
 import { ResourceDetailView } from "../ui/ResourceDetailView";
-import { Button } from "../ui/Button";
 
 // «Ver una actividad de ejemplo» del home: el recurso real de la biblioteca
 // (se lee por código; los recursos activos son públicos) con los mismos
@@ -57,12 +56,6 @@ export default function EjemploActividad({ codigo, onClose }: { codigo: string; 
               </div>
             </>
           )}
-        </div>
-        <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 px-5 sm:px-7 py-3.5 bg-white border-t border-borde">
-          <span className="text-[13.5px] text-tinta-suave">Actividad real de la biblioteca de IntegraMente.</span>
-          <Button dense to="/ingresar?mode=register">
-            Crear mi cuenta gratis
-          </Button>
         </div>
       </div>
     </div>
