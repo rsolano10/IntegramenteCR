@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../components/ui/Logo";
 import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
@@ -6,20 +6,19 @@ import { Reveal } from "../components/ui/Reveal";
 import { SitioFooter } from "../components/layout/SitioFooter";
 import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
 import { useScrolled } from "../lib/useScrollFx";
-import { areas, contacto, equipo, type EjemploArea } from "../lib/landingContenido";
+import { areas, contacto, equipo } from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsapp";
 
 // Página para médicos y geriatras (/medicos). Prioridad del negocio: que
 // refieran pacientes. Mismo lenguaje visual que el home (encabezado fijo,
-// secciones con fondos alternados, tarjetas, fotos reales del equipo y de
-// las áreas, animaciones de entrada), con un tono más técnico e igual de
-// breve. El formulario vive solo en /medicos/referir.
+// secciones con fondos alternados, tarjetas, fotos reales, animaciones de
+// entrada), con un tono más técnico e igual de breve. No repite secciones
+// del home salvo el equipo clínico. El formulario vive solo en
+// /medicos/referir.
 //
 // "Referir un paciente" no guarda nada en la base: arma el mensaje con los
 // datos y abre WhatsApp del equipo. Así no hay un formulario público
 // recibiendo datos de salud de terceros sin autenticación.
-
-const EjemploActividad = lazy(() => import("../components/landing/EjemploActividad"));
 
 const hablarConElEquipo = waLink(WHATSAPP_EQUIPO, "Hola, soy médico/a y quisiera conocer IntegraMente en Casa para referir pacientes.");
 const REFERIR = "/medicos/referir";
@@ -205,7 +204,6 @@ function FormularioReferencia() {
 }
 
 export function Medicos() {
-  const [ejemplo, setEjemplo] = useState<EjemploArea | null>(null);
   const directora = equipo[0];
   const clinicos = equipo.filter((m) => m.foto);
 
@@ -325,52 +323,6 @@ export function Medicos() {
           </div>
         </section>
 
-        {/* ─── Las áreas, con actividades reales ─── */}
-        <section className="max-w-[1280px] mx-auto py-16 lg:py-24">
-          <Reveal className="px-5 sm:px-8 lg:px-12">
-            <Eyebrow>Contenido del programa</Eyebrow>
-            <SectionTitle className="max-w-[18em] mb-3">Tres áreas, recursos diseñados por especialistas.</SectionTitle>
-            <p className="m-0 mb-10 lg:mb-12 text-[17px] leading-relaxed text-tinta-suave max-w-[40em]">Mirá una actividad real de cada área, tal como la ve la familia en la app.</p>
-          </Reveal>
-          <ul
-            aria-label="Áreas del programa"
-            className="list-none m-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {areas.map((a) => {
-              const persona = equipo[a.responsable.miembro];
-              return (
-                <li key={a.t} className="snap-start shrink-0 w-[84%] sm:w-[62%] md:w-auto">
-                  <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-elevada">
-                    <div className="relative aspect-video">
-                      <picture>
-                        <source srcSet={a.foto.webp} type="image/webp" />
-                        <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
-                      </picture>
-                    </div>
-                    <div className="px-5 sm:px-6 py-3.5" style={{ background: a.fondo, color: a.tinta }}>
-                      <h3 className="m-0 font-serif font-normal text-[24px] leading-tight">{a.t}</h3>
-                    </div>
-                    <div className="px-5 sm:px-6 pt-5 pb-5 flex flex-col gap-4 flex-1">
-                      <p className="m-0 text-[16px] leading-relaxed text-tinta">{a.frase}</p>
-                      <button
-                        type="button"
-                        onClick={() => setEjemplo(a.ejemplo)}
-                        className="mt-auto self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad"
-                      >
-                        Ver una actividad real
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2.5 px-5 sm:px-6 py-3 bg-campo border-t border-borde-suave">
-                      {persona?.foto && <img src={persona.foto.jpg} alt={persona.nombre} className="w-8 h-8 rounded-full object-cover object-[center_25%] shrink-0" loading="lazy" />}
-                      <p className="m-0 text-[13px] leading-snug text-tinta-suave">Diseñado por el área de {a.responsable.area} de IntegraMente</p>
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
         {/* ─── Equipo ─── */}
         <section className="bg-seccion-arena">
           <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
@@ -459,11 +411,6 @@ export function Medicos() {
 
       <SitioFooter />
       <AyudaWhatsApp href={hablarConElEquipo} />
-      {ejemplo && (
-        <Suspense fallback={null}>
-          <EjemploActividad codigo={ejemplo.codigo} onClose={() => setEjemplo(null)} />
-        </Suspense>
-      )}
     </div>
   );
 }
