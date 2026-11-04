@@ -795,7 +795,7 @@ export function Landing() {
 
       {/* ─── Hero ─── */}
       <section id="top" className="max-w-[1280px] mx-auto px-5 pt-8 pb-10 sm:px-8 lg:px-12 lg:pt-14 lg:pb-24 grid gap-8 md:gap-14 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
-        <Reveal>
+        <div>
           <Eyebrow>Salud cerebral en casa</Eyebrow>
           <h1 className="font-serif font-normal text-[42px] sm:text-[56px] lg:text-[72px] leading-[1.02] tracking-[-0.01em] m-0 mb-5" style={{ textWrap: "balance" }}>
             Saber qué hacer hoy, <em className="italic text-verde-profundo">sin improvisar.</em>
@@ -811,21 +811,21 @@ export function Landing() {
               Ver el video
             </Button>
           </div>
-        </Reveal>
+        </div>
         {/* En celular el video de presentación va justo después del texto:
             la maqueta del teléfono se muestra desde escritorio. */}
-        <Reveal delay={150} className="hidden lg:block">
+        <div className="hidden lg:block">
           <HeroPhone />
-        </Reveal>
+        </div>
       </section>
 
       {/* ─── Video de presentación: el elemento principal del home ─── */}
       <section className="max-w-[1280px] mx-auto px-5 pb-16 sm:px-8 lg:px-12 lg:pb-24">
-        <Reveal className="max-w-[960px] mx-auto">
+        <div className="max-w-[960px] mx-auto">
           <VideoYouTube id="video-introduccion" youtubeId={videos.introduccion.youtubeId} titulo={videos.introduccion.titulo}>
             <PosterIntro />
           </VideoYouTube>
-        </Reveal>
+        </div>
         <PruebaSocial />
       </section>
 
@@ -1040,7 +1040,7 @@ export function Landing() {
 
       {/* ─── Para médicos ─── */}
       <section id="medicos" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
-        <Reveal>
+        <div>
           <div className="rounded-[32px] bg-tinta text-white overflow-hidden grid lg:grid-cols-[1.2fr_0.8fr]">
             <div className="p-7 sm:p-10 lg:p-14">
               <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-[#a9c7ca] font-semibold">Para médicos y geriatras</p>
@@ -1088,7 +1088,7 @@ export function Landing() {
               )}
             </div>
           </div>
-        </Reveal>
+        </div>
       </section>
 
       {/* ─── Testimonios (solo si hay reales) ─── */}
@@ -1134,7 +1134,7 @@ export function Landing() {
       {/* ─── CTA final ─── */}
       <section className="bg-verde-profundo text-white relative overflow-hidden">
         <div aria-hidden="true" className="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-verde-serenidad/40" />
-        <Reveal className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-22 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
+        <div className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-22 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
           <div>
             <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 mb-3 text-white">Cuidar la mente es cuidar la vida.</h2>
             <p className="m-0 text-[17px] lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
@@ -1147,7 +1147,7 @@ export function Landing() {
           >
             Crear mi cuenta gratis
           </Link>
-        </Reveal>
+        </div>
       </section>
 
       <SitioFooter />

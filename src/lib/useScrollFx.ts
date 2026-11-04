@@ -20,7 +20,12 @@ export function easeOut(t: number) {
 // fade+rise transition actually plays out while the element is near where
 // the eye is looking, instead of finishing while it's still low on screen.
 // Used for simple fade+rise reveals on section content.
-export function useReveal<T extends HTMLElement>(threshold = 0.15) {
+// Se activa apenas el elemento asoma por abajo (el 10% inferior de la
+// pantalla no cuenta, para que el movimiento se alcance a ver). Antes pedía
+// que el 15% del elemento estuviera en la franja central de la pantalla
+// (rootMargin -28% arriba y abajo): los bloques altos (videos, fotos del
+// equipo, programas) quedaban en blanco mucho tiempo al hacer scroll.
+export function useReveal<T extends HTMLElement>(threshold = 0) {
   const ref = useRef<T | null>(null);
   const [visible, setVisible] = useState(prefersReducedMotion);
 
@@ -38,7 +43,7 @@ export function useReveal<T extends HTMLElement>(threshold = 0.15) {
           observer.unobserve(el);
         }
       },
-      { threshold, rootMargin: "-28% 0px -28% 0px" },
+      { threshold, rootMargin: "0px 0px -10% 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
