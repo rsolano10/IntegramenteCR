@@ -366,55 +366,154 @@ const pasosUso: { icono: string; t: string; d: string }[] = [
   { icono: "profesional", t: "Tu equipo revisa tu avance", d: "Profesionales revisan tu semana y ajustan el plan." },
 ];
 
-// Preguntas frecuentes en acordeón: se ve solo la pregunta y la respuesta
-// se abre al tocarla (el home tenía demasiado texto a la vista).
-function FaqAcordeon() {
-  const [abierta, setAbierta] = useState<number | null>(0);
+// Preguntas frecuentes como carrusel: cada pregunta es una tarjeta con la
+// respuesta ya visible (nada que abrir). Desplazamiento nativo con
+// scroll-snap (dedo, trackpad, teclado) + flechas y puntos que también
+// sirven para saltar. La tarjeta siguiente asoma para invitar a seguir.
+const margenContenido = "max(1.25rem, calc((100vw - 1280px) / 2 + 3rem))";
+
+const tonosFaq = [
+  { from: "#4f7d83", to: "#3f6a70" },
+  { from: "#e8b5a1", to: "#c0664f" },
+  { from: "#fadfa9", to: "#d9a441" },
+  { from: "#89c0c6", to: "#4f8a91" },
+  { from: "#ece3c4", to: "#b7a06d" },
+];
+
+function FaqCarousel() {
+  const pista = useRef<HTMLDivElement>(null);
+  const [activa, setActiva] = useState(0);
+  const total = preguntas.length;
+
+  function irA(i: number) {
+    const el = pista.current;
+    const card = el?.children[i] as HTMLElement | undefined;
+    if (!el || !card) return;
+    el.scrollTo({ left: card.offsetLeft - el.offsetLeft, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
+
+  useEffect(() => {
+    const el = pista.current;
+    if (!el) return;
+    const onScroll = () => {
+      const cards = Array.from(el.children) as HTMLElement[];
+      const x = el.scrollLeft;
+      let best = 0;
+      cards.forEach((c, i) => {
+        if (Math.abs(c.offsetLeft - el.offsetLeft - x) < Math.abs(cards[best].offsetLeft - el.offsetLeft - x)) best = i;
+      });
+      // Al llegar al final, la última se marca aunque no pueda alinearse a la izquierda.
+      if (x + el.clientWidth >= el.scrollWidth - 4) best = cards.length - 1;
+      setActiva(best);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <ul className="list-none m-0 p-0 grid gap-3">
-      {preguntas.map((q, i) => {
-        const open = abierta === i;
-        const panel = `faq-${i}`;
-        return (
-          <li key={q.p} className={`rounded-3xl bg-white border transition-colors ${open ? "border-verde-serenidad" : "border-borde"}`}>
-            <h3 className="m-0">
-              <button
-                type="button"
-                aria-expanded={open}
-                aria-controls={panel}
-                onClick={() => setAbierta(open ? null : i)}
-                className="w-full flex items-center justify-between gap-4 text-left px-5 sm:px-7 py-5 bg-transparent border-0 cursor-pointer font-serif font-normal text-[19px] sm:text-[21px] leading-snug text-tinta"
-              >
-                {q.p}
-                <span
-                  aria-hidden="true"
-                  className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-transform duration-300 ${open ? "rotate-45 bg-verde-profundo text-white" : "bg-verde-tenue text-verde-profundo"}`}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+    <div role="region" aria-roledescription="carrusel" aria-label="Preguntas frecuentes">
+      <div
+        ref={pista}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            irA(Math.min(total - 1, activa + 1));
+          }
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            irA(Math.max(0, activa - 1));
+          }
+        }}
+        // De borde a borde de la pantalla, pero alineado con el contenido:
+        // el relleno lateral replica el margen del contenedor de 1280px.
+        style={{ paddingInline: margenContenido, scrollPaddingInline: margenContenido }}
+        className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-6 pt-2 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-verde-serenidad/40"
+      >
+        {preguntas.map((q, i) => {
+          const t = tonosFaq[i % tonosFaq.length];
+          return (
+            <article
+              key={q.p}
+              aria-roledescription="tarjeta"
+              aria-label={`${i + 1} de ${total}`}
+              className={`snap-start shrink-0 w-[84%] sm:w-[400px] lg:w-[420px] rounded-[32px] bg-white border border-borde overflow-hidden flex flex-col transition-[transform,box-shadow,opacity] duration-500 ${
+                i === activa ? "shadow-elevada" : "opacity-[0.88]"
+              }`}
+            >
+              <div className="relative px-6 sm:px-7 pt-6 pb-7 text-white min-h-[184px] flex flex-col" style={{ backgroundImage: `linear-gradient(150deg, ${t.from}, ${t.to})` }}>
+                <span aria-hidden="true" className="absolute right-6 top-3 font-serif italic text-[96px] leading-none text-white/20 select-none">
+                  ?
                 </span>
+                <span aria-hidden="true" className="absolute right-10 bottom-[-46px] w-28 h-28 rounded-full bg-white/10" />
+                <span className="relative text-[12px] font-semibold tracking-[0.16em] text-white/80">
+                  {String(i + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+                </span>
+                <h3 className="relative m-0 mt-auto pt-6 font-serif font-normal text-[26px] sm:text-[28px] leading-[1.15] drop-shadow-sm" style={{ textWrap: "balance" }}>
+                  {q.p}
+                </h3>
+              </div>
+              <div className="px-6 sm:px-7 py-6">
+                <p className="m-0 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line">{q.r}</p>
+                {q.video && (
+                  <button
+                    type="button"
+                    onClick={() => reproducirVideo(q.video!)}
+                    className="mt-4 inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                    </svg>
+                    Ver el video «Así de fácil se usa»
+                  </button>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {/* Controles */}
+      <div className="flex items-center justify-between gap-4 max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 mt-2">
+        <div className="flex items-center gap-1.5" role="tablist" aria-label="Elegir pregunta">
+          {preguntas.map((q, i) => (
+            <button
+              key={q.p}
+              type="button"
+              role="tab"
+              aria-selected={i === activa}
+              aria-label={`Pregunta ${i + 1}: ${q.p}`}
+              onClick={() => irA(i)}
+              // El punto se ve igual, pero el área táctil mide 44 px de alto.
+              className={`relative h-2 rounded-full border-none cursor-pointer transition-all duration-300 after:absolute after:content-[''] after:-inset-y-[18px] after:-inset-x-[3px] ${i === activa ? "w-8 bg-verde-profundo" : "w-2 bg-borde-campo hover:bg-verde-serenidad"}`}
+            />
+          ))}
+        </div>
+        <div className="hidden sm:flex gap-2.5">
+          {[
+            { d: -1, label: "Pregunta anterior", path: "M12.5 4.5L7 10l5.5 5.5" },
+            { d: 1, label: "Pregunta siguiente", path: "M7.5 4.5L13 10l-5.5 5.5" },
+          ].map((b) => {
+            const destino = activa + b.d;
+            const off = destino < 0 || destino > total - 1;
+            return (
+              <button
+                key={b.d}
+                type="button"
+                aria-label={b.label}
+                onClick={() => irA(destino)}
+                disabled={off}
+                className="w-12 h-12 rounded-full bg-white border border-borde flex items-center justify-center text-tinta cursor-pointer transition-all hover:bg-verde-profundo hover:text-white hover:border-verde-profundo disabled:opacity-35 disabled:cursor-default disabled:hover:bg-white disabled:hover:text-tinta disabled:hover:border-borde"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d={b.path} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
-            </h3>
-            <div id={panel} hidden={!open} className="px-5 sm:px-7 pb-6 -mt-1">
-              <p className="m-0 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line max-w-[44em]">{q.r}</p>
-              {q.video && (
-                <button
-                  type="button"
-                  onClick={() => reproducirVideo(q.video!)}
-                  className="mt-4 inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
-                  </svg>
-                  Ver el video «Así de fácil se usa»
-                </button>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -458,16 +557,15 @@ function PosterAsiDeFacil() {
   );
 }
 
-// Datos verificables. Los que todavía no están (null) no se publican; en
-// desarrollo se ven marcados como TODO para saber dónde van.
+// Datos verificables: solo se muestran los que tienen valor cargado.
 function PruebaSocial() {
-  const datos = pruebaSocial.filter((d) => d.valor || import.meta.env.DEV);
+  const datos = pruebaSocial.filter((d) => d.valor);
   if (datos.length === 0) return null;
   return (
     <dl className="m-0 mt-8 grid gap-3 sm:grid-cols-3 max-w-[960px] mx-auto">
       {datos.map((d) => (
-        <div key={d.etiqueta} className={`rounded-3xl px-5 py-4 text-center ${d.valor ? "bg-white border border-borde" : "border-2 border-dashed border-mostaza-vital bg-fila-calida"}`}>
-          <dt className="font-serif text-[30px] leading-none text-verde-profundo">{d.valor ?? "TODO"}</dt>
+        <div key={d.etiqueta} className="rounded-3xl px-5 py-4 text-center bg-white border border-borde">
+          <dt className="font-serif text-[30px] leading-none text-verde-profundo">{d.valor}</dt>
           <dd className="m-0 mt-1.5 text-[14.5px] text-tinta-suave">{d.etiqueta}</dd>
         </div>
       ))}
@@ -475,19 +573,9 @@ function PruebaSocial() {
   );
 }
 
-// Fotos reales de las sesiones. Sin fotos cargadas, en producción no se
-// muestra nada; en desarrollo, el lugar marcado como TODO.
+// Fotos reales de las sesiones. Sin fotos cargadas no se muestra nada.
 function GaleriaSesiones() {
-  if (fotosSesiones.length === 0) {
-    if (!import.meta.env.DEV) return null;
-    return (
-      <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 pb-16">
-        <p className="m-0 rounded-3xl border-2 border-dashed border-mostaza-vital bg-fila-calida px-5 py-8 text-center text-[15px] text-tinta">
-          TODO: galería con las fotos de las sesiones de abril 2026 (landingContenido.ts → fotosSesiones).
-        </p>
-      </div>
-    );
-  }
+  if (fotosSesiones.length === 0) return null;
   return (
     <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 pb-16 lg:pb-24 grid gap-3 grid-cols-2 lg:grid-cols-4">
       {fotosSesiones.map((f, i) => (
@@ -743,10 +831,6 @@ export function Landing() {
               Ver el video
             </Button>
           </div>
-          <p className="m-0 mt-6 flex items-center gap-2 text-[14.5px] text-tinta-suave">
-            <span aria-hidden="true" className="w-2 h-2 rounded-full bg-verde-serenidad" />
-            Plan personalizado y revisado por profesionales.
-          </p>
         </Reveal>
         {/* En celular el video de presentación va justo después del texto:
             la maqueta del teléfono se muestra desde escritorio. */}
@@ -861,23 +945,14 @@ export function Landing() {
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col gap-3 flex-1">
                     <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{a.frase}</p>
-                    <details className="group mt-auto">
-                      <summary className="list-none [&::-webkit-details-marker]:hidden inline-flex items-center gap-1.5 min-h-10 cursor-pointer text-[14.5px] font-semibold text-verde-profundo">
-                        <span className="group-open:hidden">Ver más</span>
-                        <span className="hidden group-open:inline">Ver menos</span>
-                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="transition-transform group-open:rotate-180">
-                          <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </summary>
-                      <ul className="list-none m-0 mt-1 p-0 grid gap-2">
-                        {a.puntos.map((e) => (
-                          <li key={e} className="flex gap-2.5 text-[15px] leading-snug text-tinta">
-                            <span aria-hidden="true" className="mt-[7px] w-1.5 h-1.5 shrink-0 rounded-full bg-verde-serenidad" />
-                            {e}
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
+                    <ul className="list-none m-0 p-0 grid gap-2">
+                      {a.puntos.map((e) => (
+                        <li key={e} className="flex gap-2.5 text-[15px] leading-snug text-tinta">
+                          <span aria-hidden="true" className="mt-[7px] w-1.5 h-1.5 shrink-0 rounded-full bg-verde-serenidad" />
+                          {e}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </article>
               </Reveal>
@@ -913,7 +988,6 @@ export function Landing() {
                 <Button to={registro} className="w-full sm:w-auto">
                   Crear mi cuenta gratis
                 </Button>
-                <p className="m-0 mt-2 text-[13.5px] text-tinta-tenue">No activa una suscripción ni genera cobros.</p>
               </div>
             </article>
           </Reveal>
@@ -986,7 +1060,7 @@ export function Landing() {
       </section>
 
       {/* ─── Fotos de las sesiones ─── */}
-      {fotosSesiones.length > 0 || import.meta.env.DEV ? <div className="bg-beige-serenidad"><GaleriaSesiones /></div> : null}
+      {fotosSesiones.length > 0 && <div className="bg-beige-serenidad"><GaleriaSesiones /></div>}
 
       {/* ─── Para médicos ─── */}
       <section id="medicos" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
@@ -1011,7 +1085,7 @@ export function Landing() {
               </ul>
               <div className="flex flex-wrap gap-3">
                 <Link
-                  to={`${guiaProfesionales}#referir`}
+                  to="/medicos/referir"
                   className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-mostaza-vital text-tinta font-bold text-[16px] no-underline hover:bg-white"
                 >
                   Referir un paciente
@@ -1064,9 +1138,8 @@ export function Landing() {
       )}
 
       {/* ─── Preguntas frecuentes ─── */}
-      <section id="preguntas" className="bg-white border-y border-borde-suave scroll-mt-20">
-        <div className="max-w-[920px] mx-auto px-5 py-16 sm:px-8 lg:py-24">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
+      <section id="preguntas" className="py-16 lg:py-24 scroll-mt-20 overflow-hidden">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
           <Reveal>
             <Eyebrow>Preguntas frecuentes</Eyebrow>
             <SectionTitle>Lo que suelen preguntarnos.</SectionTitle>
@@ -1079,8 +1152,7 @@ export function Landing() {
             .
           </p>
         </div>
-        <FaqAcordeon />
-        </div>
+        <FaqCarousel />
       </section>
 
       {/* ─── CTA final ─── */}

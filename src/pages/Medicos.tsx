@@ -228,9 +228,9 @@ export function Medicos() {
         <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="no-underline">
           <Logo size="sm" />
         </Link>
-        <a href="#referir" className="inline-flex items-center min-h-10 px-4 rounded-full bg-verde-profundo text-white text-[14.5px] font-semibold no-underline hover:bg-tinta">
+        <Link to="/medicos/referir" className="inline-flex items-center min-h-10 px-4 rounded-full bg-verde-profundo text-white text-[14.5px] font-semibold no-underline hover:bg-tinta">
           Referir un paciente
-        </a>
+        </Link>
       </header>
 
       <main>
@@ -246,9 +246,9 @@ export function Medicos() {
               acompañamos.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a href="#referir" className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-verde-profundo text-white font-semibold text-[16px] no-underline hover:bg-tinta">
+              <Link to="/medicos/referir" className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-verde-profundo text-white font-semibold text-[16px] no-underline hover:bg-tinta">
                 Referir un paciente
-              </a>
+              </Link>
               <BotonWa href={hablarConElEquipo} claro>
                 Hablar con el equipo
               </BotonWa>
@@ -377,6 +377,30 @@ export function Medicos() {
         </Link>
         <span>No sustituye la consulta médica. Ante una emergencia, llamá al 9-1-1.</span>
       </footer>
+    </div>
+  );
+}
+
+// /medicos/referir: solo el formulario (el botón «Referir un paciente» del
+// home y de /medicos lleva directo acá).
+export function ReferirPaciente() {
+  return (
+    <div className="font-sans text-tinta bg-fondo-papel min-h-screen">
+      <header className="max-w-[820px] mx-auto px-5 py-4 sm:px-8 flex items-center justify-between gap-4">
+        <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="no-underline">
+          <Logo size="sm" />
+        </Link>
+        <Link to="/medicos" className="text-[14.5px] font-semibold text-verde-profundo">
+          Información para médicos
+        </Link>
+      </header>
+      <main className="max-w-[820px] mx-auto px-5 pt-6 pb-16 sm:px-8">
+        <h1 className="m-0 mb-2 font-serif font-normal text-[32px] sm:text-[40px] leading-tight">Referir un paciente</h1>
+        <p className="m-0 mb-8 text-[16px] leading-relaxed text-tinta-suave">Completá los datos y se abre WhatsApp con el mensaje listo para enviar a nuestro equipo.</p>
+        <div className="rounded-[28px] bg-white border border-borde p-5 sm:p-8">
+          <FormularioReferencia />
+        </div>
+      </main>
     </div>
   );
 }

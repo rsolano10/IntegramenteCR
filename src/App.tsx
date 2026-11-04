@@ -11,6 +11,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword").then((m) => ({ 
 const CompletarCuenta = lazy(() => import("./pages/CompletarCuenta").then((m) => ({ default: m.CompletarCuenta })));
 const ConfirmarCorreo = lazy(() => import("./pages/ConfirmarCorreo").then((m) => ({ default: m.ConfirmarCorreo })));
 const Medicos = lazy(() => import("./pages/Medicos").then((m) => ({ default: m.Medicos })));
+const ReferirPaciente = lazy(() => import("./pages/Medicos").then((m) => ({ default: m.ReferirPaciente })));
 const LegalPage = lazy(() => import("./pages/LegalPage").then((m) => ({ default: m.LegalPage })));
 
 // React Router doesn't reset scroll position on navigation by itself, and
@@ -68,6 +69,7 @@ export function App() {
       <Route path="/planes/*" element={<Navigate to="/ingresar?mode=register" replace />} />
       <Route path="/legal/:doc" element={<LegalPage />} />
       <Route path="/medicos" element={<Medicos />} />
+      <Route path="/medicos/referir" element={<ReferirPaciente />} />
       {/* La guía provisional para profesionales se reemplazó por /medicos. */}
       <Route path="/guia-profesionales" element={<Navigate to="/medicos" replace />} />
       <Route path="/app/*" element={<AppLayout />} />
