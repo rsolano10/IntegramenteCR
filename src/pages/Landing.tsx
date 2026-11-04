@@ -349,20 +349,6 @@ function IlustracionAutonomia() {
   );
 }
 
-function IlustracionProfesional() {
-  // Una profesional con la guía en la mano, lista para recomendarla.
-  return (
-    <svg viewBox="0 0 240 170" className="w-[170px] h-[120px] md:w-[240px] md:h-[170px]" aria-hidden="true">
-      <circle cx="96" cy="62" r="18" fill="#ebe6ce" />
-      <path d="M62 170c0-40 15-70 34-70s34 30 34 70z" fill="#ebe6ce" />
-      <path d="M84 100l12 22 12-22" stroke="#6a969c" strokeWidth="4" strokeLinejoin="round" fill="none" />
-      <rect x="128" y="74" width="62" height="80" rx="8" fill="#fbf7ea" transform="rotate(6 159 114)" />
-      <rect x="146" y="68" width="26" height="10" rx="4" fill="#f4d096" transform="rotate(6 159 73)" />
-      <path d="M142 96h32M141 110h32M140 124h22" stroke="#6a969c" strokeWidth="4" strokeLinecap="round" transform="rotate(6 159 114)" />
-      <path d="M118 130l16 -8" stroke="#ebe6ce" strokeWidth="10" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 // "Así de fácil se usa": los tres pasos de una semana, junto al video.
 const pasosUso: { icono: string; t: string; d: string }[] = [
@@ -763,39 +749,29 @@ function RedesFlotantes() {
 }
 
 
+// «Para quién es»: dos caminos de consumidor (primero familiares, que suelen
+// ser quienes deciden). La elección viaja al registro (?para=) y fija quién
+// responde el cuestionario, que se redacta en primera o tercera persona
+// según eso (rol_respondente → respondentVoice.ts). Médicos tiene su propia
+// franja debajo: es otro público y otro camino.
 const caminos = [
   {
     t: "Acompaño a un ser querido",
-    d: "Actividades paso a paso para compartir y registrar cómo les fue.",
-    tituloEtiquetas: "Pensado para",
-    etiquetas: ["Familiares", "Personas cuidadoras"],
-    chip: "#dce8e9",
+    d: "Un plan claro para cada día, con seguimiento profesional.",
+    beneficio: "Sabés qué hacer cada día, sin improvisar.",
     boton: "Empezar para un ser querido",
     to: registroPara("ser-querido"),
     fondo: "#6a969c",
     ilustracion: <IlustracionAcompanar />,
   },
   {
-    t: "Quiero cuidar mi salud cerebral",
-    d: "Actividades para mantenerte activo y cuidar tu bienestar, a tu ritmo.",
-    tituloEtiquetas: "Incluye",
-    etiquetas: ["Estimulación cognitiva", "Movimiento", "Bienestar"],
-    chip: "#f9e6c2",
+    t: "Cuido mi salud cerebral",
+    d: "Actividades para tu mente y tu cuerpo, a tu ritmo.",
+    beneficio: "Explicadas paso a paso, desde tu casa.",
     boton: "Empezar para mí",
     to: registroPara("mi"),
     fondo: "#f4d096",
     ilustracion: <IlustracionAutonomia />,
-  },
-  {
-    t: "¿Sos médico o profesional de la salud?",
-    d: "Referí pacientes y recibí información de su seguimiento.",
-    tituloEtiquetas: "Especialidades",
-    etiquetas: ["Geriatría", "Medicina general", "Neurología"],
-    chip: "#d3e0e2",
-    boton: "Información para médicos",
-    to: guiaProfesionales,
-    fondo: "#3f6a70",
-    ilustracion: <IlustracionProfesional />,
   },
 ];
 
@@ -882,35 +858,26 @@ export function Landing() {
             <Eyebrow>Para quién es</Eyebrow>
             <SectionTitle className="max-w-[18em] mx-auto mb-10 lg:mb-12">Para vos y para quienes acompañás.</SectionTitle>
           </Reveal>
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 max-w-[1040px] mx-auto">
             {caminos.map((c, i) => (
               <Reveal key={c.t} delay={i * 110} className="h-full">
                 <article className="h-full flex flex-col rounded-[32px] bg-white border border-borde overflow-hidden">
-                  <div className="h-[140px] md:h-[190px] flex items-end justify-center overflow-hidden" style={{ background: c.fondo }}>
+                  <div className="h-[160px] md:h-[210px] flex items-end justify-center overflow-hidden" style={{ background: c.fondo }}>
                     {c.ilustracion}
                   </div>
-                  <div className="flex flex-col gap-3 p-6 sm:p-7 flex-1">
-                    <h3 className="m-0 font-serif font-normal text-[27px] leading-tight lg:min-h-[2.5em]">{c.t}</h3>
-                    <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{c.d}</p>
-                    {/* Información, no controles: etiquetas planas (sin borde ni
-                        sombra, para que no parezcan botones), teñidas con el
-                        color de la tarjeta. */}
-                    <div className="mt-1 pt-4 border-t border-borde-suave">
-                      <p className="m-0 mb-2.5 text-[11.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{c.tituloEtiquetas}</p>
-                      <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
-                        {c.etiquetas.map((x) => (
-                          <li
-                            key={x}
-                            className="inline-flex items-center rounded-full px-3 py-1.5 text-[13.5px] font-semibold leading-none text-tinta"
-                            style={{ background: c.chip }}
-                          >
-                            {x}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="flex flex-col gap-3 p-6 sm:p-8 flex-1">
+                    <h3 className="m-0 font-serif font-normal text-[28px] sm:text-[30px] leading-tight">{c.t}</h3>
+                    <p className="m-0 text-[17px] leading-relaxed text-tinta">{c.d}</p>
+                    <p className="m-0 flex items-start gap-2.5 text-[16px] leading-snug font-semibold text-tinta">
+                      <span aria-hidden="true" className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-verde-profundo text-white flex items-center justify-center">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                          <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      {c.beneficio}
+                    </p>
                     <div className="mt-auto pt-4">
-                      <Button to={c.to} variant={i === 2 ? "secondary" : "primary"} className="w-full sm:w-auto">
+                      <Button to={c.to} className="w-full sm:w-auto">
                         {c.boton}
                       </Button>
                     </div>
@@ -920,6 +887,22 @@ export function Landing() {
             ))}
           </div>
 
+          {/* Médicos: otro público, en una franja aparte para que no compita
+              con la decisión «para mí o para alguien». */}
+          <Reveal className="max-w-[1040px] mx-auto mt-6">
+            <div className="rounded-[28px] bg-verde-profundo text-white px-6 py-6 sm:px-8 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              <div className="flex-1">
+                <p className="m-0 font-serif text-[23px] sm:text-[25px] leading-tight text-white">¿Sos profesional de la salud?</p>
+                <p className="m-0 mt-1 text-[16px] leading-relaxed text-[#e3eeee]">Referí pacientes y recibí información de su seguimiento.</p>
+              </div>
+              <Link
+                to={guiaProfesionales}
+                className="shrink-0 inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-mostaza-vital text-tinta font-bold text-[16px] no-underline hover:bg-white"
+              >
+                Información para médicos
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
