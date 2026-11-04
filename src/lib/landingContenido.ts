@@ -10,6 +10,8 @@ export const contacto = {
   // Número de WhatsApp en formato internacional sin "+" (para wa.me).
   whatsapp: WHATSAPP_EQUIPO,
   instagram: "https://instagram.com/integramentecr",
+  // Pendiente de confirmar con IntegraMente: no había URL de Facebook en el repo.
+  facebook: "https://www.facebook.com/integramentecr",
   correo: "info@integramente.com",
 };
 
@@ -63,7 +65,8 @@ const foto = (archivo: string): FotoEquipo => ({
 });
 
 // Nombres, grados y áreas tal como los indicó IntegraMente. El orden es el
-// orden en que aparecen.
+// orden en que aparecen: en computadora, Guiselle, Nancy y María Laura en la
+// primera fila y Pablo y Silvia en la segunda.
 export const equipo: MiembroEquipo[] = [
   {
     nombre: "MSc. Guiselle Solano Asenjo",
@@ -79,10 +82,10 @@ export const equipo: MiembroEquipo[] = [
     foto: foto("nancy-navarro-araya"),
   },
   {
-    nombre: "Silvia Obregón",
-    area: "Nutrición",
-    descripcion: "Desarrolla orientaciones de alimentación e hidratación para personas mayores.",
-    foto: foto("silvia-obregon"),
+    nombre: "María Laura Garita Quesada",
+    area: "Facilitadora de estimulación cognitiva",
+    descripcion: "Coordina las actividades y la comunicación con las familias, acompaña las sesiones de estimulación cognitiva.",
+    foto: foto("maria-laura"),
   },
   {
     nombre: "Pablo Jiménez Meza",
@@ -91,11 +94,10 @@ export const equipo: MiembroEquipo[] = [
     foto: foto("pablo-jimenez-meza"),
   },
   {
-    // Apellidos pendientes de confirmar con IntegraMente.
-    nombre: "María Laura",
-    area: "Facilitadora de estimulación cognitiva",
-    descripcion: "Acompaña la realización de actividades de estimulación cognitiva.",
-    foto: foto("maria-laura"),
+    nombre: "Silvia Obregón Aguilar",
+    area: "Nutrición",
+    descripcion: "Desarrolla orientaciones de alimentación e hidratación para personas mayores.",
+    foto: foto("silvia-obregon"),
   },
 ];
 
@@ -180,41 +182,47 @@ export const areas: {
   },
 ];
 
+// Texto literal de IntegraMente. Los párrafos de una respuesta van separados
+// por \n (la tarjeta los respeta).
 export const preguntas: { p: string; r: string }[] = [
   {
     p: "¿Cuál es la diferencia entre los programas?",
-    r: "El Autoguiado es un plan semanal de actividades para hacer en casa. El programa con sesiones suma encuentros profesionales, objetivos individualizados y seguimiento.",
+    r: "El Autoguiado te ofrece actividades semanales explicadas paso a paso para saber qué hacer en casa.\nCon sesiones profesionales, además evaluamos qué capacidades necesita trabajar tu familiar, lo acompañamos en las sesiones y revisamos cómo evoluciona. Recibís un informe de seguimiento y ajustamos el programa según sus necesidades.",
   },
   {
-    p: "¿Cuánto cuesta?",
-    r: `Crear tu cuenta es gratis. El Autoguiado tiene un precio mensual fijo y el programa con sesiones se presupuesta según tu plan. La valoración con IntegraMente cuesta ${precioValoracion} y se paga aparte.`,
+    p: "¿Este programa es adecuado para mi familiar si tiene deterioro cognitivo o demencia?",
+    r: "Sí. El Autoguiado ofrece actividades con recomendaciones para adaptarlas y acompañar a tu familiar en casa. Con sesiones profesionales, además definimos qué necesita trabajar y ajustamos el programa según su evolución.",
   },
   {
-    p: "¿El cuestionario inicial es una valoración neuropsicológica?",
-    r: "No. Sirve para conocer el día a día y los intereses de la persona y elegir actividades. La valoración la hace un profesional y solo se pide para el programa con sesiones.",
+    p: "¿Y si no tiene un diagnóstico?",
+    r: "También puede participar. IntegraMente en Casa ofrece actividades para quienes desean mantenerse activos y cuidar su salud cerebral. Podés usarla para vos o para acompañar a un familiar.",
   },
   {
-    p: "¿Necesito un diagnóstico?",
-    r: "No. La aplicación sirve con o sin diagnóstico. IntegraMente no diagnostica: si hace falta, te recomendamos una valoración.",
+    p: "¿Para qué necesita mi familiar una valoración neuropsicológica?",
+    r: "Para saber cómo están su memoria, atención y otras habilidades que usa a diario. Así elegimos qué trabajar y cómo aprovechar lo que conserva para apoyar su autonomía. También nos permite comparar cómo evoluciona y ajustar el programa.\nPara el programa con sesiones, debe tener menos de un año. Aceptamos valoraciones de otros profesionales o podés contratarla con nosotros por separado.",
   },
   {
-    p: "¿Sirve si mi familiar no usa celular?",
-    r: "Sí. La aplicación la usa quien acompaña. Si tu familiar usa celular, también puede tener su propia vista, sencilla y con letra grande.",
+    p: "¿Cómo ayuda el cuestionario inicial a elegir mis actividades?",
+    r: "Nos ayuda a conocerte: tus intereses, tu rutina y los apoyos que necesitás. Así orientamos las actividades para que se ajusten a vos o a tu familiar y ayuden a mantenerse activo y cuidar la salud cerebral.\nSi sos profesional, podés recomendar la aplicación a las familias como complemento del trabajo que realizás en consulta.",
   },
   {
-    p: "¿Quién selecciona las actividades?",
-    r: "Nuestro equipo, a partir de tus respuestas, intereses y necesidades.",
+    p: "¿Mi familiar necesita saber usar el celular?",
+    r: "No. Vos podés abrir las actividades y acompañarlo siguiendo las instrucciones. Tu familiar participa sin tener que manejar la aplicación.",
   },
   {
-    p: "¿Qué pasa si hay una emergencia?",
-    r: "Llamá al 9-1-1. En la aplicación, el botón SOS te orienta y te permite avisarle al equipo.",
+    p: "¿Tengo que estar presente en todas las actividades?",
+    r: "Depende de la autonomía de tu familiar y de la actividad. Algunas propuestas requieren acompañamiento o apoyos específicos. Revisá siempre las indicaciones antes de comenzar; en el programa con sesiones te orientamos según sus necesidades.",
   },
   {
-    p: "¿Quién ve mi información?",
-    r: "Solo tu familia vinculada y el equipo de IntegraMente. El detalle está en Privacidad y datos.",
+    p: "Me recomiendan mantener activo mi cerebro o el de mi familiar. ¿Cómo me ayuda la aplicación?",
+    r: "IntegraMente en Casa te ofrece actividades semanales basadas en neurociencia, con instrucciones sencillas para hacerlas en casa. Así podés crear una rutina para vos o tu familiar, sin tener que pensar cada día qué hacer.",
   },
   {
-    p: "¿Puedo cambiar de programa?",
-    r: "Sí. Escribinos por WhatsApp y lo coordinamos.",
+    p: "¿Qué hago si una actividad le cuesta o no quiere hacerla?",
+    r: "Hacé una pausa y probá en otro momento, sin presionarlo. Podés consultar el asistente de la aplicación para recibir orientación general. Si necesitás apoyo profesional, escribinos: en el Autoguiado podés solicitar una consulta adicional con costo; en el programa con sesiones, lo revisamos durante el seguimiento.",
+  },
+  {
+    p: "¿Cómo sabré cómo va mi familiar?",
+    r: "En el Autoguiado podés registrar las actividades realizadas. Con sesiones profesionales, además revisamos su rendimiento y las dificultades que presenta, compartimos los resultados en informes de seguimiento y ajustamos los objetivos del programa.",
   },
 ];

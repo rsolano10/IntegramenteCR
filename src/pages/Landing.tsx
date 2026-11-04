@@ -455,7 +455,7 @@ function FaqCarousel() {
                   {q.p}
                 </h3>
               </div>
-              <p className="m-0 px-6 sm:px-7 py-6 text-[16px] leading-relaxed text-tinta-suave">{q.r}</p>
+              <p className="m-0 px-6 sm:px-7 py-6 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line">{q.r}</p>
             </article>
           );
         })}
@@ -563,9 +563,9 @@ function FotoEquipo({ foto, alt, i }: { foto: MiembroEquipo["foto"]; alt: string
   );
 }
 
-// Ayuda por WhatsApp: discreta, en la esquina, y se oculta cuando el pie de
-// página (que ya tiene WhatsApp) está a la vista, para no tapar sus enlaces.
-function AyudaWhatsApp() {
+// Los botones flotantes se ocultan cuando el pie de página (que ya tiene
+// WhatsApp y redes) está a la vista, para no tapar sus enlaces.
+function useOcultoEnElPie() {
   const [oculto, setOculto] = useState(false);
   useEffect(() => {
     const pie = document.getElementById("pie");
@@ -574,6 +574,16 @@ function AyudaWhatsApp() {
     io.observe(pie);
     return () => io.disconnect();
   }, []);
+  return oculto;
+}
+
+const flotanteBase =
+  "fixed z-30 bg-white/95 backdrop-blur border border-borde shadow-[0_10px_28px_-14px_rgba(31,51,56,.45)] transition-[opacity,transform,border-color] duration-300";
+const flotanteBottom = { bottom: "calc(0.875rem + env(safe-area-inset-bottom, 0px))" };
+
+// Ayuda por WhatsApp: discreta, en la esquina derecha.
+function AyudaWhatsApp() {
+  const oculto = useOcultoEnElPie();
   return (
     <a
       href={whatsappHome.general}
@@ -581,16 +591,59 @@ function AyudaWhatsApp() {
       rel="noreferrer"
       aria-label="¿Necesitás ayuda? Escribinos por WhatsApp"
       tabIndex={oculto ? -1 : undefined}
-      className={`fixed z-30 right-3 sm:right-6 inline-flex items-center gap-2 min-h-11 pl-1.5 pr-3.5 rounded-full bg-white/95 backdrop-blur border border-borde text-tinta text-[14px] font-semibold no-underline shadow-[0_10px_28px_-14px_rgba(31,51,56,.45)] hover:border-verde-serenidad transition-[opacity,transform,border-color] duration-300 ${
+      className={`${flotanteBase} right-3 sm:right-6 inline-flex items-center gap-2 min-h-11 pl-1.5 pr-3.5 rounded-full text-tinta text-[14px] font-semibold no-underline hover:border-verde-serenidad ${
         oculto ? "opacity-0 translate-y-3 pointer-events-none" : ""
       }`}
-      style={{ bottom: "calc(0.875rem + env(safe-area-inset-bottom, 0px))" }}
+      style={flotanteBottom}
     >
       <span className="w-8 h-8 rounded-full bg-[#25d366] text-white flex items-center justify-center">
         <WhatsAppIcon size={18} />
       </span>
       ¿Necesitás ayuda?
     </a>
+  );
+}
+
+// Redes sociales: a la izquierda, con menos peso que «Crear mi cuenta
+// gratis». En celular va en columna angosta para no chocar con el botón de
+// WhatsApp; desde tablet, en fila.
+function RedesFlotantes() {
+  const oculto = useOcultoEnElPie();
+  const redes = [
+    { href: contacto.instagram, label: "Seguinos en Instagram (se abre en otra pestaña)", icono: <InstagramIcon size={18} /> },
+    { href: contacto.facebook, label: "Seguinos en Facebook (se abre en otra pestaña)", icono: <FacebookIcon size={18} /> },
+  ];
+  return (
+    <div
+      className={`${flotanteBase} left-3 sm:left-6 flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 p-1 sm:pl-3.5 sm:pr-1.5 rounded-[22px] sm:rounded-full ${
+        oculto ? "opacity-0 translate-y-3 pointer-events-none" : ""
+      }`}
+      style={flotanteBottom}
+      aria-hidden={oculto || undefined}
+    >
+      <span className="text-[10.5px] sm:text-[14px] font-semibold text-tinta-suave pt-1 sm:pt-0 sm:mr-0.5">Seguinos</span>
+      {redes.map((r) => (
+        <a
+          key={r.href}
+          href={r.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={r.label}
+          tabIndex={oculto ? -1 : undefined}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-verde-profundo hover:bg-verde-tenue transition-colors"
+        >
+          {r.icono}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function FacebookIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3Z" />
+    </svg>
   );
 }
 
@@ -678,8 +731,11 @@ export function Landing() {
             Saber qué hacer hoy, <em className="italic text-verde-profundo">sin improvisar.</em>
           </h1>
           <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-4">
-            Acompañá a tu ser querido con un plan semanal de estimulación cognitiva, movimiento y orientaciones de nutrición, elaborado por el
-            equipo de IntegraMente.
+            Cuidá tu salud cerebral o acompañá a un ser querido con un plan semanal de estimulación cognitiva, movimiento y orientaciones de
+            nutrición, elaborado por el equipo de IntegraMente.
+          </p>
+          <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-4">
+            Actividades explicadas paso a paso para integrarlas a la vida cotidiana.
           </p>
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
           <div className="flex flex-wrap gap-3">
@@ -1009,10 +1065,18 @@ export function Landing() {
             <a
               href={contacto.instagram}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="mt-5 inline-flex items-center gap-2.5 min-h-11 px-4 rounded-full border border-[#4a5f63] text-white text-[15px] font-semibold no-underline hover:border-[#9cc2c6] transition-colors"
             >
               <InstagramIcon /> Seguinos en Instagram
+            </a>
+            <a
+              href={contacto.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2.5 sm:mt-5 sm:ml-2.5 inline-flex items-center gap-2.5 min-h-11 px-4 rounded-full border border-[#4a5f63] text-white text-[15px] font-semibold no-underline hover:border-[#9cc2c6] transition-colors"
+            >
+              <FacebookIcon /> Seguinos en Facebook
             </a>
           </div>
           <div className="grid gap-2.5 text-[15px] content-start">
@@ -1044,6 +1108,7 @@ export function Landing() {
         </div>
       </footer>
 
+      <RedesFlotantes />
       <AyudaWhatsApp />
     </div>
   );
