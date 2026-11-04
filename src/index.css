@@ -109,6 +109,51 @@
   }
 }
 
+/* Cuestionario (Fase 2.1): cada pregunta entra deslizándose, la opción
+   elegida "late" una vez. Sin movimiento si el sistema lo pide. */
+@keyframes im-paso {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes im-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.025);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes im-check {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .im-paso {
+    animation: im-paso 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .im-pop {
+    animation: im-pop 280ms ease-out;
+  }
+  .im-check {
+    animation: im-check 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
 .im-placeholder {
   background-image: repeating-linear-gradient(135deg, #e7efef 0 10px, #dce8e8 10px 20px);
 }

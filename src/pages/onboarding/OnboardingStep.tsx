@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
@@ -9,6 +9,8 @@ import { applicableQuestions, questions, resolveOptions, resolveText } from "../
 import { normalizeCrPhone } from "../../lib/phone";
 import { Button } from "../../components/ui/Button";
 import { CheckRow } from "../../components/ui/CheckRow";
+import { IconoCategoria } from "../../components/onboarding/IconoCategoria";
+import { categoriaDe, mensajeDeAnimo } from "../../lib/categoriasCuestionario";
 
 function hasAnswer(value: string | string[] | undefined): boolean {
   if (Array.isArray(value)) return value.length > 0;
@@ -34,6 +36,131 @@ function AntesDeEmpezar() {
           <p className="m-0 text-[14px] leading-relaxed text-tinta-suave">{p.detalle}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Categorías cuyo intro ya se mostró en esta sesión: volver atrás a la
+// primera pregunta de un bloque no repite la pantalla de presentación.
+const CLAVE_INTROS = "im-intros-vistas";
+function introsVistas(): Set<string> {
+  try {
+    return new Set(JSON.parse(sessionStorage.getItem(CLAVE_INTROS) ?? "[]"));
+  } catch {
+    return new Set();
+  }
+}
+function marcarIntroVista(modulo: string) {
+  try {
+    const s = introsVistas();
+    s.add(modulo);
+    sessionStorage.setItem(CLAVE_INTROS, JSON.stringify([...s]));
+  } catch {
+    // sin sessionStorage: el intro puede repetirse, nada más
+  }
+}
+
+// Tarjeta grande y tocable para una opción (simple o múltiple).
+function OpcionTarjeta({
+  activa,
+  multiple,
+  disabled,
+  onClick,
+  children,
+}: {
+  activa: boolean;
+  multiple: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role={multiple ? "checkbox" : "radio"}
+      aria-checked={activa}
+      disabled={disabled}
+      onClick={onClick}
+      className={`group w-full text-left flex items-center gap-4 min-h-[64px] px-5 py-4 rounded-[20px] border-2 font-sans text-[16.5px] leading-snug cursor-pointer transition-[border-color,background-color,box-shadow] duration-200 disabled:opacity-45 disabled:cursor-default ${
+        activa
+          ? "im-pop border-verde-serenidad bg-verde-tenue text-tinta font-semibold shadow-[0_10px_24px_-16px_rgba(63,106,112,.7)]"
+          : "border-borde bg-white text-tinta hover:border-verde-serenidad hover:shadow-[0_8px_20px_-16px_rgba(31,51,56,.5)]"
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`shrink-0 w-7 h-7 flex items-center justify-center border-2 transition-colors ${multiple ? "rounded-lg" : "rounded-full"} ${
+          activa ? "bg-verde-profundo border-verde-profundo text-white" : "border-borde-campo bg-white group-hover:border-verde-serenidad"
+        }`}
+      >
+        {activa && (
+          <svg className="im-check w-4 h-4" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+      <span className="min-w-0">{children}</span>
+    </button>
+  );
+}
+
+// Encabezado de la categoría: ícono, nombre, "parte X de N" y una barra con
+// un tramo por categoría (la actual, llenándose según la pregunta).
+function ProgresoCuestionario({ modulo, modulos, idxModulo, fraccionModulo }: { modulo: string; modulos: string[]; idxModulo: number; fraccionModulo: number }) {
+  const cat = categoriaDe(modulo);
+  const total = modulos.length;
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          <span className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: cat.color, color: cat.tinta }}>
+            <IconoCategoria icono={cat.icono} className="w-5 h-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[14.5px] font-semibold text-tinta truncate">{modulo}</span>
+            <span className="block text-[12.5px] text-tinta-tenue">
+              Parte {idxModulo + 1} de {total}
+            </span>
+          </span>
+        </span>
+        <span className="shrink-0 text-[12.5px] text-semaforo-verde-texto inline-flex items-center gap-1.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Guardado
+        </span>
+      </div>
+      <div className="flex gap-1" role="progressbar" aria-label="Avance del cuestionario" aria-valuemin={0} aria-valuemax={total} aria-valuenow={idxModulo + fraccionModulo}>
+        {modulos.map((m, i) => (
+          <span key={m} className="flex-1 h-1.5 rounded-full bg-beige-serenidad overflow-hidden">
+            <span
+              className="block h-full rounded-full bg-verde-serenidad transition-[width] duration-500"
+              style={{ width: `${i < idxModulo ? 100 : i === idxModulo ? Math.max(6, fraccionModulo * 100) : 0}%` }}
+            />
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Pantalla breve al empezar una categoría: ícono, nombre, qué se va a
+// conversar y, desde la segunda, un mensaje de ánimo.
+function IntroCategoria({ modulo, idxModulo, total, onSeguir }: { modulo: string; idxModulo: number; total: number; onSeguir: () => void }) {
+  const cat = categoriaDe(modulo);
+  const animo = mensajeDeAnimo(idxModulo, total);
+  return (
+    <div className="im-paso max-w-[560px] mx-auto px-5 py-14 pb-20 sm:px-8 text-center">
+      {animo && <p className="m-0 mb-8 inline-flex items-center gap-2 rounded-full bg-fila-calida border border-mostaza-vital px-4 py-2 text-[14.5px] font-semibold text-tinta">{animo}</p>}
+      <span className="mx-auto mb-6 w-24 h-24 rounded-[28px] flex items-center justify-center shadow-[0_20px_40px_-20px_rgba(31,51,56,.6)]" style={{ background: cat.color, color: cat.tinta }}>
+        <IconoCategoria icono={cat.icono} className="w-12 h-12" />
+      </span>
+      <p className="m-0 mb-2 text-[12.5px] tracking-[0.16em] uppercase font-semibold text-tinta-tenue">
+        Parte {idxModulo + 1} de {total}
+      </p>
+      <h1 className="m-0 mb-3 font-serif font-normal text-[30px] sm:text-[38px] leading-tight">{modulo}</h1>
+      {cat.linea && <p className="m-0 mb-10 text-[17px] leading-relaxed text-tinta-suave">{cat.linea}</p>}
+      <Button onClick={onSeguir}>Empezar</Button>
     </div>
   );
 }
@@ -100,13 +227,80 @@ export function OnboardingStep() {
   const question = idx >= 0 ? applicable[idx] : null;
 
   const questionSteps = applicable.filter((q) => q.type !== "info");
-  const questionIdx = question ? questionSteps.findIndex((q) => q.id === question.id) : -1;
 
   // Recomputed from live answers (not frozen at edit-start) so it self-
   // corrects if answering a question mid-edit changes which others in the
   // same module still apply.
   const editQuestions = perfilEditModule ? applicable.filter((q) => q.module === perfilEditModule) : null;
   const editIdx = editQuestions && question ? editQuestions.findIndex((q) => q.id === question.id) : -1;
+  const editando = !!perfilEditQuestionId || !!editQuestions;
+  const hydrateOnboarding = useAppStore((s) => s.hydrateOnboarding);
+  const location = useLocation();
+
+  // Categorías en el orden en que aparecen (solo las que aplican). Una
+  // pantalla informativa pertenece a la categoría de la pregunta siguiente.
+  const modulos = useMemo(() => {
+    const vistos: string[] = [];
+    for (const q of applicable) if (q.type !== "info" && q.module && !vistos.includes(q.module)) vistos.push(q.module);
+    return vistos;
+  }, [applicable]);
+  const moduloDe = (i: number): string | undefined => {
+    for (let k = i; k < applicable.length; k++) if (applicable[k].type !== "info") return applicable[k].module;
+    return undefined;
+  };
+  const modulo = idx >= 0 ? moduloDe(idx) : undefined;
+  const idxModulo = modulo ? modulos.indexOf(modulo) : -1;
+  const preguntasDelModulo = modulo ? questionSteps.filter((q) => q.module === modulo) : [];
+  const posEnModulo = question ? preguntasDelModulo.findIndex((q) => q.id === question.id) : -1;
+  let moduloAnterior: string | undefined;
+  for (let k = idx - 1; k >= 0; k--) {
+    if (applicable[k].type !== "info") {
+      moduloAnterior = applicable[k].module;
+      break;
+    }
+  }
+  // Intro de categoría solo si se entra a una categoría nueva y la pantalla
+  // anterior no fue ya una de transición del propio cuestionario.
+  const entraACategoria =
+    !!question && question.type !== "info" && !!modulo && modulo !== moduloAnterior && applicable[idx - 1]?.type !== "info" && !editando && !assistedPatientId;
+  const [introCerrada, setIntroCerrada] = useState<string | null>(null);
+  const mostrarIntro = entraACategoria && introCerrada !== stepId && !introsVistas().has(modulo!);
+
+  // Guardado automático en el servidor (onboarding_borradores): retoma en
+  // otro dispositivo o si el navegador borró los datos.
+  const userId = session.status === "authed" ? session.session.user.id : null;
+  const guardaBorrador = !!userId && !assistedPatientId && !myPatient && !editando && idx > 0;
+  useEffect(() => {
+    if (!guardaBorrador || !stepId) return;
+    const t = window.setTimeout(() => {
+      supabase.from("onboarding_borradores").upsert({ profile_id: userId, answers, paso: stepId, updated_at: new Date().toISOString() }).then(() => {});
+    }, 700);
+    return () => window.clearTimeout(t);
+  }, [guardaBorrador, userId, answers, stepId]);
+
+  // Al volver a entrar (RouteGuard → /app/consent → bienvenida con
+  // state.reanudar), seguir donde quedó.
+  const reanudado = useRef(false);
+  useEffect(() => {
+    if (reanudado.current || !userId || assistedPatientId || myPatient || stepId !== "bienvenida") return;
+    if (!(location.state as { reanudar?: boolean } | null)?.reanudar) return;
+    reanudado.current = true;
+    supabase
+      .from("onboarding_borradores")
+      .select("answers, paso")
+      .eq("profile_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data?.paso || data.paso === "bienvenida") return;
+        const local = Object.keys(answers).length;
+        if (Object.keys(data.answers ?? {}).length >= local) hydrateOnboarding(data.answers);
+        navigate(`/app/perfil/${data.paso}`, { replace: true });
+      });
+  }, [userId, assistedPatientId, myPatient, stepId, location.state, answers, hydrateOnboarding, navigate]);
+
+  // Elegir una opción simple avanza sola (salvo que muestre un aviso, sea
+  // la última o se esté editando).
+  const [avanzar, setAvanzar] = useState(0);
 
   useEffect(() => {
     if (!question) navigate(withAssisted(`/app/perfil/${questions[0].id}`), { replace: true });
@@ -133,6 +327,13 @@ export function OnboardingStep() {
     if (duplicateResolved !== null) goNext();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duplicateResolved]);
+
+  useEffect(() => {
+    if (!avanzar) return;
+    const t = window.setTimeout(() => goNext(), 420);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [avanzar]);
 
   if (!question) return null;
 
@@ -298,9 +499,40 @@ export function OnboardingStep() {
 
   const canContinue = question.type === "text" || question.type === "info" || hasAnswer(value);
 
-  if (question.type === "info") {
+  if (mostrarIntro && modulo) {
     return (
-      <div className="im-in max-w-[620px] mx-auto px-5 py-14 pb-20 sm:px-8 text-center">
+      <IntroCategoria
+        key={`intro-${stepId}`}
+        modulo={modulo}
+        idxModulo={idxModulo}
+        total={modulos.length}
+        onSeguir={() => {
+          marcarIntroVista(modulo);
+          setIntroCerrada(stepId ?? null);
+        }}
+      />
+    );
+  }
+
+  if (question.type === "info") {
+    const cat = idx > 0 && modulo ? categoriaDe(modulo) : null;
+    if (cat && modulo) marcarIntroVista(modulo);
+    const animo = cat ? mensajeDeAnimo(idxModulo, modulos.length) : null;
+    return (
+      <div key={stepId} className="im-paso max-w-[620px] mx-auto px-5 py-14 pb-20 sm:px-8 text-center">
+        {animo && <p className="m-0 mb-7 inline-flex rounded-full bg-fila-calida border border-mostaza-vital px-4 py-2 text-[14.5px] font-semibold text-tinta">{animo}</p>}
+        {cat ? (
+          <span className="mx-auto mb-6 w-20 h-20 rounded-[24px] flex items-center justify-center shadow-[0_18px_36px_-20px_rgba(31,51,56,.6)]" style={{ background: cat.color, color: cat.tinta }}>
+            <IconoCategoria icono={cat.icono} className="w-10 h-10" />
+          </span>
+        ) : (
+          <img src="/marca/isotipo.png" alt="" className="mx-auto mb-6 h-16 w-auto" />
+        )}
+        {cat && (
+          <p className="m-0 mb-2 text-[12.5px] tracking-[0.16em] uppercase font-semibold text-tinta-tenue">
+            Parte {idxModulo + 1} de {modulos.length} · {modulo}
+          </p>
+        )}
         <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.16] lg:leading-[1.12] m-0 mb-4">{resolveText(question.title, answers)}</h1>
         <p className="m-0 mb-8 text-base sm:text-lg leading-relaxed text-tinta-suave">{resolveText(question.body, answers)}</p>
         {idx === 0 && !assistedPatientId && <AntesDeEmpezar />}
@@ -313,7 +545,7 @@ export function OnboardingStep() {
   }
 
   return (
-    <div className="im-in max-w-[680px] mx-auto px-5 pt-8 pb-16 sm:px-8 lg:pt-10 lg:pb-20">
+    <div key={stepId} className="im-paso max-w-[680px] mx-auto px-5 pt-8 pb-16 sm:px-8 lg:pt-10 lg:pb-20">
       {perfilEditQuestionId ? (
         <div className="flex items-center gap-2 mb-6 text-sm text-verde-profundo font-semibold">
           <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
@@ -325,24 +557,14 @@ export function OnboardingStep() {
           Editando "{perfilEditModule}" · pregunta {editIdx + 1} de {editQuestions.length}
         </div>
       ) : (
-        <>
-          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-5 mb-3">
-            {/* Deliberately no "27 de 66": with this many questions an exact
-                count reads as "still so far to go" — the bar gives a sense
-                of movement without the arithmetic. */}
-            <span className="text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">{question.module ?? ""}</span>
-            <span className="text-xs sm:text-sm text-semaforo-verde-texto inline-flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-verde-serenidad" />
-              Guardado automáticamente
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-beige-serenidad overflow-hidden mb-8">
-            <div
-              className="h-full bg-verde-serenidad rounded-full transition-[width]"
-              style={{ width: `${((questionIdx + 1) / Math.max(1, questionSteps.length)) * 100}%` }}
-            />
-          </div>
-        </>
+        modulo && (
+          <ProgresoCuestionario
+            modulo={modulo}
+            modulos={modulos}
+            idxModulo={idxModulo}
+            fraccionModulo={preguntasDelModulo.length ? (posEnModulo + 1) / preguntasDelModulo.length : 0}
+          />
+        )
       )}
 
       <h1 className="font-serif font-normal text-[24px] sm:text-[32px] leading-[1.2] lg:leading-[1.14] m-0 mb-2">{resolveText(question.title, answers)}</h1>
@@ -351,39 +573,40 @@ export function OnboardingStep() {
       {!question.example && <div className="mb-6" />}
 
       {question.type === "single" && (
-        <div className="grid gap-2.5 mb-2">
-          {resolveOptions(question, answers).map((opt) => {
-            const active = value === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => answerQuestion(question.id, opt.value)}
-                className={`text-left min-h-14 px-5 py-3.5 rounded-2xl border-[1.5px] font-sans text-[16px] cursor-pointer ${
-                  active ? "border-verde-serenidad bg-verde-tenue font-semibold" : "border-borde bg-white hover:border-verde-serenidad"
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        <div role="radiogroup" className="grid gap-3 mb-2">
+          {resolveOptions(question, answers).map((opt) => (
+            <OpcionTarjeta
+              key={opt.value}
+              multiple={false}
+              activa={value === opt.value}
+              onClick={() => {
+                answerQuestion(question.id, opt.value);
+                const avisa = question.warning?.when(opt.value);
+                if (!editando && !avisa && applicable[idx + 1] && !submitting) setAvanzar((n) => n + 1);
+              }}
+            >
+              {opt.label}
+            </OpcionTarjeta>
+          ))}
         </div>
       )}
 
       {question.type === "multi" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
           {resolveOptions(question, answers).map((opt) => {
             const list = Array.isArray(value) ? value : [];
             const capReached = !!question.maxSelect && list.filter((v) => !question.exclusive?.includes(v)).length >= question.maxSelect;
+            const checked = list.includes(opt.value);
             return (
-              <CheckRow
+              <OpcionTarjeta
                 key={opt.value}
-                checked={list.includes(opt.value)}
-                disabled={capReached}
-                onToggle={() => toggleMultiAnswer(question.id, opt.value, question.exclusive, question.maxSelect)}
+                multiple
+                activa={checked}
+                disabled={capReached && !checked}
+                onClick={() => toggleMultiAnswer(question.id, opt.value, question.exclusive, question.maxSelect)}
               >
                 {opt.label}
-              </CheckRow>
+              </OpcionTarjeta>
             );
           })}
         </div>
@@ -398,7 +621,7 @@ export function OnboardingStep() {
             setText(e.target.value);
             answerQuestion(question.id, e.target.value);
           }}
-          className="w-full min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta mb-2"
+          className="w-full min-h-14 px-5 rounded-[18px] border-2 border-borde-campo bg-white font-sans text-[18px] text-tinta mb-2 focus:outline-none focus:border-verde-serenidad"
         />
       )}
 

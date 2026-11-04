@@ -49,7 +49,7 @@ export function Consent() {
   }
   // Sin rechazo pendiente: directo al cuestionario (el consentimiento se
   // da en su primera pantalla, ver ConsentimientoInicial en OnboardingStep).
-  return <Navigate to="/app/perfil/bienvenida" replace />;
+  return <Navigate to="/app/perfil/bienvenida" replace state={{ reanudar: true }} />;
 }
 
 function SolicitudRechazada({ rechazo, onContinuar }: { rechazo: Rechazo; onContinuar: () => Promise<void> }) {
