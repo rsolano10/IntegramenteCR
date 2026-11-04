@@ -753,7 +753,7 @@ function RedesFlotantes() {
 // ser quienes deciden). La elección viaja al registro (?para=) y fija quién
 // responde el cuestionario, que se redacta en primera o tercera persona
 // según eso (rol_respondente → respondentVoice.ts). Médicos tiene su propia
-// franja debajo: es otro público y otro camino.
+// sección más abajo («Para médicos y geriatras»).
 const caminos = [
   {
     t: "Acompaño a un ser querido",
@@ -886,23 +886,6 @@ export function Landing() {
               </Reveal>
             ))}
           </div>
-
-          {/* Médicos: otro público, en una franja aparte para que no compita
-              con la decisión «para mí o para alguien». */}
-          <Reveal className="max-w-[1040px] mx-auto mt-6">
-            <div className="rounded-[28px] bg-verde-profundo text-white px-6 py-6 sm:px-8 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-              <div className="flex-1">
-                <p className="m-0 font-serif text-[23px] sm:text-[25px] leading-tight text-white">¿Sos profesional de la salud?</p>
-                <p className="m-0 mt-1 text-[16px] leading-relaxed text-[#e3eeee]">Referí pacientes y recibí información de su seguimiento.</p>
-              </div>
-              <Link
-                to={guiaProfesionales}
-                className="shrink-0 inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-mostaza-vital text-tinta font-bold text-[16px] no-underline hover:bg-white"
-              >
-                Información para médicos
-              </Link>
-            </div>
-          </Reveal>
         </div>
       </section>
 
