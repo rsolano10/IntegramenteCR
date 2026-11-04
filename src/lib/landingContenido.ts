@@ -65,7 +65,7 @@ export const whatsappHome = {
 
 export interface MiembroEquipo {
   nombre: string;
-  // Cargo dentro del programa, si lo tiene (ej. "Directora clínica del programa").
+  // Cargo adicional, si hace falta mostrarlo aparte del área.
   cargo?: string;
   area: string;
   descripcion: string;
@@ -96,8 +96,7 @@ const foto = (archivo: string): FotoEquipo => ({
 export const equipo: MiembroEquipo[] = [
   {
     nombre: "MSc. Guiselle Solano Asenjo",
-    cargo: "Directora clínica del programa",
-    area: "Neuropsicología",
+    area: "Directora clínica",
     descripcion: "Dirige el enfoque clínico del programa y participa en la valoración y la intervención neuropsicológica.",
     foto: foto("guiselle-solano-asenjo"),
   },
@@ -109,7 +108,7 @@ export const equipo: MiembroEquipo[] = [
   },
   {
     nombre: "María Laura Garita Quesada",
-    area: "Facilitadora de estimulación cognitiva",
+    area: "Coordinadora del programa",
     descripcion: "Coordina las actividades y la comunicación con las familias, acompaña las sesiones de estimulación cognitiva.",
     foto: foto("maria-laura"),
   },
