@@ -173,18 +173,14 @@ export const programasHome = {
 // Las áreas del programa (sección "Cuidamos la mente…" del home). Colores
 // de la paleta oficial; `tinta` es el color del texto sobre ese fondo (nunca
 // blanco sobre mostaza o beige).
-// Cada tarjeta lleva una foto real con el color del área encima en
-// degradé translúcido: casi sólido detrás del título (contraste del texto
-// igual que con el fondo plano) y más transparente arriba, para que se vea
-// la foto. Las de estimulación cognitiva y nutrición son de Wikimedia
-// Commons (CC BY 2.0, autor Shixart1985: el crédito va debajo de las
-// tarjetas, lo exige la licencia); la de gerontogimnasia es un cuadro de
-// nuestros propios videos (GER-004).
+// Cada tarjeta lleva una imagen (las de IntegraMente, assets/img-home/) con
+// el color del área encima en degradé translúcido: casi sólido detrás del
+// título (contraste ≥ 3:1 en el peor caso) y más transparente arriba, para
+// que se vea la imagen.
 export interface FotoArea {
   webp: string;
   jpg: string;
   alt: string;
-  credito?: { autor: string; url: string; licencia: string; licenciaUrl: string };
 }
 
 export const areas: {
@@ -211,13 +207,7 @@ export const areas: {
     foto: {
       webp: "/areas/estimulacion-cognitiva.webp",
       jpg: "/areas/estimulacion-cognitiva.jpg",
-      alt: "Una mujer mayor lee un libro con atención en su sala.",
-      credito: {
-        autor: "Shixart1985",
-        url: "https://commons.wikimedia.org/wiki/File:Elderly_woman_with_curly_hair_and_glasses_reading_an_old_book.jpg",
-        licencia: "CC BY 2.0",
-        licenciaUrl: "https://creativecommons.org/licenses/by/2.0",
-      },
+      alt: "Una señora arma un rompecabezas de piezas de colores sobre la mesa.",
     },
   },
   {
@@ -232,7 +222,7 @@ export const areas: {
     foto: {
       webp: "/areas/gerontogimnasia.webp",
       jpg: "/areas/gerontogimnasia.jpg",
-      alt: "Pablo Jiménez, del equipo de gerontogimnasia, guía a una participante durante un ejercicio.",
+      alt: "Una señora estira el brazo durante una clase de movimiento, con otras personas mayores detrás.",
     },
   },
   {
@@ -247,13 +237,7 @@ export const areas: {
     foto: {
       webp: "/areas/nutricion.webp",
       jpg: "/areas/nutricion.jpg",
-      alt: "Una mujer mayor corta verduras frescas en la cocina de su casa.",
-      credito: {
-        autor: "Shixart1985",
-        url: "https://commons.wikimedia.org/wiki/File:Elderly_woman_prepares_vegetables_while_cooking_in_a_home_kitchen_during_the_day.jpg",
-        licencia: "CC BY 2.0",
-        licenciaUrl: "https://creativecommons.org/licenses/by/2.0",
-      },
+      alt: "Una señora con delantal corta verduras frescas en su cocina, junto a su plan de nutrición.",
     },
   },
 ];

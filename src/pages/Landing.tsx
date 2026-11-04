@@ -965,22 +965,25 @@ export function Landing() {
             {areas.map((a, i) => (
               <Reveal key={a.t} delay={i * 90} className="h-full">
                 <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col">
-                  <div className="relative aspect-[16/10] flex flex-col justify-end p-5 sm:p-6" style={{ color: a.tinta }}>
+                  {/* Imagen completa (16:9, sin recortar lo importante) con un
+                      velo suave del color del área, que se funde en la franja
+                      sólida del título: el texto siempre va sobre color pleno. */}
+                  <div className="relative aspect-video">
                     <picture>
                       <source srcSet={a.foto.webp} type="image/webp" />
-                      <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1120} height={630} className="absolute inset-0 w-full h-full object-cover object-top" />
+                      <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
                     </picture>
-                    {/* Color del área en degradé: casi sólido detrás del título
-                        (mismo contraste que el fondo plano) y translúcido arriba. */}
                     <span
                       aria-hidden="true"
                       className="absolute inset-0"
-                      style={{ background: `linear-gradient(to top, ${a.fondo} 0%, ${a.fondo}f0 30%, ${a.fondo}5c 56%, ${a.fondo}1f 80%, ${a.fondo}1f 100%)` }}
+                      style={{ background: `linear-gradient(to top, ${a.fondo} 0%, ${a.fondo}99 14%, ${a.fondo}26 38%, ${a.fondo}14 100%)` }}
                     />
-                    <span className="absolute right-4 top-4 w-12 h-12 rounded-full flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(0,0,0,.5)]" style={{ background: a.fondo }}>
+                    <span className="absolute right-4 top-4 w-12 h-12 rounded-full flex items-center justify-center shadow-[0_6px_16px_-8px_rgba(0,0,0,.5)]" style={{ background: a.fondo, color: a.tinta }}>
                       <Icono name={a.icono} className="w-7 h-7" />
                     </span>
-                    <h3 className="relative m-0 font-serif font-normal text-[25px] leading-tight">{a.t}</h3>
+                  </div>
+                  <div className="px-5 sm:px-6 pb-4 pt-1 lg:min-h-[5.6rem] flex items-end" style={{ background: a.fondo, color: a.tinta }}>
+                    <h3 className="m-0 font-serif font-normal text-[25px] leading-tight">{a.t}</h3>
                   </div>
                   <div className="p-5 sm:p-6 flex flex-col gap-3 flex-1">
                     <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">{a.frase}</p>
@@ -999,32 +1002,6 @@ export function Landing() {
               </Reveal>
             ))}
           </div>
-          <p className="m-0 mt-5 text-[12px] text-tinta-tenue">
-            Fotos de estimulación cognitiva y nutrición:{" "}
-            {areas
-              .filter((a) => a.foto.credito)
-              .slice(0, 1)
-              .map((a) => (
-                <span key={a.t}>
-                  {a.foto.credito!.autor},{" "}
-                  <a href={a.foto.credito!.licenciaUrl} target="_blank" rel="noopener noreferrer" className="text-tinta-tenue underline">
-                    {a.foto.credito!.licencia}
-                  </a>
-                </span>
-              ))}
-            , vía Wikimedia Commons (
-            {areas
-              .filter((a) => a.foto.credito)
-              .map((a, i) => (
-                <span key={a.t}>
-                  {i > 0 && " · "}
-                  <a href={a.foto.credito!.url} target="_blank" rel="noopener noreferrer" className="text-tinta-tenue underline">
-                    {a.t.split(" ")[0].toLowerCase()}
-                  </a>
-                </span>
-              ))}
-            ).
-          </p>
         </div>
       </section>
 
