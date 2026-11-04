@@ -5,13 +5,14 @@ import type { MediaResource } from "../../lib/mediaResources";
 import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
 import { useBodyScrollLock } from "../../lib/useBodyScrollLock";
 import { ResourceDetailView } from "../ui/ResourceDetailView";
-import { IntroGerontogimnasia } from "../ui/IntroGerontogimnasia";
 import { Button } from "../ui/Button";
 
 // «Ver una actividad de ejemplo» del home: el recurso real de la biblioteca
 // (se lee por código; los recursos activos son públicos) con los mismos
 // componentes de la pantalla de actividad de la app (familiar/Actividad.tsx),
-// así lo que se ve acá es exactamente lo que se ve adentro. Se carga aparte
+// así lo que se ve acá es exactamente lo que se ve adentro. Sin la tarjeta
+// de introducción a la gerontogimnasia (en el home no tiene sentido «volver
+// a ver la introducción»): solo la ficha del ejercicio. Se carga aparte
 // (lazy) para no sumar el cliente de Supabase al home.
 export default function EjemploActividad({ codigo, onClose }: { codigo: string; onClose: () => void }) {
   useBodyScrollLock();
@@ -52,7 +53,6 @@ export default function EjemploActividad({ codigo, onClose }: { codigo: string; 
               {/* Mismo encabezado y cuerpo que la pantalla de actividad. */}
               <h3 className="font-serif font-normal text-[26px] m-0 mb-3.5">{recurso.titulo}</h3>
               <div className="grid gap-4.5">
-                {recurso.modulo === "gerontogimnasia" && recurso.codigo !== "GER-010" && <IntroGerontogimnasia />}
                 <ResourceDetailView content={contenidoDeRecurso(recurso, `${recurso.tipo}${recurso.duracion ? ` · ${recurso.duracion}` : ""}`)} />
               </div>
             </>
