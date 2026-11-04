@@ -763,7 +763,9 @@ const caminos = [
   {
     t: "Acompaño a un ser querido",
     d: "Actividades paso a paso para compartir y registrar cómo les fue.",
+    tituloEtiquetas: "Pensado para",
     etiquetas: ["Familiares", "Personas cuidadoras"],
+    chip: "#dce8e9",
     boton: "Empezar para un ser querido",
     to: registroPara("ser-querido"),
     fondo: "#6a969c",
@@ -772,7 +774,9 @@ const caminos = [
   {
     t: "Quiero cuidar mi salud cerebral",
     d: "Actividades para mantenerte activo y cuidar tu bienestar, a tu ritmo.",
+    tituloEtiquetas: "Incluye",
     etiquetas: ["Estimulación cognitiva", "Movimiento", "Bienestar"],
+    chip: "#f9e6c2",
     boton: "Empezar para mí",
     to: registroPara("mi"),
     fondo: "#f4d096",
@@ -781,7 +785,9 @@ const caminos = [
   {
     t: "¿Sos médico o profesional de la salud?",
     d: "Referí pacientes y recibí información de su seguimiento.",
+    tituloEtiquetas: "Especialidades",
     etiquetas: ["Geriatría", "Medicina general", "Neurología"],
+    chip: "#d3e0e2",
     boton: "Información para médicos",
     to: guiaProfesionales,
     fondo: "#3f6a70",
@@ -881,15 +887,23 @@ export function Landing() {
                   <div className="flex flex-col gap-3 p-6 sm:p-7 flex-1">
                     <h3 className="m-0 font-serif font-normal text-[27px] leading-tight lg:min-h-[2.5em]">{c.t}</h3>
                     <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">{c.d}</p>
-                    {/* Información, no controles: texto plano, sin forma de botón. */}
-                    <ul aria-label="Pensado para" className="list-none m-0 p-0 flex flex-wrap gap-x-4 gap-y-1 text-[14px] font-semibold text-verde-profundo">
-                      {c.etiquetas.map((x) => (
-                        <li key={x} className="inline-flex items-center gap-1.5">
-                          <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-verde-serenidad" />
-                          {x}
-                        </li>
-                      ))}
-                    </ul>
+                    {/* Información, no controles: etiquetas planas (sin borde ni
+                        sombra, para que no parezcan botones), teñidas con el
+                        color de la tarjeta. */}
+                    <div className="mt-1 pt-4 border-t border-borde-suave">
+                      <p className="m-0 mb-2.5 text-[11.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{c.tituloEtiquetas}</p>
+                      <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
+                        {c.etiquetas.map((x) => (
+                          <li
+                            key={x}
+                            className="inline-flex items-center rounded-full px-3 py-1.5 text-[13.5px] font-semibold leading-none text-tinta"
+                            style={{ background: c.chip }}
+                          >
+                            {x}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                     <div className="mt-auto pt-4">
                       <Button to={c.to} variant={i === 2 ? "secondary" : "primary"} className="w-full sm:w-auto">
                         {c.boton}
