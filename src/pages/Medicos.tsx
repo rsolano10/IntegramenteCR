@@ -21,7 +21,6 @@ import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsap
 // recibiendo datos de salud de terceros sin autenticación.
 
 const hablarConElEquipo = waLink(WHATSAPP_EQUIPO, "Hola, soy médico/a y quisiera conocer IntegraMente en Casa para referir pacientes.");
-const REFERIR = "/medicos/referir";
 
 const metodologia: { icono: string; t: string; d: string }[] = [
   {
@@ -211,9 +210,9 @@ export function Medicos() {
     <div className="font-sans text-tinta bg-fondo-papel min-h-full">
       <Encabezado
         accion={
-          <Link to={REFERIR} className="inline-flex items-center min-h-10 px-4 sm:px-5 rounded-full bg-verde-serenidad text-white text-[15px] font-semibold no-underline hover:bg-verde-profundo whitespace-nowrap">
+          <a href="#formulario" className="inline-flex items-center min-h-10 px-4 sm:px-5 rounded-full bg-verde-serenidad text-white text-[15px] font-semibold no-underline hover:bg-verde-profundo whitespace-nowrap">
             Referir un paciente
-          </Link>
+          </a>
         }
       />
 
@@ -229,9 +228,9 @@ export function Medicos() {
               Un programa domiciliario para personas mayores, del envejecimiento saludable a la demencia moderada. Vos referís, nosotros acompañamos.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to={REFERIR} className={botonPrimario}>
+              <a href="#formulario" className={botonPrimario}>
                 Referir un paciente
-              </Link>
+              </a>
               <a href={hablarConElEquipo} target="_blank" rel="noopener noreferrer" className={botonSecundario}>
                 <WhatsAppIcon size={20} /> Hablar con el equipo
               </a>
@@ -359,9 +358,9 @@ export function Medicos() {
               <Eyebrow>Cómo referir un paciente</Eyebrow>
               <SectionTitle className="mb-4">Tres pasos, sin trámites.</SectionTitle>
               <p className="m-0 mb-8 text-[17px] leading-relaxed text-tinta-suave">Completás un formulario corto y se abre WhatsApp con el mensaje listo para nuestro equipo.</p>
-              <Link to={REFERIR} className={botonPrimario}>
+              <a href="#formulario" className={botonPrimario}>
                 Referir un paciente
-              </Link>
+              </a>
             </Reveal>
             <Reveal delay={120}>
               <ol className="list-none m-0 p-0 grid gap-4">
@@ -393,9 +392,9 @@ export function Medicos() {
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-3">
-              <Link to={REFERIR} className="inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-mostaza-vital text-tinta font-bold text-[17px] whitespace-nowrap hover:bg-white transition-colors no-underline">
+              <a href="#formulario" className="inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-mostaza-vital text-tinta font-bold text-[17px] whitespace-nowrap hover:bg-white transition-colors no-underline">
                 Referir un paciente
-              </Link>
+              </a>
               <a
                 href={hablarConElEquipo}
                 target="_blank"
@@ -404,6 +403,19 @@ export function Medicos() {
               >
                 <WhatsAppIcon size={20} /> Hablar con el equipo
               </a>
+            </div>
+          </div>
+        </section>
+        {/* ─── Formulario de referencia, al final ─── */}
+        <section id="formulario" className="bg-seccion-arena scroll-mt-20">
+          <div className="max-w-[880px] mx-auto px-5 py-16 sm:px-8 lg:py-24">
+            <Reveal className="text-center">
+              <Eyebrow>Referir un paciente</Eyebrow>
+              <SectionTitle className="max-w-[16em] mx-auto mb-3">Envianos la referencia.</SectionTitle>
+              <p className="m-0 mb-10 mx-auto max-w-[34em] text-[17px] leading-relaxed text-tinta-suave">Completá los datos y se abre WhatsApp con el mensaje listo para nuestro equipo.</p>
+            </Reveal>
+            <div className="rounded-[32px] bg-white border border-borde p-5 sm:p-9 shadow-[0_30px_60px_-40px_rgba(31,51,56,.45)]">
+              <FormularioReferencia />
             </div>
           </div>
         </section>
