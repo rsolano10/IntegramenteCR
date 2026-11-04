@@ -211,7 +211,7 @@ export const areas: {
     fondo: "#3f6a70",
     tinta: "#ffffff",
     chip: "#dce8e9",
-    foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora arma un rompecabezas de piezas de colores sobre la mesa." },
+    foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
     // Texto literal de COG-004 en la biblioteca.
     ejemplo: {
       tipo: "ficha",
@@ -238,7 +238,7 @@ export const areas: {
     fondo: "#f4d096",
     tinta: "#1f3338",
     chip: "#f9e6c2",
-    foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora estira el brazo durante una clase de movimiento, con otras personas mayores detrás." },
+    foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora sentada en una silla estira el brazo en la sala de su casa, con mancuernas a sus pies." },
     // 20 segundos del video real de GER-003.
     ejemplo: {
       tipo: "video",
@@ -259,7 +259,7 @@ export const areas: {
     fondo: "#a9c49f",
     tinta: "#1f3338",
     chip: "#e1ebdb",
-    foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a su plan de nutrición." },
+    foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
     // Texto literal de PRE-002 («Tu actividad») en la biblioteca.
     ejemplo: {
       tipo: "ficha",
