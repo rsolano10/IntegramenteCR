@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { useSession } from "../../lib/useSession";
+import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { supabase } from "../../lib/supabase";
 import { uploadAvatar } from "../../lib/avatar";
@@ -228,7 +229,8 @@ function AvatarMenu() {
 export function ParticipantShell() {
   const session = useSession();
   const { data: myPatient } = useMyPatient();
-  const pendiente = myPatient?.plan_status === "pendiente";
+  const rechazada = myPatient?.estado_cuenta === "rechazada";
+  const pendiente = rechazada || (myPatient?.plan_status === "pendiente" && !myPatient?.tiene_plan_visible);
   const nombre = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   // The tour describes the activities screen — wait until there is one.
   const tour = useProductTour(!!myPatient && !pendiente);
@@ -247,7 +249,18 @@ export function ParticipantShell() {
         </div>
       </div>
       <div className="flex-1 px-5 py-6 sm:px-8 flex justify-center">
-        <div className="w-full max-w-xl flex flex-col gap-5.5">{pendiente ? <PendienteRevision programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}</div>
+        <div className="w-full max-w-xl flex flex-col gap-5.5">
+          {rechazada && myPatient ? (
+            <CuentaRechazada patient={myPatient} />
+          ) : pendiente ? (
+            <PendienteRevision programaElegido={myPatient?.programa_elegido ?? true} />
+          ) : (
+            <>
+              {myPatient && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
+              <Outlet />
+            </>
+          )}
+        </div>
       </div>
 
       {(() => {

@@ -1,7 +1,7 @@
 // Los módulos de actividades: nombre y color. Sin dependencias, para que el
 // home público lo use sin arrastrar el cliente de Supabase. `cognicion` es
 // «Atención, memoria y funciones ejecutivas» del manual de recursos cognitivos.
-export type ResourceModulo = "sentidos" | "movimiento" | "musica" | "reminiscencia" | "cognicion" | "gerontogimnasia" | "nutricion";
+export type ResourceModulo = "sentidos" | "movimiento" | "musica" | "reminiscencia" | "cognicion" | "gerontogimnasia" | "nutricion" | "bienvenida";
 
 // One mood per módulo so cards read by color before they read by text —
 // sentidos (calma/teal), movimiento (energía/ámbar), música (calidez/
@@ -16,6 +16,8 @@ export const moduloTheme: Record<ResourceModulo, { from: string; to: string; chi
   cognicion: { from: "#c3d2dc", to: "#5b7489", chip: "bg-[#3e5566]/80", ink: "#3e5566" },
   gerontogimnasia: { from: "#f4d096", to: "#c99a45", chip: "bg-[#7a5a1f]/80", ink: "#7a5a1f" },
   nutricion: { from: "#cfe0b8", to: "#6f8f4e", chip: "bg-[#4b6534]/80", ink: "#4b6534" },
+  // Recursos de bienvenida (Fase 3.3): video de bienvenida, equipo, tutorial.
+  bienvenida: { from: "#6a969c", to: "#3f6a70", chip: "bg-verde-profundo/85", ink: "#3f6a70" },
 };
 
 export const moduloLabel: Record<ResourceModulo, string> = {
@@ -26,6 +28,7 @@ export const moduloLabel: Record<ResourceModulo, string> = {
   cognicion: "Atención y memoria",
   gerontogimnasia: "Gerontogimnasia",
   nutricion: "Nutrición",
+  bienvenida: "Bienvenida",
 };
 
 // Módulos con formato de ficha (business/integramente-recursos-spec.md):

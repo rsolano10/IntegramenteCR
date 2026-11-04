@@ -43,7 +43,7 @@ interface Panorama {
 
 const ESTADO: Record<string, string> = { realizado: "hecha", parcial: "en parte", no: "no se hizo", pendiente: "sin registrar", futuro: "sin registrar" };
 const ANIMO: Record<string, string> = { better: "mejor", same: "igual", worse: "peor" };
-const MODULO: Record<string, string> = { sentidos: "Sentidos", movimiento: "Movimiento", musica: "Música", reminiscencia: "Reminiscencia", cognicion: "Atención y memoria", gerontogimnasia: "Gerontogimnasia", nutricion: "Nutrición" };
+const MODULO: Record<string, string> = { sentidos: "Sentidos", movimiento: "Movimiento", musica: "Música", reminiscencia: "Reminiscencia", cognicion: "Atención y memoria", gerontogimnasia: "Gerontogimnasia", nutricion: "Nutrición", bienvenida: "Bienvenida" };
 const ALERTA: Record<string, string> = { ideacion: "posible autolesión", maltrato: "sospecha de maltrato", caida: "caída", cambio: "cambio repentino de salud", extravio: "riesgo de extravío" };
 
 function fechaCorta(iso: string) {

@@ -63,10 +63,9 @@ export function Paciente() {
   const { data: extra } = useQuery({
     queryKey: ["patient-extra", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("patients").select("programa_elegido_en").eq("id", id).maybeSingle();
-      // Column only exists once 20261008000000_elegir_programa is applied.
-      if (error) return { programa_elegido_en: null as string | null };
-      return data as { programa_elegido_en: string | null };
+      const { data, error } = await supabase.from("patients").select("programa_elegido_en, aprobada_en").eq("id", id).maybeSingle();
+      if (error) return { programa_elegido_en: null as string | null, aprobada_en: null as string | null };
+      return data as { programa_elegido_en: string | null; aprobada_en: string | null };
     },
     enabled: !!id,
   });
@@ -79,6 +78,8 @@ export function Paciente() {
         .select("id, publish_at, reviewed_at, feedback_mensaje, family_reviewed_at, week_mood, review_favorita, review_preocupacion")
         .eq("patient_id", id)
         .eq("status", "published")
+        // Los planes de bienvenida (Fase 3.3) no son semanas de la clínica.
+        .eq("origen", "clinica")
         .order("publish_at", { ascending: false });
       if (error) throw error;
       return data as PlanSummary[];
@@ -268,6 +269,11 @@ export function Paciente() {
             isFirstAssignment={pendiente}
             hasFamiliar={!!familiar}
             plans={plans ?? []}
+            aprobada={!!extra?.aprobada_en}
+            onAprobada={() => {
+              queryClient.invalidateQueries({ queryKey: ["patient-extra", id] });
+              queryClient.invalidateQueries({ queryKey: ["panel-cuentas"] });
+            }}
             onPublished={(msg) => done(msg)}
           />
           </>

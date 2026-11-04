@@ -17,6 +17,7 @@ import { NuevaSemanaModal } from "../ui/NuevaSemanaModal";
 import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
 import { waEquipo } from "../../lib/whatsapp";
 import { BotonWhatsApp } from "../ui/BotonWhatsApp";
+import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
 
 const pasosRevision = [
   { titulo: "Cuestionario recibido", detalle: "Ya tenemos toda la información que nos compartiste.", estado: "hecho" },
@@ -106,7 +107,11 @@ export function FamiliarShell() {
   const { data: myPatient, isPending: isLoading } = useMyPatient();
   const hydrateOnboarding = useAppStore((s) => s.hydrateOnboarding);
   const { pathname } = useLocation();
-  const pendiente = myPatient?.plan_status === "pendiente";
+  // Pendiente sin nada para ver todavía. Con los recursos de bienvenida
+  // (Fase 3.3) la cuenta ya tiene un plan visible antes de la aprobación,
+  // y se muestra la app normal con un aviso arriba.
+  const rechazada = myPatient?.estado_cuenta === "rechazada";
+  const pendiente = rechazada || (myPatient?.plan_status === "pendiente" && !myPatient?.tiene_plan_visible);
   // The tour walks through Hoy/Plan/Semana — none of which exist yet while
   // the program is still being prepared, so it waits for the real dashboard.
   const tour = useProductTour(!!myPatient && !pendiente);
@@ -154,7 +159,16 @@ export function FamiliarShell() {
       )}
 
       <div className="max-w-3xl mx-auto px-5 py-6 sm:px-8 lg:px-12 lg:py-8">
-        {pendiente ? <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeAyuda={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} /> : <Outlet />}
+        {rechazada && myPatient ? (
+          <CuentaRechazada patient={myPatient} />
+        ) : pendiente ? (
+          <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeAyuda={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} />
+        ) : (
+          <>
+            {myPatient && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
+            <Outlet />
+          </>
+        )}
       </div>
 
       {(() => {

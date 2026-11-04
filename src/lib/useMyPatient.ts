@@ -16,7 +16,23 @@ export interface MyPatient {
   needsReregistration: boolean;
   // false = todavía no eligió entre Autoguiado y Orientado (ElegirPrograma).
   programa_elegido: boolean;
+  // Fase 4.1: estado de la cuenta (ver migración 20261105010000_cuentas_estados.sql).
+  estado_cuenta: EstadoCuenta | null;
+  demo_fin: string | null;
+  rechazo_motivo: string | null;
+  // Hay un plan publicado y visible (también el de bienvenida).
+  tiene_plan_visible: boolean;
 }
+
+export type EstadoCuenta =
+  | "registrado"
+  | "cuestionario_pendiente"
+  | "pendiente_aprobacion"
+  | "en_demo"
+  | "demo_finalizada"
+  | "activa"
+  | "inactiva"
+  | "rechazada";
 
 // Resolves "which real patient record am I (familiar/paciente) linked to"
 // — the family/participant side of the app otherwise has no notion of a
@@ -50,6 +66,10 @@ export function useMyPatient() {
         // Default true: until the elegir_programa migration is live the RPC
         // doesn't return this column, and nobody should be nagged then.
         programa_elegido: row.programa_elegido ?? true,
+        estado_cuenta: row.estado_cuenta ?? null,
+        demo_fin: row.demo_fin ?? null,
+        rechazo_motivo: row.rechazo_motivo ?? null,
+        tiene_plan_visible: row.tiene_plan_visible ?? false,
       } as MyPatient;
     },
     enabled: !!userId,

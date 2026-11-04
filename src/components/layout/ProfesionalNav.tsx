@@ -24,6 +24,17 @@ const items: NavItem[] = [
     ),
   },
   {
+    label: "Seguimiento",
+    to: "/app/profesional/seguimiento",
+    match: (p) => p.startsWith("/app/profesional/seguimiento"),
+    icon: (active) => (
+      <svg {...iconProps}>
+        <path d="M3 16.5h14" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
+        <path d="M4 13l3.5-4 3 2.5L16 5" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     label: "Usuarios",
     to: "/app/profesional/usuarios",
     match: (p) => p.startsWith("/app/profesional/usuarios"),
@@ -44,6 +55,17 @@ const items: NavItem[] = [
       <svg {...iconProps}>
         <rect x="2.5" y="3.5" width="15" height="13" rx="2" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
         <path d="M8 7.2v5.6l4.5-2.8-4.5-2.8Z" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    label: "Plantillas",
+    to: "/app/profesional/plantillas",
+    match: (p) => p.startsWith("/app/profesional/plantillas"),
+    icon: (active) => (
+      <svg {...iconProps}>
+        <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
+        <path d="M3 8h14M7 2.5v3M13 2.5v3M6.5 11h3M6.5 14h6" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
       </svg>
     ),
   },

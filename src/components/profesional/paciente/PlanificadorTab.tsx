@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import { callAdminAccounts } from "../../../lib/adminAccounts";
@@ -16,6 +16,8 @@ import {
 import { Button } from "../../ui/Button";
 import { TaskEditorModal, type DraftTask } from "./TaskEditorModal";
 import type { PlanSummary } from "./SemanaTab";
+import { DesdePlantilla, type CargaPlantilla } from "./DesdePlantilla";
+import type { CambioVisible } from "../../../lib/plantillas";
 
 // 7:00–20:00: the same quiet-hours window WhatsApp reminders respect.
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7);
@@ -46,6 +48,8 @@ export function PlanificadorTab({
   isFirstAssignment,
   hasFamiliar,
   plans,
+  aprobada,
+  onAprobada,
   onPublished,
 }: {
   patientId: string;
@@ -53,6 +57,9 @@ export function PlanificadorTab({
   isFirstAssignment: boolean;
   hasFamiliar: boolean;
   plans: PlanSummary[];
+  // Fase 4.3: solo las cuentas aprobadas reciben recursos de la clínica.
+  aprobada: boolean;
+  onAprobada: () => void;
   onPublished: (message: string) => void;
 }) {
   const nombre = patientNombre.split(" ")[0];
@@ -95,6 +102,58 @@ export function PlanificadorTab({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [quitando, setQuitando] = useState<string | null>(null);
+  const [aprobando, setAprobando] = useState(false);
+
+  // Semana en borrador (desde una plantilla, con o sin IA): se guarda en
+  // semanas_borrador para no perderla al salir, con el diff de la IA.
+  const [borrador, setBorrador] = useState<{ cambios: CambioVisible[]; aviso: string | null; plantillaId: string | null; iaId: string | null } | null>(null);
+  const borradorRestaurado = useRef(false);
+  const { data: borradorGuardado } = useQuery({
+    queryKey: ["semana-borrador", patientId],
+    queryFn: async () => {
+      const { data, error: e } = await supabase.from("semanas_borrador").select("tareas, cambios, aviso, plantilla_id, ia_id").eq("patient_id", patientId).maybeSingle();
+      if (e) throw e;
+      return data as { tareas: DraftTask[]; cambios: CambioVisible[] | null; aviso: string | null; plantilla_id: string | null; ia_id: string | null } | null;
+    },
+  });
+  useEffect(() => {
+    if (borradorRestaurado.current || !borradorGuardado) return;
+    borradorRestaurado.current = true;
+    setDrafts(borradorGuardado.tareas ?? []);
+    setBorrador({ cambios: borradorGuardado.cambios ?? [], aviso: borradorGuardado.aviso, plantillaId: borradorGuardado.plantilla_id, iaId: borradorGuardado.ia_id });
+  }, [borradorGuardado]);
+  useEffect(() => {
+    if (!borrador) return;
+    const t = window.setTimeout(() => {
+      supabase
+        .from("semanas_borrador")
+        .upsert({ patient_id: patientId, tareas: drafts, cambios: borrador.cambios, aviso: borrador.aviso, plantilla_id: borrador.plantillaId, ia_id: borrador.iaId, updated_at: new Date().toISOString() })
+        .then(() => {});
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [drafts, borrador, patientId]);
+
+  function cargarPlantilla(c: CargaPlantilla) {
+    if (drafts.length > 0 && !window.confirm("Esto reemplaza las actividades nuevas que ya pusiste en el borrador. ¿Seguimos?")) return;
+    setDrafts(c.drafts);
+    setBorrador({ cambios: c.cambios, aviso: c.aviso, plantillaId: c.plantillaId, iaId: c.iaId });
+  }
+  async function descartarBorrador() {
+    setDrafts([]);
+    setBorrador(null);
+    await supabase.from("semanas_borrador").delete().eq("patient_id", patientId);
+  }
+  async function aprobar() {
+    setAprobando(true);
+    setError("");
+    const { error: e } = await supabase.rpc("aprobar_cuenta", { p_patient_id: patientId });
+    setAprobando(false);
+    if (e) {
+      setError(e.message);
+      return;
+    }
+    onAprobada();
+  }
 
   const planId = target.kind === "plan" ? target.plan.id : null;
   const { data: existing } = useQuery({
@@ -173,6 +232,10 @@ export function PlanificadorTab({
 
   async function publish() {
     setError("");
+    if (!aprobada) {
+      setError("Primero aprobá la cuenta: solo las cuentas aprobadas reciben recursos de la clínica.");
+      return;
+    }
     if (draftsInWeek.length === 0) {
       setError("Agregá al menos una actividad al calendario.");
       return;
@@ -233,6 +296,9 @@ export function PlanificadorTab({
     }
     queryClient.invalidateQueries({ queryKey: ["patient-plans", patientId] });
     queryClient.invalidateQueries({ queryKey: ["planner-plan-tasks", planId] });
+    await supabase.from("semanas_borrador").delete().eq("patient_id", patientId);
+    queryClient.setQueryData(["semana-borrador", patientId], null);
+    setBorrador(null);
     setSaving(false);
     const cuando = visibleDesde ? ` La familia lo verá desde el ${fechaLarga(visibleDesde)}.` : " La familia ya lo puede ver.";
     const aviso = canales ? ` Se le avisó por ${canales}.` : "";
@@ -254,8 +320,63 @@ export function PlanificadorTab({
   ];
   const activa = target.kind === "plan" ? target.plan.id : "nueva";
 
+  const nombreDia = (i: number) => days[i]?.dia ?? `Día ${i + 1}`;
   return (
     <div className="grid gap-5">
+      {!aprobada && (
+        <section className="rounded-3xl border-[1.5px] border-mostaza-vital bg-fila-calida p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1">
+            <p className="m-0 text-[16px] font-bold text-tinta">Esta cuenta todavía no está aprobada</p>
+            <p className="m-0 mt-1 text-[14px] leading-relaxed text-tinta-suave">
+              Podés armar el borrador, pero para publicar hay que aprobarla. Al aprobar empieza su semana gratis.
+            </p>
+          </div>
+          <Button dense onClick={aprobar} disabled={aprobando}>
+            {aprobando ? "Aprobando…" : "Aprobar cuenta"}
+          </Button>
+        </section>
+      )}
+
+      <DesdePlantilla patientId={patientId} days={days} onCargar={cargarPlantilla} />
+
+      {borrador && (
+        <section className="rounded-3xl bg-white border-[1.5px] border-verde-serenidad p-5 sm:p-6 grid gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-verde-profundo">Borrador · sin publicar</p>
+              <h3 className="m-0 mt-0.5 text-[17px] font-bold">
+                {borrador.iaId ? (borrador.cambios.length ? `La IA propuso ${borrador.cambios.length} ${borrador.cambios.length === 1 ? "cambio" : "cambios"}` : "La IA no propuso cambios") : "Copiado de la plantilla"}
+              </h3>
+            </div>
+            <button type="button" onClick={descartarBorrador} className="min-h-9 px-3 bg-transparent border-0 text-[13.5px] text-alerta-texto cursor-pointer">
+              Descartar borrador
+            </button>
+          </div>
+          {borrador.aviso && <p className="m-0 rounded-2xl bg-aviso/70 px-4 py-2.5 text-[14px] text-aviso-texto">{borrador.aviso}</p>}
+          {borrador.cambios.length > 0 && (
+            <ul className="list-none m-0 p-0 grid gap-2">
+              {borrador.cambios.map((c, i) => (
+                <li key={i} className="rounded-2xl bg-campo px-4 py-3 text-[14px] leading-relaxed">
+                  {c.tipo === "reemplazar" ? (
+                    <>
+                      <span className="text-alerta-texto line-through">{c.quitado}</span> → <strong className="text-semaforo-verde-texto">{c.puesto}</strong>{" "}
+                      <span className="text-tinta-tenue">({nombreDia(c.diaA)})</span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{c.quitado}</strong>: {nombreDia(c.diaDe)} → {nombreDia(c.diaA)}
+                    </>
+                  )}
+                  {c.obligatorio && <span className="ml-2 rounded-full bg-riesgo px-2 py-0.5 text-[11.5px] font-semibold text-riesgo-texto">por seguridad</span>}
+                  <span className="block text-[13px] text-tinta-suave">Por qué: {c.justificacion}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="m-0 text-[13px] text-tinta-tenue">Revisá y ajustá en el calendario. Nada llega a la familia hasta que publiques.</p>
+        </section>
+      )}
+
       {/* Semana */}
       <section className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-4">
         {opciones.length > 1 && (
@@ -473,8 +594,8 @@ export function PlanificadorTab({
         </div>
         <div className="grid gap-2.5">
           {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
-          <Button variant="ink" fullWidth onClick={publish} disabled={saving}>
-            {saving ? "Publicando…" : isFirstAssignment ? "Aceptar y publicar plan" : target.kind === "plan" ? "Agregar a esta semana" : "Publicar semana"}
+          <Button variant="ink" fullWidth onClick={publish} disabled={saving || !aprobada}>
+            {saving ? "Publicando…" : isFirstAssignment ? "Aprobar y publicar plan" : target.kind === "plan" ? "Agregar a esta semana" : "Publicar semana"}
           </Button>
           <p className="m-0 text-[12.5px] leading-relaxed text-tinta-tenue text-center">
             {visibleDesde ? `La familia lo ve desde el ${fechaLarga(visibleDesde)}.` : "La familia lo ve de inmediato."}
