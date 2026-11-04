@@ -757,7 +757,6 @@ const caminos = [
     para: "Para familias y cuidadores",
     t: "Acompaño a un ser querido",
     d: "Un plan claro para cada día, con seguimiento profesional.",
-    beneficio: "Sabés qué hacer cada día, sin improvisar.",
     figura: "#6a969c",
     mitad: "#dfeceb",
     ilustracion: <IlustracionAcompanar />,
@@ -766,7 +765,6 @@ const caminos = [
     para: "Para vos",
     t: "Cuido mi salud cerebral",
     d: "Actividades para tu mente y tu cuerpo, a tu ritmo.",
-    beneficio: "Explicadas paso a paso, desde tu casa.",
     figura: "#f4d096",
     mitad: "#fbf0d6",
     ilustracion: <IlustracionAutonomia />,
@@ -873,16 +871,8 @@ export function Landing() {
                   <h3 className="m-0 mb-3 font-serif font-normal text-[30px] sm:text-[34px] leading-[1.1] text-tinta" style={{ textWrap: "balance" }}>
                     {c.t}
                   </h3>
-                  <p className="m-0 mb-6 max-w-[22em] text-[17px] leading-relaxed text-tinta" style={{ textWrap: "balance" }}>
+                  <p className="m-0 max-w-[22em] text-[17px] leading-relaxed text-tinta" style={{ textWrap: "balance" }}>
                     {c.d}
-                  </p>
-                  <p className="m-0 inline-flex items-center gap-2.5 rounded-full bg-white/80 px-4 py-2.5 text-[15.5px] font-semibold text-tinta">
-                    <span aria-hidden="true" className="shrink-0 w-6 h-6 rounded-full bg-verde-profundo text-white flex items-center justify-center">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    {c.beneficio}
                   </p>
                   {/* La «o» que une las dos mitades: al centro en escritorio,
                       sobre el borde entre ambas en celular. */}
