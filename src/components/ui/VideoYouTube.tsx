@@ -19,6 +19,7 @@ export function VideoYouTube({
   duracion,
   children,
   className = "",
+  autoIniciar = false,
 }: {
   // id del bloque en la página (para reproducirVideo y anclas).
   id: string;
@@ -28,8 +29,10 @@ export function VideoYouTube({
   // Miniatura propia (imagen o composición).
   children: ReactNode;
   className?: string;
+  // Arranca solo al montarse (el video del modal de presentación).
+  autoIniciar?: boolean;
 }) {
-  const [estado, setEstado] = useState<"miniatura" | "reproduciendo" | "pronto">("miniatura");
+  const [estado, setEstado] = useState<"miniatura" | "reproduciendo" | "pronto">(autoIniciar ? (youtubeId ? "reproduciendo" : "pronto") : "miniatura");
 
   useEffect(() => {
     const onPedido = (e: Event) => {

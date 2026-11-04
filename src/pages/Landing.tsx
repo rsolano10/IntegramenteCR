@@ -9,6 +9,7 @@ import { programas } from "../lib/programasData";
 import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
 import { VideoYouTube } from "../components/ui/VideoYouTube";
 import { reproducirVideo } from "../lib/video";
+import { useBodyScrollLock } from "../lib/useBodyScrollLock";
 import {
   areas,
   contacto,
@@ -538,6 +539,41 @@ function PosterIntro() {
   );
 }
 
+// Modal con el video de presentación: arranca solo al abrirse. Se cierra con
+// la ×, tocando afuera o con Escape.
+function ModalVideo({ onClose }: { onClose: () => void }) {
+  useBodyScrollLock();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={videos.introduccion.titulo}
+      onClick={onClose}
+      className="im-in fixed inset-0 z-50 bg-tinta/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8"
+    >
+      <div className="relative w-full max-w-[1040px]" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar el video"
+          autoFocus
+          className="absolute -top-12 right-0 w-10 h-10 rounded-full bg-white/95 border-0 text-tinta text-[22px] leading-none cursor-pointer hover:bg-white"
+        >
+          ×
+        </button>
+        <VideoYouTube id="video-introduccion" youtubeId={videos.introduccion.youtubeId} titulo={videos.introduccion.titulo} autoIniciar>
+          <PosterIntro />
+        </VideoYouTube>
+      </div>
+    </div>
+  );
+}
+
 // Miniatura de "Así de fácil se usa": la pantalla real del paso a paso.
 function PosterAsiDeFacil() {
   return (
@@ -562,7 +598,7 @@ function PruebaSocial() {
   const datos = pruebaSocial.filter((d) => d.valor);
   if (datos.length === 0) return null;
   return (
-    <dl className="m-0 mt-8 grid gap-3 sm:grid-cols-3 max-w-[960px] mx-auto">
+    <dl className="m-0 mb-14 px-5 grid gap-3 sm:grid-cols-3 max-w-[960px] mx-auto">
       {datos.map((d) => (
         <div key={d.etiqueta} className="rounded-3xl px-5 py-4 text-center bg-white border border-borde">
           <dt className="font-serif text-[30px] leading-none text-verde-profundo">{d.valor}</dt>
@@ -755,11 +791,18 @@ const caminos = [
 
 export function Landing() {
   const scrolled = useScrolled(24);
+  // El video de presentación no está en la página: se abre en un modal
+  // desde «Ver el video» (y desde el enlace del correo de bienvenida).
+  const [videoAbierto, setVideoAbierto] = useState(false);
   // El correo de bienvenida enlaza a /#video-introduccion: al llegar, el
   // video arranca solo (o muestra "muy pronto" si todavía no está).
   useEffect(() => {
     const id = window.location.hash.slice(1);
-    if (id === "video-introduccion" || id === "video-asi-de-facil") {
+    if (id === "video-introduccion") {
+      setVideoAbierto(true);
+      return;
+    }
+    if (id === "video-asi-de-facil") {
       const t = window.setTimeout(() => reproducirVideo(id), 300);
       return () => window.clearTimeout(t);
     }
@@ -807,7 +850,7 @@ export function Landing() {
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
           <div className="flex flex-wrap gap-3">
             <Button to={registro}>Crear mi cuenta gratis</Button>
-            <Button variant="secondary" onClick={() => reproducirVideo("video-introduccion")}>
+            <Button variant="secondary" onClick={() => setVideoAbierto(true)}>
               Ver el video
             </Button>
           </div>
@@ -819,18 +862,10 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ─── Video de presentación: el elemento principal del home ─── */}
-      <section className="max-w-[1280px] mx-auto px-5 pb-16 sm:px-8 lg:px-12 lg:pb-24">
-        <div className="max-w-[960px] mx-auto">
-          <VideoYouTube id="video-introduccion" youtubeId={videos.introduccion.youtubeId} titulo={videos.introduccion.titulo}>
-            <PosterIntro />
-          </VideoYouTube>
-        </div>
-        <PruebaSocial />
-      </section>
+      <PruebaSocial />
 
       {/* ─── Para quién es ─── */}
-      <section className="bg-beige-serenidad">
+      <section className="bg-seccion-arena">
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
           <Reveal className="text-center">
             <Eyebrow>Para quién es</Eyebrow>
@@ -870,6 +905,7 @@ export function Landing() {
       </section>
 
       {/* ─── Así de fácil se usa: video + tres pasos ─── */}
+      <div className="bg-white">
       <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20 grid gap-10 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
         <Reveal>
           <VideoYouTube id="video-asi-de-facil" youtubeId={videos.asiDeFacil.youtubeId} titulo={videos.asiDeFacil.titulo}>
@@ -902,9 +938,10 @@ export function Landing() {
           </div>
         </Reveal>
       </section>
+      </div>
 
       {/* ─── Las áreas del programa ─── */}
-      <section className="bg-white border-y border-borde-suave">
+      <section className="bg-seccion-fria">
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
           <Reveal>
             <Eyebrow>Las áreas del programa</Eyebrow>
@@ -1001,7 +1038,7 @@ export function Landing() {
       </section>
 
       {/* ─── Equipo ─── */}
-      <section id="equipo" className="bg-beige-serenidad scroll-mt-20">
+      <section id="equipo" className="bg-seccion-arena scroll-mt-20">
         <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
           <Reveal className="text-center">
             <Eyebrow>Conocé al equipo</Eyebrow>
@@ -1036,9 +1073,10 @@ export function Landing() {
       </section>
 
       {/* ─── Fotos de las sesiones ─── */}
-      {fotosSesiones.length > 0 && <div className="bg-beige-serenidad"><GaleriaSesiones /></div>}
+      {fotosSesiones.length > 0 && <div className="bg-seccion-arena"><GaleriaSesiones /></div>}
 
       {/* ─── Para médicos ─── */}
+      <div className="bg-white">
       <section id="medicos" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
         <div>
           <div className="rounded-[32px] bg-tinta text-white overflow-hidden grid lg:grid-cols-[1.2fr_0.8fr]">
@@ -1090,6 +1128,7 @@ export function Landing() {
           </div>
         </div>
       </section>
+      </div>
 
       {/* ─── Testimonios (solo si hay reales) ─── */}
       {testimonios.length > 0 && (
@@ -1114,7 +1153,7 @@ export function Landing() {
       )}
 
       {/* ─── Preguntas frecuentes ─── */}
-      <section id="preguntas" className="py-16 lg:py-24 scroll-mt-20 overflow-hidden">
+      <section id="preguntas" className="bg-seccion-fria py-16 lg:py-24 scroll-mt-20 overflow-hidden">
         <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
           <Reveal>
             <Eyebrow>Preguntas frecuentes</Eyebrow>
@@ -1152,6 +1191,7 @@ export function Landing() {
 
       <SitioFooter />
 
+      {videoAbierto && <ModalVideo onClose={() => setVideoAbierto(false)} />}
       <RedesFlotantes />
       <AyudaWhatsApp />
     </div>

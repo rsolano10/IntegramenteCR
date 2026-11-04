@@ -13,6 +13,11 @@
   --color-tinta-suave: #4a5b5f;
   --color-tinta-tenue: #7a8b8e;
   --color-fondo-papel: #f7f4e9;
+  /* Fondos de sección del home: alternan cálido (arena) y frío (verde)
+     con blanco y papel, con diferencia visible entre una sección y otra
+     (el papel/beige/blanco anterior casi no se distinguía). */
+  --color-seccion-arena: #e7dcb6;
+  --color-seccion-fria: #dfeceb;
   --color-borde: #e4dfc7;
 
   /* Semaforo */
