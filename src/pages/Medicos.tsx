@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../components/ui/Logo";
+import { SitioFooter } from "../components/layout/SitioFooter";
 import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
 import { contacto, equipo } from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsapp";
@@ -368,15 +369,7 @@ export function Medicos() {
         </section>
       </main>
 
-      <footer className="max-w-[1120px] mx-auto px-5 py-8 sm:px-8 text-[13.5px] text-tinta-tenue flex flex-wrap gap-x-5 gap-y-2">
-        <Link to="/" className="text-verde-profundo">
-          Volver al inicio
-        </Link>
-        <Link to="/legal/privacidad" className="text-tinta-tenue">
-          Privacidad y datos
-        </Link>
-        <span>No sustituye la consulta médica. Ante una emergencia, llamá al 9-1-1.</span>
-      </footer>
+      <SitioFooter />
     </div>
   );
 }
@@ -401,6 +394,7 @@ export function ReferirPaciente() {
           <FormularioReferencia />
         </div>
       </main>
+      <SitioFooter />
     </div>
   );
 }
