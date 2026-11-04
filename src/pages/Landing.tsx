@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Reveal } from "../components/ui/Reveal";
 import { Button } from "../components/ui/Button";
@@ -28,6 +28,9 @@ import {
 } from "../lib/landingContenido";
 import { Logo } from "../components/ui/Logo";
 import { FacebookIcon, InstagramIcon, SitioFooter } from "../components/layout/SitioFooter";
+
+// Vista real de una actividad (misma que la app). Se carga recién al abrirla.
+const EjemploActividad = lazy(() => import("../components/landing/EjemploActividad"));
 
 const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -575,111 +578,6 @@ function ModalVideo({ onClose }: { onClose: () => void }) {
   );
 }
 
-// Actividad de ejemplo de un área: 20 segundos del video real
-// (gerontogimnasia) o la ficha real de la biblioteca (cognición, nutrición).
-function ModalEjemplo({ ejemplo, onClose }: { ejemplo: EjemploArea; onClose: () => void }) {
-  useBodyScrollLock();
-  const video = useRef<HTMLVideoElement>(null);
-  const [terminado, setTerminado] = useState(false);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  const cerrar = (
-    <button
-      type="button"
-      onClick={onClose}
-      aria-label="Cerrar"
-      autoFocus
-      className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-white/95 border border-borde text-tinta text-[22px] leading-none cursor-pointer hover:bg-white"
-    >
-      ×
-    </button>
-  );
-  const cta = (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button to={registro}>Crear mi cuenta gratis</Button>
-      <span className="text-[13.5px] text-tinta-suave">Ejemplo real de la biblioteca ({ejemplo.codigo}).</span>
-    </div>
-  );
-  return (
-    <div role="dialog" aria-modal="true" aria-label={ejemplo.titulo} onClick={onClose} className="im-in fixed inset-0 z-50 bg-tinta/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8">
-      {ejemplo.tipo === "video" ? (
-        <div className="relative w-full max-w-[400px] rounded-[26px] overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
-          {cerrar}
-          <div className="relative bg-black">
-            <video
-              ref={video}
-              src={`${ejemplo.src}#t=${ejemplo.desde},${ejemplo.hasta}`}
-              poster={ejemplo.poster}
-              autoPlay
-              controls
-              playsInline
-              preload="metadata"
-              onTimeUpdate={(e) => {
-                const v = e.currentTarget;
-                if (v.currentTime >= ejemplo.hasta) {
-                  v.pause();
-                  setTerminado(true);
-                }
-              }}
-              className="block w-full max-h-[62vh] aspect-[9/16] object-cover"
-            />
-            {terminado && (
-              <button
-                type="button"
-                onClick={() => {
-                  const v = video.current;
-                  if (!v) return;
-                  v.currentTime = ejemplo.desde;
-                  setTerminado(false);
-                  v.play();
-                }}
-                className="absolute inset-x-0 bottom-14 mx-auto w-fit min-h-11 px-4 rounded-full bg-white border-0 text-tinta font-semibold text-[14.5px] cursor-pointer"
-              >
-                Ver de nuevo
-              </button>
-            )}
-          </div>
-          <div className="p-5 grid gap-3">
-            <h2 className="m-0 font-serif font-normal text-[22px] leading-tight">{ejemplo.titulo}</h2>
-            <p className="m-0 text-[14.5px] text-tinta-suave">Una muestra de 20 segundos. En la app, cada ejercicio trae el video completo y la guía paso a paso.</p>
-            {cta}
-          </div>
-        </div>
-      ) : (
-        <div className="relative w-full max-w-[620px] max-h-[88vh] overflow-y-auto rounded-[26px] bg-white p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
-          {cerrar}
-          <p className="m-0 mb-2 text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Actividad de ejemplo{ejemplo.duracion ? ` · ${ejemplo.duracion}` : ""}</p>
-          <h2 className="m-0 mb-4 pr-10 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{ejemplo.titulo}</h2>
-          {ejemplo.intro && <p className="m-0 mb-5 text-[16px] leading-relaxed text-tinta">{ejemplo.intro}</p>}
-          {ejemplo.pasos && (
-            <ol className="list-none m-0 mb-6 p-0 grid gap-3">
-              {ejemplo.pasos.map((x, i) => (
-                <li key={i} className="grid grid-cols-[32px_1fr] gap-3 items-start">
-                  <span className="w-8 h-8 rounded-full bg-verde-profundo text-white text-[14px] font-bold flex items-center justify-center">{i + 1}</span>
-                  <span className="pt-1 text-[16px] leading-relaxed text-tinta">{x}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-          {ejemplo.parrafos && (
-            <div className="grid gap-3 mb-6">
-              {ejemplo.parrafos.map((x, i) => (
-                <p key={i} className="m-0 text-[16px] leading-relaxed text-tinta">
-                  {x}
-                </p>
-              ))}
-            </div>
-          )}
-          {cta}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Miniatura de "Así de fácil se usa": la pantalla real del paso a paso.
 function PosterAsiDeFacil() {
   return (
@@ -1098,17 +996,6 @@ export function Landing() {
                     </div>
                     <div className="px-5 sm:px-6 pt-5 pb-5 flex flex-col gap-4 flex-1">
                       <p className="m-0 text-[16px] leading-relaxed text-tinta">{a.frase}</p>
-                      <div className="pt-4 border-t border-borde-suave">
-                        <p className="m-0 mb-2.5 text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Trabaja</p>
-                        <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
-                          {a.etiquetas.map((x) => (
-                            <li key={x} className="inline-flex items-center rounded-full px-3 py-1.5 text-[14px] font-semibold leading-none text-tinta" style={{ background: a.chip }}>
-                              {x}
-                            </li>
-                          ))}
-                        </ul>
-                        {a.nota && <p className="m-0 mt-3 text-[14px] text-tinta-suave">{a.nota}</p>}
-                      </div>
                       <button
                         type="button"
                         onClick={() => setEjemplo(a.ejemplo)}
@@ -1356,7 +1243,11 @@ export function Landing() {
       <SitioFooter />
 
       {videoAbierto && <ModalVideo onClose={() => setVideoAbierto(false)} />}
-      {ejemplo && <ModalEjemplo ejemplo={ejemplo} onClose={() => setEjemplo(null)} />}
+      {ejemplo && (
+        <Suspense fallback={null}>
+          <EjemploActividad codigo={ejemplo.codigo} onClose={() => setEjemplo(null)} />
+        </Suspense>
+      )}
       <RedesFlotantes />
       <AyudaWhatsApp />
     </div>

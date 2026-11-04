@@ -173,32 +173,29 @@ export const programasHome = {
 // de la paleta oficial; `tinta` es el color del texto sobre ese fondo (nunca
 // blanco sobre mostaza o beige).
 // Las tres áreas del home. Cada tarjeta: imagen de IntegraMente
-// (assets/img-home/), franja sólida con el título (contraste ≥ 7:1), cuatro
-// etiquetas, una actividad de ejemplo real y el área profesional que la
-// diseña (con la foto de quien la representa en `equipo`).
+// (assets/img-home/), franja sólida con el título (contraste ≥ 7:1), una
+// actividad de ejemplo real y el área profesional que la diseña (con la
+// foto de quien la representa en `equipo`).
 export interface FotoArea {
   webp: string;
   jpg: string;
   alt: string;
 }
 
-// Muestra real de la biblioteca: un fragmento de video (gerontogimnasia) o
-// la ficha de una actividad (las de cognición y nutrición son de texto).
-export type EjemploArea =
-  | { tipo: "video"; codigo: string; titulo: string; src: string; poster: string; desde: number; hasta: number }
-  | { tipo: "ficha"; codigo: string; titulo: string; duracion?: string; intro?: string; pasos?: string[]; parrafos?: string[] };
-
-const almacen = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media-resources`;
+// Actividad de ejemplo: el recurso real de la biblioteca, por código. El
+// home lo abre con la misma vista que la app (EjemploActividad.tsx).
+export interface EjemploArea {
+  codigo: string;
+  // Solo para el ícono del enlace.
+  tipo: "video" | "ficha";
+}
 
 export const areas: {
   icono: string;
   t: string;
   frase: string;
-  etiquetas: string[];
-  nota?: string;
   fondo: string;
   tinta: string;
-  chip: string;
   foto: FotoArea;
   ejemplo: EjemploArea;
   responsable: { area: string; miembro: number };
@@ -207,70 +204,30 @@ export const areas: {
     icono: "cerebro",
     t: "Estimulación cognitiva",
     frase: "Actividades para trabajar distintas capacidades cognitivas y conectarlas con la vida cotidiana.",
-    etiquetas: ["Atención", "Memoria", "Lenguaje", "Planificación"],
     fondo: "#3f6a70",
     tinta: "#ffffff",
-    chip: "#dce8e9",
     foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
-    // Texto literal de COG-004 en la biblioteca.
-    ejemplo: {
-      tipo: "ficha",
-      codigo: "COG-004",
-      titulo: "Palabras y expresiones de mi época",
-      duracion: "10 a 15 minutos",
-      intro:
-        "Vamos a recordar palabras o expresiones que se escuchaban antes. No hace falta completar todos los dichos ni saber su origen; podemos conversar sobre lo que significan o cuándo se usaban.",
-      pasos: [
-        "Presentar una expresión familiar y leerla en voz alta si hace falta.",
-        "Preguntar si la había escuchado antes y qué cree que significa.",
-        "Invitar a recordar quién la decía o en qué situación se utilizaba, sin exigir que recuerde a una persona específica.",
-        "Si la persona disfruta el reto, comenzar un refrán conocido y dejar que lo complete; también puede elegir entre dos posibles finales.",
-        "Cerrar preguntando si hay otra palabra o expresión que le gustaría compartir.",
-      ],
-    },
+    ejemplo: { codigo: "COG-004", tipo: "ficha" },
     responsable: { area: "estimulación cognitiva", miembro: 1 },
   },
   {
     icono: "equilibrio",
     t: "Gerontogimnasia",
     frase: "Ejercicios que combinan movimiento y retos cognitivos, según las capacidades de cada persona.",
-    etiquetas: ["Fuerza", "Equilibrio", "Coordinación", "Doble tarea"],
     fondo: "#f4d096",
     tinta: "#1f3338",
-    chip: "#f9e6c2",
     foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora sentada en una silla estira el brazo en la sala de su casa, con mancuernas a sus pies." },
-    // 20 segundos del video real de GER-003.
-    ejemplo: {
-      tipo: "video",
-      codigo: "GER-003",
-      titulo: "Sentarse y levantarse de una silla",
-      src: `${almacen}/gerontogimnasia/ger-003.mp4`,
-      poster: `${almacen}/gerontogimnasia/ger-003-poster.jpg`,
-      desde: 10,
-      hasta: 30,
-    },
+    ejemplo: { codigo: "GER-003", tipo: "video" },
     responsable: { area: "gerontogimnasia", miembro: 3 },
   },
   {
     icono: "manzana",
     t: "Nutrición",
     frase: "Orientaciones prácticas sobre alimentación e hidratación para la vida cotidiana.",
-    etiquetas: ["Alimentación variada", "Hábitos cotidianos", "Organización de comidas", "Hidratación"],
     fondo: "#a9c49f",
     tinta: "#1f3338",
-    chip: "#e1ebdb",
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
-    // Texto literal de PRE-002 («Tu actividad») en la biblioteca.
-    ejemplo: {
-      tipo: "ficha",
-      codigo: "PRE-002",
-      titulo: "Sumá moras o fresas a la merienda",
-      parrafos: [
-        "Esta semana, te proponemos incluir moras o fresas en dos meriendas de tu familiar.",
-        "Lavá bien la fruta y serví media taza, sola o acompañada de yogur natural sin azúcar, si lo tolera. Podés ofrecerla picada, según sus necesidades y preferencias. Si tiene dificultades para tragar, utilizá únicamente la textura indicada por su equipo tratante.",
-        "Para conservarla por más tiempo, podés congelar la fruta que no vayás a utilizar pronto.",
-      ],
-    },
+    ejemplo: { codigo: "PRE-002", tipo: "ficha" },
     responsable: { area: "nutrición", miembro: 4 },
   },
 ];
