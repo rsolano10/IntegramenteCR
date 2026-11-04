@@ -614,10 +614,10 @@ function GaleriaSesiones() {
   );
 }
 
-// Registro: el mismo proceso desde todos los botones. `para` deja elegida
-// la modalidad (se puede cambiar en el formulario y en el cuestionario).
+// Registro: el mismo proceso desde todos los botones. Quién responde
+// (para mí / para un ser querido) se elige en la primera pregunta del
+// cuestionario.
 const registro = "/ingresar?mode=register";
-const registroPara = (para: "ser-querido" | "mi") => `${registro}&para=${para}`;
 
 // Botón de WhatsApp del home. "primario" solo donde es la acción principal
 // de la tarjeta; el resto queda contorneado para no competir con el registro.
@@ -749,28 +749,26 @@ function RedesFlotantes() {
 }
 
 
-// «Para quién es»: dos caminos de consumidor (primero familiares, que suelen
-// ser quienes deciden). La elección viaja al registro (?para=) y fija quién
-// responde el cuestionario, que se redacta en primera o tercera persona
-// según eso (rol_respondente → respondentVoice.ts). Médicos tiene su propia
-// sección más abajo («Para médicos y geriatras»).
+// «Para quién es»: dos caminos (primero familiares, que suelen ser quienes
+// deciden), sin botones de registro. Médicos tiene su propia sección más
+// abajo («Para médicos y geriatras»).
 const caminos = [
   {
+    para: "Para familias y cuidadores",
     t: "Acompaño a un ser querido",
     d: "Un plan claro para cada día, con seguimiento profesional.",
     beneficio: "Sabés qué hacer cada día, sin improvisar.",
-    boton: "Empezar para un ser querido",
-    to: registroPara("ser-querido"),
-    fondo: "#6a969c",
+    figura: "#6a969c",
+    mitad: "#dfeceb",
     ilustracion: <IlustracionAcompanar />,
   },
   {
+    para: "Para vos",
     t: "Cuido mi salud cerebral",
     d: "Actividades para tu mente y tu cuerpo, a tu ritmo.",
     beneficio: "Explicadas paso a paso, desde tu casa.",
-    boton: "Empezar para mí",
-    to: registroPara("mi"),
-    fondo: "#f4d096",
+    figura: "#f4d096",
+    mitad: "#fbf0d6",
     ilustracion: <IlustracionAutonomia />,
   },
 ];
@@ -858,34 +856,48 @@ export function Landing() {
             <Eyebrow>Para quién es</Eyebrow>
             <SectionTitle className="max-w-[18em] mx-auto mb-10 lg:mb-12">Para vos y para quienes acompañás.</SectionTitle>
           </Reveal>
-          <div className="grid gap-6 md:grid-cols-2 max-w-[1040px] mx-auto">
-            {caminos.map((c, i) => (
-              <Reveal key={c.t} delay={i * 110} className="h-full">
-                <article className="h-full flex flex-col rounded-[32px] bg-white border border-borde overflow-hidden">
-                  <div className="h-[160px] md:h-[210px] flex items-end justify-center overflow-hidden" style={{ background: c.fondo }}>
-                    {c.ilustracion}
+          {/* Un solo panel partido en dos: la decisión es «para alguien que
+              querés o para vos», unidas por una «o». Sin botones: la sección
+              informa, el registro está en el encabezado y en el cierre. */}
+          <Reveal className="max-w-[1080px] mx-auto">
+            <div className="relative grid md:grid-cols-2 rounded-[36px] overflow-hidden border border-borde shadow-[0_30px_60px_-40px_rgba(31,51,56,.45)]">
+              {caminos.map((c, i) => (
+                <article key={c.t} className="relative flex flex-col items-center text-center px-7 pt-10 pb-11 sm:px-12 lg:px-16 lg:pt-12 lg:pb-14" style={{ background: c.mitad }}>
+                  <div className="relative mb-7 w-[230px] h-[170px] sm:w-[260px] sm:h-[190px]">
+                    <span aria-hidden="true" className="absolute inset-x-3 bottom-0 top-5 rounded-[48%_52%_44%_56%/58%_50%_50%_42%]" style={{ background: c.figura }} />
+                    <span aria-hidden="true" className="absolute -right-1 top-1 w-9 h-9 rounded-full opacity-60" style={{ background: c.figura }} />
+                    <span aria-hidden="true" className="absolute -left-2 bottom-8 w-5 h-5 rounded-full opacity-40" style={{ background: c.figura }} />
+                    <div className="relative h-full flex items-end justify-center overflow-hidden rounded-b-[40%] [&>svg]:w-[86%] [&>svg]:h-auto">{c.ilustracion}</div>
                   </div>
-                  <div className="flex flex-col gap-3 p-6 sm:p-8 flex-1">
-                    <h3 className="m-0 font-serif font-normal text-[28px] sm:text-[30px] leading-tight">{c.t}</h3>
-                    <p className="m-0 text-[17px] leading-relaxed text-tinta">{c.d}</p>
-                    <p className="m-0 flex items-start gap-2.5 text-[16px] leading-snug font-semibold text-tinta">
-                      <span aria-hidden="true" className="mt-0.5 shrink-0 w-6 h-6 rounded-full bg-verde-profundo text-white flex items-center justify-center">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                          <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      {c.beneficio}
-                    </p>
-                    <div className="mt-auto pt-4">
-                      <Button to={c.to} className="w-full sm:w-auto">
-                        {c.boton}
-                      </Button>
-                    </div>
-                  </div>
+                  <p className="m-0 mb-2 text-[12.5px] tracking-[0.16em] uppercase font-semibold text-tinta-suave">{c.para}</p>
+                  <h3 className="m-0 mb-3 font-serif font-normal text-[30px] sm:text-[34px] leading-[1.1] text-tinta" style={{ textWrap: "balance" }}>
+                    {c.t}
+                  </h3>
+                  <p className="m-0 mb-6 max-w-[22em] text-[17px] leading-relaxed text-tinta" style={{ textWrap: "balance" }}>
+                    {c.d}
+                  </p>
+                  <p className="m-0 inline-flex items-center gap-2.5 rounded-full bg-white/80 px-4 py-2.5 text-[15.5px] font-semibold text-tinta">
+                    <span aria-hidden="true" className="shrink-0 w-6 h-6 rounded-full bg-verde-profundo text-white flex items-center justify-center">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    {c.beneficio}
+                  </p>
+                  {/* La «o» que une las dos mitades: al centro en escritorio,
+                      sobre el borde entre ambas en celular. */}
+                  {i === 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute z-10 left-1/2 -bottom-7 -translate-x-1/2 md:left-auto md:bottom-auto md:-right-7 md:top-1/2 md:translate-x-0 md:-translate-y-1/2 w-14 h-14 rounded-full bg-white border border-borde shadow-[0_10px_24px_-12px_rgba(31,51,56,.5)] flex items-center justify-center font-serif italic text-[26px] text-verde-profundo"
+                    >
+                      o
+                    </span>
+                  )}
                 </article>
-              </Reveal>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
