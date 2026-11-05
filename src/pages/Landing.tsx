@@ -263,11 +263,12 @@ const tonosFaq = [
   { from: "#ece3c4", to: "#b7a06d" },
 ];
 
-// Respuesta de una pregunta frecuente. En celular todas las tarjetas miden
-// lo mismo: la respuesta se corta en 4 líneas y, si no entra completa,
-// aparece «Ver más», que la abre en un modal (la tarjeta no cambia de
-// tamaño). Desde tablet se ve siempre completa.
-function RespuestaFaq({ texto, onVerMas }: { texto: string; onVerMas: () => void }) {
+// Texto recortado en celular (preguntas frecuentes, áreas): así todas las
+// tarjetas miden lo mismo. Si no entra completo aparece «Ver más», que lo
+// abre en un modal (la tarjeta no cambia de tamaño). El recorte va en
+// `clase` (line-clamp-N md:line-clamp-none): desde tablet se ve completo y
+// el botón no aparece.
+function TextoConVerMas({ texto, clase, onVerMas }: { texto: string; clase: string; onVerMas: () => void }) {
   const ref = useRef<HTMLParagraphElement>(null);
   const [recortada, setRecortada] = useState(false);
   useEffect(() => {
@@ -281,14 +282,14 @@ function RespuestaFaq({ texto, onVerMas }: { texto: string; onVerMas: () => void
   }, []);
   return (
     <>
-      <p ref={ref} className="m-0 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line line-clamp-4 md:line-clamp-none">
+      <p ref={ref} className={`m-0 ${clase}`}>
         {texto}
       </p>
       {recortada && (
         <button
           type="button"
           onClick={onVerMas}
-          className="mt-3 self-start min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4"
+          className="mt-1 self-start min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4"
         >
           Ver más
         </button>
@@ -372,7 +373,11 @@ function FaqCarousel() {
                 </h3>
               </div>
               <div className="px-6 sm:px-7 py-6 flex flex-col flex-1">
-                <RespuestaFaq texto={q.r} onVerMas={() => setAbierta(i)} />
+                <TextoConVerMas
+                  texto={q.r}
+                  clase="text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line line-clamp-4 md:line-clamp-none"
+                  onVerMas={() => setAbierta(i)}
+                />
                 {q.video && (
                   <button
                     type="button"
@@ -669,6 +674,7 @@ export function Landing() {
   // desde «Ver el video» (y desde el enlace del correo de bienvenida).
   const [videoAbierto, setVideoAbierto] = useState(false);
   const [ejemplo, setEjemplo] = useState<EjemploArea | null>(null);
+  const [areaAbierta, setAreaAbierta] = useState<number | null>(null);
   // El correo de bienvenida enlaza a /#video-introduccion: al llegar, el
   // video arranca solo (o muestra "muy pronto" si todavía no está).
   useEffect(() => {
@@ -837,7 +843,7 @@ export function Landing() {
             className="list-none m-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{ scrollPaddingInline: "1.25rem" }}
           >
-            {areas.map((a) => {
+            {areas.map((a, i) => {
               const persona = equipo[a.responsable.miembro];
               return (
                 <li key={a.t} className="snap-start shrink-0 w-[84%] sm:w-[62%] md:w-auto">
@@ -859,7 +865,9 @@ export function Landing() {
                       <h3 className="m-0 font-serif font-normal text-[24px] leading-tight">{a.t}</h3>
                     </div>
                     <div className="px-5 sm:px-6 pt-5 pb-5 flex flex-col gap-4 flex-1">
-                      <p className="m-0 text-[16px] leading-relaxed text-tinta">{a.frase}</p>
+                      <div className="flex flex-col">
+                        <TextoConVerMas texto={a.frase} clase="text-[16px] leading-relaxed text-tinta line-clamp-4 md:line-clamp-none" onVerMas={() => setAreaAbierta(i)} />
+                      </div>
                       <button
                         type="button"
                         onClick={() => setEjemplo(a.ejemplo)}
@@ -904,44 +912,49 @@ export function Landing() {
             Mismo alto, con los botones alineados abajo. */}
         <Reveal className="max-w-[1040px] mx-auto">
           <CarruselMovil etiqueta="Programas" escritorio="md:grid md:grid-cols-2 md:gap-5" item="md:w-auto">
-            <article className="h-full rounded-[28px] p-6 sm:p-8 flex flex-col gap-5 border-[1.5px] border-borde bg-white">
+            <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 border-[1.5px] border-borde bg-white">
               <div>
-                <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{auto.nombre}</h3>
+                <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{auto.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{auto.subtitulo}</p>
               </div>
-              <p className="m-0 flex items-baseline gap-2 pb-5 border-b border-borde-suave">
-                <span className="font-serif text-[40px] leading-none">{autoguiado.precio}</span>
+              <p className="m-0 flex items-baseline gap-2 pb-4 sm:pb-5 border-b border-borde-suave">
+                <span className="font-serif text-[34px] sm:text-[40px] leading-none">{autoguiado.precio}</span>
                 <span className="text-[15px] text-tinta-suave">{autoguiado.periodo}</span>
               </p>
               <ListaIncluye items={auto.incluye} />
-              <p className="m-0 text-[15px] leading-relaxed text-tinta bg-campo border border-borde-suave rounded-2xl px-4 py-3">{auto.aclaracion}</p>
+              <p className="m-0 text-[14.5px] sm:text-[15px] leading-relaxed text-tinta bg-campo border border-borde-suave rounded-2xl px-4 py-2.5 sm:py-3">{auto.aclaracion}</p>
               <div className="mt-auto">
                 <Button to={registro} className="w-full sm:w-auto">
                   Crear mi cuenta gratis
                 </Button>
               </div>
             </article>
-            <article className="h-full rounded-[28px] p-6 sm:p-8 flex flex-col gap-5 border-[1.5px] border-verde-serenidad bg-verde-tenue">
+            <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 border-[1.5px] border-verde-serenidad bg-verde-tenue">
               <div>
                 <span className="inline-block mb-2 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-tinta px-3 py-1.5 rounded-full font-bold">{ses.etiqueta}</span>
-                <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{ses.nombre}</h3>
+                <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{ses.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{ses.subtitulo}</p>
               </div>
-              <p className="m-0 pb-5 border-b border-borde-suave font-serif text-[28px] leading-tight text-tinta">{ses.presupuesto}</p>
+              <p className="m-0 pb-4 sm:pb-5 border-b border-borde-suave font-serif text-[22px] sm:text-[28px] leading-tight text-tinta">{ses.presupuesto}</p>
               <ListaIncluye items={ses.incluye} />
               {/* Requisito como nota al pie: discreto, sin caja ni color de
                   aviso, con el mismo contraste legible del resto. */}
-              <p className="m-0 flex gap-2.5 pt-4 border-t border-borde-suave text-[14px] leading-relaxed text-tinta-suave">
+              {/* En celular el requisito queda detrás de un botón informativo
+                  para que la tarjeta sea corta. */}
+              <InfoRequisito />
+              <p className="m-0 hidden md:flex gap-2.5 pt-4 border-t border-borde-suave text-[14px] leading-relaxed text-tinta-suave">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 mt-[3px] text-verde-profundo">
                   <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
                   <path d="M12 11v5.5M12 7.6v.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 <span>
-                  <span className="font-semibold text-tinta">Requisito de ingreso:</span> valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional.
+                  <span className="font-semibold text-tinta">Requisito de ingreso:</span> {REQUISITO_INGRESO}
                 </span>
               </p>
               <BotonWhatsApp href={whatsappHome.programaSesiones} primario className="mt-auto w-full sm:w-auto sm:self-start">
-                Consultar mi programa con sesiones
+                {/* En celular, corto para que el botón entre en una línea (la tarjeta ya dice «con sesiones»). */}
+                <span className="md:hidden whitespace-nowrap">Consultar mi programa</span>
+                <span className="hidden md:inline">Consultar mi programa con sesiones</span>
               </BotonWhatsApp>
             </article>
           </CarruselMovil>
@@ -1121,6 +1134,12 @@ export function Landing() {
       <SitioFooter />
 
       {videoAbierto && <ModalVideo onClose={() => setVideoAbierto(false)} />}
+      {areaAbierta !== null && (
+        <Modal onClose={() => setAreaAbierta(null)}>
+          <h3 className="m-0 mb-4 pr-10 font-serif font-normal text-[26px] leading-[1.15] text-tinta">{areas[areaAbierta].t}</h3>
+          <p className="m-0 text-[16.5px] leading-relaxed text-tinta-suave">{areas[areaAbierta].frase}</p>
+        </Modal>
+      )}
       {ejemplo && (
         <Suspense fallback={null}>
           <EjemploActividad codigo={ejemplo.codigo} onClose={() => setEjemplo(null)} />
@@ -1128,6 +1147,60 @@ export function Landing() {
       )}
       <RedesFlotantes />
       <AyudaWhatsApp href={whatsappHome.general} />
+    </div>
+  );
+}
+
+const REQUISITO_INGRESO = "valoración neuropsicológica de los últimos 12 meses, de IntegraMente o de otro profesional.";
+
+const iconoInfo = (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 text-verde-profundo">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M12 11v5.5M12 7.6v.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+// Solo celular: «Requisito de ingreso» como botón con un globo informativo
+// encima. Se cierra con la ×, tocando afuera o con Escape.
+function InfoRequisito() {
+  const [abierto, setAbierto] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const fuera = (e: PointerEvent) => !caja.current?.contains(e.target as Node) && setAbierto(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setAbierto(false);
+    document.addEventListener("pointerdown", fuera);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", fuera);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [abierto]);
+  return (
+    <div ref={caja} className="md:hidden relative">
+      <button
+        type="button"
+        aria-expanded={abierto}
+        onClick={() => setAbierto((v) => !v)}
+        className="inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[14.5px] font-semibold text-tinta underline decoration-borde-campo decoration-2 underline-offset-4"
+      >
+        {iconoInfo}
+        Requisito de ingreso
+      </button>
+      {abierto && (
+        <div role="status" className="absolute left-0 right-0 bottom-full mb-1 z-10 rounded-2xl bg-tinta text-white text-[14.5px] leading-relaxed px-4 py-3 pr-10 shadow-elevada">
+          <span className="font-semibold">Requisito de ingreso:</span> {REQUISITO_INGRESO}
+          <button
+            type="button"
+            onClick={() => setAbierto(false)}
+            aria-label="Cerrar"
+            className="absolute top-1.5 right-1.5 w-8 h-8 rounded-full bg-transparent border-0 text-white/80 text-[20px] leading-none cursor-pointer"
+          >
+            ×
+          </button>
+          <span aria-hidden="true" className="absolute left-5 -bottom-1.5 w-3 h-3 rotate-45 bg-tinta" />
+        </div>
+      )}
     </div>
   );
 }
