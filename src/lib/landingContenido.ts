@@ -95,7 +95,7 @@ const foto = (archivo: string): FotoEquipo => ({
 // primera fila y Pablo y Silvia en la segunda.
 export const equipo: MiembroEquipo[] = [
   {
-    nombre: "MSc. Guiselle Solano Asenjo",
+    nombre: "Guiselle Solano Asenjo",
     area: "Directora clínica",
     descripcion: "Dirige el enfoque clínico del programa y participa en la valoración y la intervención neuropsicológica.",
     foto: foto("guiselle-solano-asenjo"),
@@ -208,7 +208,7 @@ export const areas: {
     tinta: "#ffffff",
     foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
     ejemplo: { codigo: "COG-004", tipo: "ficha" },
-    responsable: { area: "estimulación cognitiva", miembro: 1 },
+    responsable: { area: "estimulación cognitiva", miembro: 2 },
   },
   {
     icono: "equilibrio",
@@ -223,7 +223,7 @@ export const areas: {
   {
     icono: "manzana",
     t: "Nutrición",
-    frase: "Orientaciones prácticas sobre alimentación e hidratación para la vida cotidiana.",
+    frase: "Orientación especializada en alimentación e hidratación para cuidar la salud cerebral durante el envejecimiento y atender las necesidades nutricionales de personas con deterioro cognitivo leve, Alzheimer u otras demencias.",
     fondo: "#a9c49f",
     tinta: "#1f3338",
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },

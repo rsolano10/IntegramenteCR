@@ -990,10 +990,10 @@ export function Landing() {
               </Link>
             </div>
             <div className="relative min-h-[240px] bg-verde-profundo">
-              {equipo[1].foto && (
+              {equipo[0].foto && (
                 <picture>
-                  <source srcSet={equipo[1].foto.webp} type="image/webp" />
-                  <img src={equipo[1].foto.jpg} alt={`${equipo[1].nombre}, ${equipo[1].area}`} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_25%]" />
+                  <source srcSet={equipo[0].foto.webp} type="image/webp" />
+                  <img src={equipo[0].foto.jpg} alt={`${equipo[0].nombre}, ${equipo[0].area}`} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_25%]" />
                 </picture>
               )}
             </div>
