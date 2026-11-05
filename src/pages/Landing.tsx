@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Reveal } from "../components/ui/Reveal";
+import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { ModuloIcon } from "../components/ui/ModuloIcon";
 import { useScrolled } from "../lib/useScrollFx";
@@ -27,6 +28,7 @@ import {
 } from "../lib/landingContenido";
 import { Logo } from "../components/ui/Logo";
 import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
+import { CarruselMovil } from "../components/landing/CarruselMovil";
 import { flotanteBase, flotanteBottom, useOcultoEnElPie } from "../lib/flotantes";
 import { FacebookIcon, InstagramIcon, SitioFooter } from "../components/layout/SitioFooter";
 
@@ -261,9 +263,44 @@ const tonosFaq = [
   { from: "#ece3c4", to: "#b7a06d" },
 ];
 
+// Respuesta de una pregunta frecuente. En celular todas las tarjetas miden
+// lo mismo: la respuesta se corta en 4 líneas y, si no entra completa,
+// aparece «Ver más», que la abre en un modal (la tarjeta no cambia de
+// tamaño). Desde tablet se ve siempre completa.
+function RespuestaFaq({ texto, onVerMas }: { texto: string; onVerMas: () => void }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [recortada, setRecortada] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const medir = () => setRecortada(el.scrollHeight > el.clientHeight + 1);
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <>
+      <p ref={ref} className="m-0 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line line-clamp-4 md:line-clamp-none">
+        {texto}
+      </p>
+      {recortada && (
+        <button
+          type="button"
+          onClick={onVerMas}
+          className="mt-3 self-start min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4"
+        >
+          Ver más
+        </button>
+      )}
+    </>
+  );
+}
+
 function FaqCarousel() {
   const pista = useRef<HTMLDivElement>(null);
   const [activa, setActiva] = useState(0);
+  const [abierta, setAbierta] = useState<number | null>(null);
   const total = preguntas.length;
 
   function irA(i: number) {
@@ -322,7 +359,7 @@ function FaqCarousel() {
                 i === activa ? "shadow-elevada" : "opacity-[0.88]"
               }`}
             >
-              <div className="relative px-6 sm:px-7 pt-6 pb-7 text-white min-h-[184px] flex flex-col" style={{ backgroundImage: `linear-gradient(150deg, ${t.from}, ${t.to})` }}>
+              <div className="relative px-6 sm:px-7 pt-6 pb-7 text-white min-h-[228px] md:min-h-[184px] flex flex-col" style={{ backgroundImage: `linear-gradient(150deg, ${t.from}, ${t.to})` }}>
                 <span aria-hidden="true" className="absolute right-6 top-3 font-serif italic text-[96px] leading-none text-white/20 select-none">
                   ?
                 </span>
@@ -330,17 +367,17 @@ function FaqCarousel() {
                 <span className="relative text-[12px] font-semibold tracking-[0.16em] text-white/80">
                   {String(i + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
                 </span>
-                <h3 className="relative m-0 mt-auto pt-6 font-serif font-normal text-[26px] sm:text-[28px] leading-[1.15] drop-shadow-sm" style={{ textWrap: "balance" }}>
+                <h3 className="relative m-0 mt-auto pt-6 font-serif font-normal text-[23px] sm:text-[28px] leading-[1.15] drop-shadow-sm" style={{ textWrap: "balance" }}>
                   {q.p}
                 </h3>
               </div>
-              <div className="px-6 sm:px-7 py-6">
-                <p className="m-0 text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line">{q.r}</p>
+              <div className="px-6 sm:px-7 py-6 flex flex-col flex-1">
+                <RespuestaFaq texto={q.r} onVerMas={() => setAbierta(i)} />
                 {q.video && (
                   <button
                     type="button"
                     onClick={() => reproducirVideo(q.video!)}
-                    className="mt-4 inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
+                    className="mt-4 self-start inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
@@ -394,6 +431,12 @@ function FaqCarousel() {
           })}
         </div>
       </div>
+      {abierta !== null && (
+        <Modal onClose={() => setAbierta(null)}>
+          <h3 className="m-0 mb-4 pr-10 font-serif font-normal text-[26px] leading-[1.15] text-tinta">{preguntas[abierta].p}</h3>
+          <p className="m-0 text-[16.5px] leading-relaxed text-tinta-suave whitespace-pre-line">{preguntas[abierta].r}</p>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -573,7 +616,7 @@ function RedesFlotantes() {
   ];
   return (
     <div
-      className={`${flotanteBase} left-3 sm:left-6 flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 p-1 sm:pl-3.5 sm:pr-1.5 rounded-[22px] sm:rounded-full ${
+      className={`${flotanteBase} left-3 sm:left-6 hidden sm:flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 p-1 sm:pl-3.5 sm:pr-1.5 rounded-[22px] sm:rounded-full ${
         oculto ? "opacity-0 translate-y-3 pointer-events-none" : ""
       }`}
       style={flotanteBottom}
@@ -742,16 +785,20 @@ export function Landing() {
 
       {/* ─── Así de fácil se usa: video + tres pasos ─── */}
       <div className="bg-white">
-      <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20 grid gap-10 lg:gap-16 items-center lg:grid-cols-[1.1fr_0.9fr]">
-        <Reveal>
+      {/* Celular: título, video y pasos, en ese orden. Computadora: video a
+          la izquierda y el título con los pasos a la derecha. */}
+      <section id="como-funciona" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20 grid gap-8 lg:gap-x-16 lg:gap-y-0 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_auto]">
+        <Reveal className="lg:col-start-2 lg:row-start-1 lg:self-end">
+          <Eyebrow>Así de fácil se usa</Eyebrow>
+          <SectionTitle className="mb-3">Tres pasos cada semana.</SectionTitle>
+          <p className="m-0 lg:mb-8 text-[17px] leading-relaxed text-tinta-suave">Actividades explicadas paso a paso para integrarlas a la vida cotidiana.</p>
+        </Reveal>
+        <Reveal className="lg:col-start-1 lg:row-start-1 lg:row-span-2 lg:self-center">
           <VideoYouTube id="video-asi-de-facil" youtubeId={videos.asiDeFacil.youtubeId} titulo={videos.asiDeFacil.titulo}>
             <PosterAsiDeFacil />
           </VideoYouTube>
         </Reveal>
-        <Reveal delay={120}>
-          <Eyebrow>Así de fácil se usa</Eyebrow>
-          <SectionTitle className="mb-3">Tres pasos cada semana.</SectionTitle>
-          <p className="m-0 mb-8 text-[17px] leading-relaxed text-tinta-suave">Actividades explicadas paso a paso para integrarlas a la vida cotidiana.</p>
+        <Reveal delay={120} className="lg:col-start-2 lg:row-start-2 lg:self-start">
           <ol className="list-none m-0 p-0 grid gap-5">
             {pasosUso.map((p, i) => (
               <li key={p.t} className="grid grid-cols-[56px_1fr] gap-4 items-center">
@@ -855,8 +902,8 @@ export function Landing() {
         </Reveal>
         {/* Mismo orden en las dos: nombre, descripción, precio, beneficios, condiciones y botón.
             Mismo alto, con los botones alineados abajo. */}
-        <div className="grid gap-5 md:grid-cols-2 max-w-[1040px] mx-auto">
-          <Reveal className="h-full">
+        <Reveal className="max-w-[1040px] mx-auto">
+          <CarruselMovil etiqueta="Programas" escritorio="md:grid md:grid-cols-2 md:gap-5" item="md:w-auto">
             <article className="h-full rounded-[28px] p-6 sm:p-8 flex flex-col gap-5 border-[1.5px] border-borde bg-white">
               <div>
                 <h3 className="m-0 font-serif font-normal text-[30px] leading-tight">{auto.nombre}</h3>
@@ -874,8 +921,6 @@ export function Landing() {
                 </Button>
               </div>
             </article>
-          </Reveal>
-          <Reveal delay={100} className="h-full">
             <article className="h-full rounded-[28px] p-6 sm:p-8 flex flex-col gap-5 border-[1.5px] border-verde-serenidad bg-verde-tenue">
               <div>
                 <span className="inline-block mb-2 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-tinta px-3 py-1.5 rounded-full font-bold">{ses.etiqueta}</span>
@@ -899,8 +944,8 @@ export function Landing() {
                 Consultar mi programa con sesiones
               </BotonWhatsApp>
             </article>
-          </Reveal>
-        </div>
+          </CarruselMovil>
+        </Reveal>
         <p className="m-0 mt-8 text-center text-[15.5px] leading-relaxed text-tinta-suave">
           ¿Ya sos paciente de IntegraMente? Consultá con nuestro equipo cómo acceder a tu cuenta.{" "}
           <a href={whatsappHome.accesoPaciente} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold inline-block py-2">
@@ -919,10 +964,10 @@ export function Landing() {
               Neuropsicología, gerontogimnasia y nutrición. Este equipo revisa cada plan antes de que llegue a tu casa.
             </p>
           </Reveal>
-          <div className="flex flex-wrap justify-center gap-5">
+          <Reveal>
+          <CarruselMovil etiqueta="Equipo" escritorio="md:flex-wrap md:justify-center md:gap-5" item="md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
             {equipo.map((m, i) => (
-              <Reveal key={m.nombre} delay={i * 80} className="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
-                <figure className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
+                <figure key={m.nombre} className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
                   <div className="relative aspect-[16/10] bg-campo">
                     <FotoEquipo foto={m.foto} alt={m.nombre} i={i} />
                     {!m.foto && (
@@ -938,9 +983,9 @@ export function Landing() {
                     <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta-suave">{m.descripcion}</p>
                   </figcaption>
                 </figure>
-              </Reveal>
             ))}
-          </div>
+          </CarruselMovil>
+          </Reveal>
         </div>
       </section>
 
@@ -953,10 +998,22 @@ export function Landing() {
         <div>
           <div className="rounded-[32px] bg-tinta text-white overflow-hidden grid lg:grid-cols-[1.2fr_0.8fr]">
             <div className="p-7 sm:p-10 lg:p-14">
-              <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-[#a9c7ca] font-semibold">Para médicos y geriatras</p>
-              <h2 className="m-0 mb-6 font-serif font-normal text-[30px] sm:text-[38px] lg:text-[44px] leading-[1.1] text-white" style={{ textWrap: "balance" }}>
-                Un aliado entre consultas para tus pacientes.
-              </h2>
+              {/* Celular: la foto queda a la derecha del título, como en
+                  computadora, en lugar de caer al final de la tarjeta. */}
+              <div className="grid grid-cols-[1fr_104px] sm:grid-cols-[1fr_140px] lg:block gap-4 items-start mb-6">
+                <div>
+                  <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-[#a9c7ca] font-semibold">Para médicos y geriatras</p>
+                  <h2 className="m-0 font-serif font-normal text-[27px] sm:text-[38px] lg:text-[44px] leading-[1.1] text-white" style={{ textWrap: "balance" }}>
+                    Un aliado entre consultas para tus pacientes.
+                  </h2>
+                </div>
+                {equipo[0].foto && (
+                  <picture className="lg:hidden">
+                    <source srcSet={equipo[0].foto.webp} type="image/webp" />
+                    <img src={equipo[0].foto.jpg} alt={`${equipo[0].nombre}, ${equipo[0].area}`} loading="lazy" decoding="async" className="block w-full aspect-[3/4] object-cover object-[center_20%] rounded-2xl" />
+                  </picture>
+                )}
+              </div>
               <ul className="list-none m-0 p-0 grid gap-3 mb-8">
                 {[
                   "Evaluación funcional estandarizada y plan según etapa.",
@@ -989,7 +1046,7 @@ export function Landing() {
                 Ver metodología y cómo trabajamos →
               </Link>
             </div>
-            <div className="relative min-h-[240px] bg-verde-profundo">
+            <div className="hidden lg:block relative min-h-[240px] bg-verde-profundo">
               {equipo[0].foto && (
                 <picture>
                   <source srcSet={equipo[0].foto.webp} type="image/webp" />

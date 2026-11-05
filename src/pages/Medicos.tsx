@@ -5,6 +5,7 @@ import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
 import { Reveal } from "../components/ui/Reveal";
 import { SitioFooter } from "../components/layout/SitioFooter";
 import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
+import { CarruselMovil } from "../components/landing/CarruselMovil";
 import { useScrolled } from "../lib/useScrollFx";
 import { areas, contacto, equipo } from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsapp";
@@ -13,8 +14,8 @@ import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsap
 // refieran pacientes. Mismo lenguaje visual que el home (encabezado fijo,
 // secciones con fondos alternados, tarjetas, fotos reales, animaciones de
 // entrada), con un tono más técnico e igual de breve. No repite secciones
-// del home salvo el equipo clínico. El formulario vive solo en
-// /medicos/referir.
+// del home salvo el equipo clínico. El formulario va al final de la
+// página (y también en /medicos/referir, para los enlaces del home).
 //
 // "Referir un paciente" no guarda nada en la base: arma el mensaje con los
 // datos y abre WhatsApp del equipo. Así no hay un formulario público
@@ -211,7 +212,9 @@ export function Medicos() {
       <Encabezado
         accion={
           <a href="#formulario" className="inline-flex items-center min-h-10 px-4 sm:px-5 rounded-full bg-verde-serenidad text-white text-[15px] font-semibold no-underline hover:bg-verde-profundo whitespace-nowrap">
-            Referir un paciente
+            {/* En celular, corto para que entre junto al logo. */}
+            <span className="sm:hidden">Referir</span>
+            <span className="hidden sm:inline">Referir un paciente</span>
           </a>
         }
       />
@@ -237,8 +240,9 @@ export function Medicos() {
             </div>
           </div>
 
-          {/* Foto real de la directora clínica con datos flotantes. */}
-          <div className="relative mx-auto w-full max-w-[520px]">
+          {/* Foto real de la directora clínica con datos flotantes. Solo en
+              computadora: en el celular ocupaba media pantalla sin aportar. */}
+          <div className="hidden lg:block relative mx-auto w-full max-w-[520px]">
             <div aria-hidden="true" className="absolute -inset-2 sm:-inset-6 rounded-[44px] bg-seccion-arena rotate-[-2deg] sm:rotate-[-3deg]" />
             {directora.foto && (
               <picture>
@@ -277,20 +281,20 @@ export function Medicos() {
               <Eyebrow>Base y metodología</Eyebrow>
               <SectionTitle className="max-w-[16em] mx-auto mb-12 lg:mb-16">Cómo se construye cada plan.</SectionTitle>
             </Reveal>
-            <ol className="list-none m-0 p-0 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Reveal>
+            <CarruselMovil etiqueta="Base y metodología" escritorio="md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-5" item="md:w-auto">
               {metodologia.map((m, i) => (
-                <Reveal key={m.t} delay={i * 90} className="h-full">
-                  <li className="h-full rounded-[26px] border border-borde bg-fondo-papel p-6 flex flex-col gap-3">
+                  <div key={m.t} className="h-full rounded-[26px] border border-borde bg-fondo-papel p-6 flex flex-col gap-3">
                     <span className="relative w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-[0_14px_30px_-16px_rgba(31,51,56,0.6)]" style={{ background: i % 2 ? "#6a969c" : "#3f6a70" }}>
                       <Icono name={m.icono} className="w-7 h-7" />
                       <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-mostaza-vital text-tinta text-[12.5px] font-bold flex items-center justify-center">{i + 1}</span>
                     </span>
                     <h3 className="m-0 mt-2 font-serif font-normal text-[22px] leading-tight">{m.t}</h3>
                     <p className="m-0 text-[15.5px] leading-relaxed text-tinta">{m.d}</p>
-                  </li>
-                </Reveal>
+                  </div>
               ))}
-            </ol>
+            </CarruselMovil>
+            </Reveal>
             <p className="m-0 mt-8 text-center text-[15px] leading-relaxed text-tinta-suave">
               El programa no emite diagnósticos ni modifica tratamientos: complementa la atención médica entre consultas.
             </p>
@@ -329,10 +333,10 @@ export function Medicos() {
               <Eyebrow>Equipo clínico</Eyebrow>
               <SectionTitle className="max-w-[17em] mx-auto mb-10 lg:mb-12">Quiénes revisan cada plan.</SectionTitle>
             </Reveal>
-            <div className="flex flex-wrap justify-center gap-5">
-              {clinicos.map((m, i) => (
-                <Reveal key={m.nombre} delay={i * 80} className="w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
-                  <figure className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
+            <Reveal>
+            <CarruselMovil etiqueta="Equipo clínico" escritorio="md:flex-wrap md:justify-center md:gap-5" item="md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
+              {clinicos.map((m) => (
+                  <figure key={m.nombre} className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
                     <div className="relative aspect-[16/10] bg-campo">
                       <picture>
                         <source srcSet={m.foto!.webp} type="image/webp" />
@@ -345,9 +349,9 @@ export function Medicos() {
                       <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta">{m.descripcion}</p>
                     </figcaption>
                   </figure>
-                </Reveal>
               ))}
-            </div>
+            </CarruselMovil>
+            </Reveal>
           </div>
         </section>
 
