@@ -18,6 +18,8 @@ import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
 import { waEquipo } from "../../lib/whatsapp";
 import { BotonWhatsApp } from "../ui/BotonWhatsApp";
 import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
+import { ClaraEncabezado } from "./ClaraEncabezado";
+import { useAlturaChat } from "../../lib/useAlturaChat";
 
 const pasosRevision = [
   { titulo: "Cuestionario recibido", detalle: "Ya tenemos toda la información que nos compartiste.", estado: "hecho" },
@@ -136,26 +138,20 @@ export function FamiliarShell() {
   }, [onboardingRow, hydrateOnboarding]);
 
   const nombreFamiliar = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
+  // Ayuda es una pantalla de chat (como WhatsApp): encabezado y barra para
+  // escribir fijos, solo la conversación se desplaza.
+  const modoChat = pathname === "/app/ayuda" && !pendiente && !isLoading;
+  const altoChat = useAlturaChat(modoChat);
 
   if (isLoading) return <div className="min-h-[40vh]" />;
 
   return (
-    <div className="im-in min-h-full pb-24 md:pb-0">
-      {/* En Ayuda el encabezado es de Clara: otro color, el isotipo y su
-          nombre. En el resto de la app, el saludo de siempre. */}
-      {pathname === "/app/ayuda" && !pendiente ? (
-        <div className="relative overflow-hidden px-5 pt-6 pb-6 sm:px-8 lg:px-12" style={{ backgroundImage: "linear-gradient(120deg, #dfeceb 0%, #ebe6ce 100%)" }}>
-          <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute -right-6 -bottom-10 w-44 opacity-[0.16] rotate-12 select-none pointer-events-none" />
-          <div className="relative max-w-3xl mx-auto flex items-center gap-4">
-            <span className="shrink-0 w-14 h-14 rounded-2xl bg-white shadow-[0_10px_24px_-14px_rgba(31,51,56,0.5)] flex items-center justify-center">
-              <img src="/marca/isotipo.png" alt="" className="w-9 h-auto" />
-            </span>
-            <div className="min-w-0">
-              <h1 className="font-serif font-normal text-[28px] sm:text-[32px] leading-none m-0 text-tinta">Clara</h1>
-              <p className="m-0 mt-1.5 text-[14.5px] text-tinta-suave">Tu asistente de IntegraMente</p>
-            </div>
-          </div>
-        </div>
+    <div
+      className={modoChat ? "im-in flex flex-col overflow-hidden" : "im-in min-h-full pb-24 md:pb-0"}
+      style={modoChat ? { height: altoChat ?? "calc(100dvh - 72px)" } : undefined}
+    >
+      {modoChat ? (
+        <ClaraEncabezado paciente={myPatient?.nombre} />
       ) : (
         <div className="bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
           <div className="max-w-3xl mx-auto">
@@ -168,13 +164,19 @@ export function FamiliarShell() {
       )}
 
       {!pendiente && (
-        <div className="bg-white md:px-8 lg:px-12">
+        <div className="shrink-0 bg-white md:px-8 lg:px-12">
           <div className="max-w-3xl mx-auto">
             <FamiliarNav />
           </div>
         </div>
       )}
 
+      {modoChat ? (
+        // El aviso de estado de la cuenta va dentro de la conversación (Ayuda).
+        <div className="flex-1 min-h-0">
+          <Outlet />
+        </div>
+      ) : (
       <div className="max-w-3xl mx-auto px-5 py-6 sm:px-8 lg:px-12 lg:py-8">
         {rechazada && myPatient ? (
           <CuentaRechazada patient={myPatient} />
@@ -187,6 +189,7 @@ export function FamiliarShell() {
           </>
         )}
       </div>
+      )}
 
       {(() => {
         // Tour first, welcome-message second — never stack two full-screen

@@ -64,6 +64,7 @@ export function FamiliarNav() {
     <>
       {/* Phone: fixed bottom tab bar */}
       <nav
+        data-menu-inferior
         className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-3"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >

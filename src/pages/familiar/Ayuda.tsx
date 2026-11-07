@@ -1,5 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { useMyPatient } from "../../lib/useMyPatient";
+import { useSession } from "../../lib/useSession";
+import { AvisoEstadoCuenta } from "../../components/layout/EstadoCuentaAviso";
 import { programas } from "../../lib/programas";
 import { waEquipo } from "../../lib/whatsapp";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
@@ -10,45 +12,24 @@ import { Icono } from "../../components/landing/Piezas";
 const Asistente = lazy(() => import("./Asistente").then((m) => ({ default: m.Asistente })));
 
 // Ayuda = Clara (agente de ElevenLabs, por texto o por voz, con las reglas
-// de riesgo de siempre) integrada a la página y, para lo que necesita a un
-// profesional, WhatsApp: es el único canal con el equipo de salud, la app no
-// tiene chat con la clínica.
+// de riesgo de siempre) en una pantalla tipo chat y, para lo que necesita a
+// un profesional, WhatsApp (botón fijo en el encabezado): es el único canal
+// con el equipo de salud, la app no tiene chat con la clínica.
 export function Ayuda() {
+  const session = useSession();
   const { data: myPatient } = useMyPatient();
   const autoguiado = myPatient?.modalidad === "autoguiado";
 
-  // Arriba, siempre a mano: WhatsApp con un profesional. El programa con
-  // sesiones va dentro de la bienvenida de Clara; la barra para escribir
-  // queda fija abajo, así que nada vive debajo de ella.
+  // Pantalla tipo WhatsApp: el encabezado (con el botón para hablar con un
+  // profesional) y la barra para escribir quedan fijos; el aviso de la
+  // cuenta y el programa con sesiones van dentro de la conversación.
   return (
-    <>
-      <HablarConEquipo paciente={myPatient?.nombre} />
-      <Suspense fallback={<div className="min-h-[60vh]" />}>
-        <Asistente extras={autoguiado ? <SesionesEnVivo paciente={myPatient?.nombre} /> : undefined} />
-      </Suspense>
-    </>
-  );
-}
-
-function HablarConEquipo({ paciente }: { paciente?: string }) {
-  return (
-    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[24px] border border-borde bg-white px-4.5 py-4">
-      <span className="shrink-0 w-11 h-11 rounded-2xl bg-[#25d366]/12 text-[#1a7f43] flex items-center justify-center">
-        <Icono name="profesional" className="w-6 h-6" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="m-0 text-[15px] font-semibold text-tinta">¿Necesitás hablar con un profesional?</p>
-        <p className="m-0 mt-0.5 text-[13.5px] text-tinta-tenue">Nuestro equipo de salud te atiende por WhatsApp.</p>
-      </div>
-      <a
-        href={waEquipo(undefined, paciente)}
-        target="_blank"
-        rel="noreferrer"
-        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-11 px-5 rounded-full bg-[#25d366] text-white text-[14.5px] font-semibold no-underline hover:brightness-95"
-      >
-        <WhatsAppIcon size={18} /> Escribir por WhatsApp
-      </a>
-    </div>
+    <Suspense fallback={<div className="h-full" />}>
+      <Asistente
+        arriba={myPatient ? <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} /> : null}
+        extras={autoguiado ? <SesionesEnVivo paciente={myPatient?.nombre} /> : undefined}
+      />
+    </Suspense>
   );
 }
 
