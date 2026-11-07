@@ -425,22 +425,6 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
         <Bienvenida nombre={firstName} paciente={nombrePaciente} enVoz={enVoz} onPregunta={submit} extras={extras} />
       ) : (
         <>
-          {/* Quién responde: una línea, sin franja ni caja. */}
-          <div className="flex items-center gap-3 pb-4 mb-5 border-b border-borde">
-            <ClaraAvatar tam={30} animado={ocupado || (enVoz && isSpeaking)} />
-            <div className="min-w-0 flex-1">
-              <p className="m-0 font-serif text-[21px] leading-none text-tinta">Clara</p>
-              <p className="m-0 mt-1 text-[12.5px] text-tinta-tenue">
-                {llamada ? `En llamada · ${llamada}` : ocupado ? "Escribiendo…" : "Tu asistente de IntegraMente"}
-              </p>
-            </div>
-            {!enVoz && (
-              <button type="button" onClick={nuevaConversacion} className="shrink-0 bg-transparent border-none p-2 -mr-2 cursor-pointer text-[13px] font-semibold text-verde-profundo">
-                Empezar de nuevo
-              </button>
-            )}
-          </div>
-
           <ol ref={lista} className="list-none m-0 p-0 grid gap-4" aria-live="polite">
             {burbujas.map((b, i) => {
               const primeraDelGrupo = i === 0 || burbujas[i - 1].rol !== b.rol;
@@ -481,9 +465,6 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
               );
             })}
           </ol>
-          <p className="m-0 mt-6 text-center text-[12px] leading-relaxed text-tinta-tenue">
-            Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, 9-1-1 o el botón SOS.
-          </p>
         </>
       )}
 
@@ -555,6 +536,17 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
             </button>
           </form>
         )}
+        <p className="m-0 mt-2 px-3 text-center text-[11.5px] leading-snug text-tinta-tenue">
+          Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, 9-1-1 o el botón SOS.
+          {!vacio && !enVoz && (
+            <>
+              {" "}
+              <button type="button" onClick={nuevaConversacion} className="bg-transparent border-none p-0 cursor-pointer font-semibold text-verde-profundo underline decoration-dotted">
+                Empezar de nuevo
+              </button>
+            </>
+          )}
+        </p>
       </div>
     </section>
   );
@@ -592,21 +584,19 @@ function Bienvenida({
 }) {
   return (
     <div className="clara-entra">
-      <div className="flex items-start gap-4">
-        <span className="shrink-0 w-16 h-16 rounded-[22px] bg-white ring-1 ring-borde shadow-elevada flex items-center justify-center">
-          <ClaraAvatar tam={42} animado />
+      {/* El saludo es el primer mensaje de Clara (su encabezado ya está arriba). */}
+      <div className="flex items-start gap-2.5 max-w-[92%] sm:max-w-[80%]">
+        <span className="w-8 shrink-0 flex justify-center pt-2">
+          <ClaraAvatar tam={26} />
         </span>
-        <div className="min-w-0 pt-0.5">
-          <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-verde-profundo">Clara · tu asistente</p>
-          <h2 className="m-0 mt-1 font-serif font-normal text-[26px] sm:text-[30px] leading-[1.15] text-tinta">Hola{nombre ? `, ${nombre}` : ""}. ¿En qué te ayudo?</h2>
+        <div className="rounded-[22px] rounded-tl-md bg-white border border-borde-suave px-4 py-3 text-[15.5px] leading-relaxed text-tinta shadow-[0_12px_28px_-22px_rgba(31,51,56,0.6)]">
+          Hola{nombre ? `, ${nombre}` : ""}. Te ayudo con la app y con el día a día del cuidado{paciente ? ` de ${paciente}` : ""}.{" "}
+          {enVoz ? "Ya podés hablarme." : "Escribime abajo, tocá el micrófono para conversar con tu voz o elegí una de estas preguntas:"}
         </div>
       </div>
-      <p className="m-0 mt-3 text-[15.5px] leading-relaxed text-tinta-suave">
-        Te ayudo con la app y con el día a día del cuidado{paciente ? ` de ${paciente}` : ""}. {enVoz ? "Ya podés hablarme." : "Escribime abajo o tocá el micrófono para conversar con tu voz."}
-      </p>
       {!enVoz && (
         <>
-          <ul className="list-none m-0 mt-6 p-0 grid grid-cols-2 gap-2.5">
+          <ul className="list-none m-0 mt-4 p-0 grid grid-cols-2 gap-2.5">
             {preguntasIniciales.map((q) => (
               <li key={q.t}>
                 <button
@@ -636,15 +626,7 @@ function Bienvenida({
           </div>
         </>
       )}
-      {extras && (
-        <div className="mt-8">
-          <p className="m-0 mb-3 text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">¿Preferís hablar con una persona?</p>
-          {extras}
-        </div>
-      )}
-      <p className="m-0 mt-6 text-[12px] leading-relaxed text-tinta-tenue">
-        Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, 9-1-1 o el botón SOS.
-      </p>
+      {extras && <div className="mt-8">{extras}</div>}
     </div>
   );
 }
@@ -675,7 +657,7 @@ function RespuestaClara({
       <span className="w-8 shrink-0 flex justify-center pt-2">{conAvatar && <ClaraAvatar tam={26} animado={esperando} />}</span>
       <div className="min-w-0">
         <div
-          className={`rounded-[22px] rounded-bl-md px-4 py-3 text-[15.5px] leading-relaxed text-tinta shadow-[0_12px_28px_-22px_rgba(31,51,56,0.6)] ${
+          className={`rounded-[22px] rounded-tl-md px-4 py-3 text-[15.5px] leading-relaxed text-tinta shadow-[0_12px_28px_-22px_rgba(31,51,56,0.6)] ${
             urgente ? "bg-alerta border-[1.5px] border-alerta-borde" : "bg-white border border-borde-suave"
           }`}
         >

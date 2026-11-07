@@ -141,14 +141,31 @@ export function FamiliarShell() {
 
   return (
     <div className="im-in min-h-full pb-24 md:pb-0">
-      <div className="bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
-        <div className="max-w-3xl mx-auto">
-          <p className="m-0 mb-1 text-sm text-[#c4dbdb] first-letter:uppercase">
-            {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
-          </p>
-          <h1 className="font-serif font-normal text-2xl sm:text-[28px] m-0 text-white">Hola, {nombreFamiliar}</h1>
+      {/* En Ayuda el encabezado es de Clara: otro color, el isotipo y su
+          nombre. En el resto de la app, el saludo de siempre. */}
+      {pathname === "/app/ayuda" && !pendiente ? (
+        <div className="relative overflow-hidden px-5 pt-6 pb-6 sm:px-8 lg:px-12" style={{ backgroundImage: "linear-gradient(120deg, #dfeceb 0%, #ebe6ce 100%)" }}>
+          <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute -right-6 -bottom-10 w-44 opacity-[0.16] rotate-12 select-none pointer-events-none" />
+          <div className="relative max-w-3xl mx-auto flex items-center gap-4">
+            <span className="shrink-0 w-14 h-14 rounded-2xl bg-white shadow-[0_10px_24px_-14px_rgba(31,51,56,0.5)] flex items-center justify-center">
+              <img src="/marca/isotipo.png" alt="" className="w-9 h-auto" />
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-serif font-normal text-[28px] sm:text-[32px] leading-none m-0 text-tinta">Clara</h1>
+              <p className="m-0 mt-1.5 text-[14.5px] text-tinta-suave">Tu asistente de IntegraMente</p>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
+          <div className="max-w-3xl mx-auto">
+            <p className="m-0 mb-1 text-sm text-[#c4dbdb] first-letter:uppercase">
+              {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
+            </p>
+            <h1 className="font-serif font-normal text-2xl sm:text-[28px] m-0 text-white">Hola, {nombreFamiliar}</h1>
+          </div>
+        </div>
+      )}
 
       {!pendiente && (
         <div className="bg-white md:px-8 lg:px-12">
