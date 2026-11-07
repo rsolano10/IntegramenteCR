@@ -10,23 +10,27 @@ import { Icono } from "../../components/landing/Piezas";
 const Asistente = lazy(() => import("./Asistente").then((m) => ({ default: m.Asistente })));
 
 // Ayuda = Clara (agente de ElevenLabs, por texto o por voz, con las reglas
-// de riesgo de siempre) como pieza principal y, para lo que necesita a un
+// de riesgo de siempre) integrada a la página y, para lo que necesita a un
 // profesional, WhatsApp: es el único canal con el equipo de salud, la app no
 // tiene chat con la clínica.
 export function Ayuda() {
   const { data: myPatient } = useMyPatient();
   const autoguiado = myPatient?.modalidad === "autoguiado";
 
+  // WhatsApp y el programa con sesiones van dentro de la bienvenida de
+  // Clara: la conversación ocupa la página y la barra para escribir queda
+  // fija abajo, así que nada vive debajo de ella.
   return (
-    <div className="grid gap-4">
-      <Suspense fallback={<div className="rounded-[32px] bg-white border border-borde" style={{ height: "min(70vh, 680px)" }} />}>
-        <Asistente embedded />
-      </Suspense>
-      <div className={`grid gap-3 ${autoguiado ? "sm:grid-cols-2" : ""}`}>
-        <HablarConEquipo paciente={myPatient?.nombre} />
-        {autoguiado && <SesionesEnVivo paciente={myPatient?.nombre} />}
-      </div>
-    </div>
+    <Suspense fallback={<div className="min-h-[60vh]" />}>
+      <Asistente
+        extras={
+          <div className={`grid gap-3 ${autoguiado ? "sm:grid-cols-2" : ""}`}>
+            <HablarConEquipo paciente={myPatient?.nombre} />
+            {autoguiado && <SesionesEnVivo paciente={myPatient?.nombre} />}
+          </div>
+        }
+      />
+    </Suspense>
   );
 }
 

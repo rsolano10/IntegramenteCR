@@ -80,7 +80,7 @@ interface Manejadores {
   onError: (m: string) => void;
 }
 
-export function Asistente({ embedded = false }: { embedded?: boolean }) {
+export function Asistente({ extras }: { extras?: ReactNode }) {
   const manejadores = useRef<Manejadores | null>(null);
   return (
     <ConversationProvider
@@ -90,12 +90,12 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
       onAgentChatResponsePart={(p) => manejadores.current?.onParte(p)}
       onError={(m) => manejadores.current?.onError(m)}
     >
-      <Clara embedded={embedded} manejadores={manejadores} />
+      <Clara extras={extras} manejadores={manejadores} />
     </ConversationProvider>
   );
 }
 
-function Clara({ embedded, manejadores }: { embedded: boolean; manejadores: React.MutableRefObject<Manejadores | null> }) {
+function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React.MutableRefObject<Manejadores | null> }) {
   const navigate = useNavigate();
   const session = useSession();
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
@@ -111,7 +111,7 @@ function Clara({ embedded, manejadores }: { embedded: boolean; manejadores: Reac
   const [modo, setModo] = useState<"texto" | "voz" | null>(null);
   const [error, setError] = useState("");
   const [calificada, setCalificada] = useState<Record<string, boolean>>({});
-  const scroller = useRef<HTMLDivElement>(null);
+  const lista = useRef<HTMLOListElement>(null);
 
   // Estado de la sesión de texto: el saludo del agente se omite (ya hay
   // uno en pantalla) y el primer mensaje espera a que conecte.
@@ -136,28 +136,26 @@ function Clara({ embedded, manejadores }: { embedded: boolean; manejadores: Reac
   }, [burbujas]);
 
   const vacio = burbujas.length === 0;
-  // El chat se desplaza por dentro, sin mover la página. Mientras la
-  // persona esté al final, sigue al texto que va apareciendo; si subió a
-  // leer algo anterior, no la interrumpe.
+  // La conversación es parte de la página: mientras la persona esté al
+  // final, la página sigue al texto que va apareciendo; si subió a leer
+  // algo anterior, no la interrumpe.
   const pegado = useRef(true);
   useEffect(() => {
-    const el = scroller.current;
-    if (!el) return;
-    const alFinal = () => (el.scrollTop = el.scrollHeight);
-    const onScroll = () => (pegado.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+    const alFinal = () => window.scrollTo({ top: document.documentElement.scrollHeight });
+    const onScroll = () => (pegado.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160);
     const ro = new ResizeObserver(() => pegado.current && alFinal());
-    if (el.firstElementChild) ro.observe(el.firstElementChild);
-    el.addEventListener("scroll", onScroll, { passive: true });
+    if (lista.current) ro.observe(lista.current);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       ro.disconnect();
-      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [vacio]);
   useEffect(() => {
-    const el = scroller.current;
-    if (!el) return;
+    if (vacio) return;
     pegado.current = true;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [burbujas.length]);
 
   // Al salir de Ayuda se corta la conversación.
@@ -419,204 +417,143 @@ function Clara({ embedded, manejadores }: { embedded: boolean; manejadores: Reac
 
   const estadoVoz = status === "connecting" ? "Conectando con Clara…" : !conectada ? "Terminando…" : isMuted ? "Tu micrófono está en silencio" : isSpeaking ? "Clara está hablando" : "Te escucho…";
 
+  const llamada = enVoz && conectada ? reloj : null;
+
   return (
-    <section aria-label="Clara, asistente de IntegraMente" className={`relative ${embedded ? "" : "mt-2"}`}>
-      <div className="rounded-[32px] overflow-hidden bg-white border border-borde shadow-marco">
-        {/* Encabezado */}
-        <header className="relative overflow-hidden px-5 sm:px-7 py-5 text-white" style={{ backgroundImage: "linear-gradient(135deg, #3f6a70 0%, #2f5459 100%)" }}>
-          <span aria-hidden="true" className="absolute -right-12 -top-16 w-48 h-48 rounded-full bg-white/[0.06]" />
-          <span aria-hidden="true" className="absolute right-24 -bottom-20 w-36 h-36 rounded-full bg-mostaza-vital/[0.12]" />
-          <div className="relative flex flex-wrap items-center gap-x-4 gap-y-4">
-            <span className="relative shrink-0 w-14 h-14 rounded-2xl bg-white/10 ring-1 ring-white/15 flex items-center justify-center">
-              <ClaraAvatar tam={38} animado={ocupado || (enVoz && isSpeaking)} />
-              <span
-                aria-hidden="true"
-                className={`absolute -right-0.5 -bottom-0.5 w-3.5 h-3.5 rounded-full ring-[3px] ring-[#365e63] ${conectada ? "bg-semaforo-verde-claro" : "bg-white/60"}`}
-              />
-            </span>
+    <section aria-label="Clara, asistente de IntegraMente" className="relative">
+      {vacio ? (
+        <Bienvenida nombre={firstName} paciente={nombrePaciente} enVoz={enVoz} onPregunta={submit} extras={extras} />
+      ) : (
+        <>
+          {/* Quién responde: una línea, sin franja ni caja. */}
+          <div className="flex items-center gap-3 pb-4 mb-5 border-b border-borde">
+            <ClaraAvatar tam={30} animado={ocupado || (enVoz && isSpeaking)} />
             <div className="min-w-0 flex-1">
-              <h2 className="m-0 font-serif font-normal text-[26px] leading-none text-white">Clara</h2>
-              <p className="m-0 mt-1.5 text-[13.5px] text-[#c4dbdb] truncate">
-                {enVoz ? (conectada ? `En llamada · ${reloj}` : estadoVoz) : ocupado ? "Escribiendo…" : "Tu asistente de IntegraMente"}
+              <p className="m-0 font-serif text-[21px] leading-none text-tinta">Clara</p>
+              <p className="m-0 mt-1 text-[12.5px] text-tinta-tenue">
+                {llamada ? `En llamada · ${llamada}` : ocupado ? "Escribiendo…" : "Tu asistente de IntegraMente"}
               </p>
             </div>
-            <div role="tablist" aria-label="Cómo hablar con Clara" className="w-full sm:w-auto flex p-1 rounded-full bg-black/15 ring-1 ring-white/10">
-              {(
-                [
-                  ["texto", "Escribir"],
-                  ["voz", "Hablar"],
-                ] as const
-              ).map(([k, t]) => {
-                const activo = k === "voz" ? enVoz : !enVoz;
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    role="tab"
-                    aria-selected={activo}
-                    onClick={() => (k === "voz" ? !enVoz && hablar() : enVoz && endSession())}
-                    className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 min-h-10 px-4 rounded-full border-0 font-sans text-[13.5px] font-semibold cursor-pointer transition-colors ${
-                      activo ? "bg-white text-verde-profundo shadow-sm" : "bg-transparent text-white/80 hover:text-white"
-                    }`}
-                  >
-                    {k === "voz" ? <IconoMic /> : <IconoTeclado />}
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
+            {!enVoz && (
+              <button type="button" onClick={nuevaConversacion} className="shrink-0 bg-transparent border-none p-2 -mr-2 cursor-pointer text-[13px] font-semibold text-verde-profundo">
+                Empezar de nuevo
+              </button>
+            )}
           </div>
-        </header>
 
-        {/* Conversación */}
-        <div
-          ref={scroller}
-          className="relative overflow-y-auto overscroll-contain px-4 sm:px-6 py-5"
-          style={{
-            height: enVoz ? "min(44vh, 420px)" : "min(58vh, 540px)",
-            backgroundColor: "#f7f4e9",
-            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(63,106,112,0.07) 1px, transparent 0)",
-            backgroundSize: "18px 18px",
-          }}
-          aria-live="polite"
-        >
-          {burbujas.length === 0 ? (
-            <Bienvenida nombre={firstName} paciente={nombrePaciente} enVoz={enVoz} onPregunta={submit} />
-          ) : (
-            <ol className="list-none m-0 p-0 grid gap-3.5">
-              {burbujas.map((b, i) => {
-                const primeraDelGrupo = i === 0 || burbujas[i - 1].rol !== b.rol;
-                return b.rol === "usuario" ? (
-                  <li key={b.key} className="clara-entra flex justify-end">
-                    <div className="max-w-[82%] sm:max-w-[72%]">
-                      {b.porVoz && (
-                        <p className="m-0 mb-1 mr-1 flex items-center justify-end gap-1 text-[11.5px] font-semibold text-tinta-tenue">
-                          <IconoMic /> Por voz
-                        </p>
-                      )}
-                      <div
-                        className="rounded-[22px] rounded-br-md px-4 py-3 text-[15.5px] leading-relaxed text-white shadow-[0_10px_24px_-16px_rgba(31,51,56,0.7)]"
-                        style={{ backgroundImage: "linear-gradient(135deg, #4f7d83, #3f6a70)" }}
-                      >
-                        <span className="whitespace-pre-line">{b.texto}</span>
-                      </div>
+          <ol ref={lista} className="list-none m-0 p-0 grid gap-4" aria-live="polite">
+            {burbujas.map((b, i) => {
+              const primeraDelGrupo = i === 0 || burbujas[i - 1].rol !== b.rol;
+              return b.rol === "usuario" ? (
+                <li key={b.key} className="clara-entra flex justify-end">
+                  <div className="max-w-[84%] sm:max-w-[72%]">
+                    {b.porVoz && (
+                      <p className="m-0 mb-1 mr-1 flex items-center justify-end gap-1 text-[11.5px] font-semibold text-tinta-tenue">
+                        <IconoMic /> Por voz
+                      </p>
+                    )}
+                    <div
+                      className="rounded-[22px] rounded-br-md px-4 py-3 text-[15.5px] leading-relaxed text-white"
+                      style={{ backgroundImage: "linear-gradient(135deg, #4f7d83, #3f6a70)" }}
+                    >
+                      <span className="whitespace-pre-line">{b.texto}</span>
                     </div>
-                  </li>
-                ) : (
-                  <li key={b.key} className="clara-entra">
-                    <RespuestaClara
-                      b={b}
-                      conAvatar={primeraDelGrupo}
-                      paciente={paciente}
-                      onAccion={(to) => navigate(to)}
-                      calificar={
-                        canSendFeedback && b.key === ultimaRespuesta?.key && !calificada[b.key] && !b.porVoz
-                          ? (v) => {
-                              sendFeedback(v);
-                              setCalificada((c) => ({ ...c, [b.key]: v }));
-                            }
-                          : null
-                      }
-                      calificacion={calificada[b.key]}
-                    />
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </div>
+                  </div>
+                </li>
+              ) : (
+                <li key={b.key} className="clara-entra">
+                  <RespuestaClara
+                    b={b}
+                    conAvatar={primeraDelGrupo}
+                    paciente={paciente}
+                    onAccion={(to) => navigate(to)}
+                    calificar={
+                      canSendFeedback && b.key === ultimaRespuesta?.key && !calificada[b.key] && !b.porVoz
+                        ? (v) => {
+                            sendFeedback(v);
+                            setCalificada((c) => ({ ...c, [b.key]: v }));
+                          }
+                        : null
+                    }
+                    calificacion={calificada[b.key]}
+                  />
+                </li>
+              );
+            })}
+          </ol>
+          <p className="m-0 mt-6 text-center text-[12px] leading-relaxed text-tinta-tenue">
+            Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, 9-1-1 o el botón SOS.
+          </p>
+        </>
+      )}
 
-        {/* Llamada en curso */}
-        {enVoz && (
-          <div className="relative border-t border-borde-suave bg-white px-5 py-6 flex flex-col items-center text-center" role="status">
-            <div ref={orbe} className="relative w-[132px] h-[132px] flex items-center justify-center" style={{ ["--nivel" as string]: 0 }}>
-              {conectada && (
-                <>
-                  <span aria-hidden="true" className="clara-onda absolute inset-2 rounded-full bg-verde-serenidad/25" />
-                  <span aria-hidden="true" className="clara-onda absolute inset-2 rounded-full bg-mostaza-vital/30 [animation-delay:1.2s]" />
-                </>
-              )}
-              <span
-                aria-hidden="true"
-                className="absolute inset-3 rounded-full bg-verde-tenue ring-1 ring-borde transition-transform duration-75"
-                style={{ transform: "scale(calc(1 + var(--nivel) * 0.18))" }}
-              />
-              <span className="relative transition-transform duration-75" style={{ transform: "scale(calc(1 + var(--nivel) * 0.22))" }}>
-                <ClaraAvatar tam={64} animado={status === "connecting"} />
+      {/* Barra fija al pie de la pantalla (sobre el menú inferior en el
+          celular): para escribir o, en una llamada, los controles de voz.
+          El margen negativo absorbe el relleno inferior de la página para
+          que, al final, quede igual de pegada al menú. */}
+      <div className="sticky z-10 -mx-5 sm:-mx-8 lg:-mx-12 px-5 sm:px-8 lg:px-12 pt-6 pb-3 mt-4 -mb-14 md:-mb-6 lg:-mb-8 bottom-[calc(64px+env(safe-area-inset-bottom))] md:bottom-0 bg-gradient-to-t from-fondo-papel via-fondo-papel to-transparent">
+        {error && <p className="m-0 mb-2 px-2 text-[13.5px] text-alerta-texto">{error}</p>}
+        {enVoz ? (
+          <div className="flex items-center gap-3 rounded-[28px] bg-white border border-borde p-2.5 pl-3 shadow-elevada" role="status">
+            <div ref={orbe} className="relative shrink-0 w-14 h-14 flex items-center justify-center" style={{ ["--nivel" as string]: 0 }}>
+              {conectada && <span aria-hidden="true" className="clara-onda absolute inset-1 rounded-full bg-verde-serenidad/30" />}
+              <span aria-hidden="true" className="absolute inset-1 rounded-full bg-verde-tenue ring-1 ring-borde transition-transform duration-75" style={{ transform: "scale(calc(1 + var(--nivel) * 0.25))" }} />
+              <span className="relative transition-transform duration-75" style={{ transform: "scale(calc(1 + var(--nivel) * 0.3))" }}>
+                <ClaraAvatar tam={30} animado={status === "connecting"} />
               </span>
             </div>
-            <p className="m-0 mt-3 font-serif text-[22px] leading-tight text-tinta">{estadoVoz}</p>
-            <p className="m-0 mt-1 text-[13.5px] text-tinta-tenue">Hablá con naturalidad, como en una llamada.</p>
-            <div className="mt-4 flex items-center gap-4">
-              <BotonRedondo
-                etiqueta={isMuted ? "Activar micrófono" : "Silenciar micrófono"}
-                activo={isMuted}
-                deshabilitado={!conectada}
-                onClick={() => setMuted(!isMuted)}
-              >
-                {isMuted ? <IconoMicApagado /> : <IconoMic grande />}
-              </BotonRedondo>
-              <button
-                type="button"
-                onClick={() => endSession()}
-                aria-label="Terminar la llamada"
-                className="w-16 h-16 rounded-full border-0 bg-semaforo-rojo text-white cursor-pointer flex items-center justify-center shadow-[0_14px_30px_-12px_rgba(192,102,79,0.8)] hover:brightness-95"
-              >
-                <IconoColgar />
-              </button>
+            <div className="min-w-0 flex-1">
+              <p className="m-0 font-serif text-[18px] leading-tight text-tinta truncate">{estadoVoz}</p>
+              <p className="m-0 mt-0.5 text-[12.5px] text-tinta-tenue">{llamada ? `En llamada · ${llamada}` : "Hablá con naturalidad"}</p>
             </div>
+            <BotonRedondo etiqueta={isMuted ? "Activar micrófono" : "Silenciar micrófono"} activo={isMuted} deshabilitado={!conectada} onClick={() => setMuted(!isMuted)}>
+              {isMuted ? <IconoMicApagado /> : <IconoMic grande />}
+            </BotonRedondo>
+            <button
+              type="button"
+              onClick={() => endSession()}
+              aria-label="Terminar la llamada"
+              className="shrink-0 w-12 h-12 rounded-full border-0 bg-semaforo-rojo text-white cursor-pointer flex items-center justify-center hover:brightness-95"
+            >
+              <IconoColgar />
+            </button>
           </div>
-        )}
-
-        {/* Compositor */}
-        <div className="border-t border-borde-suave bg-white px-3.5 sm:px-5 py-3.5">
-          {error && <p className="m-0 mb-2.5 px-1 text-[13.5px] text-alerta-texto">{error}</p>}
+        ) : (
           <form
             onSubmit={(e) => {
               e.preventDefault();
               submit(input);
             }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 rounded-full bg-white border border-borde p-1.5 shadow-elevada focus-within:border-verde-serenidad"
           >
-            {!enVoz && (
-              <button
-                type="button"
-                onClick={hablar}
-                aria-label="Hablar con Clara"
-                title="Hablar con Clara"
-                className="shrink-0 w-12 h-12 rounded-full border-[1.5px] border-verde-serenidad/50 bg-verde-tenue text-verde-profundo cursor-pointer flex items-center justify-center hover:bg-[#e6f0f0]"
-              >
-                <IconoMic grande />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={hablar}
+              aria-label="Hablar con Clara"
+              title="Hablar con Clara"
+              className="shrink-0 w-11 h-11 rounded-full border-0 bg-verde-tenue text-verde-profundo cursor-pointer flex items-center justify-center hover:bg-[#e6f0f0]"
+            >
+              <IconoMic grande />
+            </button>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={enVoz ? "También podés escribirle…" : "Escribile a Clara…"}
+              placeholder="Escribile a Clara…"
               aria-label="Tu mensaje"
-              className="flex-1 min-w-0 min-h-12 px-5 rounded-full border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta focus:outline-none focus:border-verde-serenidad focus:bg-white"
+              className="flex-1 min-w-0 min-h-11 px-2 border-0 bg-transparent font-sans text-[16px] text-tinta focus:outline-none"
             />
             <button
               type="submit"
               disabled={ocupado || !input.trim()}
               aria-label="Enviar"
-              className="shrink-0 w-12 h-12 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-all hover:bg-tinta disabled:bg-borde-campo disabled:cursor-default"
+              className="shrink-0 w-11 h-11 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-colors hover:bg-tinta disabled:bg-borde-campo disabled:cursor-default"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
               </svg>
             </button>
           </form>
-        </div>
-      </div>
-
-      <div className="mt-3 px-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-[12.5px] leading-relaxed text-tinta-tenue">
-        <span>Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, 9-1-1 o el botón SOS.</span>
-        {burbujas.length > 0 && !enVoz && (
-          <button type="button" onClick={nuevaConversacion} className="bg-transparent border-none p-0 cursor-pointer font-semibold text-verde-profundo underline decoration-dotted">
-            Empezar de nuevo
-          </button>
         )}
       </div>
     </section>
@@ -640,25 +577,42 @@ function ClaraAvatar({ tam, animado = false }: { tam: number; animado?: boolean 
   );
 }
 
-function Bienvenida({ nombre, paciente, enVoz, onPregunta }: { nombre: string; paciente?: string; enVoz: boolean; onPregunta: (t: string) => void }) {
+function Bienvenida({
+  nombre,
+  paciente,
+  enVoz,
+  onPregunta,
+  extras,
+}: {
+  nombre: string;
+  paciente?: string;
+  enVoz: boolean;
+  onPregunta: (t: string) => void;
+  extras?: ReactNode;
+}) {
   return (
-    <div className="clara-entra flex flex-col items-center text-center pt-3 pb-2">
-      <span className="w-20 h-20 rounded-[26px] bg-white ring-1 ring-borde shadow-elevada flex items-center justify-center">
-        <ClaraAvatar tam={52} animado />
-      </span>
-      <h3 className="m-0 mt-4 font-serif font-normal text-[26px] sm:text-[30px] leading-tight text-tinta">Hola{nombre ? `, ${nombre}` : ""}. Soy Clara.</h3>
-      <p className="m-0 mt-2 max-w-[30em] text-[15px] leading-relaxed text-tinta-suave">
-        Te ayudo con la app y con el día a día del cuidado{paciente ? ` de ${paciente}` : ""}. {enVoz ? "Ya podés hablarme." : "Escribime o tocá el micrófono para conversar con tu voz."}
+    <div className="clara-entra">
+      <div className="flex items-start gap-4">
+        <span className="shrink-0 w-16 h-16 rounded-[22px] bg-white ring-1 ring-borde shadow-elevada flex items-center justify-center">
+          <ClaraAvatar tam={42} animado />
+        </span>
+        <div className="min-w-0 pt-0.5">
+          <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-verde-profundo">Clara · tu asistente</p>
+          <h2 className="m-0 mt-1 font-serif font-normal text-[26px] sm:text-[30px] leading-[1.15] text-tinta">Hola{nombre ? `, ${nombre}` : ""}. ¿En qué te ayudo?</h2>
+        </div>
+      </div>
+      <p className="m-0 mt-3 text-[15.5px] leading-relaxed text-tinta-suave">
+        Te ayudo con la app y con el día a día del cuidado{paciente ? ` de ${paciente}` : ""}. {enVoz ? "Ya podés hablarme." : "Escribime abajo o tocá el micrófono para conversar con tu voz."}
       </p>
       {!enVoz && (
         <>
-          <ul className="list-none m-0 mt-6 p-0 w-full grid grid-cols-2 gap-2.5 text-left">
+          <ul className="list-none m-0 mt-6 p-0 grid grid-cols-2 gap-2.5">
             {preguntasIniciales.map((q) => (
               <li key={q.t}>
                 <button
                   type="button"
                   onClick={() => onPregunta(q.t)}
-                  className="group w-full h-full flex flex-col items-start gap-2.5 rounded-[20px] border border-borde bg-white p-3.5 cursor-pointer font-sans text-left transition-all hover:-translate-y-0.5 hover:shadow-elevada hover:border-verde-serenidad/50"
+                  className="w-full h-full flex flex-col items-start gap-2.5 rounded-[20px] border border-borde bg-white p-3.5 cursor-pointer font-sans text-left transition-all hover:-translate-y-0.5 hover:shadow-elevada hover:border-verde-serenidad/50"
                 >
                   <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: q.fondo, color: q.tinta }}>
                     <Icono name={q.icono} className="w-5 h-5" />
@@ -668,13 +622,13 @@ function Bienvenida({ nombre, paciente, enVoz, onPregunta }: { nombre: string; p
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {otrasPreguntas.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => onPregunta(t)}
-                className="px-3.5 py-2 rounded-full border border-borde bg-white/80 text-[13px] font-semibold text-tinta-suave cursor-pointer hover:border-verde-serenidad hover:text-tinta"
+                className="px-3.5 py-2 rounded-full border border-borde bg-white text-[13px] font-semibold text-tinta-suave cursor-pointer hover:border-verde-serenidad hover:text-tinta"
               >
                 {t}
               </button>
@@ -682,6 +636,15 @@ function Bienvenida({ nombre, paciente, enVoz, onPregunta }: { nombre: string; p
           </div>
         </>
       )}
+      {extras && (
+        <div className="mt-8">
+          <p className="m-0 mb-3 text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">¿Preferís hablar con una persona?</p>
+          {extras}
+        </div>
+      )}
+      <p className="m-0 mt-6 text-[12px] leading-relaxed text-tinta-tenue">
+        Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, 9-1-1 o el botón SOS.
+      </p>
     </div>
   );
 }
@@ -828,14 +791,6 @@ function IconoMicApagado() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
       <path {...trazo} d="M15 10.5V6a3 3 0 0 0-5.7-1.3M9 9v2a3 3 0 0 0 4.6 2.5M5.5 11a6.5 6.5 0 0 0 10.4 5.2M18.5 11a6.4 6.4 0 0 1-.5 2.5M12 17.5V21M4 4l16 16" />
-    </svg>
-  );
-}
-function IconoTeclado() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-      <rect {...trazo} x="3" y="6" width="18" height="12" rx="2.5" />
-      <path {...trazo} d="M7 10h.01M11 10h.01M15 10h.01M8 14h8" />
     </svg>
   );
 }
