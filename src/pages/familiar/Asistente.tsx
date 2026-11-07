@@ -17,6 +17,9 @@ import { WHATSAPP_EQUIPO, waEquipo, waLink } from "../../lib/whatsapp";
 import { detenerVoz, lecturaDisponible, leerEnVoz } from "../../lib/voz";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
 import { Icono } from "../../components/landing/Piezas";
+import { Modal } from "../../components/ui/Modal";
+import { bloquesDeTexto, destinos as destinosApp, destinosEnTexto, trozosDeLinea, type Destino } from "../../lib/claraTexto";
+import { abrirVentanaCuenta } from "../../lib/abrirCuenta";
 
 // Clara: la asistente de la sección Ayuda, un agente de ElevenLabs
 // (Conversational AI). Mismo chat de siempre, con dos formas de hablarle:
@@ -37,12 +40,19 @@ import { Icono } from "../../components/landing/Piezas";
 const CLARA_AGENT_ID = "agent_6101m6vtn05pf4mtqvys2jnavkt4";
 
 // Preguntas para empezar: mismos íconos y colores de la paleta oficial.
+// Preguntas para empezar (desde tablet), sobre lo que Clara responde: el
+// uso de la app. Mismos íconos y colores de la paleta oficial.
 const preguntasIniciales = [
   { t: "¿Cómo registro una actividad?", icono: "check", fondo: "#6a969c", tinta: "#ffffff" },
-  { t: "Repite la misma pregunta", icono: "cerebro", fondo: "#e8b5a1", tinta: "#1f3338" },
-  { t: "No quiere comer", icono: "manzana", fondo: "#a9c49f", tinta: "#1f3338" },
-  { t: "Necesito un respiro", icono: "sol", fondo: "#f4d096", tinta: "#1f3338" },
+  { t: "¿Cómo recibo avisos en el teléfono?", icono: "campana", fondo: "#e8b5a1", tinta: "#1f3338" },
+  { t: "¿Qué es la semana gratis?", icono: "sol", fondo: "#f4d096", tinta: "#1f3338" },
+  { t: "¿Cómo cambio de programa?", icono: "ajuste", fondo: "#a9c49f", tinta: "#1f3338" },
 ];
+
+// Ejemplos que rotan en el campo vacío: una pista de qué preguntar sin
+// ocupar lugar (sobre todo en el celular, donde no hay tarjetas).
+// Cortos, para que entren en una línea en el celular.
+const ejemplos = ["¿qué es la semana gratis?", "¿cómo registro algo?", "¿cómo recibo avisos?", "¿cómo veo mi semana?", "¿cómo cambio la clave?"];
 
 interface Burbuja {
   key: string;
@@ -54,6 +64,8 @@ interface Burbuja {
   accion?: { label: string; to: string };
   porVoz?: boolean;
   hora?: number;
+  // Pantallas que el agente pidió ofrecer (herramienta ir_a).
+  destinos?: Destino[];
 }
 
 let seq = 0;
@@ -80,7 +92,7 @@ interface Manejadores {
   onError: (m: string) => void;
 }
 
-export function Asistente({ extras, arriba }: { extras?: ReactNode; arriba?: ReactNode }) {
+export function Asistente({ extras }: { extras?: ReactNode }) {
   const manejadores = useRef<Manejadores | null>(null);
   return (
     <ConversationProvider
@@ -90,12 +102,12 @@ export function Asistente({ extras, arriba }: { extras?: ReactNode; arriba?: Rea
       onAgentChatResponsePart={(p) => manejadores.current?.onParte(p)}
       onError={(m) => manejadores.current?.onError(m)}
     >
-      <Clara extras={extras} arriba={arriba} manejadores={manejadores} />
+      <Clara extras={extras} manejadores={manejadores} />
     </ConversationProvider>
   );
 }
 
-function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: ReactNode; manejadores: React.MutableRefObject<Manejadores | null> }) {
+function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React.MutableRefObject<Manejadores | null> }) {
   const navigate = useNavigate();
   const session = useSession();
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
@@ -362,10 +374,30 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
     }, 10_000);
   }
 
+  // La primera vez que toca el micrófono: qué va a pasar, antes de que el
+  // navegador pida permiso (que no tome por sorpresa).
+  const [explicarVoz, setExplicarVoz] = useState(false);
+  function pedirVoz() {
+    let vista = false;
+    try {
+      vista = localStorage.getItem("clara-voz-explicada") === "1";
+    } catch {
+      // sin almacenamiento: se explica cada vez
+    }
+    if (vista) hablar();
+    else setExplicarVoz(true);
+  }
+
   async function hablar() {
     if (modo === "voz") {
       endSession();
       return;
+    }
+    setExplicarVoz(false);
+    try {
+      localStorage.setItem("clara-voz-explicada", "1");
+    } catch {
+      // no pasa nada
     }
     setError("");
     try {
@@ -393,6 +425,13 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
     if (ultima && !ultima.whatsapp) actualizar(ultima.key, { whatsapp: mensaje });
     else agregar({ key: clave(), rol: "asistente", texto: "Te dejo el mensaje listo para nuestro equipo:", whatsapp: mensaje, animar: true });
     return "Listo: la persona ve el mensaje para el equipo con el botón de WhatsApp.";
+  });
+  useConversationClientTool("ir_a", (params: Record<string, unknown>) => {
+    const d = params.pantalla as Destino;
+    if (!destinosApp[d]) return `Pantalla desconocida. Opciones: ${Object.keys(destinosApp).join(", ")}.`;
+    const ultima = [...burbujasRef.current].reverse().find((b) => b.rol === "asistente");
+    if (ultima) actualizar(ultima.key, { destinos: [...new Set([...(ultima.destinos ?? []), d])] });
+    return `Listo: la persona ve el botón «${destinosApp[d].label}».`;
   });
   useConversationClientTool("mostrar_emergencia", () => {
     agregar({ key: clave(), rol: "asistente", texto: "Si es una urgencia, llamá al 9-1-1. Acá tenés la guía para este momento:", accion: SOS, animar: true });
@@ -454,6 +493,36 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
     t.style.height = `${Math.min(t.scrollHeight, 132)}px`;
   }, [input]);
   const tactil = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+
+  // Letra más grande para los mensajes (se recuerda en este dispositivo).
+  const [grande, setGrande] = useState(() => {
+    try {
+      return localStorage.getItem("clara-letra") === "grande";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("clara-letra", grande ? "grande" : "normal");
+    } catch {
+      // no pasa nada
+    }
+  }, [grande]);
+  const letra = grande ? "text-[19px] leading-[1.55]" : "text-[16px] leading-relaxed";
+
+  const [ejemplo, setEjemplo] = useState(0);
+  useEffect(() => {
+    if (input || enVoz) return;
+    const id = window.setInterval(() => setEjemplo((n) => (n + 1) % ejemplos.length), 4000);
+    return () => window.clearInterval(id);
+  }, [input, enVoz]);
+
+  const irA = (d: Destino) => {
+    const destino = destinosApp[d];
+    if (destino.ventana) abrirVentanaCuenta(destino.ventana);
+    else if (destino.ruta) navigate(destino.ruta);
+  };
   const hayTexto = input.trim().length > 0;
 
   return (
@@ -466,12 +535,53 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
         {/* Mismo contenedor y márgenes que el resto de las secciones. El
             relleno de abajo deja lugar a la barra flotante. */}
         <div ref={contenido} className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 pt-6" style={{ paddingBottom: altoBarra + 16 }}>
-          {arriba}
+          {/* Una línea discreta: persona por WhatsApp y tamaño de letra. */}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <a
+              href={waEquipo(undefined, paciente)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 min-h-11 text-[14.5px] font-semibold text-[#1a7f43] no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo rounded-full"
+            >
+              <span aria-hidden="true" className="w-8 h-8 rounded-full bg-[#25d366] text-white flex items-center justify-center">
+                <WhatsAppIcon size={16} />
+              </span>
+              <span>
+                <span className="sm:hidden underline decoration-[#25d366]/50 underline-offset-4">Hablar con una persona</span>
+                <span className="hidden sm:inline">
+                  ¿Preferís una persona? <span className="underline decoration-[#25d366]/50 underline-offset-4">Escribinos por WhatsApp</span>
+                </span>
+                <span className="sr-only"> por WhatsApp (se abre en otra pestaña)</span>
+              </span>
+            </a>
+            <div role="group" aria-label="Tamaño de la letra" className="flex items-center gap-1 rounded-full bg-white border border-borde p-1">
+              {(
+                [
+                  [false, "Letra normal", "text-[14px]"],
+                  [true, "Letra grande", "text-[19px]"],
+                ] as const
+              ).map(([g, etiqueta, tam]) => (
+                <button
+                  key={etiqueta}
+                  type="button"
+                  aria-pressed={grande === g}
+                  aria-label={etiqueta}
+                  title={etiqueta}
+                  onClick={() => setGrande(g)}
+                  className={`w-10 h-9 rounded-full border-0 cursor-pointer font-serif leading-none ${tam} ${
+                    grande === g ? "bg-verde-profundo text-white" : "bg-transparent text-tinta-suave hover:text-tinta"
+                  } focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-verde-profundo`}
+                >
+                  A
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="m-0 mb-4 flex justify-center">
             <span className="rounded-full bg-white/90 border border-borde-suave px-3 py-1 text-[12px] font-semibold text-tinta-suave shadow-sm">Hoy</span>
           </p>
           <div role="log" aria-live="polite" aria-relevant="additions" aria-busy={ocupado} aria-label="Mensajes">
-            <Bienvenida nombre={firstName} paciente={nombrePaciente} enVoz={enVoz} conPreguntas={vacio} onPregunta={submit} extras={vacio ? extras : null} />
+            <Bienvenida nombre={firstName} paciente={nombrePaciente} enVoz={enVoz} conPreguntas={vacio} onPregunta={submit} extras={vacio ? extras : null} letra={letra} />
             {!vacio && (
               <ol className="list-none m-0 mt-4 p-0 grid gap-1.5">
                 {burbujas.map((b, i) => {
@@ -482,7 +592,7 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
                         <div className="flex justify-end">
                           <div className="max-w-[84%] sm:max-w-[72%]">
                             <div
-                              className={`rounded-[20px] ${primeraDelGrupo ? "rounded-tr-md" : ""} px-4 pt-2.5 pb-1.5 text-[16px] leading-relaxed text-white`}
+                              className={`rounded-[20px] ${primeraDelGrupo ? "rounded-tr-md" : ""} px-4 pt-2.5 pb-1.5 ${letra} text-white`}
                               style={{ backgroundImage: "linear-gradient(135deg, #4f7d83, #3f6a70)" }}
                             >
                               <span className="sr-only">{b.porVoz ? "Dijiste por voz: " : "Vos: "}</span>
@@ -497,6 +607,8 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
                           conAvatar={primeraDelGrupo}
                           paciente={paciente}
                           onAccion={(to) => navigate(to)}
+                          onDestino={irA}
+                          letra={letra}
                           calificar={
                             canSendFeedback && b.key === ultimaRespuesta?.key && !calificada[b.key] && !b.porVoz
                               ? (v) => {
@@ -592,7 +704,7 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
                     if (hayTexto && !ocupado) submit(input);
                   }
                 }}
-                placeholder="Escribile a Clara…"
+                placeholder={`Probá: ${ejemplos[ejemplo]}`}
                 enterKeyHint="send"
                 className="flex-1 min-w-0 min-h-11 max-h-[132px] resize-none border-0 bg-transparent px-3.5 py-[10px] font-sans text-[16px] leading-[1.4] text-tinta placeholder:text-tinta-tenue focus:outline-none"
               />
@@ -610,7 +722,7 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
               ) : (
                 <button
                   type="button"
-                  onClick={hablar}
+                  onClick={pedirVoz}
                   aria-label="Hablar con Clara por voz"
                   title="Hablar con Clara por voz"
                   className="shrink-0 w-11 h-11 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-colors hover:bg-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
@@ -637,7 +749,112 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
           </p>
         </div>
       </div>
+
+      {explicarVoz && (
+        <Modal onClose={() => setExplicarVoz(false)}>
+          <div className="flex flex-col items-center text-center pt-2">
+            <span className="w-16 h-16 rounded-[22px] bg-verde-tenue ring-1 ring-borde flex items-center justify-center">
+              <ClaraAvatar tam={40} animado />
+            </span>
+            <h2 className="m-0 mt-4 font-serif font-normal text-[26px] leading-tight text-tinta">Hablá con Clara como en una llamada</h2>
+            <ul className="list-none m-0 mt-4 p-0 grid gap-2.5 text-left text-[16px] leading-relaxed text-tinta-suave">
+              <li className="flex gap-2.5">
+                <span aria-hidden="true" className="text-verde-profundo font-bold">1</span>Tu navegador te va a pedir permiso para usar el micrófono: tocá «Permitir».
+              </li>
+              <li className="flex gap-2.5">
+                <span aria-hidden="true" className="text-verde-profundo font-bold">2</span>Hablá con naturalidad. Lo que digan las dos queda escrito en el chat.
+              </li>
+              <li className="flex gap-2.5">
+                <span aria-hidden="true" className="text-verde-profundo font-bold">3</span>Podés silenciarte o colgar cuando quieras con el botón rojo.
+              </li>
+            </ul>
+            <div className="mt-6 grid gap-2.5 w-full sm:flex sm:justify-center">
+              <button
+                type="button"
+                onClick={hablar}
+                autoFocus
+                className="inline-flex items-center justify-center gap-2 min-h-12 px-6 rounded-full border-0 bg-verde-profundo text-white text-[16px] font-semibold cursor-pointer hover:bg-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+              >
+                <IconoMic grande /> Empezar a hablar
+              </button>
+              <button
+                type="button"
+                onClick={() => setExplicarVoz(false)}
+                className="min-h-12 px-6 rounded-full border-[1.5px] border-borde bg-white text-tinta text-[16px] font-semibold cursor-pointer hover:border-verde-serenidad"
+              >
+                Prefiero escribir
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </section>
+  );
+}
+
+// Respuesta con formato: párrafos, listas numeradas y viñetas reales, y en
+// negrita los nombres de botones y pantallas (lo que viene entre comillas).
+function TextoClara({ texto }: { texto: string }) {
+  const linea = (l: string) =>
+    trozosDeLinea(l).map((t, i) =>
+      t.destacado ? (
+        <strong key={i} className="font-semibold text-tinta">
+          {t.texto}
+        </strong>
+      ) : (
+        <span key={i}>{t.texto}</span>
+      ),
+    );
+  return (
+    <div className="grid gap-2">
+      {bloquesDeTexto(texto).map((b, i) =>
+        b.tipo === "parrafo" ? (
+          <p key={i} className="m-0 whitespace-pre-line">
+            {linea(b.texto)}
+          </p>
+        ) : b.tipo === "numerada" ? (
+          <ol key={i} className="m-0 p-0 list-none grid gap-1.5">
+            {b.items.map((it, j) => (
+              <li key={j} className="flex gap-2.5">
+                <span aria-hidden="true" className="shrink-0 mt-[3px] w-[1.35em] h-[1.35em] rounded-full bg-verde-tenue text-verde-profundo text-[0.78em] font-bold flex items-center justify-center">
+                  {j + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="sr-only">{j + 1}. </span>
+                  {linea(it)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <ul key={i} className="m-0 pl-5 grid gap-1 list-disc marker:text-verde-serenidad">
+            {b.items.map((it, j) => (
+              <li key={j}>{linea(it)}</li>
+            ))}
+          </ul>
+        ),
+      )}
+    </div>
+  );
+}
+
+// Botones para ir a la pantalla que Clara acaba de nombrar.
+function AccesosDirectos({ destinos, onDestino }: { destinos: Destino[]; onDestino: (d: Destino) => void }) {
+  if (!destinos.length) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {destinos.map((d) => (
+        <button
+          key={d}
+          type="button"
+          onClick={() => onDestino(d)}
+          className="inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full border-[1.5px] border-verde-serenidad/60 bg-white text-[14.5px] font-semibold text-verde-profundo cursor-pointer hover:bg-verde-tenue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+        >
+          {destinosApp[d].label}
+          <span aria-hidden="true">→</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -682,6 +899,7 @@ function Bienvenida({
   conPreguntas,
   onPregunta,
   extras,
+  letra,
 }: {
   nombre: string;
   paciente?: string;
@@ -689,6 +907,7 @@ function Bienvenida({
   conPreguntas: boolean;
   onPregunta: (t: string) => void;
   extras?: ReactNode;
+  letra: string;
 }) {
   return (
     <div>
@@ -697,14 +916,14 @@ function Bienvenida({
         <span className="w-8 shrink-0 flex justify-center pt-1.5">
           <ClaraAvatar tam={26} />
         </span>
-        <div className="rounded-[20px] rounded-tl-md bg-white border border-borde-suave px-4 py-2.5 text-[16px] leading-relaxed text-tinta shadow-[0_8px_20px_-18px_rgba(31,51,56,0.6)]">
+        <div className={`rounded-[20px] rounded-tl-md bg-white border border-borde-suave px-4 py-2.5 ${letra} text-tinta shadow-[0_8px_20px_-18px_rgba(31,51,56,0.6)]`}>
           <span className="sr-only">Clara: </span>
           Hola{nombre ? `, ${nombre}` : ""}. Soy Clara y te ayudo con la app y con el día a día del cuidado{paciente ? ` de ${paciente}` : ""}.{" "}
           {enVoz ? (
             "Ya podés hablarme."
           ) : conPreguntas ? (
             <>
-              <span className="md:hidden">Escribime abajo o tocá el micrófono para hablar.</span>
+              <span className="md:hidden">Escribime tu duda abajo o tocá el micrófono para hablar.</span>
               <span className="hidden md:inline">Escribime, tocá el micrófono para hablar o elegí una pregunta:</span>
             </>
           ) : null}
@@ -741,6 +960,8 @@ function RespuestaClara({
   conAvatar,
   paciente,
   onAccion,
+  onDestino,
+  letra,
   calificar,
   calificacion,
 }: {
@@ -748,6 +969,8 @@ function RespuestaClara({
   conAvatar: boolean;
   paciente?: string;
   onAccion: (to: string) => void;
+  onDestino: (d: Destino) => void;
+  letra: string;
   calificar: ((v: boolean) => void) | null;
   calificacion?: boolean;
 }) {
@@ -762,7 +985,7 @@ function RespuestaClara({
       <span className="w-8 shrink-0 flex justify-center pt-1.5">{conAvatar && <ClaraAvatar tam={26} animado={esperando} />}</span>
       <div className="min-w-0">
         <div
-          className={`rounded-[20px] ${conAvatar ? "rounded-tl-md" : ""} px-4 pt-2.5 pb-1.5 text-[16px] leading-relaxed text-tinta shadow-[0_8px_20px_-18px_rgba(31,51,56,0.6)] ${
+          className={`rounded-[20px] ${conAvatar ? "rounded-tl-md" : ""} px-4 pt-2.5 pb-1.5 ${letra} text-tinta shadow-[0_8px_20px_-18px_rgba(31,51,56,0.6)] ${
             urgente ? "bg-alerta border-[1.5px] border-alerta-borde" : "bg-white border border-borde-suave"
           }`}
         >
@@ -775,7 +998,7 @@ function RespuestaClara({
           ) : (
             <>
               <span className="sr-only">Clara{b.porVoz ? " dijo por voz" : ""}: </span>
-              <span className="whitespace-pre-line">{texto}</span>
+              <TextoClara texto={texto} />
             </>
           )}
           {b.accion && !b.escribiendo && (
@@ -792,6 +1015,7 @@ function RespuestaClara({
           )}
           {!esperando && <Hora hora={b.hora} clara porVoz={b.porVoz} />}
         </div>
+        {!b.escribiendo && b.texto && !b.accion && <AccesosDirectos destinos={[...new Set([...(b.destinos ?? []), ...destinosEnTexto(b.texto)])].slice(0, 2)} onDestino={onDestino} />}
         {b.whatsapp && !b.escribiendo && <BorradorWhatsApp inicial={b.whatsapp} paciente={paciente} />}
         {!b.escribiendo && b.texto && !b.porVoz && (lecturaDisponible || calificar || calificacion !== undefined) && (
           <div className="flex items-center gap-0.5 mt-1">

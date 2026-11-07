@@ -1,7 +1,5 @@
 import { lazy, Suspense, useState } from "react";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { useSession } from "../../lib/useSession";
-import { AvisoEstadoCuenta } from "../../components/layout/EstadoCuentaAviso";
 import { programas } from "../../lib/programas";
 import { waEquipo } from "../../lib/whatsapp";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
@@ -16,50 +14,17 @@ const Asistente = lazy(() => import("./Asistente").then((m) => ({ default: m.Asi
 // un profesional, WhatsApp (botón fijo en el encabezado): es el único canal
 // con el equipo de salud, la app no tiene chat con la clínica.
 export function Ayuda() {
-  const session = useSession();
   const { data: myPatient } = useMyPatient();
   const autoguiado = myPatient?.modalidad === "autoguiado";
 
   // Pantalla tipo WhatsApp: el saludo de siempre y la barra para escribir
-  // quedan fijos; el aviso de la cuenta, el acceso a un profesional por
-  // WhatsApp y el programa con sesiones van dentro de la conversación.
+  // quedan fijos. El aviso de la semana gratis ya se ve en Hoy y Mi semana,
+  // así que acá no se repite; el acceso a una persona por WhatsApp es una
+  // línea compacta dentro de la conversación.
   return (
     <Suspense fallback={<div className="h-full" />}>
-      <Asistente
-        arriba={
-          <>
-            {myPatient && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
-            <HablarConEquipo paciente={myPatient?.nombre} />
-          </>
-        }
-        extras={autoguiado ? <SesionesEnVivo paciente={myPatient?.nombre} /> : undefined}
-      />
+      <Asistente extras={autoguiado ? <SesionesEnVivo paciente={myPatient?.nombre} /> : undefined} />
     </Suspense>
-  );
-}
-
-// Hablar con una persona del equipo: WhatsApp es el único canal.
-function HablarConEquipo({ paciente }: { paciente?: string }) {
-  return (
-    <div className="mb-5 flex items-center gap-3.5 rounded-[24px] border border-borde bg-white px-4 py-3.5">
-      <span aria-hidden="true" className="shrink-0 w-11 h-11 rounded-2xl bg-[#e3f6ea] text-[#1a7f43] flex items-center justify-center">
-        <Icono name="profesional" className="w-6 h-6" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="m-0 text-[15px] font-semibold leading-snug text-tinta">¿Necesitás hablar con un profesional?</p>
-        <p className="m-0 mt-0.5 text-[13.5px] leading-snug text-tinta-suave">Te atendemos por WhatsApp.</p>
-      </div>
-      <a
-        href={waEquipo(undefined, paciente)}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Escribir por WhatsApp a un profesional (se abre en otra pestaña)"
-        className="shrink-0 inline-flex items-center justify-center gap-2 min-h-11 min-w-11 px-3 sm:px-4 rounded-full bg-[#25d366] text-white text-[14px] font-semibold no-underline hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
-      >
-        <WhatsAppIcon size={18} />
-        <span className="hidden sm:inline">Escribir por WhatsApp</span>
-      </a>
-    </div>
   );
 }
 

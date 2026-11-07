@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { EVENTO_ABRIR_CUENTA, type VentanaCuenta } from "../../lib/abrirCuenta";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
@@ -59,6 +60,13 @@ export function AppHeader() {
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
+  // Otras pantallas (los botones de Clara en Ayuda) pueden pedir abrir una
+  // ventana del menú de la cuenta.
+  useEffect(() => {
+    const on = (e: Event) => setModal((e as CustomEvent<VentanaCuenta>).detail);
+    window.addEventListener(EVENTO_ABRIR_CUENTA, on);
+    return () => window.removeEventListener(EVENTO_ABRIR_CUENTA, on);
+  }, []);
 
   // The participant experience is deliberately minimal — large touch
   // targets, no navigation, no risk data. A generic header with an account
