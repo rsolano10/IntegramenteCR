@@ -40,13 +40,13 @@ const riskRules: RiskRule[] = [
     label: "Ver qué hacer ante una caída",
   },
   {
-    keywords: ["se perdió", "se perdio", "no aparece", "salió sola", "salio sola", "se desorienta", "quiere salir de la casa", "se fue de la casa"],
+    keywords: ["se perdió", "se perdio", "no aparece", "salió sola", "salio sola", "salió solo", "salio solo", "no la encuentro", "no lo encuentro", "no la encontramos", "no lo encontramos", "se desorienta", "quiere salir de la casa", "se fue de la casa"],
     reply: "Esto corresponde a la guía de prevención de extravío. Te la muestro.",
     to: "/app/alerta/extravio",
     label: "Ver las medidas",
   },
   {
-    keywords: ["fiebre", "no me reconoce", "no reconoce", "muy dormida", "no despierta", "de un día para otro", "cambio repentino", "confundida de golpe"],
+    keywords: ["fiebre", "no me reconoce", "no reconoce", "muy dormida", "muy dormido", "no despierta", "de un día para otro", "cambio repentino", "confundida de golpe", "confundido de golpe"],
     reply: "Un cambio así de rápido casi siempre tiene una causa médica tratable. Te muestro qué revisar.",
     to: "/app/alerta/cambio",
     label: "Ver qué revisar",

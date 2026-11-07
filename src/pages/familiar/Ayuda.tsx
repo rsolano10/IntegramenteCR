@@ -1,75 +1,102 @@
+import { lazy, Suspense, useState } from "react";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { programas } from "../../lib/programas";
 import { waEquipo } from "../../lib/whatsapp";
-import { BotonWhatsApp } from "../../components/ui/BotonWhatsApp";
-import { lazy, Suspense } from "react";
+import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
+import { Icono } from "../../components/landing/Piezas";
 
 // Clara trae el SDK de ElevenLabs (voz en tiempo real, ~600 kB): se carga
 // solo al entrar a Ayuda, no con el resto de la app.
 const Asistente = lazy(() => import("./Asistente").then((m) => ({ default: m.Asistente })));
 
 // Ayuda = Clara (agente de ElevenLabs, por texto o por voz, con las reglas
-// de riesgo de siempre) y, para lo que necesita a un profesional, WhatsApp:
-// es el único canal con el equipo de salud, la app no tiene chat con la
-// clínica.
+// de riesgo de siempre) como pieza principal y, para lo que necesita a un
+// profesional, WhatsApp: es el único canal con el equipo de salud, la app no
+// tiene chat con la clínica.
 export function Ayuda() {
   const { data: myPatient } = useMyPatient();
   const autoguiado = myPatient?.modalidad === "autoguiado";
 
   return (
-    <div>
-      <HablarConEquipo paciente={myPatient?.nombre} />
-      {autoguiado && <SesionesEnVivo paciente={myPatient?.nombre} />}
-      <Suspense fallback={<div style={{ minHeight: "min(60vh, 520px)" }} />}>
+    <div className="grid gap-4">
+      <Suspense fallback={<div className="rounded-[32px] bg-white border border-borde" style={{ height: "min(70vh, 680px)" }} />}>
         <Asistente embedded />
       </Suspense>
+      <div className={`grid gap-3 ${autoguiado ? "sm:grid-cols-2" : ""}`}>
+        <HablarConEquipo paciente={myPatient?.nombre} />
+        {autoguiado && <SesionesEnVivo paciente={myPatient?.nombre} />}
+      </div>
     </div>
   );
 }
 
 function HablarConEquipo({ paciente }: { paciente?: string }) {
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-borde bg-white px-4.5 py-3.5">
-      <div className="min-w-0">
-        <p className="m-0 text-[15px] font-semibold text-tinta">¿Necesitás hablar con un profesional?</p>
-        <p className="m-0 mt-0.5 text-[13.5px] text-tinta-tenue">Nuestro equipo de salud te atiende por WhatsApp.</p>
-      </div>
-      <BotonWhatsApp href={waEquipo(undefined, paciente)} />
-    </div>
+    <a
+      href={waEquipo(undefined, paciente)}
+      target="_blank"
+      rel="noreferrer"
+      className="group flex items-center gap-3.5 rounded-[24px] border border-borde bg-white px-4.5 py-4 no-underline transition-all hover:-translate-y-0.5 hover:shadow-elevada"
+    >
+      <span className="shrink-0 w-11 h-11 rounded-2xl bg-[#25d366] text-white flex items-center justify-center">
+        <WhatsAppIcon size={22} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold text-tinta">Hablar con una persona</span>
+        <span className="block mt-0.5 text-[13.5px] leading-snug text-tinta-tenue">Nuestro equipo de salud te atiende por WhatsApp.</span>
+      </span>
+      <span aria-hidden="true" className="text-[20px] text-tinta-tenue transition-transform group-hover:translate-x-0.5">
+        ›
+      </span>
+    </a>
   );
 }
 
 // Lo que suma el programa con sesiones profesionales (id "orientado") sobre
-// el Autoguiado, con su requisito de ingreso: se cuenta acá, sin
-// interrumpir el chat.
+// el Autoguiado, con su requisito de ingreso.
 function SesionesEnVivo({ paciente }: { paciente?: string }) {
   const orientado = programas.find((p) => p.id === "orientado")!;
+  const [abierto, setAbierto] = useState(false);
   return (
-    <details className="mb-5 rounded-2xl border border-borde bg-white px-4.5 py-3.5">
-      <summary className="cursor-pointer text-[14.5px] font-semibold text-tinta">
-        ¿Querés sesiones con nuestro equipo? <span className="text-verde-profundo">Conocé el programa con sesiones profesionales</span>
-      </summary>
-      <ul className="list-none m-0 mt-3 p-0 grid gap-2">
-        {orientado.incluye.slice(1).map((i) => (
-          <li key={i} className="flex items-start gap-2.5 text-[14.5px] text-tinta">
-            <span className="text-verde-serenidad font-bold">✓</span>
-            {i}
-          </li>
-        ))}
-      </ul>
-      {orientado.requisito && <p className="m-0 mt-3 text-[13.5px] leading-relaxed text-tinta-suave">{orientado.requisito}</p>}
-      <p className="m-0 mt-3 text-[13.5px] text-tinta-tenue">
-        Para cambiarte,{" "}
-        <a
-          href={waEquipo("Quiero información para pasarnos al programa con sesiones profesionales.", paciente)}
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-verde-profundo"
-        >
-          escribinos por WhatsApp
-        </a>
-        .
-      </p>
-    </details>
+    <div className="rounded-[24px] border border-borde bg-white overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        aria-expanded={abierto}
+        className="w-full flex items-center gap-3.5 px-4.5 py-4 bg-transparent border-0 cursor-pointer text-left font-sans"
+      >
+        <span className="shrink-0 w-11 h-11 rounded-2xl bg-mostaza-vital text-tinta flex items-center justify-center">
+          <Icono name="profesional" className="w-6 h-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold text-tinta">¿Querés sesiones con el equipo?</span>
+          <span className="block mt-0.5 text-[13.5px] leading-snug text-tinta-tenue">Conocé el programa con sesiones profesionales.</span>
+        </span>
+        <span aria-hidden="true" className={`text-[20px] text-tinta-tenue transition-transform ${abierto ? "rotate-90" : ""}`}>
+          ›
+        </span>
+      </button>
+      {abierto && (
+        <div className="px-4.5 pb-4.5 border-t border-borde-suave pt-3.5">
+          <ul className="list-none m-0 p-0 grid gap-2">
+            {orientado.incluye.slice(1).map((i) => (
+              <li key={i} className="flex items-start gap-2.5 text-[14.5px] text-tinta">
+                <span className="text-verde-serenidad font-bold">✓</span>
+                {i}
+              </li>
+            ))}
+          </ul>
+          {orientado.requisito && <p className="m-0 mt-3 text-[13.5px] leading-relaxed text-tinta-suave">{orientado.requisito}</p>}
+          <a
+            href={waEquipo("Quiero información para pasarnos al programa con sesiones profesionales.", paciente)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 mt-3.5 min-h-10 px-4 rounded-full bg-verde-profundo text-white text-[14px] font-semibold no-underline hover:bg-tinta"
+          >
+            <WhatsAppIcon size={16} /> Consultar por WhatsApp
+          </a>
+        </div>
+      )}
+    </div>
   );
 }
