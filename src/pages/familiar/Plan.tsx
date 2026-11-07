@@ -13,7 +13,7 @@ import { useCurrentPlanMeta, usePendingReviews, usePlan } from "../../lib/usePla
 import { weekDays } from "../../lib/planWeek";
 import { ModuloIcon } from "../../components/ui/ModuloIcon";
 import type { PlanDay, PlanDayStatus, PlanTask } from "../../lib/mockData";
-import { contenidoDeRecurso, contenidoDeTarea } from "../../lib/contenidoRecurso";
+import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 
@@ -22,14 +22,6 @@ const tipoLabel: Record<PlanTask["tipo"], string> = {
   actividad: "Actividad",
   estrategia: "Estrategia",
   neuroproteccion: "Neuroprotección",
-};
-
-const estadoBadge: Record<PlanDayStatus, { text: string; className: string } | null> = {
-  realizado: { text: "✓ Realizado", className: "bg-fila-fria text-semaforo-verde-texto" },
-  parcial: { text: "En parte", className: "bg-fila-calida text-semaforo-amarillo-texto" },
-  no: { text: "No se realizó", className: "bg-campo text-tinta-tenue" },
-  pendiente: { text: "Pendiente", className: "bg-verde-tenue text-verde-profundo" },
-  futuro: null,
 };
 
 const estadoMeta: Record<PlanDayStatus, { label: string; pill: string } | null> = {
@@ -106,51 +98,12 @@ function WeekTaskCard({ task, isToday, onOpen }: { task: PlanTask; isToday: bool
   );
 }
 
-function TaskDetail({ task }: { task: PlanTask }) {
-  const { data: perfilRecursos } = usePerfilRecursos();
-  const etapas = perfilRecursos?.etapas ?? null;
-  const badge = estadoBadge[task.estado];
-  return (
-    <div>
-      <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">
-        {task.hora} · {tipoLabel[task.tipo]}
-        {task.duracion ? ` · ${task.duracion}` : ""}
-      </p>
-      <h3 className="font-serif font-normal text-2xl m-0 mb-3">{task.titulo}</h3>
-      {badge && <span className={`inline-block mb-3 px-3 py-1.5 rounded-full text-[13px] font-semibold ${badge.className}`}>{badge.text}</span>}
-      {task.detalle && <p className="m-0 mb-3 text-base leading-relaxed text-tinta-suave">{task.detalle}</p>}
-      {task.notaClinica && (
-        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-3.5 mb-3">
-          <p className="m-0 mb-1 text-[12px] tracking-[0.1em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
-          <p className="m-0 text-[14px] leading-relaxed text-tinta">{task.notaClinica}</p>
-        </div>
-      )}
-      <div className="grid grid-cols-1 gap-3 mb-3">
-        {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia />}
-        <ResourceDetailView
-          content={contenidoDeTarea(task, `${tipoLabel[task.tipo]}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas)}
-        />
-      </div>
-      {task.precaucion && (
-        <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3">{task.precaucion}</p>
-      )}
-      {task.comentario && (
-        <div className="bg-fila-calida rounded-2xl p-3.5 mt-3">
-          <p className="m-0 mb-1 text-[13px] font-bold text-semaforo-amarillo-texto">Ayuda que necesitó</p>
-          <p className="m-0 text-[14px] leading-relaxed text-tinta-suave">{task.comentario}</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Plan() {
   const navigate = useNavigate();
   const { data: myPatient } = useMyPatient();
   const { data: plan, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const { data: pendientes } = usePendingReviews(myPatient?.id);
   const { data: planMeta } = useCurrentPlanMeta(myPatient?.id);
-  const [openTask, setOpenTask] = useState<PlanTask | null>(null);
 
   if (loadingPlan) return <div className="flex-1" />;
 
@@ -172,18 +125,15 @@ export function Plan() {
       {!plan || plan.length === 0 ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Todavía no hay un plan asignado.</p>
       ) : (
-        <EstaSemana plan={plan} publishAt={planMeta?.publish_at ?? null} onOpen={(task, isToday) => (isToday && task.estado === "pendiente" ? navigate(`/app/hoy/actividad/${task.id}`) : setOpenTask(task))} />
+        // Toda actividad se abre en su pantalla (la misma que desde Hoy);
+        // «Volver» regresa a Mi semana.
+        <EstaSemana plan={plan} publishAt={planMeta?.publish_at ?? null} onOpen={(task) => navigate(`/app/plan/actividad/${task.id}`)} />
       )}
 
       {myPatient?.id && <SemanasAnteriores patientId={myPatient.id} />}
 
       <MasActividades />
 
-      {openTask && (
-        <Modal onClose={() => setOpenTask(null)}>
-          <TaskDetail task={openTask} />
-        </Modal>
-      )}
     </div>
   );
 }
@@ -351,28 +301,46 @@ function MasActividades() {
     if (!isLoading && (resources ?? []).length === 0) return null;
     return (
       <section>
+        {/* Texto e íconos en el mismo flujo (antes los íconos flotaban encima
+            del título): solo las áreas que traen las sugerencias, hasta 3. */}
         <button
           type="button"
           onClick={() => setAbierto(true)}
-          className="group w-full text-left relative overflow-hidden rounded-3xl border border-borde bg-white p-5 sm:p-6 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-elevada font-sans"
+          className="group w-full text-left flex items-center gap-4 rounded-3xl border border-borde bg-white p-5 sm:p-6 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-elevada font-sans focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
         >
-          <div aria-hidden="true" className="absolute right-4 top-1/2 -translate-y-1/2 hidden sm:flex -space-x-3">
-            {(Object.keys(moduloTheme) as ResourceModulo[]).map((m) => (
+          {/* Desde tablet, los íconos a la izquierda; en el celular, arriba del título. */}
+          <span aria-hidden="true" className="hidden sm:flex shrink-0 -space-x-2.5">
+            {modulosPresentes.slice(0, 3).map((m) => (
               <span
                 key={m}
-                className="w-12 h-12 rounded-2xl border-2 border-white flex items-center justify-center text-white shadow-sm"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border-2 border-white flex items-center justify-center text-white shadow-sm"
                 style={{ backgroundImage: `linear-gradient(150deg, ${moduloTheme[m].from}, ${moduloTheme[m].to})` }}
               >
                 <ModuloIcon modulo={m} className="w-5 h-5" />
               </span>
             ))}
-          </div>
-          <p className="m-0 text-[12px] tracking-[0.14em] uppercase text-tinta-tenue font-semibold">¿Con ganas de más?</p>
-          <p className="m-0 mt-1 font-serif text-[21px] leading-snug text-tinta sm:pr-56">Ver actividades sugeridas para hacer juntos</p>
-          <p className="m-0 mt-1.5 text-[14px] text-tinta-suave sm:pr-56">
-            {isLoading ? "Buscando…" : `${(resources ?? []).length} ideas elegidas según el perfil, además de lo del plan.`}
-            <span className="ml-1.5 font-semibold text-verde-profundo group-hover:underline">Ver ›</span>
-          </p>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span aria-hidden="true" className="sm:hidden flex -space-x-2 mb-3">
+              {modulosPresentes.slice(0, 3).map((m) => (
+              <span
+                key={m}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border-2 border-white flex items-center justify-center text-white shadow-sm"
+                style={{ backgroundImage: `linear-gradient(150deg, ${moduloTheme[m].from}, ${moduloTheme[m].to})` }}
+              >
+                <ModuloIcon modulo={m} className="w-5 h-5" />
+              </span>
+            ))}
+            </span>
+            <span className="block text-[12px] tracking-[0.14em] uppercase text-tinta-suave font-semibold">¿Con ganas de más?</span>
+            <span className="block mt-1 font-serif text-[20px] sm:text-[21px] leading-snug text-tinta">Actividades sugeridas para hacer juntos</span>
+            <span className="block mt-1 text-[14px] text-tinta-suave">
+              {isLoading ? "Buscando…" : `${(resources ?? []).length} ideas según el perfil, además del plan.`}
+            </span>
+          </span>
+          <span aria-hidden="true" className="shrink-0 w-10 h-10 rounded-full bg-verde-tenue text-verde-profundo flex items-center justify-center text-[20px] transition-transform group-hover:translate-x-0.5">
+            ›
+          </span>
         </button>
       </section>
     );

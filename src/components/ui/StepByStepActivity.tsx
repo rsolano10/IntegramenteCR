@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { useVolver } from "../../lib/useVolver";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useMarkRegistro } from "../../lib/usePlan";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
@@ -32,6 +33,9 @@ export function StepByStepActivity({
   size?: "compact" | "large";
 }) {
   const navigate = useNavigate();
+  // Cerrar (×) vuelve a la pantalla de la que se vino: la actividad, Hoy o
+  // Mi semana. Al terminar de registrar, a la lista (backTo).
+  const volver = useVolver(backTo);
   const { data: myPatient } = useMyPatient();
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const { data: perfil } = usePerfilRecursos();
@@ -59,7 +63,7 @@ export function StepByStepActivity({
         )}
         <button
           type="button"
-          onClick={() => navigate(backTo)}
+          onClick={volver}
           aria-label="Cerrar"
           className="w-10 h-10 inline-flex items-center justify-center rounded-full text-tinta-tenue hover:bg-campo cursor-pointer border-none bg-transparent"
         >
@@ -78,7 +82,7 @@ export function StepByStepActivity({
     return shell(
       <div>
         <p className={`m-0 ${large ? "text-2xl" : "text-lg"} text-tinta-suave`}>No encontramos esa actividad.</p>
-        <Button variant="ink" onClick={() => navigate(backTo)} className="mt-6">
+        <Button variant="ink" onClick={volver} className="mt-6">
           Volver
         </Button>
       </div>,
@@ -303,7 +307,7 @@ export function StepByStepActivity({
     return shell(
       <div>
         <p className={`m-0 mb-6 ${large ? "text-[24px]" : "text-[20px]"} leading-relaxed text-verde-profundo`}>{messages[saved]}</p>
-        <Button variant="ink" fullWidth onClick={() => navigate(backTo)}>
+        <Button variant="ink" fullWidth onClick={() => navigate(backTo, { replace: true })}>
           Volver
         </Button>
       </div>,

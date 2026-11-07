@@ -224,6 +224,9 @@ export default function AppLayout() {
           <Route path="hoy" element={<Hoy />} />
           <Route path="hoy/actividad/:taskId" element={<Actividad />} />
           <Route path="plan" element={<Plan />} />
+          {/* La misma pantalla de actividad, abierta desde Mi semana: así
+              «Volver» y el menú inferior saben que se vino de ahí. */}
+          <Route path="plan/actividad/:taskId" element={<Actividad />} />
           {/* Reorganización del menú familiar: Plan+Semana → Mi semana,
               Dudas+Mensajes → Ayuda, Actividades → dentro de Mi semana
               (filtradas por perfil). Las rutas viejas redirigen para no
@@ -263,6 +266,7 @@ export default function AppLayout() {
             criterio que las rutas de alerta de abajo. AppHeader también se
             oculta para estas rutas (ver AppHeader.tsx). */}
         <Route path="hoy/actividad/:taskId/pasos" element={<ActividadPasos />} />
+        <Route path="plan/actividad/:taskId/pasos" element={<ActividadPasos />} />
         <Route path="participante/actividad/:taskId/pasos" element={<ParticipanteActividadPasos />} />
 
         <Route path="alerta/ideacion" element={<Ideacion />} />

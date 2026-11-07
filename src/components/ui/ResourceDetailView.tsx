@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ImagePlaceholder } from "./ImagePlaceholder";
 import { LightbulbIcon } from "./Icons";
 import { nivelCognitivoLabel, resourceUrl, type AdaptacionPorEtapa, type MediaKind, type NivelCognitivo, type ResourceExtras } from "../../lib/mediaResources";
 import { modulosFicha, type ResourceModulo } from "../../lib/modulos";
@@ -293,8 +292,8 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
           {content.mediaKind === "documento" ? "Ver documento" : "Ver recurso"} ↗
         </a>
       )}
-      {/* Nutrición no tiene imágenes ni videos: sin marcador de lugar. */}
-      {!mediaUrl && !esFicha && <ImagePlaceholder label={content.fallbackLabel} height={large ? 170 : 150} rounded={radio} />}
+      {/* Sin imagen ni video no se dibuja ningún marcador de lugar: la
+          duración se muestra, discreta, en el encabezado de la actividad. */}
 
       {content.intro && <p className={`m-0 leading-relaxed text-tinta ${large ? "text-[19px]" : "text-[16px]"}`}>{content.intro}</p>}
 

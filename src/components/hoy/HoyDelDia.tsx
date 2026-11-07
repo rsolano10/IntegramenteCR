@@ -4,6 +4,7 @@ import { estaRegistrada, minutosDe, ordenarDelDia } from "../../lib/hoyDelDia";
 import { moduloLabel, moduloTheme } from "../../lib/modulos";
 import { ModuloIcon } from "../ui/ModuloIcon";
 import { ClockIcon } from "../ui/Icons";
+import type { SiguienteDia } from "../../lib/siguienteDia";
 
 // Pantalla "Hoy" (familia y participante). Pocas actividades por día (no más
 // de 8): en vez de una lista plana, el día se cuenta como una línea de
@@ -263,6 +264,48 @@ export function LineaDelDia({ tasks, size = "compact", rutaActividad }: { tasks:
           </ol>
         </section>
       ))}
+    </div>
+  );
+}
+
+// ─── Cierre del día ───
+
+// Cierre de la línea del día: un final tranquilo después de la última
+// actividad, que dice qué sigue (mañana o el cierre de la semana).
+export function CierreDelDia({ pendientes, siguiente, size = "compact" }: { pendientes: number; siguiente: SiguienteDia | null; size?: HoySize }) {
+  const large = size === "large";
+  const n = siguiente?.cantidad ?? 0;
+  const actividades = `${n} ${n === 1 ? "actividad" : "actividades"}`;
+  const cuando = siguiente ? (siguiente.esManana ? "Mañana" : `El ${siguiente.dia.toLowerCase()}`) : "";
+  const { titulo, detalle, icono } = !siguiente
+    ? pendientes > 0
+      ? { titulo: "Último día de la semana", detalle: "Con estas actividades termina la semana. Después, contanos cómo les fue.", icono: "bandera" as const }
+      : { titulo: "¡Terminaron la semana!", detalle: "Tu equipo está preparando la próxima. Te avisamos cuando esté lista.", icono: "bandera" as const }
+    : pendientes > 0
+      ? { titulo: "Eso es todo por hoy", detalle: `${cuando} les esperan ${actividades} nuevas.`, icono: "sol" as const }
+      : { titulo: "¡Listo por hoy!", detalle: `A descansar. ${cuando} hay ${actividades} nuevas.`, icono: "luna" as const };
+
+  return (
+    <div className="flex flex-col items-center text-center pt-1" role="status">
+      <span aria-hidden="true" className="h-6 w-[2px] rounded-full bg-[repeating-linear-gradient(to_bottom,#ddd7be_0_4px,transparent_4px_8px)]" />
+      <span aria-hidden="true" className={`mt-2 rounded-full bg-white border border-borde flex items-center justify-center text-verde-profundo ${large ? "w-14 h-14" : "w-12 h-12"}`}>
+        {icono === "luna" ? (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19.5 14.2A7.5 7.5 0 1 1 9.8 4.5a6 6 0 0 0 9.7 9.7z" />
+          </svg>
+        ) : icono === "sol" ? (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4" />
+          </svg>
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 21V4M6 4h11l-2 4 2 4H6" />
+          </svg>
+        )}
+      </span>
+      <p className={`m-0 mt-2.5 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{titulo}</p>
+      <p className={`m-0 mt-1 max-w-[26em] text-tinta-suave ${large ? "text-[18px]" : "text-[15px]"}`}>{detalle}</p>
     </div>
   );
 }

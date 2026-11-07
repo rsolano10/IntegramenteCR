@@ -1,7 +1,8 @@
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
 import { Button } from "../../components/ui/Button";
-import { DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
+import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
+import { siguienteDia } from "../../lib/siguienteDia";
 
 const rutaActividad = (id: string) => `/app/hoy/actividad/${id}`;
 
@@ -26,6 +27,7 @@ export function Hoy() {
         <>
           <ResumenDelDia tasks={tasks} quien={quien} rutaActividad={rutaActividad} />
           <LineaDelDia tasks={tasks} rutaActividad={rutaActividad} />
+          {!weekComplete && <CierreDelDia pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} />}
         </>
       )}
 

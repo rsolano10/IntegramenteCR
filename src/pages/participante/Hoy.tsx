@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
-import { DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
+import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
+import { siguienteDia } from "../../lib/siguienteDia";
 
 const rutaActividad = (id: string) => `/app/participante/actividad/${id}`;
 
@@ -25,6 +26,7 @@ export function ParticipanteHoy() {
         <>
           <ResumenDelDia tasks={tasks} quien={null} size="large" rutaActividad={rutaActividad} />
           <LineaDelDia tasks={tasks} size="large" rutaActividad={rutaActividad} />
+          {!weekComplete && <CierreDelDia size="large" pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} />}
         </>
       )}
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useLayoutEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Landing } from "./pages/Landing";
 
@@ -25,10 +25,14 @@ if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
   window.history.scrollRestoration = "manual";
 }
 
+// Instantáneo y antes de pintar: html tiene scroll-behavior: smooth, y un
+// scroll animado hacia arriba mientras la página nueva ya es más corta (de
+// Mi semana a Hoy, por ejemplo) dejaba en Safari del celular el alto viejo
+// "pegado", con mucho espacio en blanco al final.
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
   return null;
 }
