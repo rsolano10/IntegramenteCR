@@ -3,9 +3,12 @@ import { waEquipo } from "../../lib/whatsapp";
 import { WhatsAppIcon } from "../ui/WhatsAppIcon";
 import { EVENTO_ESTADO_CLARA } from "../../lib/claraEstado";
 
-// Encabezado de Ayuda: queda fijo arriba, como la barra de un chat de
-// WhatsApp. Isotipo, «Clara» y su estado en vivo (escribiendo, en llamada…),
-// y a la derecha el acceso directo a un profesional por WhatsApp.
+// Encabezado de Ayuda. Mismas medidas y estilo de texto que el saludo de
+// las otras secciones («Hola, [nombre]»): arriba, en letra chica, «Tu
+// asistente de IntegraMente» (o el estado en vivo: escribiendo, en
+// llamada…) en lugar de la fecha, y el título «Hola, soy Clara». Cambia el
+// color y suma el isotipo y el acceso a un profesional por WhatsApp, sin
+// cambiar el alto.
 export function ClaraEncabezado({ paciente }: { paciente?: string }) {
   const [estado, setEstado] = useState<string | null>(null);
   useEffect(() => {
@@ -15,17 +18,19 @@ export function ClaraEncabezado({ paciente }: { paciente?: string }) {
   }, []);
 
   return (
-    <div className="shrink-0 relative overflow-hidden border-b border-borde" style={{ backgroundImage: "linear-gradient(120deg, #dfeceb 0%, #ebe6ce 100%)" }}>
-      <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute right-28 sm:right-40 -bottom-9 w-32 opacity-[0.14] rotate-12 select-none pointer-events-none" />
-      <div className="relative max-w-3xl mx-auto flex items-center gap-3 px-4 py-3 sm:px-8 lg:px-0">
-        <span className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white shadow-[0_8px_20px_-12px_rgba(31,51,56,0.5)] flex items-center justify-center">
-          <img src="/marca/isotipo.png" alt="" className="w-7 sm:w-8 h-auto" />
+    <div className="shrink-0 relative overflow-hidden px-5 pt-6 pb-6 sm:px-8 lg:px-12" style={{ backgroundImage: "linear-gradient(120deg, #dfeceb 0%, #ebe6ce 100%)" }}>
+      <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute right-32 sm:right-56 -bottom-10 w-32 opacity-[0.14] rotate-12 select-none pointer-events-none" />
+      <div className="relative max-w-3xl mx-auto flex items-center gap-4">
+        {/* El isotipo cuelga en el margen (solo en pantallas anchas) para que
+            el texto quede alineado igual que en «Hola, [nombre]». */}
+        <span className="hidden xl:flex absolute -left-[72px] top-1/2 -translate-y-1/2 w-12 h-12 rounded-2xl bg-white shadow-[0_8px_20px_-12px_rgba(31,51,56,0.5)] items-center justify-center">
+          <img src="/marca/isotipo.png" alt="" className="w-8 h-auto" />
         </span>
         <div className="min-w-0 flex-1">
-          <h1 className="m-0 font-serif font-normal text-[23px] sm:text-[26px] leading-none text-tinta">Clara</h1>
-          <p className="m-0 mt-1 text-[13.5px] leading-snug text-tinta-suave" aria-live="polite">
+          <p className="m-0 mb-1 text-sm text-tinta-suave truncate" aria-live="polite">
             {estado ?? "Tu asistente de IntegraMente"}
           </p>
+          <h1 className="font-serif font-normal text-2xl sm:text-[28px] m-0 text-tinta">Hola, soy Clara</h1>
         </div>
         <a
           href={waEquipo(undefined, paciente)}

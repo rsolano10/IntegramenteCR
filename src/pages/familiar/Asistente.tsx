@@ -116,6 +116,16 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
   const scroller = useRef<HTMLDivElement>(null);
   const contenido = useRef<HTMLDivElement>(null);
   const campo = useRef<HTMLTextAreaElement>(null);
+  // Alto de la barra flotante, para dejarle lugar al final de la conversación.
+  const barra = useRef<HTMLDivElement>(null);
+  const [altoBarra, setAltoBarra] = useState(110);
+  useEffect(() => {
+    const el = barra.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setAltoBarra(el.getBoundingClientRect().height));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Estado de la sesión de texto: el saludo del agente se omite (ya hay
   // uno en pantalla) y el primer mensaje espera a que conecte.
@@ -143,7 +153,8 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
   // Solo la conversación se desplaza (como en WhatsApp). Mientras la
   // persona esté al final, sigue al texto que va apareciendo; si subió a
   // leer algo anterior, no la interrumpe y aparece «Ir al último mensaje».
-  const pegado = useRef(true);
+  // Vacía, la conversación se lee desde arriba; con mensajes, desde el último.
+  const pegado = useRef(burbujas.length > 0);
   const [lejos, setLejos] = useState(false);
   useEffect(() => {
     const el = scroller.current;
@@ -158,7 +169,8 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
     if (contenido.current) ro.observe(contenido.current);
     ro.observe(el);
     el.addEventListener("scroll", onScroll, { passive: true });
-    alFinal();
+    // Con una conversación guardada se abre en el último mensaje; vacía, arriba.
+    if (burbujasRef.current.length) alFinal();
     return () => {
       ro.disconnect();
       el.removeEventListener("scroll", onScroll);
@@ -454,17 +466,15 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
   const hayTexto = input.trim().length > 0;
 
   return (
-    <section aria-label="Conversación con Clara" className="h-full flex flex-col">
+    <section aria-label="Conversación con Clara" className="relative h-full flex flex-col">
       {/* Conversación: lo único que se desplaza */}
       <div
         ref={scroller}
         className="relative flex-1 min-h-0 overflow-y-auto overscroll-contain"
-        style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(63,106,112,0.07) 1px, transparent 0)",
-          backgroundSize: "20px 20px",
-        }}
       >
-        <div ref={contenido} className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-0 pt-4 pb-6">
+        {/* Mismo contenedor y márgenes que el resto de las secciones. El
+            relleno de abajo deja lugar a la barra flotante. */}
+        <div ref={contenido} className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 pt-6" style={{ paddingBottom: altoBarra + 16 }}>
           {arriba}
           <p className="m-0 mb-4 flex justify-center">
             <span className="rounded-full bg-white/90 border border-borde-suave px-3 py-1 text-[12px] font-semibold text-tinta-suave shadow-sm">Hoy</span>
@@ -515,30 +525,32 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
           </div>
         </div>
 
-        {lejos && (
-          <button
-            type="button"
-            onClick={() => irAlFinal()}
-            aria-label="Ir al último mensaje"
-            className="sticky bottom-3 float-right mr-3 sm:mr-6 w-11 h-11 rounded-full border border-borde bg-white text-verde-profundo shadow-elevada cursor-pointer flex items-center justify-center hover:bg-verde-tenue focus-visible:outline-2 focus-visible:outline-verde-profundo"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 5v14M5.5 12.5L12 19l6.5-6.5" />
-            </svg>
-          </button>
-        )}
       </div>
 
-      {/* Barra fija: para escribir o, en una llamada, los controles de voz */}
-      <div className="shrink-0 border-t border-borde bg-campo/95 backdrop-blur">
-        <div className="max-w-3xl mx-auto px-3 sm:px-8 lg:px-0 pt-2.5 pb-2">
+      {/* Barra flotante sobre la conversación (sin franja de pie): para
+          escribir o, en una llamada, los controles de voz. Respeta los
+          márgenes de la sección; la conversación se desvanece por debajo. */}
+      <div ref={barra} className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-fondo-papel from-55% to-transparent pt-8">
+        <div className="relative max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 pb-2.5 [&>*]:pointer-events-auto">
+          {lejos && (
+            <button
+              type="button"
+              onClick={() => irAlFinal()}
+              aria-label="Ir al último mensaje"
+              className="absolute right-5 sm:right-8 lg:right-12 -top-12 w-11 h-11 rounded-full border border-borde bg-white text-verde-profundo shadow-elevada cursor-pointer flex items-center justify-center hover:bg-verde-tenue focus-visible:outline-2 focus-visible:outline-verde-profundo"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 5v14M5.5 12.5L12 19l6.5-6.5" />
+              </svg>
+            </button>
+          )}
           {error && (
             <p className="m-0 mb-2 px-2 text-[13.5px] text-alerta-texto" role="alert">
               {error}
             </p>
           )}
           {enVoz ? (
-            <div className="flex items-center gap-3 rounded-[26px] bg-white border border-borde p-2 pl-2.5" role="status">
+            <div className="flex items-center gap-3 rounded-[28px] bg-white border border-borde p-2 pl-2.5 shadow-elevada" role="status">
               <div ref={orbe} className="relative shrink-0 w-12 h-12 flex items-center justify-center" style={{ ["--nivel" as string]: 0 }}>
                 {conectada && <span aria-hidden="true" className="clara-onda absolute inset-1 rounded-full bg-verde-serenidad/30" />}
                 <span aria-hidden="true" className="absolute inset-1 rounded-full bg-verde-tenue ring-1 ring-borde transition-transform duration-75" style={{ transform: "scale(calc(1 + var(--nivel) * 0.25))" }} />
@@ -571,7 +583,7 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
                   campo.current?.focus();
                 }
               }}
-              className="flex items-end gap-2"
+              className="flex items-end gap-2 rounded-[28px] bg-white border border-borde p-1.5 pl-1.5 shadow-elevada focus-within:border-verde-serenidad"
             >
               <label htmlFor="mensaje-clara" className="sr-only">
                 Escribí un mensaje para Clara
@@ -591,14 +603,14 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
                 }}
                 placeholder="Escribile a Clara…"
                 enterKeyHint="send"
-                className="flex-1 min-w-0 min-h-12 max-h-[132px] resize-none rounded-[24px] border-[1.5px] border-borde-campo bg-white px-4 py-[11px] font-sans text-[16px] leading-[1.4] text-tinta placeholder:text-tinta-tenue focus:outline-none focus:border-verde-serenidad"
+                className="flex-1 min-w-0 min-h-11 max-h-[132px] resize-none border-0 bg-transparent px-3.5 py-[10px] font-sans text-[16px] leading-[1.4] text-tinta placeholder:text-tinta-tenue focus:outline-none"
               />
               {hayTexto ? (
                 <button
                   type="submit"
                   disabled={ocupado}
                   aria-label="Enviar mensaje"
-                  className="shrink-0 w-12 h-12 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-colors hover:bg-tinta disabled:opacity-60 disabled:cursor-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+                  className="shrink-0 w-11 h-11 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-colors hover:bg-tinta disabled:opacity-60 disabled:cursor-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
@@ -610,14 +622,14 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
                   onClick={hablar}
                   aria-label="Hablar con Clara por voz"
                   title="Hablar con Clara por voz"
-                  className="shrink-0 w-12 h-12 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-colors hover:bg-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+                  className="shrink-0 w-11 h-11 rounded-full border-0 bg-verde-profundo text-white cursor-pointer flex items-center justify-center transition-colors hover:bg-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
                 >
                   <IconoMic grande />
                 </button>
               )}
             </form>
           )}
-          <p className="m-0 mt-1.5 px-2 text-center text-[12px] leading-snug text-tinta-suave">
+          <p className="m-0 mt-2 px-2 text-center text-[12px] leading-snug text-tinta-suave">
             Clara es una IA y puede equivocarse. Ante una urgencia, 9-1-1 o el botón SOS.
             {!vacio && !enVoz && (
               <>
