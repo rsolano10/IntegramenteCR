@@ -20,6 +20,7 @@ import { Icono } from "../../components/landing/Piezas";
 import { Modal } from "../../components/ui/Modal";
 import { bloquesDeTexto, destinos as destinosApp, destinosEnTexto, trozosDeLinea, type Destino } from "../../lib/claraTexto";
 import { abrirVentanaCuenta } from "../../lib/abrirCuenta";
+import { iniciarCompra } from "../../lib/pagos";
 
 // Clara: la asistente de la sección Ayuda, un agente de ElevenLabs
 // (Conversational AI). Mismo chat de siempre, con dos formas de hablarle:
@@ -203,7 +204,8 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
   const actualizar = (key: string, cambios: Partial<Burbuja>) => setBurbujas((bs) => bs.map((b) => (b.key === key ? { ...b, ...cambios } : b)));
   const agregar = (...nuevas: Burbuja[]) => setBurbujas((bs) => [...bs, ...nuevas.map((n) => ({ hora: Date.now(), ...n }))]);
   const paciente = myPatient?.nombre;
-  const mensajeEquipo = (pregunta: string) => `Hola, les escribo por ${paciente ?? "mi familiar"}. Tengo una consulta: ${pregunta}`;
+  const mensajeEquipo = (pregunta: string) =>
+    `Hola, les escribo por ${paciente ?? "mi familiar"}. Tengo una consulta${pregunta.trim() ? `: ${pregunta.trim()}` : "."}`;
 
   // Respuesta de la IA en curso: una sola burbuja que se va llenando.
   function burbujaRespuesta(): string {
@@ -521,6 +523,15 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
   }, [input, enVoz]);
 
   const irA = (d: Destino) => {
+    if (d === "activar") {
+      // Mismo camino que «Activar mi programa» del aviso: WhatsApp con el mensaje de compra.
+      iniciarCompra({
+        nombreCuenta: session.status === "authed" ? session.profile.nombre : "",
+        nombrePaciente: paciente,
+        programa: myPatient?.modalidad === "orientado" ? "orientado" : "autoguiado",
+      });
+      return;
+    }
     const destino = destinosApp[d];
     if (destino.ventana) abrirVentanaCuenta(destino.ventana);
     else if (destino.ruta) navigate(destino.ruta);
@@ -586,6 +597,7 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
                           b={b}
                           conAvatar={primeraDelGrupo}
                           paciente={paciente}
+                          mensajeWhatsApp={mensajeEquipo([...burbujas.slice(0, i)].reverse().find((x) => x.rol === "usuario")?.texto ?? "")}
                           onAccion={(to) => navigate(to)}
                           onDestino={irA}
                           letra={letra}
@@ -930,21 +942,39 @@ function TextoClara({ texto }: { texto: string }) {
 }
 
 // Botones para ir a la pantalla que Clara acaba de nombrar.
-function AccesosDirectos({ destinos, onDestino }: { destinos: Destino[]; onDestino: (d: Destino) => void }) {
+function AccesosDirectos({ destinos, onDestino, mensajeWhatsApp }: { destinos: Destino[]; onDestino: (d: Destino) => void; mensajeWhatsApp: string }) {
   if (!destinos.length) return null;
+  const foco = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo";
   return (
     <div className="mt-2 flex flex-wrap gap-2">
-      {destinos.map((d) => (
-        <button
-          key={d}
-          type="button"
-          onClick={() => onDestino(d)}
-          className="inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full border-[1.5px] border-verde-serenidad/60 bg-white text-[14.5px] font-semibold text-verde-profundo cursor-pointer hover:bg-verde-tenue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
-        >
-          {destinosApp[d].label}
-          <span aria-hidden="true">→</span>
-        </button>
-      ))}
+      {destinos.map((d) =>
+        d === "whatsapp" ? (
+          // WhatsApp con la consulta ya escrita (se puede editar antes de enviar).
+          <a
+            key={d}
+            href={waLink(WHATSAPP_EQUIPO, mensajeWhatsApp)}
+            target="_blank"
+            rel="noreferrer"
+            className={`inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-[#25d366] text-white text-[14.5px] font-semibold no-underline hover:brightness-95 ${foco}`}
+          >
+            <WhatsAppIcon size={17} />
+            {destinosApp[d].label}
+            <span className="sr-only"> (se abre en otra pestaña)</span>
+          </a>
+        ) : (
+          <button
+            key={d}
+            type="button"
+            onClick={() => onDestino(d)}
+            className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full border-[1.5px] cursor-pointer text-[14.5px] font-semibold ${
+              d === "activar" ? "border-verde-profundo bg-verde-profundo text-white hover:bg-tinta" : "border-verde-serenidad/60 bg-white text-verde-profundo hover:bg-verde-tenue"
+            } ${foco}`}
+          >
+            {destinosApp[d].label}
+            <span aria-hidden="true">→</span>
+          </button>
+        ),
+      )}
     </div>
   );
 }
@@ -1053,6 +1083,7 @@ function RespuestaClara({
   onAccion,
   onDestino,
   letra,
+  mensajeWhatsApp,
   calificar,
   calificacion,
 }: {
@@ -1062,6 +1093,7 @@ function RespuestaClara({
   onAccion: (to: string) => void;
   onDestino: (d: Destino) => void;
   letra: string;
+  mensajeWhatsApp: string;
   calificar: ((v: boolean) => void) | null;
   calificacion?: boolean;
 }) {
@@ -1106,7 +1138,14 @@ function RespuestaClara({
           )}
           {!esperando && <Hora hora={b.hora} clara porVoz={b.porVoz} />}
         </div>
-        {!b.escribiendo && b.texto && !b.accion && <AccesosDirectos destinos={[...new Set([...(b.destinos ?? []), ...destinosEnTexto(b.texto)])].slice(0, 2)} onDestino={onDestino} />}
+        {!b.escribiendo && b.texto && !b.accion && (
+          <AccesosDirectos
+            // Si ya hay un mensaje redactado para el equipo, no se repite el botón de WhatsApp.
+            destinos={[...new Set([...(b.destinos ?? []), ...destinosEnTexto(b.texto)])].filter((d) => !(d === "whatsapp" && b.whatsapp)).slice(0, 3)}
+            onDestino={onDestino}
+            mensajeWhatsApp={mensajeWhatsApp}
+          />
+        )}
         {b.whatsapp && !b.escribiendo && <BorradorWhatsApp inicial={b.whatsapp} paciente={paciente} />}
         {!b.escribiendo && b.texto && !b.porVoz && (lecturaDisponible || calificar || calificacion !== undefined) && (
           <div className="flex items-center gap-0.5 mt-1">
