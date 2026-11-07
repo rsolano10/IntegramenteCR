@@ -62,7 +62,7 @@ export const destinos: Record<Destino, { label: string; ruta?: string; ventana?:
   calendario: { label: "Abrir el calendario", ventana: "calendario" },
   cuenta: { label: "Abrir Mi cuenta", ventana: "mi-perfil" },
   perfil: { label: "Ver el perfil", ruta: "/app/perfil/resumen" },
-  emergencia: { label: "Abrir SOS", ruta: "/app/emergencia" },
+  emergencia: { label: "Ver qué hacer en una urgencia", ruta: "/app/emergencia" },
 };
 
 const reglas: { destino: Destino; patron: RegExp }[] = [

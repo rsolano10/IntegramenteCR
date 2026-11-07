@@ -9,8 +9,8 @@ const canales: { titulo: string; valor: string }[] = [
 ];
 
 // WhatsApp es el único canal con el equipo (cuenta, programa, pagos y
-// dudas del cuidado). Correo y teléfono quedan como alternativa. Las
-// urgencias van por el botón SOS.
+// dudas del cuidado). Correo y teléfono quedan como alternativa. Ante una
+// urgencia, el 9-1-1.
 export function ContactanosModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal onClose={onClose}>
@@ -28,8 +28,8 @@ export function ContactanosModal({ onClose }: { onClose: () => void }) {
         ))}
       </div>
       <p className="m-0 text-[13.5px] leading-relaxed text-tinta-suave">
-        ¿Una duda rápida del día a día? Probá <strong>Respuestas rápidas</strong> en Ayuda. ¿Una urgencia? Usá el botón{" "}
-        <strong className="text-alerta-texto">SOS</strong> de arriba.
+        ¿Una duda rápida sobre la app? Preguntale a <strong>Clara</strong> en Ayuda. ¿Una urgencia? Llamá al{" "}
+        <strong className="text-alerta-texto">9-1-1</strong>.
       </p>
     </Modal>
   );

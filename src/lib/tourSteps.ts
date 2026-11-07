@@ -15,11 +15,11 @@ export const familiarTourSteps: TourStep[] = [
   },
   {
     title: "Ayuda",
-    body: "El Asistente IntegraMente, una IA que conoce a tu familiar y te ayuda con el día a día del cuidado. Si algo necesita a un profesional, te deja el mensaje listo para mandarle a nuestro equipo por WhatsApp.",
+    body: "Clara, la asistente de IntegraMente: le podés escribir o hablar para resolver dudas de la app. Si algo necesita a un profesional, nuestro equipo te atiende por WhatsApp.",
   },
   {
-    title: "SOS, siempre a mano",
-    body: "Arriba a la derecha está el botón SOS: te orienta según lo que esté pasando y tiene los teléfonos de ayuda. Tu cuenta y el perfil de tu familiar están en el menú con tu nombre.",
+    title: "Tu cuenta",
+    body: "Arriba a la derecha, en el menú con tu nombre, están tu cuenta, el perfil de tu familiar y el calendario para recibir avisos en el teléfono.",
   },
 ];
 

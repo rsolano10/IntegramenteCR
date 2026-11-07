@@ -29,14 +29,14 @@ import { abrirVentanaCuenta } from "../../lib/abrirCuenta";
 // Agente público: alcanza con el agentId (nunca la API key en el navegador).
 //
 // Seguridad, igual que antes: las urgencias se detectan primero acá, sin IA
-// (detectarRiesgo), y muestran la guía de SOS al instante. Si Clara no se
+// (detectarRiesgo), y muestran la guía de emergencia al instante. Si Clara no se
 // puede conectar, responden las respuestas fijas de siempre.
 //
 // Herramientas que el agente puede llamar (configurarlas en ElevenLabs
 // como «client tools» con estos nombres):
 //   · derivar_whatsapp({ mensaje }): muestra el mensaje para el equipo, ya
 //     redactado, con el botón para abrir WhatsApp.
-//   · mostrar_emergencia(): muestra el acceso a la guía de SOS.
+//   · mostrar_emergencia(): muestra el acceso a la guía de emergencia.
 const CLARA_AGENT_ID = "agent_6101m6vtn05pf4mtqvys2jnavkt4";
 
 // Preguntas para empezar: mismos íconos y colores de la paleta oficial.
@@ -716,7 +716,7 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
             </form>
           )}
           <p className="m-0 mt-2 px-2 text-center text-[12px] leading-snug text-tinta-suave">
-            Clara es una IA y puede equivocarse. Ante una urgencia, 9-1-1 o el botón SOS.
+            Clara es una IA y puede equivocarse. Ante una urgencia, llamá al 9-1-1.
             {!vacio && !enVoz && (
               <>
                 {" "}

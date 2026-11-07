@@ -118,18 +118,6 @@ export function AppHeader() {
 
       {(role === "familiar" || (role === "paciente" && myPatient?.vista_completa)) && (
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Siempre visible: en una urgencia nadie debería tener que buscar
-            en un menú. Lleva a la orientación por situación + teléfonos. */}
-        {pathname !== "/app/emergencia" && !pathname.startsWith("/app/alerta") && (
-          <Link
-            to="/app/emergencia"
-            aria-label="Emergencia"
-            className="inline-flex items-center gap-1.5 min-h-10 px-3 sm:px-3.5 rounded-full border-[1.5px] border-alerta-borde bg-alerta text-alerta-texto font-sans text-[13.5px] font-bold no-underline hover:bg-[#f7e2db]"
-          >
-            <span aria-hidden="true" className="w-2 h-2 rounded-full bg-semaforo-rojo" />
-            SOS<span className="hidden sm:inline font-semibold">· Emergencia</span>
-          </Link>
-        )}
         <AccountMenu
           initials={
             nombre
