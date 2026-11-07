@@ -9,6 +9,8 @@ import { FormField } from "../ui/FormField";
 import { callAdminAccounts, type ManagedAccount } from "../../lib/adminAccounts";
 import { normalizeCrPhone } from "../../lib/phone";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
+import { EstadoChip } from "./CuentaSeguimiento";
+import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
 
 // The secondary half of Usuarios — clinic/admin accounts, and any
 // familiar/paciente account invited but not yet attached to a patient. Both
@@ -32,6 +34,9 @@ export function CuentasTab({
     },
   });
 
+  // Estado de la cuenta (registrado, cuestionario pendiente…) para las que
+  // todavía no tienen paciente.
+  const { porCuenta } = useCuentaPorPaciente();
   const [createFor, setCreateFor] = useState<"profesional" | "familiar_admin" | null>(null);
   const [deleteFor, setDeleteFor] = useState<ManagedAccount | null>(null);
   const [permanentDeleteFor, setPermanentDeleteFor] = useState<ManagedAccount | null>(null);
@@ -66,6 +71,7 @@ export function CuentasTab({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {a.role !== "profesional" && a.is_active && <EstadoChip estado={porCuenta.get(a.id)?.estado ?? null} />}
           {!a.is_active ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-white text-tinta-tenue">Desactivada</span>
           ) : confirmed ? (

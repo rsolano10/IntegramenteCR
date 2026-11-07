@@ -16,6 +16,11 @@ import { patientHaystack } from "../../lib/usuariosSearch";
 import { attentionFor, attentionMeta, attentionRankOf } from "../../lib/patientAttention";
 import type { PatientRow } from "../../lib/patients";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
+import { CuentaLinea } from "./CuentaSeguimiento";
+import { useAccionesCuenta } from "./useAccionesCuenta";
+import { ORDEN_ESTADOS, demoPorTerminar, useCuentaPorPaciente } from "../../lib/usePanelCuentas";
+import { estadoInfo, type FilaCuenta } from "../../lib/cuentas";
+import type { Answers } from "../../lib/onboardingSchema";
 
 type SortMode = "accion" | "nombre" | "recientes";
 type EstadoFacet = "accion" | "al_dia";
@@ -70,28 +75,62 @@ export function PacientesTab({
   });
   const accountById = useMemo(() => new Map((accounts ?? []).map((a) => [a.id, a])), [accounts]);
 
+  // Seguimiento de cuentas: estado de la cuenta de cada paciente.
+  const { porPaciente: cuentas } = useCuentaPorPaciente();
+  const acciones = useAccionesCuenta(onChanged);
+  const pendientesIds = useMemo(() => [...cuentas.values()].filter((f) => f.estado === "pendiente_aprobacion").map((f) => f.patient_id!), [cuentas]);
+  const { data: respuestasPendientes } = useQuery({
+    queryKey: ["cola-respuestas", pendientesIds.join(",")],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("onboarding_answers").select("patient_id, answers").in("patient_id", pendientesIds);
+      if (error) throw error;
+      return new Map((data ?? []).map((r) => [r.patient_id as string, r.answers as Answers]));
+    },
+    enabled: pendientesIds.length > 0,
+  });
+
   const [sortMode, setSortMode] = useState<SortMode>("accion");
   const [estadoFilter, setEstadoFilter] = useState<EstadoFacet | "">("");
+  const [cuentaFilter, setCuentaFilter] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [deleteFor, setDeleteFor] = useState<PatientRow | null>(null);
 
   useEffect(() => {
     setPage(1);
-  }, [search, estadoFilter, sortMode]);
+  }, [search, estadoFilter, cuentaFilter, sortMode]);
+
+  // «Acción primero»: cuentas por aprobar, después demos que terminan en
+  // 2 días o menos, después lo clínico (nuevo, revisar, asignar).
+  const rango = (p: PatientRow) => {
+    const f = cuentas.get(p.id);
+    if (f?.estado === "pendiente_aprobacion") return 0;
+    if (demoPorTerminar(f)) return 1;
+    return 2 + attentionRankOf(p);
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = (patients ?? []).filter((p) => !q || patientHaystack(p).includes(q));
     if (estadoFilter) list = list.filter((p) => (estadoFilter === "accion" ? attentionFor(p) !== null : attentionFor(p) === null));
+    if (cuentaFilter === "demo_por_terminar") list = list.filter((p) => demoPorTerminar(cuentas.get(p.id)));
+    else if (cuentaFilter) list = list.filter((p) => cuentas.get(p.id)?.estado === cuentaFilter);
     list = [...list].sort((a, b) => {
       if (sortMode === "nombre") return a.nombre.localeCompare(b.nombre);
       if (sortMode === "recientes") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      const rankCmp = attentionRankOf(a) - attentionRankOf(b);
+      const rankCmp = rango(a) - rango(b);
       return rankCmp !== 0 ? rankCmp : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
     return list;
-  }, [patients, search, estadoFilter, sortMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patients, search, estadoFilter, cuentaFilter, sortMode, cuentas]);
+
+  const conteoCuentas = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of cuentas.values()) m.set(f.estado!, (m.get(f.estado!) ?? 0) + 1);
+    m.set("demo_por_terminar", [...cuentas.values()].filter((f) => demoPorTerminar(f)).length);
+    return m;
+  }, [cuentas]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const effectivePage = Math.min(page, pageCount);
@@ -160,6 +199,7 @@ export function PacientesTab({
   }
 
   function HouseholdCard({ p }: { p: PatientRow }) {
+    const cuenta: FilaCuenta | undefined = cuentas.get(p.id);
     const attention = attentionFor(p);
     const meta = attention ? attentionMeta[attention] : null;
     return (
@@ -192,11 +232,22 @@ export function PacientesTab({
                 items={[
                   { label: "Ver ficha clínica", hidden: p.nombre !== FICHA_PATIENT_NAME, onClick: () => navigate("/app/profesional/ficha") },
                   { label: "Ver detalle", onClick: () => onOpenPatient(p) },
+                  ...acciones.menu(cuenta),
                   { label: "Eliminar paciente", danger: true, onClick: () => setDeleteFor(p) },
                 ]}
               />
             </div>
           </div>
+
+          {cuenta && (
+            <CuentaLinea
+              fila={cuenta}
+              answers={respuestasPendientes?.get(p.id) ?? null}
+              ocupado={acciones.ocupado === p.id}
+              onAprobar={() => acciones.aprobar(cuenta)}
+              onPagar={() => acciones.pagar(cuenta, true)}
+            />
+          )}
 
           {ejesChips(p)}
 
@@ -221,6 +272,18 @@ export function PacientesTab({
             ]}
             value={estadoFilter}
             onChange={(v) => setEstadoFilter(v as EstadoFacet | "")}
+          />
+          <FilterDropdown
+            label="Cuenta"
+            options={[
+              { value: "demo_por_terminar", label: `Semana gratis por terminar (${conteoCuentas.get("demo_por_terminar") ?? 0})` },
+              ...ORDEN_ESTADOS.filter((e) => e !== "registrado" && e !== "cuestionario_pendiente").map((e) => ({
+                value: e,
+                label: `${estadoInfo[e].label} (${conteoCuentas.get(e) ?? 0})`,
+              })),
+            ]}
+            value={cuentaFilter}
+            onChange={setCuentaFilter}
           />
           <label className="grid grid-cols-1 gap-1.5 text-[12px] font-semibold text-tinta-tenue">
             <span className="tracking-[0.08em] uppercase">Ordenar</span>
@@ -263,6 +326,8 @@ export function PacientesTab({
           onError={(msg) => onChanged(msg, true)}
         />
       )}
+
+      {acciones.modalHistorial}
 
       {deleteFor && (
         <DeleteConfirmModal

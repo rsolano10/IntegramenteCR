@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import type { ResourceModulo } from "./modulos";
+import { DIAS } from "./planWeek";
 import type { MediaResource } from "./mediaResources";
 import type { DraftTask } from "../components/profesional/paciente/TaskEditorModal";
 import { evaluarAsignacion, gruposDeLaSemana, type PerfilRecursos } from "./reglasRecursos";
@@ -162,7 +163,10 @@ export function aplicarCambios(
       diaIdx = c.dia_idx;
     }
     if (!recurso) continue;
-    const dia = dias[diaIdx]?.dia;
+    // dia_idx es el día de la semana (0 = domingo … 6 = sábado), como en
+    // el calendario de la plantilla. Si la semana del paciente empieza a
+    // mitad de semana, los días que no tiene quedan afuera y se avisa.
+    const dia = dias.find((d) => d.dia === DIAS[diaIdx])?.dia;
     if (!dia) {
       fueraDeSemana.push(recurso.titulo);
       continue;

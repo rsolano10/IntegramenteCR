@@ -79,3 +79,14 @@ export function formatHora(hora: string): string {
   const h = parseInt(m[1], 10);
   return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h < 12 ? "a.m." : "p.m."}`;
 }
+
+// 7:00–20:00: the same quiet-hours window WhatsApp reminders respect.
+export const HORAS = Array.from({ length: 14 }, (_, i) => i + 7);
+
+// ¿La hora de una tarea cae en esta fila? `fila` null = "sin hora fija":
+// ahí cae todo lo que no tiene hora o queda fuera de las filas visibles.
+export function enFila(hora: string | null | undefined, fila: number | null): boolean {
+  const h = horaToHour(hora ?? null);
+  const visible = h !== null && HORAS.includes(h);
+  return fila === null ? !visible : h === fila;
+}

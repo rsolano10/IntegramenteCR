@@ -7,20 +7,19 @@ import {
   addDays,
   defaultPublishDate,
   formatHora,
+  DIAS,
+  enFila,
   formatWeekRange,
   fromDateInputValue,
-  horaToHour,
   toDateInputValue,
   weekDays,
 } from "../../../lib/planWeek";
+import { CalendarioSemana } from "../CalendarioSemana";
 import { Button } from "../../ui/Button";
 import { TaskEditorModal, type DraftTask } from "./TaskEditorModal";
 import type { PlanSummary } from "./SemanaTab";
 import { DesdePlantilla, type CargaPlantilla } from "./DesdePlantilla";
 import type { CambioVisible } from "../../../lib/plantillas";
-
-// 7:00–20:00: the same quiet-hours window WhatsApp reminders respect.
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7);
 
 interface ExistingTask {
   id: string;
@@ -209,16 +208,9 @@ export function PlanificadorTab({
   }, [existentes, draftsInWeek]);
 
   function cellItems(dia: string, hour: number | null) {
-    // Anything outside the visible rows (no hour, legacy free text, or an
-    // early/late time) lands in the "sin hora fija" lane rather than vanishing.
-    const match = (h: string | null) => {
-      const hh = horaToHour(h);
-      const visible = hh !== null && HOURS.includes(hh);
-      return hour === null ? !visible : hh === hour;
-    };
     return {
-      existing: existentes.filter((t) => t.dia === dia && match(t.hora)),
-      drafts: draftsInWeek.filter((t) => t.dia === dia && match(t.hora)),
+      existing: existentes.filter((t) => t.dia === dia && enFila(t.hora, hour)),
+      drafts: draftsInWeek.filter((t) => t.dia === dia && enFila(t.hora, hour)),
     };
   }
 
@@ -320,7 +312,8 @@ export function PlanificadorTab({
   ];
   const activa = target.kind === "plan" ? target.plan.id : "nueva";
 
-  const nombreDia = (i: number) => days[i]?.dia ?? `Día ${i + 1}`;
+  // Las plantillas van de domingo (0) a sábado (6).
+  const nombreDia = (i: number) => DIAS[i] ?? `Día ${i + 1}`;
   return (
     <div className="grid gap-5">
       {!aprobada && (
@@ -446,94 +439,63 @@ export function PlanificadorTab({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <div
-            className="grid min-w-[760px]"
-            style={{ gridTemplateColumns: `64px repeat(${days.length}, minmax(112px, 1fr))` }}
-            role="grid"
-            aria-label="Calendario de la semana"
-          >
-            {/* Encabezados */}
-            <div className="sticky left-0 z-[1] bg-campo border-b border-borde-suave" />
-            {days.map((d) => {
-              const n = countByDia.get(d.dia) ?? 0;
-              const hoy = toDateInputValue(d.date) === toDateInputValue(new Date());
-              return (
-                <div key={d.dia + d.date.toISOString()} className={`px-2.5 py-3 border-b border-l border-borde-suave text-center ${n === 0 ? "bg-aviso/60" : "bg-campo"}`}>
-                  <p className={`m-0 text-[13px] font-semibold ${hoy ? "text-verde-profundo" : "text-tinta"}`}>
-                    {d.dia}
-                    {hoy && " · hoy"}
-                  </p>
-                  <p className="m-0 text-[12px] text-tinta-tenue">{d.date.toLocaleDateString("es-CR", { day: "numeric", month: "short" })}</p>
-                  <p className={`m-0 mt-1 text-[11.5px] font-semibold ${n === 0 ? "text-aviso-texto" : "text-tinta-tenue"}`}>
-                    {n === 0 ? "Sin actividades" : `${n} ${n === 1 ? "actividad" : "actividades"}`}
-                  </p>
-                </div>
-              );
-            })}
-
-            {/* Filas por hora, más "sin hora fija" */}
-            {[null, ...HOURS].map((hour) => (
-              <Row key={hour ?? "sin"} hour={hour}>
-                {days.map((d) => {
-                  const items = cellItems(d.dia, hour);
-                  const empty = items.existing.length + items.drafts.length === 0;
-                  return (
-                    <div
-                      key={d.dia + d.date.toISOString()}
-                      className={`group relative border-l border-t border-borde-suave p-1 ${hour === null ? "min-h-[52px] bg-campo/50" : "min-h-[48px]"}`}
-                    >
-                      <div className="grid gap-1">
-                        {items.existing.map((t) => {
-                          const editable = t.estado === "pendiente" || t.estado === "futuro";
-                          return (
-                            <div key={t.id} className="relative rounded-lg bg-beige-serenidad border border-borde px-2 py-1.5 pr-6 text-[12px] leading-tight text-tinta-suave">
-                              {t.hora && <span className="block text-[10.5px] text-tinta-tenue">{formatHora(t.hora)}</span>}
-                              {t.titulo}
-                              {!editable && <span className="block text-[10.5px] text-[#22663f] mt-0.5">✓ registrada</span>}
-                              {editable && (
-                                <button
-                                  type="button"
-                                  onClick={() => quitar(t.id)}
-                                  disabled={quitando === t.id}
-                                  aria-label={`Quitar ${t.titulo}`}
-                                  title="Quitar del plan"
-                                  className="absolute top-1 right-1 w-5 h-5 rounded-full text-tinta-tenue hover:bg-white hover:text-alerta-texto cursor-pointer border-none bg-transparent text-[13px] leading-none disabled:opacity-50"
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                        {items.drafts.map((t) => (
+        <CalendarioSemana
+          columnas={days.map((d) => {
+            const hoy = toDateInputValue(d.date) === toDateInputValue(new Date());
+            return {
+              key: d.dia,
+              titulo: `${d.dia}${hoy ? " · hoy" : ""}`,
+              detalle: d.date.toLocaleDateString("es-CR", { day: "numeric", month: "short" }),
+              resaltado: hoy,
+              cantidad: countByDia.get(d.dia) ?? 0,
+            };
+          })}
+          onAgregar={(dia, hour) => setEditor({ mode: "new", dia, hora: hour === null ? "" : `${String(hour).padStart(2, "0")}:00` })}
+          celda={(dia, hour) => {
+            const items = cellItems(dia, hour);
+            return {
+              vacia: items.existing.length + items.drafts.length === 0,
+              contenido: (
+                <>
+                  {items.existing.map((t) => {
+                    const editable = t.estado === "pendiente" || t.estado === "futuro";
+                    return (
+                      <div key={t.id} className="relative rounded-lg bg-beige-serenidad border border-borde px-2 py-1.5 pr-6 text-[12px] leading-tight text-tinta-suave">
+                        {t.hora && <span className="block text-[10.5px] text-tinta-tenue">{formatHora(t.hora)}</span>}
+                        {t.titulo}
+                        {!editable && <span className="block text-[10.5px] text-[#22663f] mt-0.5">✓ registrada</span>}
+                        {editable && (
                           <button
-                            key={t.key}
                             type="button"
-                            onClick={() => setEditor({ mode: "edit", task: t })}
-                            className="text-left rounded-lg bg-verde-serenidad text-white px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none hover:bg-verde-profundo font-sans"
+                            onClick={() => quitar(t.id)}
+                            disabled={quitando === t.id}
+                            aria-label={`Quitar ${t.titulo}`}
+                            title="Quitar del plan"
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full text-tinta-tenue hover:bg-white hover:text-alerta-texto cursor-pointer border-none bg-transparent text-[13px] leading-none disabled:opacity-50"
                           >
-                            {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
-                            <span className="font-semibold">{t.titulo}</span>
-                            {t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>}
+                            ×
                           </button>
-                        ))}
+                        )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setEditor({ mode: "new", dia: d.dia, hora: hour === null ? "" : `${String(hour).padStart(2, "0")}:00` })}
-                        aria-label={`Agregar actividad el ${d.dia}${hour !== null ? ` a las ${hour}:00` : " sin hora fija"}`}
-                        className={`${empty ? "absolute inset-1" : "w-full mt-1 h-6"} rounded-lg border border-dashed border-transparent text-tinta-tenue text-[16px] cursor-pointer bg-transparent opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-hover:border-borde-campo hover:bg-verde-tenue transition-opacity`}
-                      >
-                        +
-                      </button>
-                    </div>
-                  );
-                })}
-              </Row>
-            ))}
-          </div>
-        </div>
+                    );
+                  })}
+                  {items.drafts.map((t) => (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setEditor({ mode: "edit", task: t })}
+                      className="text-left rounded-lg bg-verde-serenidad text-white px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none hover:bg-verde-profundo font-sans"
+                    >
+                      {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
+                      <span className="font-semibold">{t.titulo}</span>
+                      {t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>}
+                    </button>
+                  ))}
+                </>
+              ),
+            };
+          }}
+        />
 
         {(diasVacios.length > 0 || choques.length > 0) && (
           <div className="px-5 sm:px-6 py-4 border-t border-borde-suave grid gap-1.5 bg-campo/60">
@@ -626,16 +588,5 @@ export function PlanificadorTab({
         />
       )}
     </div>
-  );
-}
-
-function Row({ hour, children }: { hour: number | null; children: React.ReactNode }) {
-  return (
-    <>
-      <div className={`sticky left-0 z-[1] border-t border-borde-suave px-2 py-1.5 text-right text-[11.5px] text-tinta-tenue ${hour === null ? "bg-campo" : "bg-white"}`}>
-        {hour === null ? "Sin hora fija" : `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? "a.m." : "p.m."}`}
-      </div>
-      {children}
-    </>
   );
 }

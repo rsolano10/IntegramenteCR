@@ -71,7 +71,7 @@ function prompt(e: Entrada, max: number): string {
 Tenés una semana armada desde una plantilla y el perfil de la persona. Proponé AJUSTES LEVES para que la semana se adapte a sus gustos e intereses.
 
 Reglas obligatorias:
-- Solo podés "reemplazar" una tarea por un recurso de SU lista "candidatos" (usá el id exacto), o "mover" una tarea a otro día (dia_idx de 0 a 6).
+- Solo podés "reemplazar" una tarea por un recurso de SU lista "candidatos" (usá el id exacto), o "mover" una tarea a otro día (dia_idx: 0 = domingo, 1 = lunes … 6 = sábado).
 - No inventes actividades, recursos ni texto clínico.
 - Las tareas con "permitido": false NO son seguras para esta persona: reemplazalas siempre por un candidato (si no tiene candidatos, dejala y no la menciones).
 - Además de esas, como máximo ${max} cambios.

@@ -10,6 +10,8 @@ import { patientPath, type PatientRow } from "../../lib/patients";
 import { AccountDetailModal } from "../../components/profesional/AccountDetailModal";
 import { attentionFor } from "../../lib/patientAttention";
 import type { ManagedAccount } from "../../lib/adminAccounts";
+import { AjustesCuentasModal } from "../../components/profesional/CuentaSeguimiento";
+import { demoPorTerminar, useCuentaPorPaciente } from "../../lib/usePanelCuentas";
 
 export function Usuarios() {
   const [searchParams] = useSearchParams();
@@ -20,18 +22,11 @@ export function Usuarios() {
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
+  const [ajustes, setAjustes] = useState(false);
+  const { porPaciente: cuentas } = useCuentaPorPaciente();
 
-  // Both PacientesTab and CuentasTab run their own useQuery on these same
-  // keys — this read only drives the KPI strip and the two cross-navigation
-  // lookups below, it doesn't trigger an extra request.
-  const { data: accounts } = useQuery({
-    queryKey: ["managed-accounts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_managed_accounts");
-      if (error) throw error;
-      return data as ManagedAccount[];
-    },
-  });
+  // PacientesTab runs its own useQuery on this same key — this read only
+  // drives the KPI strip, it doesn't trigger an extra request.
   const { data: patients } = useQuery({
     queryKey: ["patients"],
     queryFn: async () => {
@@ -53,15 +48,16 @@ export function Usuarios() {
     setStatusMsg({ text: message, error: isError });
     queryClient.invalidateQueries({ queryKey: ["managed-accounts"] });
     queryClient.invalidateQueries({ queryKey: ["patients"] });
+    queryClient.invalidateQueries({ queryKey: ["panel-cuentas"] });
   }
 
   const stats = useMemo(() => {
     const totalPacientes = patients?.length ?? 0;
     const necesitanAccion = (patients ?? []).filter((p) => attentionFor(p) !== null).length;
-    const familiasVinculadas = (patients ?? []).filter((p) => p.links.some((l) => l.relation !== "profesional_asignado")).length;
-    const equipoClinico = (accounts ?? []).filter((a) => a.role === "profesional").length;
-    return { totalPacientes, necesitanAccion, familiasVinculadas, equipoClinico };
-  }, [patients, accounts]);
+    const porAprobar = [...cuentas.values()].filter((f) => f.estado === "pendiente_aprobacion").length;
+    const demosPorTerminar = [...cuentas.values()].filter((f) => demoPorTerminar(f)).length;
+    return { totalPacientes, necesitanAccion, porAprobar, demosPorTerminar };
+  }, [patients, cuentas]);
 
   const existingPatients = (patients ?? []).map((p) => ({ id: p.id, nombre: p.nombre }));
 
@@ -72,14 +68,19 @@ export function Usuarios() {
           <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Usuarios</p>
           <h1 className="font-serif font-normal text-[32px] sm:text-[36px] m-0">Pacientes y familias</h1>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>+ Nuevo paciente</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setAjustes(true)}>
+            Ajustes de cuentas
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>+ Nuevo paciente</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Metric value={String(stats.totalPacientes)} label="pacientes" />
         <Metric value={String(stats.necesitanAccion)} label="necesitan acción" tone={stats.necesitanAccion > 0 ? "amarillo" : "verde"} />
-        <Metric value={String(stats.familiasVinculadas)} label="con familia vinculada" />
-        <Metric value={String(stats.equipoClinico)} label="cuentas de clínica" />
+        <Metric value={String(stats.porAprobar)} label="cuentas por aprobar" tone={stats.porAprobar > 0 ? "amarillo" : "verde"} />
+        <Metric value={String(stats.demosPorTerminar)} label="semanas gratis por terminar" tone={stats.demosPorTerminar > 0 ? "amarillo" : "verde"} />
       </div>
 
       {statusMsg && (
@@ -120,6 +121,8 @@ export function Usuarios() {
           <CuentasTab patients={existingPatients} onChanged={handleChanged} onOpenAccount={setOpenAccount} />
         </div>
       </div>
+
+      {ajustes && <AjustesCuentasModal onClose={() => setAjustes(false)} />}
 
       {openAccount && (
         <AccountDetailModal

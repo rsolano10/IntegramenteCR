@@ -42,7 +42,6 @@ import { ProfesionalAlerta } from "./pages/profesional/Alerta";
 import { Usuarios } from "./pages/profesional/Usuarios";
 import { Biblioteca } from "./pages/profesional/Biblioteca";
 import { Paciente } from "./pages/profesional/Paciente";
-import { Seguimiento } from "./pages/profesional/Seguimiento";
 import { Plantillas } from "./pages/profesional/Plantillas";
 
 import { Ideacion } from "./pages/alertas/Ideacion";
@@ -240,7 +239,8 @@ export default function AppLayout() {
 
         <Route path="profesional" element={<ProfesionalShell />}>
           <Route path="panel" element={<Panel />} />
-          <Route path="seguimiento" element={<Seguimiento />} />
+          {/* El seguimiento de cuentas vive ahora en Usuarios. */}
+          <Route path="seguimiento" element={<Navigate to="/app/profesional/usuarios" replace />} />
           <Route path="plantillas" element={<Plantillas />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="biblioteca" element={<Biblioteca />} />

@@ -24,17 +24,6 @@ const items: NavItem[] = [
     ),
   },
   {
-    label: "Seguimiento",
-    to: "/app/profesional/seguimiento",
-    match: (p) => p.startsWith("/app/profesional/seguimiento"),
-    icon: (active) => (
-      <svg {...iconProps}>
-        <path d="M3 16.5h14" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
-        <path d="M4 13l3.5-4 3 2.5L16 5" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
     label: "Usuarios",
     to: "/app/profesional/usuarios",
     match: (p) => p.startsWith("/app/profesional/usuarios"),
