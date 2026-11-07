@@ -512,6 +512,8 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
   const letra = grande ? "text-[19px] leading-[1.55]" : "text-[16px] leading-relaxed";
 
   const [ejemplo, setEjemplo] = useState(0);
+  // En pantallas angostas el ejemplo va sin «Probá:» para que entre en una línea.
+  const angosto = typeof window !== "undefined" && window.matchMedia("(max-width: 480px)").matches;
   useEffect(() => {
     if (input || enVoz) return;
     const id = window.setInterval(() => setEjemplo((n) => (n + 1) % ejemplos.length), 4000);
@@ -535,8 +537,8 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
         {/* Mismo contenedor y márgenes que el resto de las secciones. El
             relleno de abajo deja lugar a la barra flotante. */}
         <div ref={contenido} className="max-w-3xl mx-auto px-5 sm:px-8 lg:px-12 pt-6" style={{ paddingBottom: altoBarra + 16 }}>
-          {/* Una línea discreta: persona por WhatsApp y tamaño de letra. */}
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          {/* Una línea discreta: hablar con una persona por WhatsApp. */}
+          <div className="mb-4 flex items-center">
             <a
               href={waEquipo(undefined, paciente)}
               target="_blank"
@@ -554,28 +556,6 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
                 <span className="sr-only"> por WhatsApp (se abre en otra pestaña)</span>
               </span>
             </a>
-            <div role="group" aria-label="Tamaño de la letra" className="flex items-center gap-1 rounded-full bg-white border border-borde p-1">
-              {(
-                [
-                  [false, "Letra normal", "text-[14px]"],
-                  [true, "Letra grande", "text-[19px]"],
-                ] as const
-              ).map(([g, etiqueta, tam]) => (
-                <button
-                  key={etiqueta}
-                  type="button"
-                  aria-pressed={grande === g}
-                  aria-label={etiqueta}
-                  title={etiqueta}
-                  onClick={() => setGrande(g)}
-                  className={`w-10 h-9 rounded-full border-0 cursor-pointer font-serif leading-none ${tam} ${
-                    grande === g ? "bg-verde-profundo text-white" : "bg-transparent text-tinta-suave hover:text-tinta"
-                  } focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-verde-profundo`}
-                >
-                  A
-                </button>
-              ))}
-            </div>
           </div>
           <p className="m-0 mb-4 flex justify-center">
             <span className="rounded-full bg-white/90 border border-borde-suave px-3 py-1 text-[12px] font-semibold text-tinta-suave shadow-sm">Hoy</span>
@@ -704,10 +684,13 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
                     if (hayTexto && !ocupado) submit(input);
                   }
                 }}
-                placeholder={`Probá: ${ejemplos[ejemplo]}`}
+                placeholder={angosto ? ejemplos[ejemplo].replace(/^¿(.)/, (_, l: string) => `¿${l.toUpperCase()}`) : `Probá: ${ejemplos[ejemplo]}`}
                 enterKeyHint="send"
-                className="flex-1 min-w-0 min-h-11 max-h-[132px] resize-none border-0 bg-transparent px-3.5 py-[10px] font-sans text-[16px] leading-[1.4] text-tinta placeholder:text-tinta-tenue focus:outline-none"
+                className={`flex-1 min-w-0 min-h-11 max-h-[132px] resize-none border-0 bg-transparent px-3 py-[10px] font-sans text-[16px] leading-[1.4] text-tinta placeholder:text-tinta-tenue focus:outline-none ${
+                  hayTexto ? "" : "whitespace-nowrap overflow-hidden"
+                }`}
               />
+              <MasOpciones grande={grande} onGrande={setGrande} />
               {hayTexto ? (
                 <button
                   type="submit"
@@ -789,6 +772,114 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
         </Modal>
       )}
     </section>
+  );
+}
+
+// «Más opciones» junto al micrófono: un menú para ajustes de la
+// conversación. Hoy, el tamaño de la letra; queda listo para sumar otras
+// (adjuntar archivos, etc.). Accesible: menú con opciones de radio, se
+// navega con flechas, Escape cierra y el foco vuelve al botón.
+function MasOpciones({ grande, onGrande }: { grande: boolean; onGrande: (g: boolean) => void }) {
+  const [abierto, setAbierto] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+  const boton = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!abierto) return;
+    menu.current?.querySelector<HTMLElement>("[aria-checked=true]")?.focus();
+    const fuera = (e: PointerEvent) => {
+      if (!caja.current?.contains(e.target as Node)) setAbierto(false);
+    };
+    document.addEventListener("pointerdown", fuera);
+    return () => document.removeEventListener("pointerdown", fuera);
+  }, [abierto]);
+
+  function cerrar() {
+    setAbierto(false);
+    boton.current?.focus();
+  }
+  function teclas(e: React.KeyboardEvent) {
+    const items = [...(menu.current?.querySelectorAll<HTMLElement>("[role^=menuitem]") ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "Escape") {
+      e.preventDefault();
+      cerrar();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const n = items.length;
+      items[(i + (e.key === "ArrowDown" ? 1 : -1) + n) % n]?.focus();
+    } else if (e.key === "Tab") {
+      setAbierto(false);
+    }
+  }
+
+  const opciones = [
+    { g: false, label: "Normal", muestra: "text-[15px]" },
+    { g: true, label: "Grande", muestra: "text-[21px]" },
+  ];
+
+  return (
+    <div ref={caja} className="relative shrink-0">
+      <button
+        ref={boton}
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        aria-label="Más opciones"
+        aria-haspopup="menu"
+        aria-expanded={abierto}
+        title="Más opciones"
+        className={`w-11 h-11 rounded-full border-0 cursor-pointer flex items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${
+          abierto ? "bg-verde-tenue text-verde-profundo" : "bg-transparent text-tinta-suave hover:bg-campo hover:text-tinta"
+        }`}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="5.5" cy="12" r="1.9" />
+          <circle cx="12" cy="12" r="1.9" />
+          <circle cx="18.5" cy="12" r="1.9" />
+        </svg>
+      </button>
+      {abierto && (
+        <div
+          ref={menu}
+          role="menu"
+          aria-label="Más opciones"
+          onKeyDown={teclas}
+          className="clara-entra absolute right-0 bottom-full mb-3 w-[min(17rem,calc(100vw-2.5rem))] rounded-[22px] bg-white border border-borde shadow-elevada p-2"
+        >
+          <p className="m-0 px-3 pt-2 pb-1.5 text-[12px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">Tamaño de la letra</p>
+          {opciones.map((o) => {
+            const activo = grande === o.g;
+            return (
+              <button
+                key={o.label}
+                type="button"
+                role="menuitemradio"
+                aria-checked={activo}
+                tabIndex={activo ? 0 : -1}
+                onClick={() => {
+                  onGrande(o.g);
+                  cerrar();
+                }}
+                className={`w-full flex items-center gap-3 min-h-12 px-3 rounded-2xl border-0 cursor-pointer font-sans text-left focus-visible:outline-2 focus-visible:outline-verde-profundo ${
+                  activo ? "bg-verde-tenue" : "bg-transparent hover:bg-campo"
+                }`}
+              >
+                <span aria-hidden="true" className={`w-9 text-center font-serif leading-none text-tinta ${o.muestra}`}>
+                  Aa
+                </span>
+                <span className="flex-1 text-[15px] font-semibold text-tinta">{o.label}</span>
+                {activo && (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-verde-profundo">
+                    <path d="M5 12.5l4.2 4.2L19 7" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
