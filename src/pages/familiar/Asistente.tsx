@@ -1,168 +1,385 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  ConversationProvider,
+  useConversationClientTool,
+  useConversationControls,
+  useConversationFeedback,
+  useConversationInput,
+  useConversationMode,
+  useConversationStatus,
+  type MessagePayload,
+} from "@elevenlabs/react";
 import { classifyMessage, detectarRiesgo } from "../../lib/chatbot";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { WHATSAPP_EQUIPO, waEquipo, waLink } from "../../lib/whatsapp";
-import { borrarHistorialAsistente, calificarRespuesta, preguntarAsistente, useHistorialAsistente, type MensajeAsistente } from "../../lib/asistente";
-import { dictadoDisponible, detenerVoz, lecturaDisponible, leerEnVoz, useDictado } from "../../lib/voz";
+import { detenerVoz, lecturaDisponible, leerEnVoz } from "../../lib/voz";
 import { ChatBubble } from "../../components/ui/ChatBubble";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
 
-const sugerenciasIniciales = ["Repite la misma pregunta", "Se resiste al baño", "No quiere comer", "No duerme bien", "Necesito un respiro"];
+// Clara: la asistente de la sección Ayuda, un agente de ElevenLabs
+// (Conversational AI). Mismo chat de siempre, con dos formas de hablarle:
+//   · escribiendo: sesión de solo texto, la respuesta llega en vivo;
+//   · con la voz: «Hablar con Clara» abre una conversación hablada y lo que
+//     dicen las dos partes aparece en el chat.
+// Agente público: alcanza con el agentId (nunca la API key en el navegador).
+//
+// Seguridad, igual que antes: las urgencias se detectan primero acá, sin IA
+// (detectarRiesgo), y muestran la guía de SOS al instante. Si Clara no se
+// puede conectar, responden las respuestas fijas de siempre.
+//
+// Herramientas que el agente puede llamar (configurarlas en ElevenLabs
+// como «client tools» con estos nombres):
+//   · derivar_whatsapp({ mensaje }): muestra el mensaje para el equipo, ya
+//     redactado, con el botón para abrir WhatsApp.
+//   · mostrar_emergencia(): muestra el acceso a la guía de SOS.
+const CLARA_AGENT_ID = "agent_6101m6vtn05pf4mtqvys2jnavkt4";
+
+const sugerenciasIniciales = ["¿Cómo registro una actividad?", "Repite la misma pregunta", "Se resiste al baño", "No quiere comer", "Necesito un respiro"];
 
 interface Burbuja {
   key: string;
-  id: string | null; // id en el servidor (para 👍/👎)
   rol: "usuario" | "asistente";
   texto: string;
-  categoria?: string | null;
   whatsapp?: string | null;
-  sugerencias?: string[];
-  feedback?: -1 | 1 | null;
-  escribiendo?: boolean; // esperando o recibiendo la respuesta
-  animar?: boolean; // nueva en esta sesión: se revela con efecto de escritura
-  accion?: { label: string; to: string }; // guía de emergencia
+  escribiendo?: boolean;
+  animar?: boolean;
+  accion?: { label: string; to: string };
+  porVoz?: boolean;
 }
 
-const desdeServidor = (m: MensajeAsistente): Burbuja => ({
-  key: m.id,
-  id: m.id,
-  rol: m.rol,
-  texto: m.texto,
-  categoria: m.categoria,
-  whatsapp: m.whatsapp,
-  sugerencias: m.sugerencias,
-  feedback: m.feedback,
-  accion: m.rol === "asistente" && m.categoria === "emergencia" ? { label: "Ver qué hacer ahora", to: "/app/emergencia" } : undefined,
-});
-
 let seq = 0;
-const clave = () => `local-${++seq}`;
+const clave = () => `b-${Date.now()}-${++seq}`;
+const GUARDADO = "clara-conversacion";
+const SOS = { label: "Ver qué hacer ahora", to: "/app/emergencia" };
 
-// Asistente IntegraMente: conversación con IA que conoce a la persona
-// participante y recuerda lo hablado. Las urgencias se detectan primero
-// sin IA (detectarRiesgo); lo clínico se deriva a WhatsApp con un mensaje
-// redactado que la persona revisa antes de enviar.
+function leerGuardado(): Burbuja[] {
+  try {
+    const b = JSON.parse(sessionStorage.getItem(GUARDADO) ?? "[]") as Burbuja[];
+    return b.filter((x) => x.texto).map((x) => ({ ...x, escribiendo: false, animar: false }));
+  } catch {
+    return [];
+  }
+}
+
+// Manejadores de los eventos del agente. ConversationProvider recibe los
+// callbacks una vez; acá se apunta siempre a la versión actual.
+interface Manejadores {
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onMessage: (m: MessagePayload) => void;
+  onParte: (p: { text: string; type: "start" | "delta" | "stop" }) => void;
+  onError: (m: string) => void;
+}
+
 export function Asistente({ embedded = false }: { embedded?: boolean }) {
+  const manejadores = useRef<Manejadores | null>(null);
+  return (
+    <ConversationProvider
+      onConnect={() => manejadores.current?.onConnect()}
+      onDisconnect={() => manejadores.current?.onDisconnect()}
+      onMessage={(m) => manejadores.current?.onMessage(m)}
+      onAgentChatResponsePart={(p) => manejadores.current?.onParte(p)}
+      onError={(m) => manejadores.current?.onError(m)}
+    >
+      <Clara embedded={embedded} manejadores={manejadores} />
+    </ConversationProvider>
+  );
+}
+
+function Clara({ embedded, manejadores }: { embedded: boolean; manejadores: React.MutableRefObject<Manejadores | null> }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const session = useSession();
   const firstName = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   const { data: myPatient } = useMyPatient();
-  const { data: historial, isLoading } = useHistorialAsistente();
-  const [burbujas, setBurbujas] = useState<Burbuja[] | null>(null);
+  const { startSession, endSession, sendUserMessage, sendContextualUpdate } = useConversationControls();
+  const { status } = useConversationStatus();
+  const { isSpeaking } = useConversationMode();
+  const { isMuted, setMuted } = useConversationInput();
+  const { canSendFeedback, sendFeedback } = useConversationFeedback();
+
+  const [burbujas, setBurbujas] = useState<Burbuja[]>(leerGuardado);
   const [input, setInput] = useState("");
-  const [ocupado, setOcupado] = useState(false);
-  const [confirmarBorrar, setConfirmarBorrar] = useState(false);
+  const [modo, setModo] = useState<"texto" | "voz" | null>(null);
+  const [error, setError] = useState("");
+  const [calificada, setCalificada] = useState<Record<string, boolean>>({});
   const endRef = useRef<HTMLDivElement>(null);
-  const dictado = useDictado(setInput);
+
+  // Estado de la sesión de texto: el saludo del agente se omite (ya hay
+  // uno en pantalla) y el primer mensaje espera a que conecte.
+  const pendiente = useRef<string | null>(null);
+  const saludoPorOmitir = useRef(false);
+  const respuestaKey = useRef<string | null>(null);
+  const modoRef = useRef(modo);
+  modoRef.current = modo;
+  const burbujasRef = useRef(burbujas);
+  burbujasRef.current = burbujas;
+  const espera = useRef<number | null>(null);
 
   useEffect(() => {
-    if (historial && burbujas === null) setBurbujas(historial.map(desdeServidor));
-  }, [historial, burbujas]);
+    try {
+      sessionStorage.setItem(GUARDADO, JSON.stringify(burbujas.slice(-40)));
+    } catch {
+      // sin sessionStorage la conversación vive solo en pantalla
+    }
+  }, [burbujas]);
 
-  const lista = burbujas ?? [];
-  const ultimoTexto = lista[lista.length - 1]?.texto;
+  const ultimoTexto = burbujas[burbujas.length - 1]?.texto;
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
-  }, [lista.length, ultimoTexto]);
+  }, [burbujas.length, ultimoTexto]);
 
-  const actualizar = (key: string, cambios: Partial<Burbuja>) => setBurbujas((bs) => (bs ?? []).map((b) => (b.key === key ? { ...b, ...cambios } : b)));
-  const agregar = (...nuevas: Burbuja[]) => setBurbujas((bs) => [...(bs ?? []), ...nuevas]);
+  // Al salir de Ayuda se corta la conversación.
+  useEffect(() => () => endSession(), [endSession]);
 
-  async function submit(text: string) {
+  const actualizar = (key: string, cambios: Partial<Burbuja>) => setBurbujas((bs) => bs.map((b) => (b.key === key ? { ...b, ...cambios } : b)));
+  const agregar = (...nuevas: Burbuja[]) => setBurbujas((bs) => [...bs, ...nuevas]);
+  const paciente = myPatient?.nombre;
+  const mensajeEquipo = (pregunta: string) => `Hola, les escribo por ${paciente ?? "mi familiar"}. Tengo una consulta: ${pregunta}`;
+
+  // Respuesta de la IA en curso: una sola burbuja que se va llenando.
+  function burbujaRespuesta(): string {
+    if (respuestaKey.current && burbujasRef.current.some((b) => b.key === respuestaKey.current)) return respuestaKey.current;
+    const key = clave();
+    respuestaKey.current = key;
+    agregar({ key, rol: "asistente", texto: "", escribiendo: true, animar: true });
+    return key;
+  }
+
+  // Si Clara no responde: respuestas fijas de siempre.
+  function respuestaFija(pregunta: string, key: string | null) {
+    const fijo = classifyMessage(pregunta);
+    const esWhatsApp = fijo.escalate && /^https?:/.test(fijo.escalate.to);
+    const datos = {
+      texto: fijo.text,
+      escribiendo: false,
+      accion: esWhatsApp ? undefined : fijo.escalate,
+      whatsapp: esWhatsApp ? mensajeEquipo(pregunta) : null,
+    };
+    if (key) actualizar(key, datos);
+    else agregar({ key: clave(), rol: "asistente", animar: true, ...datos });
+  }
+
+  function limpiarEspera() {
+    if (espera.current) window.clearTimeout(espera.current);
+    espera.current = null;
+  }
+
+  // Lo conversado antes (por texto o por voz) para que Clara no pierda el hilo.
+  function contextoPrevio() {
+    const previas = burbujasRef.current.filter((b) => b.texto && !b.escribiendo).slice(-10);
+    if (!previas.length) return;
+    sendContextualUpdate(
+      `Conversación previa con esta persona en IntegraMente en Casa:\n${previas.map((b) => `${b.rol === "usuario" ? "Persona" : "Clara"}: ${b.texto}`).join("\n")}`,
+    );
+  }
+
+  const variables = () => ({
+    nombre_usuario: firstName || "",
+    nombre_paciente: paciente?.split(" ")[0] ?? "",
+    programa: myPatient?.modalidad === "orientado" ? "Con sesiones profesionales" : "Autoguiado",
+    estado_cuenta: myPatient?.estado_cuenta ?? "",
+  });
+
+  manejadores.current = {
+    onConnect() {
+      setError("");
+      contextoPrevio();
+      if (modoRef.current === "texto") {
+        saludoPorOmitir.current = true;
+        // Si el agente no saluda, el mensaje sale igual.
+        window.setTimeout(() => {
+          if (!saludoPorOmitir.current) return;
+          saludoPorOmitir.current = false;
+          enviarPendiente();
+        }, 1500);
+      }
+    },
+    onDisconnect() {
+      limpiarEspera();
+      setModo(null);
+      if (respuestaKey.current) {
+        const b = burbujasRef.current.find((x) => x.key === respuestaKey.current);
+        if (b && !b.texto) setBurbujas((bs) => bs.filter((x) => x.key !== respuestaKey.current));
+        else if (b) actualizar(b.key, { escribiendo: false });
+      }
+      respuestaKey.current = null;
+    },
+    onMessage(m) {
+      if (m.role === "user") {
+        // En modo texto el mensaje ya está en pantalla; por voz, es la transcripción.
+        if (modoRef.current !== "voz" || !m.message.trim()) return;
+        agregar({ key: clave(), rol: "usuario", texto: m.message, porVoz: true });
+        const riesgo = detectarRiesgo(m.message);
+        if (riesgo) agregar({ key: clave(), rol: "asistente", texto: riesgo.text, accion: riesgo.escalate, animar: true });
+        return;
+      }
+      if (modoRef.current === "texto" && saludoPorOmitir.current) {
+        saludoPorOmitir.current = false;
+        enviarPendiente();
+        return;
+      }
+      limpiarEspera();
+      if (modoRef.current === "voz") {
+        respuestaKey.current = null;
+        agregar({ key: clave(), rol: "asistente", texto: m.message, porVoz: true });
+        return;
+      }
+      const key = burbujaRespuesta();
+      actualizar(key, { texto: m.message, escribiendo: false });
+      respuestaKey.current = null;
+    },
+    onParte(p) {
+      if (modoRef.current !== "texto" || saludoPorOmitir.current) return;
+      if (p.type === "start") return;
+      const key = burbujaRespuesta();
+      if (p.type === "delta") setBurbujas((bs) => bs.map((b) => (b.key === key ? { ...b, texto: (b.texto + p.text).trimStart() } : b)));
+    },
+    onError(m) {
+      console.warn("Clara:", m);
+      setError("No pudimos conectar con Clara. Probá de nuevo en un momento o escribinos por WhatsApp.");
+    },
+  };
+
+  function enviarPendiente() {
+    const texto = pendiente.current;
+    if (!texto) return;
+    pendiente.current = null;
+    sendUserMessage(texto);
+    esperarRespuesta(texto);
+  }
+
+  // Si en 20 s no llega nada, se responde con lo fijo y se corta la sesión.
+  function esperarRespuesta(pregunta: string) {
+    limpiarEspera();
+    espera.current = window.setTimeout(() => {
+      const key = respuestaKey.current;
+      const b = burbujasRef.current.find((x) => x.key === key);
+      if (b && b.texto) return;
+      respuestaFija(pregunta, key);
+      respuestaKey.current = null;
+      endSession();
+    }, 20_000);
+  }
+
+  function submit(text: string) {
     const pregunta = text.trim();
-    if (!pregunta || ocupado) return;
+    if (!pregunta) return;
     setInput("");
     detenerVoz();
-    agregar({ key: clave(), id: null, rol: "usuario", texto: pregunta });
+    agregar({ key: clave(), rol: "usuario", texto: pregunta });
 
-    // 1) Urgencia: la guía aparece al instante, sin esperar a la IA. La IA
-    //    solo suma una frase de acompañamiento después.
+    // 1) Urgencia: la guía aparece al instante, sin esperar a la IA.
     const riesgo = detectarRiesgo(pregunta);
-    const tipoRiesgo = riesgo?.escalate?.to.split("/").pop() ?? null;
-    if (riesgo) agregar({ key: clave(), id: null, rol: "asistente", texto: riesgo.text, accion: riesgo.escalate, animar: true });
+    if (riesgo) agregar({ key: clave(), rol: "asistente", texto: riesgo.text, accion: riesgo.escalate, animar: true });
 
-    const key = clave();
-    agregar({ key, id: null, rol: "asistente", texto: "", escribiendo: true, animar: true });
-    setOcupado(true);
-    let acumulado = "";
-    await preguntarAsistente(pregunta, tipoRiesgo, (e) => {
-      if (e.t === "delta") {
-        acumulado += e.texto;
-        actualizar(key, { texto: acumulado.trimStart() });
-      } else if (e.t === "fin") {
-        actualizar(key, {
-          id: e.id,
-          texto: e.texto,
-          categoria: e.categoria,
-          whatsapp: e.derivar ? e.whatsapp : null,
-          sugerencias: e.sugerencias,
-          escribiendo: false,
-          accion: e.emergencia ? { label: "Ver qué hacer ahora", to: "/app/emergencia" } : undefined,
-        });
-      } else if (e.t === "limite") {
-        actualizar(key, { texto: e.texto, escribiendo: false, whatsapp: `Hola, les escribo por ${myPatient?.nombre ?? "mi familiar"}. Tengo una consulta: ${pregunta}` });
-      } else {
-        // Sin IA: respuestas fijas de siempre (si la urgencia ya se mostró, no se repite).
-        if (riesgo) {
-          setBurbujas((bs) => (bs ?? []).filter((b) => b.key !== key));
-          return;
-        }
-        const fijo = classifyMessage(pregunta);
-        const esWhatsApp = fijo.escalate && /^https?:/.test(fijo.escalate.to);
-        actualizar(key, {
-          texto: fijo.text,
-          escribiendo: false,
-          accion: esWhatsApp ? undefined : fijo.escalate,
-          whatsapp: esWhatsApp ? `Hola, les escribo por ${myPatient?.nombre ?? "mi familiar"}. Tengo una consulta: ${pregunta}` : null,
-        });
-      }
-    });
-    setOcupado(false);
-    queryClient.invalidateQueries({ queryKey: ["asistente-historial"] });
-  }
-
-  async function borrar() {
-    if (await borrarHistorialAsistente()) {
-      setBurbujas([]);
-      queryClient.setQueryData(["asistente-historial"], []);
+    // 2) Clara: por voz, el texto se le manda a la conversación hablada.
+    if (modo === "voz" && status === "connected") {
+      sendUserMessage(pregunta);
+      return;
     }
-    setConfirmarBorrar(false);
+    burbujaRespuesta();
+    if (status === "connected" && modo === "texto") {
+      sendUserMessage(pregunta);
+      esperarRespuesta(pregunta);
+      return;
+    }
+    pendiente.current = pregunta;
+    setModo("texto");
+    setError("");
+    try {
+      startSession({ agentId: CLARA_AGENT_ID, textOnly: true, dynamicVariables: variables() });
+    } catch {
+      respuestaFija(pregunta, respuestaKey.current);
+      respuestaKey.current = null;
+      setModo(null);
+      return;
+    }
+    // Si no conecta en 10 s, respuestas fijas.
+    espera.current = window.setTimeout(() => {
+      if (pendiente.current !== pregunta) return;
+      pendiente.current = null;
+      respuestaFija(pregunta, respuestaKey.current);
+      respuestaKey.current = null;
+      endSession();
+    }, 10_000);
   }
 
-  const ultimaRespuesta = [...lista].reverse().find((b) => b.rol === "asistente" && !b.escribiendo);
-  const chips = ocupado ? [] : lista.length === 0 ? sugerenciasIniciales : (ultimaRespuesta?.sugerencias ?? []);
+  async function hablar() {
+    if (modo === "voz") {
+      endSession();
+      return;
+    }
+    setError("");
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setError("Para hablar con Clara, permití el uso del micrófono en tu navegador. También podés escribirle.");
+      return;
+    }
+    detenerVoz();
+    if (status !== "disconnected") endSession();
+    respuestaKey.current = null;
+    setModo("voz");
+    // Un instante para que se cierre la sesión de texto, si había.
+    window.setTimeout(() => startSession({ agentId: CLARA_AGENT_ID, dynamicVariables: variables() }), status !== "disconnected" ? 400 : 0);
+  }
+
+  // Herramientas que el agente puede usar (ver comentario de arriba).
+  useConversationClientTool("derivar_whatsapp", (params: Record<string, unknown>) => {
+    const mensaje = typeof params.mensaje === "string" && params.mensaje.trim() ? params.mensaje.trim() : mensajeEquipo("");
+    const ultima = [...burbujasRef.current].reverse().find((b) => b.rol === "asistente");
+    if (ultima && !ultima.whatsapp) actualizar(ultima.key, { whatsapp: mensaje });
+    else agregar({ key: clave(), rol: "asistente", texto: "Te dejo el mensaje listo para nuestro equipo:", whatsapp: mensaje, animar: true });
+    return "Listo: la persona ve el mensaje para el equipo con el botón de WhatsApp.";
+  });
+  useConversationClientTool("mostrar_emergencia", () => {
+    agregar({ key: clave(), rol: "asistente", texto: "Si es una urgencia, llamá al 9-1-1. Acá tenés la guía para este momento:", accion: SOS, animar: true });
+    return "Listo: la persona ve el acceso a la guía de emergencia.";
+  });
+
+  function nuevaConversacion() {
+    endSession();
+    setBurbujas([]);
+    setCalificada({});
+  }
+
+  const ocupado = burbujas.some((b) => b.escribiendo);
+  const enVoz = modo === "voz";
+  const ultimaRespuesta = [...burbujas].reverse().find((b) => b.rol === "asistente" && !b.escribiendo && b.texto);
+  const chips = ocupado || enVoz ? [] : burbujas.length === 0 ? sugerenciasIniciales : [];
 
   return (
     <div className="flex flex-col" style={{ minHeight: "min(60vh, 520px)" }}>
-      {!embedded && <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Asistente IntegraMente</p>}
+      {!embedded && <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Clara · Asistente IntegraMente</p>}
 
       <div className="grid gap-3 mb-4">
-        {!isLoading && lista.length === 0 && (
-          <ChatBubble role="bot">
-            Hola{firstName ? `, ${firstName}` : ""}. Soy el Asistente IntegraMente, una inteligencia artificial que te acompaña con el día a día del cuidado
-            {myPatient?.nombre ? ` de ${myPatient.nombre.split(" ")[0]}` : ""}. Contame qué está pasando, o elegí una de las dudas de abajo.
-          </ChatBubble>
-        )}
-        {lista.map((b) =>
+        <ChatBubble role="bot">
+          Hola{firstName ? `, ${firstName}` : ""}. Soy Clara, la asistente de IntegraMente en Casa. Te ayudo con la app y con el día a día del cuidado
+          {paciente ? ` de ${paciente.split(" ")[0]}` : ""}. Escribime tu duda o tocá «Hablar con Clara» para conversar con tu voz.
+        </ChatBubble>
+        {burbujas.map((b) =>
           b.rol === "usuario" ? (
             <ChatBubble key={b.key} role="user">
+              {b.porVoz && <span className="sr-only">Dijiste: </span>}
               <span className="whitespace-pre-line">{b.texto}</span>
             </ChatBubble>
           ) : (
-            <RespuestaAsistente
+            <RespuestaClara
               key={b.key}
               b={b}
-              paciente={myPatient?.nombre}
+              paciente={paciente}
               onAccion={(to) => navigate(to)}
-              onCalificar={(v) => {
-                if (!b.id) return;
-                actualizar(b.key, { feedback: v });
-                calificarRespuesta(b.id, v);
-              }}
+              calificar={
+                canSendFeedback && b.key === ultimaRespuesta?.key && !calificada[b.key]
+                  ? (v) => {
+                      sendFeedback(v);
+                      setCalificada((c) => ({ ...c, [b.key]: v }));
+                    }
+                  : null
+              }
+              calificacion={calificada[b.key]}
             />
           ),
         )}
@@ -184,6 +401,33 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
         </div>
       )}
 
+      {/* Conversación por voz en curso */}
+      {enVoz && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue px-4 py-3" role="status">
+          <span className="relative flex w-10 h-10 shrink-0 items-center justify-center" aria-hidden="true">
+            <span className={`absolute inset-0 rounded-full bg-verde-serenidad/40 ${status === "connected" ? "animate-ping" : ""}`} style={{ animationDuration: isSpeaking ? "1s" : "2.2s" }} />
+            <span className="relative w-8 h-8 rounded-full bg-verde-profundo" />
+          </span>
+          <p className="m-0 flex-1 min-w-[10em] text-[15px] font-semibold text-tinta">
+            {status === "connecting" ? "Conectando con Clara…" : status !== "connected" ? "Terminando…" : isMuted ? "Micrófono en silencio" : isSpeaking ? "Clara está hablando…" : "Te escucho…"}
+          </p>
+          {status === "connected" && (
+            <button
+              type="button"
+              onClick={() => setMuted(!isMuted)}
+              className="min-h-10 px-4 rounded-full border-[1.5px] border-borde bg-white text-[14px] font-semibold text-tinta cursor-pointer"
+            >
+              {isMuted ? "Activar micrófono" : "Silenciar"}
+            </button>
+          )}
+          <button type="button" onClick={() => endSession()} className="min-h-10 px-4 rounded-full border-0 bg-semaforo-rojo text-white text-[14px] font-semibold cursor-pointer">
+            Terminar
+          </button>
+        </div>
+      )}
+
+      {error && <p className="m-0 mb-3 text-[14px] text-alerta-texto">{error}</p>}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -191,32 +435,14 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
         }}
         className="flex gap-2"
       >
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={dictado.escuchando ? "Te escucho…" : "Escribí tu duda…"}
-            aria-label="Tu mensaje"
-            className={`w-full min-h-13 pl-4 ${dictadoDisponible ? "pr-12" : "pr-4"} rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta`}
-          />
-          {dictadoDisponible && (
-            <button
-              type="button"
-              onClick={() => dictado.alternar(input)}
-              aria-label={dictado.escuchando ? "Detener dictado" : "Dictar por voz"}
-              title={dictado.escuchando ? "Detener dictado" : "Dictar por voz"}
-              className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-none cursor-pointer flex items-center justify-center ${
-                dictado.escuchando ? "bg-semaforo-rojo text-white animate-pulse" : "bg-transparent text-tinta-suave hover:text-verde-profundo"
-              }`}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                <rect x="9" y="3" width="6" height="11" rx="3" />
-                <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
-              </svg>
-            </button>
-          )}
-        </div>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={enVoz ? "También podés escribirle…" : "Escribí tu duda…"}
+          aria-label="Tu mensaje"
+          className="flex-1 min-w-0 min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta"
+        />
         <button
           type="submit"
           disabled={ocupado || !input.trim()}
@@ -226,42 +452,46 @@ export function Asistente({ embedded = false }: { embedded?: boolean }) {
         </button>
       </form>
 
+      {!enVoz && (
+        <button
+          type="button"
+          onClick={hablar}
+          className="mt-2.5 inline-flex items-center justify-center gap-2 min-h-12 px-5 rounded-xl border-[1.5px] border-verde-serenidad bg-white text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-verde-tenue"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3" />
+            <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+          </svg>
+          Hablar con Clara
+        </button>
+      )}
+
       <div className="mt-3 text-[12.5px] leading-relaxed text-tinta-tenue">
-        Soy una IA: puedo equivocarme y no reemplazo a nuestro equipo de salud. Recuerdo nuestras conversaciones para ayudarte mejor, y si algo es
-        delicado el equipo clínico puede revisarlo.{" "}
-        {lista.length > 0 &&
-          (confirmarBorrar ? (
-            <span className="inline-flex flex-wrap items-center gap-2">
-              <span className="text-tinta-suave font-semibold">¿Borrar todo el historial y lo que recuerdo?</span>
-              <button type="button" onClick={borrar} className="bg-transparent border-none p-0 cursor-pointer font-semibold text-alerta-texto underline">
-                Sí, borrar
-              </button>
-              <button type="button" onClick={() => setConfirmarBorrar(false)} className="bg-transparent border-none p-0 cursor-pointer font-semibold text-tinta-suave underline">
-                Cancelar
-              </button>
-            </span>
-          ) : (
-            <button type="button" onClick={() => setConfirmarBorrar(true)} className="bg-transparent border-none p-0 cursor-pointer text-verde-profundo underline decoration-dotted">
-              Borrar historial
-            </button>
-          ))}
+        Clara es una inteligencia artificial: puede equivocarse y no reemplaza a nuestro equipo de salud. Ante una urgencia, llamá al 9-1-1 o usá el botón SOS.{" "}
+        {burbujas.length > 0 && !enVoz && (
+          <button type="button" onClick={nuevaConversacion} className="bg-transparent border-none p-0 cursor-pointer text-verde-profundo underline decoration-dotted">
+            Empezar una conversación nueva
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function RespuestaAsistente({
+function RespuestaClara({
   b,
   paciente,
   onAccion,
-  onCalificar,
+  calificar,
+  calificacion,
 }: {
   b: Burbuja;
   paciente?: string;
   onAccion: (to: string) => void;
-  onCalificar: (v: -1 | 1 | null) => void;
+  calificar: ((v: boolean) => void) | null;
+  calificacion?: boolean;
 }) {
-  const texto = useEscritura(b.texto, !!b.animar);
+  const texto = useEscritura(b.texto, !!b.animar && !b.porVoz);
   const [leyendo, setLeyendo] = useState(false);
   const esperando = b.escribiendo && !b.texto;
 
@@ -269,7 +499,7 @@ function RespuestaAsistente({
     <div>
       <ChatBubble role="bot">
         {esperando ? (
-          <span className="inline-flex gap-1 py-1" aria-label="Escribiendo">
+          <span className="inline-flex gap-1 py-1" aria-label="Clara está escribiendo">
             <span className="w-1.5 h-1.5 rounded-full bg-tinta-tenue animate-bounce [animation-delay:-0.3s]" />
             <span className="w-1.5 h-1.5 rounded-full bg-tinta-tenue animate-bounce [animation-delay:-0.15s]" />
             <span className="w-1.5 h-1.5 rounded-full bg-tinta-tenue animate-bounce" />
@@ -290,7 +520,7 @@ function RespuestaAsistente({
         )}
       </ChatBubble>
       {b.whatsapp && !b.escribiendo && <BorradorWhatsApp inicial={b.whatsapp} paciente={paciente} />}
-      {!b.escribiendo && b.texto && (b.id || lecturaDisponible) && (
+      {!b.escribiendo && b.texto && !b.porVoz && (lecturaDisponible || calificar || calificacion !== undefined) && (
         <div className="flex items-center gap-1 mt-1 ml-1">
           {lecturaDisponible && (
             <BotonIcono
@@ -310,17 +540,17 @@ function RespuestaAsistente({
               <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
             </BotonIcono>
           )}
-          {b.id && (
+          {calificar && (
             <>
-              <BotonIcono label="Me sirvió" activo={b.feedback === 1} onClick={() => onCalificar(b.feedback === 1 ? null : 1)}>
+              <BotonIcono label="Me sirvió" onClick={() => calificar(true)}>
                 <path d="M7 10.5V20H4.5v-9.5H7zm0 0 3.8-6.3c.9 0 1.7.8 1.6 1.7l-.5 3.6h5.4a1.8 1.8 0 0 1 1.8 2.1l-1.2 6.7a1.8 1.8 0 0 1-1.8 1.5H7" />
               </BotonIcono>
-              <BotonIcono label="No me sirvió" activo={b.feedback === -1} onClick={() => onCalificar(b.feedback === -1 ? null : -1)}>
+              <BotonIcono label="No me sirvió" onClick={() => calificar(false)}>
                 <path d="M17 13.5V4h2.5v9.5H17zm0 0-3.8 6.3c-.9 0-1.7-.8-1.6-1.7l.5-3.6H6.7a1.8 1.8 0 0 1-1.8-2.1l1.2-6.7A1.8 1.8 0 0 1 7.9 4H17" />
               </BotonIcono>
-              {b.feedback === -1 && <span className="text-[12px] text-tinta-tenue ml-1">Gracias, el equipo lo va a revisar.</span>}
             </>
           )}
+          {calificacion !== undefined && <span className="text-[12px] text-tinta-tenue ml-1">{calificacion ? "¡Gracias!" : "Gracias, lo vamos a revisar."}</span>}
         </div>
       )}
     </div>
@@ -346,8 +576,8 @@ function BotonIcono({ label, activo, onClick, children }: { label: string; activ
   );
 }
 
-// El mensaje para el equipo, ya redactado por el asistente: la persona lo
-// revisa y lo cambia antes de abrir WhatsApp. Nada se envía solo.
+// El mensaje para el equipo, ya redactado: la persona lo revisa y lo cambia
+// antes de abrir WhatsApp. Nada se envía solo.
 function BorradorWhatsApp({ inicial, paciente }: { inicial: string; paciente?: string }) {
   const [texto, setTexto] = useState(inicial);
   const [editando, setEditando] = useState(false);
@@ -382,15 +612,13 @@ function BorradorWhatsApp({ inicial, paciente }: { inicial: string; paciente?: s
   );
 }
 
-// Revela el texto con un ritmo de escritura. Lo que llega en bloque (una
-// respuesta verificada antes de mostrarse) se ve igual de natural que lo
-// que llega en vivo. El historial se muestra completo, sin animación.
+// Revela el texto con ritmo de escritura (respuestas por texto). Lo que ya
+// estaba en pantalla, o lo que llegó por voz, se muestra completo.
 function useEscritura(objetivo: string, animar: boolean) {
   const [visible, setVisible] = useState(animar ? 0 : objetivo.length);
   const prev = useRef(objetivo);
 
   useEffect(() => {
-    // Si el texto cambió por completo (reemplazo final), se reinicia.
     if (!objetivo.startsWith(prev.current.slice(0, Math.min(prev.current.length, visible)))) setVisible(0);
     prev.current = objetivo;
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -2,11 +2,16 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { programas } from "../../lib/programas";
 import { waEquipo } from "../../lib/whatsapp";
 import { BotonWhatsApp } from "../../components/ui/BotonWhatsApp";
-import { Asistente } from "./Asistente";
+import { lazy, Suspense } from "react";
 
-// Ayuda = respuestas rápidas al momento (asistente con IA y reglas de
-// riesgo) y, para lo que necesita a un profesional, WhatsApp: es el único
-// canal con el equipo de salud, la app no tiene chat con la clínica.
+// Clara trae el SDK de ElevenLabs (voz en tiempo real, ~600 kB): se carga
+// solo al entrar a Ayuda, no con el resto de la app.
+const Asistente = lazy(() => import("./Asistente").then((m) => ({ default: m.Asistente })));
+
+// Ayuda = Clara (agente de ElevenLabs, por texto o por voz, con las reglas
+// de riesgo de siempre) y, para lo que necesita a un profesional, WhatsApp:
+// es el único canal con el equipo de salud, la app no tiene chat con la
+// clínica.
 export function Ayuda() {
   const { data: myPatient } = useMyPatient();
   const autoguiado = myPatient?.modalidad === "autoguiado";
@@ -15,7 +20,9 @@ export function Ayuda() {
     <div>
       <HablarConEquipo paciente={myPatient?.nombre} />
       {autoguiado && <SesionesEnVivo paciente={myPatient?.nombre} />}
-      <Asistente embedded />
+      <Suspense fallback={<div style={{ minHeight: "min(60vh, 520px)" }} />}>
+        <Asistente embedded />
+      </Suspense>
     </div>
   );
 }
