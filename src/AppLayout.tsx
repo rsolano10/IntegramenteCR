@@ -198,7 +198,15 @@ function RouteGuard({ children }: { children: ReactNode }) {
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen grid" style={{ gridTemplateRows: "auto 1fr" }}>
+    // Una sola columna que nunca crece más que la pantalla (minmax(0, 1fr)):
+    // con la columna implícita «auto», el menú de píldoras del celular (que
+    // se desplaza de lado) estiraba toda la app a ~520 px, el teléfono
+    // alejaba el zoom y quedaba un gran espacio en blanco al final de las
+    // pantallas cortas. overflow-x-clip: las animaciones que entran de lado
+    // (cada pregunta del cuestionario, translateX de 24 px) tampoco pueden
+    // ensanchar la página; clip no crea un contenedor de scroll, así que los
+    // encabezados sticky siguen funcionando.
+    <div className="min-h-screen grid overflow-x-clip" style={{ gridTemplateRows: "auto 1fr", gridTemplateColumns: "minmax(0, 1fr)" }}>
       <AppHeader />
       <RouteGuard>
       <Routes>
