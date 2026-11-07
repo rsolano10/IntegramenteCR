@@ -18,7 +18,6 @@ import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
 import { waEquipo } from "../../lib/whatsapp";
 import { BotonWhatsApp } from "../ui/BotonWhatsApp";
 import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
-import { ClaraEncabezado } from "./ClaraEncabezado";
 import { useAlturaChat } from "../../lib/useAlturaChat";
 
 const pasosRevision = [
@@ -150,18 +149,15 @@ export function FamiliarShell() {
       className={modoChat ? "im-in flex flex-col overflow-hidden" : "im-in min-h-full pb-24 md:pb-0"}
       style={modoChat ? { height: altoChat ?? "calc(100dvh - 72px)" } : undefined}
     >
-      {modoChat ? (
-        <ClaraEncabezado paciente={myPatient?.nombre} />
-      ) : (
-        <div className="bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
-          <div className="max-w-3xl mx-auto">
-            <p className="m-0 mb-1 text-sm text-[#c4dbdb] first-letter:uppercase">
-              {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
-            </p>
-            <h1 className="font-serif font-normal text-2xl sm:text-[28px] m-0 text-white">Hola, {nombreFamiliar}</h1>
-          </div>
+      {/* Mismo saludo en todas las secciones, también en Ayuda. */}
+      <div className="shrink-0 bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
+        <div className="max-w-3xl mx-auto">
+          <p className="m-0 mb-1 text-sm text-[#c4dbdb] first-letter:uppercase">
+            {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
+          </p>
+          <h1 className="font-serif font-normal text-2xl sm:text-[28px] m-0 text-white">Hola, {nombreFamiliar}</h1>
         </div>
-      )}
+      </div>
 
       {!pendiente && (
         <div className="shrink-0 bg-white md:px-8 lg:px-12">

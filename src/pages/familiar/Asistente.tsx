@@ -17,7 +17,6 @@ import { WHATSAPP_EQUIPO, waEquipo, waLink } from "../../lib/whatsapp";
 import { detenerVoz, lecturaDisponible, leerEnVoz } from "../../lib/voz";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
 import { Icono } from "../../components/landing/Piezas";
-import { anunciarEstadoClara } from "../../lib/claraEstado";
 
 // Clara: la asistente de la sección Ayuda, un agente de ElevenLabs
 // (Conversational AI). Mismo chat de siempre, con dos formas de hablarle:
@@ -44,7 +43,6 @@ const preguntasIniciales = [
   { t: "No quiere comer", icono: "manzana", fondo: "#a9c49f", tinta: "#1f3338" },
   { t: "Necesito un respiro", icono: "sol", fondo: "#f4d096", tinta: "#1f3338" },
 ];
-const otrasPreguntas = ["Se resiste al baño", "No duerme bien", "¿Qué es la semana gratis?"];
 
 interface Burbuja {
   key: string;
@@ -448,13 +446,6 @@ function Clara({ extras, arriba, manejadores }: { extras?: ReactNode; arriba?: R
 
   const llamada = enVoz && conectada ? reloj : null;
 
-  // El estado en vivo se ve en el encabezado de Ayuda (como el «escribiendo…» de WhatsApp).
-  const estadoEncabezado = enVoz ? (llamada ? `En llamada · ${llamada}` : estadoVoz) : ocupado ? "Escribiendo…" : null;
-  useEffect(() => {
-    anunciarEstadoClara(estadoEncabezado);
-  }, [estadoEncabezado]);
-  useEffect(() => () => anunciarEstadoClara(null), []);
-
   // El campo crece con el texto, hasta 5 líneas.
   useEffect(() => {
     const t = campo.current;
@@ -709,12 +700,20 @@ function Bienvenida({
         <div className="rounded-[20px] rounded-tl-md bg-white border border-borde-suave px-4 py-2.5 text-[16px] leading-relaxed text-tinta shadow-[0_8px_20px_-18px_rgba(31,51,56,0.6)]">
           <span className="sr-only">Clara: </span>
           Hola{nombre ? `, ${nombre}` : ""}. Soy Clara y te ayudo con la app y con el día a día del cuidado{paciente ? ` de ${paciente}` : ""}.{" "}
-          {enVoz ? "Ya podés hablarme." : conPreguntas ? "Escribime, tocá el micrófono para hablar o elegí una pregunta:" : ""}
+          {enVoz ? (
+            "Ya podés hablarme."
+          ) : conPreguntas ? (
+            <>
+              <span className="md:hidden">Escribime abajo o tocá el micrófono para hablar.</span>
+              <span className="hidden md:inline">Escribime, tocá el micrófono para hablar o elegí una pregunta:</span>
+            </>
+          ) : null}
         </div>
       </div>
       {conPreguntas && !enVoz && (
         <div className="clara-entra pl-10">
-          <ul className="list-none m-0 mt-3 p-0 grid grid-cols-2 gap-2">
+          {/* En el celular las tarjetas desplazaban el saludo: solo desde tablet. */}
+          <ul className="list-none m-0 mt-3 p-0 hidden md:grid grid-cols-2 gap-2">
             {preguntasIniciales.map((q) => (
               <li key={q.t}>
                 <button
@@ -730,18 +729,6 @@ function Bienvenida({
               </li>
             ))}
           </ul>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {otrasPreguntas.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onPregunta(t)}
-                className="min-h-10 px-3.5 rounded-full border border-borde bg-white text-[13.5px] font-semibold text-tinta-suave cursor-pointer hover:border-verde-serenidad hover:text-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
-              >
-                {t}
-              </button>
-            ))}
-          </div>
           {extras && <div className="mt-5">{extras}</div>}
         </div>
       )}
