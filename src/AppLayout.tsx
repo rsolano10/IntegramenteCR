@@ -25,6 +25,7 @@ import { Hoy } from "./pages/familiar/Hoy";
 import { Actividad } from "./pages/familiar/Actividad";
 import { ActividadPasos } from "./pages/familiar/ActividadPasos";
 import { Plan } from "./pages/familiar/Plan";
+import { HistorialSemanas } from "./pages/familiar/HistorialSemanas";
 import { Revision } from "./pages/familiar/Revision";
 import { Resumen } from "./pages/familiar/Resumen";
 import { Emergencia } from "./pages/familiar/Emergencia";
@@ -227,6 +228,7 @@ export default function AppLayout() {
           {/* La misma pantalla de actividad, abierta desde Mi semana: así
               «Volver» y el menú inferior saben que se vino de ahí. */}
           <Route path="plan/actividad/:taskId" element={<Actividad />} />
+          <Route path="historial" element={<HistorialSemanas />} />
           {/* Reorganización del menú familiar: Plan+Semana → Mi semana,
               Dudas+Mensajes → Ayuda, Actividades → dentro de Mi semana
               (filtradas por perfil). Las rutas viejas redirigen para no

@@ -16,6 +16,8 @@ import type { PlanDay, PlanDayStatus, PlanTask } from "../../lib/mockData";
 import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
+import { useSemanasAnteriores } from "../../lib/semanasAnteriores";
+import { FilaSemana } from "../../components/familiar/FilaSemana";
 
 const tipoLabel: Record<PlanTask["tipo"], string> = {
   video: "Video",
@@ -228,45 +230,30 @@ function EstaSemana({ plan, publishAt, onOpen }: { plan: PlanDay[]; publishAt: s
   );
 }
 
-// Historial corto: las últimas semanas ya terminadas, con acceso a su resumen.
+// Historial corto: las últimas 5 semanas ya terminadas. Si hay más, «Ver
+// historial completo» lleva a su pantalla (/app/historial).
+const SEMANAS_VISIBLES = 5;
 function SemanasAnteriores({ patientId }: { patientId: string }) {
   const navigate = useNavigate();
-  const { data } = useQuery({
-    queryKey: ["semanas-anteriores", patientId],
-    queryFn: async () => {
-      const { data: plans, error } = await supabase
-        .from("plans")
-        .select("id, publish_at, family_reviewed_at")
-        .eq("patient_id", patientId)
-        .eq("status", "published")
-        .lte("publish_at", new Date().toISOString())
-        .order("publish_at", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return (plans ?? []).slice(1) as { id: string; publish_at: string; family_reviewed_at: string | null }[];
-    },
-  });
-  if (!data || data.length === 0) return null;
+  const { data } = useSemanasAnteriores(patientId, SEMANAS_VISIBLES);
+  if (!data || data.semanas.length === 0) return null;
   return (
     <section>
-      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Semanas anteriores</p>
+      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-suave">Semanas anteriores</p>
       <div className="grid gap-2">
-        {data.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => navigate(p.family_reviewed_at ? `/app/resumen?plan=${p.id}` : `/app/revision?plan=${p.id}`)}
-            className="flex items-center justify-between gap-3 text-left bg-white border border-borde rounded-2xl px-4 py-3 cursor-pointer hover:border-verde-serenidad font-sans"
-          >
-            <span className="text-[15px] font-semibold text-tinta">
-              Semana del {new Date(p.publish_at).toLocaleDateString("es-CR", { day: "numeric", month: "long" })}
-            </span>
-            <span className={`text-[13px] font-semibold ${p.family_reviewed_at ? "text-tinta-tenue" : "text-verde-profundo"}`}>
-              {p.family_reviewed_at ? "Ver resumen ›" : "Evaluar ›"}
-            </span>
-          </button>
+        {data.semanas.map((s) => (
+          <FilaSemana key={s.id} semana={s} />
         ))}
       </div>
+      {data.totalAnteriores > SEMANAS_VISIBLES && (
+        <button
+          type="button"
+          onClick={() => navigate("/app/historial")}
+          className="mt-3 inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full border-[1.5px] border-borde bg-white text-[14.5px] font-semibold text-verde-profundo cursor-pointer hover:border-verde-serenidad focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+        >
+          Ver historial completo ({data.totalAnteriores} semanas) <span aria-hidden="true">→</span>
+        </button>
+      )}
     </section>
   );
 }

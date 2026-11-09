@@ -29,7 +29,7 @@ const items: NavItem[] = [
   {
     label: "Mi semana",
     to: "/app/plan",
-    match: (p) => p === "/app/plan" || p.startsWith("/app/plan/actividad") || p === "/app/revision" || p === "/app/resumen",
+    match: (p) => p === "/app/plan" || p.startsWith("/app/plan/actividad") || p === "/app/historial" || p === "/app/revision" || p === "/app/resumen",
     icon: (active) => (
       <svg {...iconProps}>
         <rect x="3.5" y="4.5" width="15" height="14" rx="2.5" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
