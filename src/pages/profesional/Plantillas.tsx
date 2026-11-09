@@ -11,7 +11,7 @@ import { CalendarioSemana } from "../../components/profesional/CalendarioSemana"
 import { Modal } from "../../components/ui/Modal";
 import { ResourceEditor } from "../../components/profesional/ResourceEditor";
 
-// Plantillas de semana (Fase 4.4) y recursos de bienvenida (Fase 3.3).
+// Plantillas de semana (Fase 4.4) y recursos automáticos (antes «de bienvenida»).
 // Una plantilla es una semana tipo (recursos por día, de domingo a sábado) para
 // un perfil objetivo; en el planificador del paciente se puede partir de
 // una, con o sin ajuste de la IA (Fase 4.5).
@@ -311,24 +311,67 @@ function ListaPlantillas() {
   );
 }
 
-interface FilaBienvenida {
+type Disparador = "cuenta_creada" | "cuenta_aprobada" | "primera_semana" | "cada_semana" | "inmediato";
+
+interface FilaAutomatico {
   id: string;
   dia_offset: number;
   hora: string | null;
   orden: number;
   activo: boolean;
+  disparador: Disparador;
+  aplicado_en: string | null;
+  aplicado_cuentas: number | null;
   media_resource_id: string;
   media_resources: { titulo: string; codigo: string | null; modulo: ResourceModulo; media_kind: string | null } | { titulo: string; codigo: string | null; modulo: ResourceModulo; media_kind: string | null }[] | null;
 }
 
-// Recursos que recibe automáticamente toda cuenta nueva al terminar el
-// cuestionario, antes de la aprobación (Fase 3.3). Día 1 = el día en que
-// termina el cuestionario.
-function RecursosBienvenida() {
+// Cuándo se agrega cada grupo de recursos y qué significa «día» en cada caso.
+const DISPARADORES: { id: Disparador; titulo: string; detalle: string; dia: string }[] = [
+  {
+    id: "cuenta_creada",
+    titulo: "Al crear la cuenta",
+    detalle: "Cuando la familia termina el cuestionario, sin esperar la aprobación. Arman un plan de bienvenida para conocer la app.",
+    dia: "Día 1 = el día en que termina el cuestionario.",
+  },
+  {
+    id: "cuenta_aprobada",
+    titulo: "Al aprobar la cuenta",
+    detalle: "Cuando la clínica aprueba la cuenta (empieza la semana gratis). Se suman a la semana en curso o, si no hay, a una de bienvenida.",
+    dia: "Día 1 = el día de la aprobación.",
+  },
+  {
+    id: "primera_semana",
+    titulo: "Al asignar la primera semana",
+    detalle: "Se suman a la primera semana que publica la clínica para esa cuenta.",
+    dia: "Día 1 = el primer día de esa semana.",
+  },
+  {
+    id: "cada_semana",
+    titulo: "Al asignar cualquier semana",
+    detalle: "Se suman a cada semana que publica la clínica, también la primera.",
+    dia: "Día 1 = el primer día de cada semana.",
+  },
+  {
+    id: "inmediato",
+    titulo: "Aplicación inmediata",
+    detalle:
+      "Se agregan una sola vez, cuando tocás «Aplicar ahora», a todas las cuentas con una semana en curso (no rechazadas). Después el recurso queda desactivado.",
+    dia: "Día 1 = hoy. Nunca pasan del final de la semana de cada cuenta.",
+  },
+];
+
+const fechaCorta = (iso: string) => new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });
+
+// Recursos automáticos (antes «recursos de bienvenida»): se agregan solos al
+// plan de una cuenta según un disparador. La lógica vive en la base
+// (migración 20261109010000_recursos_automaticos.sql).
+function RecursosAutomaticos() {
   const queryClient = useQueryClient();
-  const [agregar, setAgregar] = useState(false);
+  const [agregarEn, setAgregarEn] = useState<Disparador | null>(null);
   const [cambiando, setCambiando] = useState<string | null>(null);
   const [editando, setEditando] = useState<MediaResource | null>(null);
+  const [aplicando, setAplicando] = useState<string | null>(null);
   const [aviso, setAviso] = useState("");
   const [error, setError] = useState("");
   // Abre el recurso completo en el mismo editor de la Biblioteca (video,
@@ -340,89 +383,167 @@ function RecursosBienvenida() {
     else setEditando(data as MediaResource);
   }
   const { data: filas } = useQuery({
-    queryKey: ["recursos-bienvenida"],
+    queryKey: ["recursos-automaticos"],
     queryFn: async () => {
-      const { data, error: e } = await supabase.from("recursos_bienvenida").select("id, dia_offset, hora, orden, activo, media_resource_id, media_resources(titulo, codigo, modulo, media_kind)").order("dia_offset").order("orden");
+      const { data, error: e } = await supabase
+        .from("recursos_automaticos")
+        .select("id, dia_offset, hora, orden, activo, disparador, aplicado_en, aplicado_cuentas, media_resource_id, media_resources(titulo, codigo, modulo, media_kind)")
+        .order("dia_offset")
+        .order("orden");
       if (e) throw e;
-      return (data ?? []) as FilaBienvenida[];
+      return (data ?? []) as FilaAutomatico[];
     },
   });
   const refrescar = () => {
-    queryClient.invalidateQueries({ queryKey: ["recursos-bienvenida"] });
+    queryClient.invalidateQueries({ queryKey: ["recursos-automaticos"] });
     queryClient.invalidateQueries({ queryKey: ["media-resources"] });
     queryClient.invalidateQueries({ queryKey: ["media-resources-active"] });
   };
   async function cambiar(id: string, cambios: Record<string, unknown>) {
-    const { error: e } = await supabase.from("recursos_bienvenida").update(cambios).eq("id", id);
+    setError("");
+    const { error: e } = await supabase.from("recursos_automaticos").update(cambios).eq("id", id);
     if (e) setError(e.message);
     refrescar();
   }
   async function quitar(id: string) {
-    const { error: e } = await supabase.from("recursos_bienvenida").delete().eq("id", id);
+    setError("");
+    const { error: e } = await supabase.from("recursos_automaticos").delete().eq("id", id);
     if (e) setError(e.message);
     refrescar();
   }
-  async function sumar(r: MediaResource) {
-    setAgregar(false);
-    const { error: e } = await supabase.from("recursos_bienvenida").insert({ media_resource_id: r.id, dia_offset: 0, orden: (filas?.length ?? 0) + 1 });
+  async function sumar(disparador: Disparador, r: MediaResource) {
+    setAgregarEn(null);
+    setError("");
+    const enGrupo = (filas ?? []).filter((f) => f.disparador === disparador).length;
+    const { error: e } = await supabase.from("recursos_automaticos").insert({ media_resource_id: r.id, dia_offset: 0, orden: enGrupo + 1, disparador });
     if (e) setError(e.message);
     refrescar();
   }
+  async function aplicarAhora(f: FilaAutomatico, titulo: string) {
+    if (!window.confirm(`¿Agregar «${titulo}» ahora a todas las cuentas con una semana en curso? Se aplica una sola vez y después queda desactivado.`)) return;
+    setError("");
+    setAviso("");
+    setAplicando(f.id);
+    const { data, error: e } = await supabase.rpc("aplicar_recurso_inmediato", { p_recurso: f.id });
+    setAplicando(null);
+    if (e) setError(e.message);
+    else setAviso(`Listo: «${titulo}» se agregó a ${data} ${data === 1 ? "cuenta" : "cuentas"}.`);
+    refrescar();
+    queryClient.invalidateQueries({ queryKey: ["patients"] });
+  }
+
   return (
-    <div className="grid gap-4">
-      <p className="m-0 text-[14.5px] leading-relaxed text-tinta-suave max-w-[52em]">
-        Toda cuenta nueva los recibe al terminar el cuestionario, sin esperar la aprobación. Se ven igual que los recursos reales y quedan
-        marcados como bienvenida en el panel y las métricas. Los cambios aplican a las cuentas nuevas.
+    <div className="grid gap-5">
+      <p className="m-0 text-[14.5px] leading-relaxed text-tinta-suave max-w-[56em]">
+        Recursos que se agregan solos al plan de cada cuenta según lo que pase: al crearla, al aprobarla, al asignar sus semanas o una sola vez,
+        cuando vos decidas. Se ven igual que los recursos que asignás a mano. Un recurso que ya está en esa semana no se repite.
       </p>
       {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
-      {aviso && <p className="m-0 rounded-2xl bg-verde-tenue px-4 py-2.5 text-[14px] text-verde-profundo">{aviso}</p>}
-      <ul className="list-none m-0 p-0 grid gap-2">
-        {(filas ?? []).map((f) => {
-          const r = uno(f.media_resources);
-          return (
-            <li key={f.id} className={`rounded-2xl bg-white border border-borde px-4 py-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-center ${f.activo ? "" : "opacity-60"}`}>
-              <button type="button" onClick={() => abrir(f.media_resource_id)} className="text-left bg-transparent border-0 p-0 cursor-pointer font-sans group" title="Abrir y editar el recurso">
-                <span className="block text-[14.5px] font-semibold text-tinta group-hover:text-verde-profundo group-hover:underline underline-offset-4">{r?.titulo}</span>
-                <span className="block text-[12.5px] text-tinta-tenue">
-                  {r?.codigo ? `${r.codigo} · ` : ""}
-                  {r ? moduloLabel[r.modulo] : ""}
-                  {r?.media_kind ? ` · ${r.media_kind === "video" ? "video" : r.media_kind}` : ""}
-                </span>
-              </button>
-              <div className="flex gap-1.5">
-                <Button dense variant="secondary" onClick={() => abrir(f.media_resource_id)}>
-                  Abrir y editar
-                </Button>
-                <Button dense variant="secondary" onClick={() => setCambiando(f.id)}>
-                  Cambiar
-                </Button>
+      {aviso && (
+        <p className="m-0 rounded-2xl bg-verde-tenue px-4 py-2.5 text-[14px] text-verde-profundo" role="status">
+          {aviso}
+        </p>
+      )}
+
+      {DISPARADORES.map((d) => {
+        const grupo = (filas ?? []).filter((f) => f.disparador === d.id);
+        const inmediato = d.id === "inmediato";
+        return (
+          <section key={d.id} className="rounded-3xl bg-white border border-borde p-5 sm:p-6 grid gap-3.5" aria-labelledby={`disp-${d.id}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 max-w-[46em]">
+                <h2 id={`disp-${d.id}`} className="m-0 text-[17px] font-bold text-tinta">
+                  {d.titulo}
+                  <span className="ml-2 align-middle rounded-full bg-campo px-2.5 py-0.5 text-[12.5px] font-semibold text-tinta-suave">{grupo.length}</span>
+                </h2>
+                <p className="m-0 mt-1 text-[14px] leading-relaxed text-tinta-suave">{d.detalle}</p>
+                <p className="m-0 mt-0.5 text-[13px] text-tinta-tenue">{d.dia}</p>
               </div>
-              <label className="flex items-center gap-2 text-[13px] text-tinta-suave">
-                Día
-                <select value={f.dia_offset} onChange={(e) => cambiar(f.id, { dia_offset: Number(e.target.value) })} className="min-h-9 px-2 rounded-lg border border-borde-campo font-sans text-[13.5px]">
-                  {Array.from({ length: 7 }, (_, i) => (
-                    <option key={i} value={i}>
-                      {i + 1}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-2 text-[13px] text-tinta-suave cursor-pointer">
-                <input type="checkbox" checked={f.activo} onChange={(e) => cambiar(f.id, { activo: e.target.checked })} /> Activo
-              </label>
-              <button type="button" onClick={() => quitar(f.id)} className="min-h-9 px-2 bg-transparent border-0 text-[13px] text-alerta-texto cursor-pointer">
-                Quitar
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <div>
-        <Button dense variant="secondary" onClick={() => setAgregar(true)}>
-          + Agregar recurso
-        </Button>
-      </div>
-      {agregar && <SelectorRecurso titulo="Agregar a la bienvenida" onElegir={sumar} onClose={() => setAgregar(false)} />}
+              <Button dense variant="secondary" onClick={() => setAgregarEn(d.id)}>
+                + Agregar recurso
+              </Button>
+            </div>
+
+            {grupo.length === 0 ? (
+              <p className="m-0 rounded-2xl border border-dashed border-borde-campo px-4 py-3 text-[14px] text-tinta-tenue">Ningún recurso todavía.</p>
+            ) : (
+              <ul className="list-none m-0 p-0 grid gap-2">
+                {grupo.map((f) => {
+                  const r = uno(f.media_resources);
+                  const titulo = r?.titulo ?? "Recurso";
+                  const yaAplicado = inmediato && !!f.aplicado_en;
+                  return (
+                    <li
+                      key={f.id}
+                      className={`rounded-2xl bg-campo/60 border border-borde-suave px-4 py-3 grid gap-2.5 lg:grid-cols-[1fr_auto_auto_auto] lg:items-center ${f.activo ? "" : "opacity-70"}`}
+                    >
+                      <button type="button" onClick={() => abrir(f.media_resource_id)} className="text-left bg-transparent border-0 p-0 cursor-pointer font-sans group" title="Abrir y editar el recurso">
+                        <span className="block text-[14.5px] font-semibold text-tinta group-hover:text-verde-profundo group-hover:underline underline-offset-4">{titulo}</span>
+                        <span className="block text-[12.5px] text-tinta-tenue">
+                          {r?.codigo ? `${r.codigo} · ` : ""}
+                          {r ? moduloLabel[r.modulo] : ""}
+                          {r?.media_kind ? ` · ${r.media_kind === "video" ? "video" : r.media_kind}` : ""}
+                        </span>
+                        {yaAplicado && (
+                          <span className="mt-1 inline-block rounded-full bg-[#e3efe3] px-2.5 py-0.5 text-[12px] font-semibold text-semaforo-verde-texto">
+                            Aplicado el {fechaCorta(f.aplicado_en!)} · {f.aplicado_cuentas ?? 0} {f.aplicado_cuentas === 1 ? "cuenta" : "cuentas"}
+                          </span>
+                        )}
+                      </button>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Button dense variant="secondary" onClick={() => abrir(f.media_resource_id)}>
+                          Abrir y editar
+                        </Button>
+                        <Button dense variant="secondary" onClick={() => setCambiando(f.id)}>
+                          Cambiar
+                        </Button>
+                      </div>
+                      <label className="flex items-center gap-2 text-[13px] text-tinta-suave">
+                        Día
+                        <select value={f.dia_offset} onChange={(e) => cambiar(f.id, { dia_offset: Number(e.target.value) })} className="min-h-9 px-2 rounded-lg border border-borde-campo bg-white font-sans text-[13.5px]">
+                          {Array.from({ length: 7 }, (_, i) => (
+                            <option key={i} value={i}>
+                              {i + 1}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {inmediato ? (
+                          f.activo ? (
+                            <Button dense onClick={() => aplicarAhora(f, titulo)} disabled={aplicando === f.id}>
+                              {aplicando === f.id ? "Aplicando…" : "Aplicar ahora"}
+                            </Button>
+                          ) : (
+                            <Button dense variant="secondary" onClick={() => cambiar(f.id, { activo: true, aplicado_en: null, aplicado_cuentas: null })}>
+                              Preparar de nuevo
+                            </Button>
+                          )
+                        ) : (
+                          <label className="flex items-center gap-2 text-[13px] text-tinta-suave cursor-pointer">
+                            <input type="checkbox" checked={f.activo} onChange={(e) => cambiar(f.id, { activo: e.target.checked })} /> Activo
+                          </label>
+                        )}
+                        <button type="button" onClick={() => quitar(f.id)} className="min-h-9 px-2 bg-transparent border-0 text-[13px] text-alerta-texto cursor-pointer">
+                          Quitar
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        );
+      })}
+
+      {agregarEn && (
+        <SelectorRecurso
+          titulo={`Agregar: ${DISPARADORES.find((d) => d.id === agregarEn)!.titulo.toLowerCase()}`}
+          onElegir={(r) => sumar(agregarEn, r)}
+          onClose={() => setAgregarEn(null)}
+        />
+      )}
       {cambiando && (
         <SelectorRecurso
           titulo="Cambiar por otro recurso"
@@ -450,18 +571,18 @@ function RecursosBienvenida() {
 }
 
 export function Plantillas() {
-  const [tab, setTab] = useState<"plantillas" | "bienvenida">("plantillas");
+  const [tab, setTab] = useState<"plantillas" | "automaticos">("plantillas");
   return (
     <div className="im-in max-w-[1180px] mx-auto px-5 py-8 sm:px-8 lg:py-10 grid gap-6">
       <div>
         <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Plantillas</p>
-        <h1 className="m-0 font-serif font-normal text-[30px] sm:text-[36px]">Semanas tipo y bienvenida</h1>
+        <h1 className="m-0 font-serif font-normal text-[30px] sm:text-[36px]">Semanas tipo y recursos automáticos</h1>
       </div>
-      <div role="tablist" className="flex gap-2">
+      <div role="tablist" className="flex flex-wrap gap-2">
         {(
           [
             ["plantillas", "Plantillas de semana"],
-            ["bienvenida", "Recursos de bienvenida"],
+            ["automaticos", "Recursos automáticos"],
           ] as const
         ).map(([k, t]) => (
           <button
@@ -476,7 +597,7 @@ export function Plantillas() {
           </button>
         ))}
       </div>
-      {tab === "plantillas" ? <ListaPlantillas /> : <RecursosBienvenida />}
+      {tab === "plantillas" ? <ListaPlantillas /> : <RecursosAutomaticos />}
     </div>
   );
 }
