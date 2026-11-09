@@ -41,6 +41,13 @@ export interface ConfigClasificar {
 
 export const MIN_POR_CAJA = 2;
 
+// Recursos con un juego en pantalla (para marcarlos como «Interactivo»).
+// Hoy el único modo interactivo es "clasificar"; los futuros se suman acá.
+export const MODOS_INTERACTIVOS = ["clasificar"] as const;
+export function esInteractivo(extras: { modo?: string } | null | undefined): boolean {
+  return !!extras?.modo && (MODOS_INTERACTIVOS as readonly string[]).includes(extras.modo);
+}
+
 // Completa lo que falte con valores por defecto razonables.
 export function normalizarConfig(ex: ExtrasClasificar): ConfigClasificar {
   const referencia = Number.isFinite(ex.referencia) ? Number(ex.referencia) : 20;

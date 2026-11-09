@@ -11,6 +11,7 @@ import {
   tipoLabel,
   type MediaResource,
 } from "../../lib/mediaResources";
+import { esInteractivo } from "../../lib/clasificarNumeros";
 
 const tagClass = "inline-flex items-center px-2 py-0.5 rounded-full bg-beige-serenidad text-tinta text-[11px] font-semibold";
 
@@ -76,6 +77,16 @@ export function ResourceCard({
           <ModuloIcon modulo={r.modulo} className="w-3 h-3 text-white" />
           {moduloLabel[r.modulo]}
         </span>
+
+        {/* Actividad con juego en pantalla: mismo estilo que el módulo, más sutil. */}
+        {esInteractivo(r.extras) && (
+          <span className="absolute top-[38px] left-2.5 inline-flex items-center gap-1 pl-1.5 pr-2.5 py-1 rounded-full bg-white/85 text-tinta text-[10.5px] font-semibold uppercase tracking-[0.04em] backdrop-blur-sm">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4.2 15.6a1.5 1.5 0 0 1 2.3-1.9L9 16" />
+            </svg>
+            Interactivo
+          </span>
+        )}
 
         {actions ? (
           <div
