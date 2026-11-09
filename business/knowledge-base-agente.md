@@ -227,6 +227,7 @@ Arriba: la fecha y «Hola, [nombre]». Menú de pestañas: **Hoy · Mi semana ·
 - **"Ver actividades sugeridas para hacer juntos"**: ideas extra elegidas según el perfil, para los días con ganas de más (son adicionales al plan).
 - Cuando corresponde, aparece **«¿Cómo les fue la semana?»** → **"Evaluar la semana"**.
 - Las semanas van **de domingo a sábado**. Una semana nueva puede estar programada para verse desde una fecha futura.
+- **Semanas anteriores**: se ven las últimas 5, cada una con cuántas actividades se hicieron y el botón «Evaluar» o «Ver resumen». Si hay más, **"Ver historial completo"** abre la lista de todas, ordenadas por mes; «Volver» regresa a la pantalla anterior.
 
 ### 6.12 Evaluar la semana
 Tres preguntas rápidas:
@@ -474,10 +475,12 @@ Qué hay en cada una:
   - se toca una celda para agregar un recurso;
   - al tocar una actividad se le cambia el día, la hora o el recurso, o se quita;
   - acciones: Editar, Duplicar, Archivar y Borrar.
-- **Recursos de bienvenida**:
-  - lo que recibe toda cuenta nueva al terminar el cuestionario, antes de la aprobación;
-  - por cada uno se elige el día, si está activo, **"Abrir y editar"** (abre el recurso completo, por ejemplo para cambiar el video; el cambio se ve en todas las cuentas que lo usan) o **"Cambiar"** (lo reemplaza por otro recurso del catálogo);
-  - los cambios aplican a las cuentas nuevas.
+- **Recursos automáticos** (antes «recursos de bienvenida»): recursos que se agregan solos al plan según lo que pase. Hay una sección por disparador:
+  - **Al crear la cuenta**: cuando la familia termina el cuestionario (plan de bienvenida, antes de la aprobación);
+  - **Al aprobar la cuenta**: se suman a la semana en curso o a una de bienvenida;
+  - **Al asignar la primera semana** y **al asignar cualquier semana**;
+  - **Aplicación inmediata**: con «Aplicar ahora» se agregan una sola vez a todas las cuentas con una semana en curso y quedan desactivados (se ve cuándo y a cuántas cuentas se aplicó; «Preparar de nuevo» lo reactiva).
+  - Por cada recurso: el día (1 = el primero que corresponde), si está activo, **"Abrir y editar"** o **"Cambiar"**. Un recurso que ya está en esa semana no se repite.
 
 ### 12.6 Menú de la cuenta clínica
 **Mi cuenta** · **Historial de auditoría** · **Cerrar sesión**.
