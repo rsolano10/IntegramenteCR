@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
 import {
   ConversationProvider,
   useConversationClientTool,
@@ -86,7 +88,7 @@ function leerGuardado(): Burbuja[] {
 // Manejadores de los eventos del agente. ConversationProvider recibe los
 // callbacks una vez; acá se apunta siempre a la versión actual.
 interface Manejadores {
-  onConnect: () => void;
+  onConnect: (p: { conversationId: string }) => void;
   onDisconnect: () => void;
   onMessage: (m: MessagePayload) => void;
   onParte: (p: { text: string; type: "start" | "delta" | "stop" }) => void;
@@ -97,7 +99,7 @@ export function Asistente({ extras }: { extras?: ReactNode }) {
   const manejadores = useRef<Manejadores | null>(null);
   return (
     <ConversationProvider
-      onConnect={() => manejadores.current?.onConnect()}
+      onConnect={(p) => manejadores.current?.onConnect(p)}
       onDisconnect={() => manejadores.current?.onDisconnect()}
       onMessage={(m) => manejadores.current?.onMessage(m)}
       onAgentChatResponsePart={(p) => manejadores.current?.onParte(p)}
@@ -244,16 +246,50 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
     );
   }
 
-  const variables = () => ({
-    nombre_usuario: firstName || "",
-    nombre_paciente: paciente?.split(" ")[0] ?? "",
-    programa: myPatient?.modalidad === "orientado" ? "Con sesiones profesionales" : "Autoguiado",
-    estado_cuenta: myPatient?.estado_cuenta ?? "",
-  });
+  // Memoria de Clara por usuario: se pide al servidor (clara-session) antes
+  // de iniciar la sesión. El user_id sale del token verificado allá, nunca
+  // de acá. «nombre» y «resumen_previo» van siempre, aunque estén vacías,
+  // porque el prompt del agente las usa.
+  const queryClient = useQueryClient();
+  const memoria = () =>
+    queryClient
+      .fetchQuery({
+        queryKey: ["clara-session"],
+        staleTime: 60_000,
+        queryFn: async () => {
+          const { data, error } = await supabase.functions.invoke<{ user_id: string; nombre: string; resumen_previo: string }>("clara-session", { method: "GET" });
+          if (error || !data) throw error ?? new Error("Sin datos");
+          return data;
+        },
+      })
+      .catch(() => null);
+  // Se pide apenas se abre Ayuda, para no demorar el primer mensaje.
+  useEffect(() => {
+    memoria();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  async function opcionesSesion() {
+    const m = await memoria();
+    return {
+      ...(m?.user_id ? { userId: m.user_id } : {}),
+      dynamicVariables: {
+        nombre: m?.nombre ?? "",
+        resumen_previo: m?.resumen_previo || "ninguno",
+        nombre_usuario: firstName || "",
+        nombre_paciente: paciente?.split(" ")[0] ?? "",
+        programa: myPatient?.modalidad === "orientado" ? "Con sesiones profesionales" : "Autoguiado",
+        estado_cuenta: myPatient?.estado_cuenta ?? "",
+      },
+    };
+  }
 
   manejadores.current = {
-    onConnect() {
+    onConnect({ conversationId }) {
       setError("");
+      // La conversación queda registrada a nombre de este usuario (sesión
+      // verificada en el servidor): el webhook post-llamada guarda la
+      // memoria con este dato, no con el user_id que viaja desde acá.
+      if (conversationId) supabase.functions.invoke("clara-session", { method: "POST", body: { conversation_id: conversationId } }).catch(() => {});
       contextoPrevio();
       if (modoRef.current === "texto") {
         saludoPorOmitir.current = true;
@@ -267,6 +303,8 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
     },
     onDisconnect() {
       limpiarEspera();
+      // La memoria se actualiza al terminar (webhook): la próxima sesión la vuelve a pedir.
+      queryClient.invalidateQueries({ queryKey: ["clara-session"] });
       if (cambiandoAVoz.current) cambiandoAVoz.current = false;
       else setModo(null);
       if (respuestaKey.current) {
@@ -358,14 +396,13 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
     pendiente.current = pregunta;
     setModo("texto");
     setError("");
-    try {
-      startSession({ agentId: CLARA_AGENT_ID, textOnly: true, stripAudioTags: true, dynamicVariables: variables() });
-    } catch {
-      respuestaFija(pregunta, respuestaKey.current);
-      respuestaKey.current = null;
-      setModo(null);
-      return;
-    }
+    opcionesSesion()
+      .then((op) => startSession({ agentId: CLARA_AGENT_ID, textOnly: true, stripAudioTags: true, ...op }))
+      .catch(() => {
+        respuestaFija(pregunta, respuestaKey.current);
+        respuestaKey.current = null;
+        setModo(null);
+      });
     // Si no conecta en 10 s, respuestas fijas.
     espera.current = window.setTimeout(() => {
       if (pendiente.current !== pregunta) return;
@@ -417,7 +454,8 @@ function Clara({ extras, manejadores }: { extras?: ReactNode; manejadores: React
     respuestaKey.current = null;
     setModo("voz");
     // Un instante para que se cierre la sesión de texto, si había.
-    window.setTimeout(() => startSession({ agentId: CLARA_AGENT_ID, stripAudioTags: true, dynamicVariables: variables() }), habiaSesion ? 400 : 0);
+    const op = await opcionesSesion();
+    window.setTimeout(() => startSession({ agentId: CLARA_AGENT_ID, stripAudioTags: true, ...op }), habiaSesion ? 400 : 0);
   }
 
   // Herramientas que el agente puede usar (ver comentario de arriba).

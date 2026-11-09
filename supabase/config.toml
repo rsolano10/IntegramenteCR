@@ -444,3 +444,8 @@ enabled = true
 # (Authentication → Hooks); ver el encabezado de la función.
 [functions.auth-email]
 verify_jwt = false
+
+# Webhook post-llamada de ElevenLabs (Clara): lo llama ElevenLabs, no un
+# usuario; la autenticidad se verifica con la firma HMAC.
+[functions.clara-post-call]
+verify_jwt = false
