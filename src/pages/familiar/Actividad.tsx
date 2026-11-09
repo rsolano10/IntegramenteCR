@@ -12,6 +12,7 @@ import { moduloLabel, moduloTheme } from "../../lib/modulos";
 import { origenDeActividad, useVolver } from "../../lib/useVolver";
 import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 import type { PlanDayStatus } from "../../lib/mockData";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 const regMessages: Record<string, string> = {
   done: "Registrado. ¡Bien hecho!",
@@ -51,11 +52,7 @@ export function Actividad() {
   const [saved, setSaved] = useState<"done" | "partial" | "no" | null>(null);
   const [error, setError] = useState("");
 
-  const botonVolver = (
-    <button type="button" onClick={volver} className="inline-flex items-center gap-1 min-h-11 -ml-1 px-1 border-none bg-transparent font-sans text-[15px] font-semibold text-verde-profundo cursor-pointer mb-1">
-      ‹ Volver a {origen.nombre}
-    </button>
-  );
+  const botonVolver = <BotonVolver respaldo={origen.ruta} texto={`Volver a ${origen.nombre}`} className="mb-1" />;
 
   if (loadingPlan) return <div className="flex-1" />;
 

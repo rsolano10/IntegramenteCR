@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { emergencyContacts } from "../../lib/mockData";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 const situations: { title: string; detail: string; to: string }[] = [
   { title: "Se cayó o se lastimó", detail: "Golpe, caída, dolor que antes no tenía.", to: "/app/alerta/caida" },
@@ -26,13 +27,7 @@ export function Emergencia() {
 
   return (
     <div className="im-in max-w-[680px] mx-auto px-5 py-10 pb-16 sm:px-8 lg:py-14 lg:pb-20">
-      <button
-        type="button"
-        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/app/hoy"))}
-        className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-4 cursor-pointer p-0"
-      >
-        ‹ Volver
-      </button>
+      <BotonVolver respaldo="/app/hoy" className="mb-2" />
       <p className="m-0 mb-2.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">¿Qué está pasando?</p>
       <h1 className="font-serif font-normal text-[26px] sm:text-[34px] leading-[1.16] m-0 mb-3">Contame para orientarte mejor</h1>
       <p className="m-0 mb-7 text-base sm:text-[17px] leading-relaxed text-tinta-suave">

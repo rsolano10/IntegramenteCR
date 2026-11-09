@@ -10,7 +10,7 @@ import { useSession } from "../../lib/useSession";
 import { waEquipo } from "../../lib/whatsapp";
 import { moduloLabel, moduloTheme, type ResourceModulo } from "../../lib/modulos";
 import { calcularResumen, titularSemana, DIAS_SEMANA, type TareaResumen } from "../../lib/resumenSemana";
-import { useVolver } from "../../lib/useVolver";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 const animo: Record<string, { texto: string; frase: string; fondo: string; tinta: string }> = {
   better: { texto: "Mejor", frase: "El ánimo estuvo mejor esta semana. ¡Qué lindo!", fondo: "#e3efe3", tinta: "#4c7a4c" },
@@ -31,7 +31,6 @@ interface FilaTarea {
 // más disfrutó, el mensaje del equipo y la lista de actividades.
 export function Resumen() {
   const location = useLocation();
-  const volver = useVolver("/app/plan");
   const session = useSession();
   const { data: myPatient } = useMyPatient();
   const [searchParams] = useSearchParams();
@@ -69,9 +68,7 @@ export function Resumen() {
 
   return (
     <div className="grid gap-4">
-      <button type="button" onClick={volver} className="justify-self-start inline-flex items-center gap-1 min-h-11 -ml-1 px-1 -mb-2 border-none bg-transparent font-sans text-[15px] font-semibold text-verde-profundo cursor-pointer">
-        ‹ Volver
-      </button>
+      <BotonVolver respaldo={esPropia ? "/app/participante/hoy" : "/app/plan"} className="justify-self-start -mb-2" />
 
       {/* ─── El logro de la semana ─── */}
       <section

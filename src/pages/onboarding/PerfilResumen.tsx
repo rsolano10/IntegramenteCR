@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { describeAnswer, groupAnswerableByModule, resolveText } from "../../lib/onboardingSchema";
 import { getPatientName } from "../../lib/patient";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 export function PerfilResumen() {
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ export function PerfilResumen() {
 
   return (
     <div className="im-in max-w-[760px] mx-auto px-5 py-10 pb-16 sm:px-8 lg:py-14 lg:pb-20">
-      <Link to="/app/hoy" className="inline-block border-none bg-transparent font-sans text-[15px] text-verde-profundo pb-4">
-        ‹ Volver a Hoy
-      </Link>
+      <BotonVolver respaldo="/app/hoy" className="mb-2" />
       <p className="m-0 mb-2.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">Perfil funcional</p>
       <h1 className="font-serif font-normal text-[28px] sm:text-[36px] leading-[1.15] m-0 mb-3">
         Lo que respondiste sobre {getPatientName(answers)}

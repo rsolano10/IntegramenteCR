@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 export function Rechazo() {
   const navigate = useNavigate();
   return (
-    <div className="max-w-[720px] mx-auto px-5 py-10 pb-16 sm:px-8 lg:py-12 lg:pb-20">
+    <div className="max-w-[720px] mx-auto px-5 pt-6 pb-10 pb-16 sm:px-8 lg:py-12 lg:pb-20">
+      <BotonVolver respaldo="/app/hoy" className="mb-2" />
       <div className="bg-white border-[1.5px] border-riesgo-borde rounded-3xl p-5 sm:p-8.5">
         <span className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-riesgo text-[15px] font-bold text-riesgo-texto">
           <span className="w-2.5 h-2.5 rounded-full bg-semaforo-amarillo" />

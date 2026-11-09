@@ -15,6 +15,7 @@ import { participanteTourSteps } from "../../lib/tourSteps";
 import { useProductTour } from "../../lib/useProductTour";
 import { CalendarSyncCard } from "../ui/CalendarSyncCard";
 import { BigActionButton } from "../ui/BigActionButton";
+import { Logo } from "../ui/Logo";
 
 const bigInputClass = "w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] text-tinta";
 
@@ -237,6 +238,12 @@ export function ParticipantShell() {
 
   return (
     <div className="im-in min-h-full flex flex-col">
+      {/* Logo del libro de marca, como en el resto de la app. */}
+      <div className="bg-white border-b border-borde px-5 py-3 sm:px-8">
+        <div className="max-w-xl mx-auto">
+          <Logo size="sm" />
+        </div>
+      </div>
       <div className="bg-beige-serenidad px-5 py-6 sm:px-8">
         <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
           <div>

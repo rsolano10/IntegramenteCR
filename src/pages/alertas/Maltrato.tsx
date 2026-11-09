@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { NotifyBar } from "../../components/ui/NotifyBar";
 import { emergencyContacts } from "../../lib/mockData";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 export function Maltrato() {
   const emergencia = emergencyContacts.find((c) => c.id === "emergencia")!;
@@ -9,6 +10,7 @@ export function Maltrato() {
   return (
     <div className="min-h-[84vh] bg-alerta flex items-center justify-center px-4 py-10 sm:px-8 sm:py-12">
       <div className="max-w-[680px] bg-white border-2 border-semaforo-rojo rounded-3xl p-6 sm:p-10">
+        <BotonVolver respaldo="/app/hoy" className="mb-2" />
         <p className="m-0 mb-2.5 text-[13px] tracking-[0.16em] uppercase text-alerta-texto">Situación de protección</p>
         <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.16] lg:leading-[1.12] m-0 mb-6.5">
           Si sospechás maltrato o abandono

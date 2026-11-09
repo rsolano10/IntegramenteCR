@@ -8,6 +8,7 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { comparacion, programaSugerido, programas, type ProgramaId } from "../../lib/programas";
 import { nombreConTratamiento, participanteEsRespondente } from "../../lib/respondentVoice";
 import { Button } from "../../components/ui/Button";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 // Después del cuestionario: la familia elige entre Autoguiado y el programa
 // con sesiones profesionales (id "orientado").
@@ -52,7 +53,8 @@ export function ElegirPrograma() {
   }
 
   return (
-    <div className="im-in max-w-[980px] mx-auto px-5 pt-10 pb-36 sm:px-8 lg:pt-14">
+    <div className="im-in max-w-[980px] mx-auto px-5 pt-6 pb-36 sm:px-8 lg:pt-10">
+      <BotonVolver respaldo="/app/hoy" className="mb-2" />
       <div className="text-center max-w-[640px] mx-auto mb-8 lg:mb-10">
         <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">Último paso</p>
         <h1 className="font-serif font-normal text-[28px] sm:text-[38px] leading-[1.14] m-0 mb-4">

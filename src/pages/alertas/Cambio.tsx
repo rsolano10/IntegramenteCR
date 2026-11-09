@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { NotifyButton, NotifyState } from "../../components/ui/NotifyBar";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 export function Cambio() {
   return (
-    <div className="max-w-[720px] mx-auto px-5 py-10 pb-16 sm:px-8 lg:py-12 lg:pb-20">
+    <div className="max-w-[720px] mx-auto px-5 pt-6 pb-10 pb-16 sm:px-8 lg:py-12 lg:pb-20">
+      <BotonVolver respaldo="/app/hoy" className="mb-2" />
       <div className="bg-white border-[1.5px] border-alerta-borde rounded-3xl overflow-hidden">
         <div className="bg-alerta p-5 sm:p-7.5">
           <span className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white text-[15px] font-bold text-alerta-texto">

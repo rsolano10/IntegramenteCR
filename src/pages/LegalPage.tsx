@@ -1,5 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { legalContent } from "../lib/legalContent";
+import { Logo } from "../components/ui/Logo";
 
 export function LegalPage() {
   const { doc } = useParams();
@@ -10,8 +11,8 @@ export function LegalPage() {
   return (
     <div className="font-sans text-tinta bg-fondo-papel min-h-screen">
       <header className="max-w-[760px] mx-auto px-5 py-5 sm:px-8">
-        <Link to="/" className="inline-flex items-baseline gap-2 font-serif text-xl text-tinta no-underline">
-          Integra<em className="italic text-verde-profundo">Mente</em>
+        <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="inline-flex no-underline">
+          <Logo size="sm" />
         </Link>
       </header>
 

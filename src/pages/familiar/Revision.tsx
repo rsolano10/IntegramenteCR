@@ -6,6 +6,7 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { usePendingReviews, useSubmitWeekReview } from "../../lib/usePlan";
 import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 function formatWeekOf(publishAt: string) {
   return new Date(publishAt).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
@@ -35,6 +36,7 @@ export function Revision() {
     if (loadingPending) return <div className="flex-1" />;
     return (
       <div>
+        <BotonVolver respaldo={isParticipante ? "/app/participante/hoy" : "/app/plan"} className="mb-1" />
         <p className="m-0 mb-1.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Semana</p>
         <h3 className="font-serif font-normal text-[23px] m-0 mb-4.5">Semanas por evaluar</h3>
         {!pending || pending.length === 0 ? (
@@ -72,6 +74,7 @@ export function Revision() {
 
   return (
     <div>
+      <BotonVolver respaldo={isParticipante ? "/app/participante/hoy" : "/app/plan"} className="mb-1" />
       <p className="m-0 mb-1.5 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Revisión semanal</p>
       <h3 className="font-serif font-normal text-[23px] m-0 mb-4.5">Tres preguntas y listo</h3>
       <div className="grid gap-5 mb-5">

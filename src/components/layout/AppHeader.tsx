@@ -10,6 +10,7 @@ import { Modal } from "../ui/Modal";
 import { MiPerfilModal } from "../ui/MiPerfilModal";
 import { ContactanosModal } from "../ui/ContactanosModal";
 import { CalendarModal } from "../ui/CalendarSyncCard";
+import { Logo } from "../ui/Logo";
 
 const crumbs: [string, string][] = [
   ["/app/login", "Ingreso"],
@@ -91,12 +92,8 @@ export function AppHeader() {
   }
 
   const isAuthed = session.status === "authed";
-  const logoContent = (
-    <>
-      Integra<em className="italic text-verde-profundo">Mente</em>{" "}
-      <span className="hidden sm:inline font-sans text-[11px] tracking-[0.16em] uppercase text-tinta-tenue">en Casa</span>
-    </>
-  );
+  // Logo del libro de marca (isotipo + logotipo), igual que en el home.
+  const logoContent = <Logo size="sm" />;
 
   return (
     <header className="flex items-center justify-between gap-3 sm:gap-6 px-4 sm:px-6 lg:px-8 py-3.5 bg-white border-b border-borde sticky top-0 z-20">
@@ -105,9 +102,9 @@ export function AppHeader() {
             only ever "Cerrar sesión" so a stray tap can't drop someone out
             of their session without meaning to. */}
         {isAuthed ? (
-          <span className="flex items-baseline gap-1.5 sm:gap-2 font-serif text-lg sm:text-[22px] text-tinta shrink-0">{logoContent}</span>
+          <span className="flex items-center shrink-0">{logoContent}</span>
         ) : (
-          <Link to="/" className="flex items-baseline gap-1.5 sm:gap-2 font-serif text-lg sm:text-[22px] text-tinta no-underline shrink-0">
+          <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="flex items-center no-underline shrink-0">
             {logoContent}
           </Link>
         )}

@@ -1,12 +1,11 @@
 import { useMyPatient } from "../../lib/useMyPatient";
 import { useSemanasAnteriores } from "../../lib/semanasAnteriores";
-import { useVolver } from "../../lib/useVolver";
 import { FilaSemana } from "../../components/familiar/FilaSemana";
+import { BotonVolver } from "../../components/ui/BotonVolver";
 
 // Historial completo de semanas anteriores (se llega desde «Ver historial
 // completo» en Mi semana). «Volver» regresa a la pantalla de la que se vino.
 export function HistorialSemanas() {
-  const volver = useVolver("/app/plan");
   const { data: myPatient } = useMyPatient();
   const { data, isLoading } = useSemanasAnteriores(myPatient?.id, null);
   const semanas = data?.semanas ?? [];
@@ -20,9 +19,7 @@ export function HistorialSemanas() {
 
   return (
     <div>
-      <button type="button" onClick={volver} className="inline-flex items-center gap-1 min-h-11 -ml-1 px-1 border-none bg-transparent font-sans text-[15px] font-semibold text-verde-profundo cursor-pointer mb-1">
-        ‹ Volver
-      </button>
+      <BotonVolver respaldo="/app/plan" className="mb-1" />
       <h1 className="font-serif font-normal text-[26px] leading-tight m-0 text-tinta">Historial de semanas</h1>
       <p className="m-0 mt-1 mb-6 text-[15px] text-tinta-suave">
         {isLoading ? "Cargando…" : semanas.length ? `${semanas.length} ${semanas.length === 1 ? "semana anterior" : "semanas anteriores"}.` : "Todavía no hay semanas anteriores."}
