@@ -307,3 +307,28 @@
     animation: clara-onda 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
   }
 }
+
+/* Resumen semanal: pétalos del isotipo que caen como confeti al abrirlo
+   (solo una vez, solo si el sistema no pide menos movimiento). */
+@keyframes resumen-petalo {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--deriva, 20px), 340px, 0) rotate(var(--giro, 220deg));
+    opacity: 0;
+  }
+}
+.resumen-petalo {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .resumen-petalo {
+    display: block;
+    animation: resumen-petalo var(--dur, 2.6s) cubic-bezier(0.25, 0.6, 0.4, 1) var(--retraso, 0s) both;
+  }
+}
