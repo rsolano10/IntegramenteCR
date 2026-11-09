@@ -733,7 +733,8 @@ export function ResourceEditor({
                   </button>
                 </div>
 
-                {!otroMaterial && <EditorJuegoClasificar valor={juego} onChange={setJuego} />}
+                {/* Solo en el recurso del juego (COG-036): ajustar números, rondas y cajas. No es una opción al crear recursos. */}
+                {juego && <EditorJuegoClasificar valor={juego} onChange={setJuego} />}
 
                 <Bloque titulo="Si necesita ayuda extra" ayuda="cómo adaptarla" vacio={!f.adaptacion} className="bg-campo border border-borde rounded-2xl p-4">
                   <p className="m-0 mb-1.5 font-bold text-tinta text-[15px]">Si necesita ayuda extra</p>
