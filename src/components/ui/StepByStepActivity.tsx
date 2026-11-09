@@ -20,7 +20,7 @@ import { MaterialDeApoyo } from "./ResourceDetailView";
 // por pantalla, con la ayuda de su etapa a mano → cierre → recién ahí
 // «¿Cómo le fue?». Sin el marco de la app alrededor (App.tsx + AppHeader.tsx).
 
-type Fase = { tipo: "preparacion" } | { tipo: "video" } | { tipo: "paso"; i: number } | { tipo: "cierre" };
+type Fase = { tipo: "preparacion" } | { tipo: "video" } | { tipo: "paso"; i: number } | { tipo: "juego" } | { tipo: "cierre" };
 const ETAPAS: NivelCognitivo[] = ["preventivo", "dcl", "leve", "moderada", "avanzada"];
 
 export function StepByStepActivity({
@@ -105,10 +105,14 @@ export function StepByStepActivity({
     : [];
   const hayAyuda = !!(task.ayuda || task.adaptacion || adaptaciones.length);
 
+  const esJuego = task.extras?.modo === "clasificar";
   const fases: Fase[] = [
     ...(hayPreparacion ? [{ tipo: "preparacion" } as const] : []),
     ...(videoUrl ? [{ tipo: "video" } as const] : []),
     ...guia.pasos.map((_, i) => ({ tipo: "paso", i }) as const),
+    // Juego interactivo (p. ej. clasificar números): una fase propia, antes
+    // del cierre y del registro.
+    ...(esJuego ? [{ tipo: "juego" } as const] : []),
     ...(task.paraCerrar ? [{ tipo: "cierre" } as const] : []),
   ];
   const totalPasos = guia.pasos.length;
@@ -232,7 +236,7 @@ export function StepByStepActivity({
               ))}
             </ul>
           )}
-          {task.extras && (
+          {task.extras && !esJuego && (
             <div className="mt-6">
               <MaterialDeApoyo extras={task.extras} large={large} />
             </div>
@@ -259,6 +263,17 @@ export function StepByStepActivity({
     }
 
     // 4. Cierre.
+    if (fase.tipo === "juego" && task.extras) {
+      return shell(
+        <div>
+          <MaterialDeApoyo extras={task.extras} large={large} />
+          {/* Terminar el juego no registra la actividad: eso lo hace la persona o su familiar. */}
+          {navegacion(fases[faseIdx + 1] ? "Siguiente" : "Registrar cómo les fue")}
+        </div>,
+        progreso,
+      );
+    }
+
     if (fase.tipo === "cierre") {
       return shell(
         <div className="text-center">

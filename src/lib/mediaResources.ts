@@ -1,3 +1,4 @@
+import type { ExtrasClasificar } from "./clasificarNumeros";
 import { supabase } from "./supabase";
 
 import type { ResourceModulo } from "./modulos";
@@ -21,7 +22,9 @@ export interface ResourceCiencia {
 // opcional con duraciones fijas, sin puntuación (COG-016).
 export type ResourceExtras =
   | { modo: "tabla" | "tarjetas"; titulo: string; columnas: string[]; filas: string[][]; intro?: string; cierre?: string }
-  | { modo: "temporizador"; titulo: string; segundos: number[] };
+  | { modo: "temporizador"; titulo: string; segundos: number[] }
+  // Juego interactivo «Clasificar números por valor» (lib/clasificarNumeros.ts).
+  | ExtrasClasificar;
 
 export type AdaptacionPorEtapa = Partial<Record<NivelCognitivo, string>>;
 

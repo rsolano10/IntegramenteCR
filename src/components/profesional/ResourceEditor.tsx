@@ -27,6 +27,8 @@ import {
   type ResourceModulo,
   type ResourceTipo,
 } from "../../lib/mediaResources";
+import { EditorJuegoClasificar } from "./EditorJuegoClasificar";
+import type { ExtrasClasificar } from "../../lib/clasificarNumeros";
 
 const modulos = Object.keys(moduloLabel) as ResourceModulo[];
 const tipos = Object.keys(tipoLabel) as ResourceTipo[];
@@ -254,6 +256,11 @@ export function ResourceEditor({
     }));
   }, [interno]);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
+  // Juego interactivo (extras.modo = "clasificar"). Otros materiales del
+  // manual (tablas, tarjetas, temporizador) no se editan acá y se conservan.
+  const otroMaterial = resource?.extras && resource.extras.modo !== "clasificar" ? resource.extras : null;
+  const [juego, setJuego] = useState<ExtrasClasificar | null>(resource?.extras?.modo === "clasificar" ? resource.extras : null);
+  const extrasFinal = otroMaterial ?? juego;
 
   const [source, setSource] = useState<"upload" | "link" | "none">(
     resource?.external_url ? "link" : resource?.storage_path ? "upload" : resource ? "none" : "upload",
@@ -335,8 +342,7 @@ export function ResourceEditor({
     precaucion: f.precaucion || null,
     ciencia: f.gancho || f.evidencia || f.cierre ? { gancho: f.gancho, evidencia: f.evidencia, cierre: f.cierre } : null,
     por_que: f.porQue || null,
-    // No se edita acá (tablas y tarjetas del manual): se conserva tal cual.
-    extras: resource?.extras ?? null,
+    extras: extrasFinal,
     niveles_cognitivos: f.nivelesCog.length ? f.nivelesCog : null,
     niveles_motores: f.nivelesMot.length ? f.nivelesMot : null,
     activo: resource?.activo ?? true,
@@ -433,6 +439,7 @@ export function ResourceEditor({
         storage_path: source === "upload" ? storagePath : null,
         external_url: source === "link" ? externalUrl.trim() : null,
         media_kind: mediaKind,
+        extras: extrasFinal,
       };
       let resourceId = resource?.id ?? null;
       if (isNew) {
@@ -725,6 +732,8 @@ export function ResourceEditor({
                     + Agregar paso
                   </button>
                 </div>
+
+                {!otroMaterial && <EditorJuegoClasificar valor={juego} onChange={setJuego} />}
 
                 <Bloque titulo="Si necesita ayuda extra" ayuda="cómo adaptarla" vacio={!f.adaptacion} className="bg-campo border border-borde rounded-2xl p-4">
                   <p className="m-0 mb-1.5 font-bold text-tinta text-[15px]">Si necesita ayuda extra</p>
