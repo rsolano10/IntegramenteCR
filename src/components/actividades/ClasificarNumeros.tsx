@@ -91,7 +91,7 @@ const etiquetaCaja = (c: ConfigClasificar["cajas"][number]) => {
   return s ? `${c.etiqueta} (${s})` : c.etiqueta;
 };
 
-function BotonEscuchar({ texto }: { texto: string }) {
+export function BotonEscuchar({ texto }: { texto: string }) {
   const [leyendo, setLeyendo] = useState(false);
   if (!lecturaDisponible) return null;
   return (

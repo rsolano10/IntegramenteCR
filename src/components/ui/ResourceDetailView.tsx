@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState, type ReactNode } from "react";
 import { LightbulbIcon } from "./Icons";
 import { nivelCognitivoLabel, resourceUrl, type AdaptacionPorEtapa, type MediaKind, type NivelCognitivo, type ResourceExtras } from "../../lib/mediaResources";
 import { modulosFicha, type ResourceModulo } from "../../lib/modulos";
 import { antesDeEmpezar, comoIncorporarDobleTarea, cuandoParar } from "../../lib/bloquesGerontogimnasia";
 import { ClasificarNumeros } from "../actividades/ClasificarNumeros";
+// Las actividades interactivas se cargan solo cuando se abren.
+const ActividadInteractiva = lazy(() => import("../actividades/interactivas/Marco"));
 
 export interface ResourceContent {
   codigo?: string | null;
@@ -425,6 +427,15 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
 // usa el modo paso a paso.
 export function MaterialDeApoyo({ extras, large = false }: { extras: ResourceExtras; large?: boolean }) {
   if (extras.modo === "temporizador") return <Temporizador segundos={extras.segundos} titulo={extras.titulo} large={large} />;
+  if (extras.modo === "interactiva")
+    return (
+      <section className="grid gap-2.5">
+        <p className={`m-0 tracking-[0.14em] uppercase text-tinta-tenue ${large ? "text-[15px]" : "text-[13px]"}`}>Tu actividad</p>
+        <Suspense fallback={<div className="min-h-[240px] rounded-[26px] bg-white border border-borde" aria-busy="true" />}>
+          <ActividadInteractiva extras={extras} size={large ? "large" : "compact"} />
+        </Suspense>
+      </section>
+    );
   if (extras.modo === "clasificar")
     return (
       <section className="grid gap-2.5">

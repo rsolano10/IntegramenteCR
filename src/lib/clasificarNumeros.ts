@@ -42,8 +42,8 @@ export interface ConfigClasificar {
 export const MIN_POR_CAJA = 2;
 
 // Recursos con un juego en pantalla (para marcarlos como «Interactivo»).
-// Hoy el único modo interactivo es "clasificar"; los futuros se suman acá.
-export const MODOS_INTERACTIVOS = ["clasificar"] as const;
+// "clasificar" (este juego) e "interactiva" (lib/actividades/registro.ts).
+export const MODOS_INTERACTIVOS = ["clasificar", "interactiva"] as const;
 export function esInteractivo(extras: { modo?: string } | null | undefined): boolean {
   return !!extras?.modo && (MODOS_INTERACTIVOS as readonly string[]).includes(extras.modo);
 }

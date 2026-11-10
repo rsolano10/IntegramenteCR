@@ -7,6 +7,7 @@ import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { guiaDeTarea } from "../../lib/pasoAPaso";
 import { nivelCognitivoLabel, resourceUrl, type NivelCognitivo } from "../../lib/mediaResources";
 import { moduloLabel } from "../../lib/modulos";
+import { esInteractivo } from "../../lib/clasificarNumeros";
 import { antesDeEmpezar, cuandoParar } from "../../lib/bloquesGerontogimnasia";
 import { Button } from "./Button";
 import { BigActionButton } from "./BigActionButton";
@@ -105,7 +106,7 @@ export function StepByStepActivity({
     : [];
   const hayAyuda = !!(task.ayuda || task.adaptacion || adaptaciones.length);
 
-  const esJuego = task.extras?.modo === "clasificar";
+  const esJuego = esInteractivo(task.extras);
   const fases: Fase[] = [
     ...(hayPreparacion ? [{ tipo: "preparacion" } as const] : []),
     ...(videoUrl ? [{ tipo: "video" } as const] : []),

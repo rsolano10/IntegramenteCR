@@ -29,6 +29,9 @@ import {
 } from "../../lib/mediaResources";
 import { EditorJuegoClasificar } from "./EditorJuegoClasificar";
 import type { ExtrasClasificar } from "../../lib/clasificarNumeros";
+import type { ExtrasInteractiva } from "../../lib/actividades/contrato";
+import { erroresDeActividad } from "../../lib/actividades/registro";
+import { EditorActividadInteractiva } from "./EditorActividadInteractiva";
 
 const modulos = Object.keys(moduloLabel) as ResourceModulo[];
 const tipos = Object.keys(tipoLabel) as ResourceTipo[];
@@ -258,9 +261,11 @@ export function ResourceEditor({
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
   // Juego interactivo (extras.modo = "clasificar"). Otros materiales del
   // manual (tablas, tarjetas, temporizador) no se editan acá y se conservan.
-  const otroMaterial = resource?.extras && resource.extras.modo !== "clasificar" ? resource.extras : null;
+  const otroMaterial = resource?.extras && resource.extras.modo !== "clasificar" && resource.extras.modo !== "interactiva" ? resource.extras : null;
   const [juego, setJuego] = useState<ExtrasClasificar | null>(resource?.extras?.modo === "clasificar" ? resource.extras : null);
-  const extrasFinal = otroMaterial ?? juego;
+  // Actividad interactiva con el contrato común (extras.modo = "interactiva").
+  const [interactiva, setInteractiva] = useState<ExtrasInteractiva | null>(resource?.extras?.modo === "interactiva" ? resource.extras : null);
+  const extrasFinal = otroMaterial ?? juego ?? interactiva;
 
   const [source, setSource] = useState<"upload" | "link" | "none">(
     resource?.external_url ? "link" : resource?.storage_path ? "upload" : resource ? "none" : "upload",
@@ -397,6 +402,14 @@ export function ResourceEditor({
       setError("Ponele un título a la actividad.");
       setMobileView("editar");
       return;
+    }
+    if (interactiva) {
+      const errores = erroresDeActividad(interactiva);
+      if (errores.length) {
+        setError(`Revisá la configuración de la actividad: ${errores[0]}`);
+        setMobileView("editar");
+        return;
+      }
     }
     if (source === "link" && !externalUrl.trim()) {
       setError("Pegá el enlace o elegí “Sin multimedia”.");
@@ -735,6 +748,8 @@ export function ResourceEditor({
 
                 {/* Solo en el recurso del juego (COG-036): ajustar números, rondas y cajas. No es una opción al crear recursos. */}
                 {juego && <EditorJuegoClasificar valor={juego} onChange={setJuego} />}
+                {/* Igual para las actividades interactivas: solo en su propio recurso. */}
+                {interactiva && <EditorActividadInteractiva valor={interactiva} onChange={setInteractiva} />}
 
                 <Bloque titulo="Si necesita ayuda extra" ayuda="cómo adaptarla" vacio={!f.adaptacion} className="bg-campo border border-borde rounded-2xl p-4">
                   <p className="m-0 mb-1.5 font-bold text-tinta text-[15px]">Si necesita ayuda extra</p>

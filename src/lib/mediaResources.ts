@@ -1,4 +1,5 @@
 import type { ExtrasClasificar } from "./clasificarNumeros";
+import type { ExtrasInteractiva } from "./actividades/contrato";
 import { supabase } from "./supabase";
 
 import type { ResourceModulo } from "./modulos";
@@ -24,7 +25,9 @@ export type ResourceExtras =
   | { modo: "tabla" | "tarjetas"; titulo: string; columnas: string[]; filas: string[][]; intro?: string; cierre?: string }
   | { modo: "temporizador"; titulo: string; segundos: number[] }
   // Juego interactivo «Clasificar números por valor» (lib/clasificarNumeros.ts).
-  | ExtrasClasificar;
+  | ExtrasClasificar
+  // Actividades interactivas con el contrato común (lib/actividades/registro.ts).
+  | ExtrasInteractiva;
 
 export type AdaptacionPorEtapa = Partial<Record<NivelCognitivo, string>>;
 
