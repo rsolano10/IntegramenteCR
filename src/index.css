@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+/* Caprasimo (SIL Open Font License), alojada en el proyecto. No trae ₡: los montos van con la voz de lectura. */
+@font-face {
+  font-family: "Caprasimo";
+  src: url("./assets/fuentes/caprasimo.woff2") format("woff2");
+  font-display: swap;
+}
+
 @theme {
   --font-serif: "Newsreader", ui-serif, Georgia, serif;
   --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  /* Voz de rótulo de las actividades («Un día en el pueblo»): solo títulos y rótulos de escena. */
+  --font-rotulo: "Caprasimo", "Newsreader", ui-serif, Georgia, serif;
 
   /* Brand */
   --color-verde-serenidad: #6a969c;
@@ -343,4 +352,37 @@
   0% { opacity: 0; transform: scale(0.9); }
   45% { opacity: 1; transform: scale(1.04); }
   100% { opacity: 0.85; transform: none; }
+}
+
+/* ─── Actividades «Un día en el pueblo» ─── */
+/* Pincel: el trazo se pinta de punta a punta. */
+@keyframes pueblo-pincel {
+  from { stroke-dashoffset: var(--largo); }
+  to { stroke-dashoffset: 0; }
+}
+/* La rueda completa da un giro lento (una vez). */
+@keyframes pueblo-giro {
+  to { transform: rotate(360deg); }
+}
+/* La pieza se asienta con un rebote corto. */
+@keyframes pueblo-asentar {
+  0% { transform: translateY(-10px) scale(1.04); }
+  60% { transform: translateY(2px) scale(0.99); }
+  100% { transform: none; }
+}
+/* La pieza vuelve a su sitio, con suavidad. */
+@keyframes pueblo-regreso {
+  0% { transform: translateY(-6px) scale(0.96); opacity: 0.6; }
+  100% { transform: none; opacity: 1; }
+}
+/* Algo de la escena aparece (sello, bolsa, rótulo). */
+@keyframes pueblo-aparece {
+  0% { transform: translateY(-14px) rotate(var(--giro, 0deg)) scale(1.08); opacity: 0; }
+  70% { transform: translateY(1px) rotate(var(--giro, 0deg)); opacity: 1; }
+  100% { transform: rotate(var(--giro, 0deg)); opacity: 1; }
+}
+/* Grano de papel sobre los fondos de escena (imagen chica repetida). */
+.pueblo-grano {
+  background-image: url("./assets/grano.png");
+  background-size: 96px 96px;
 }

@@ -13,7 +13,8 @@ import { JuegoContar } from "./JuegoContar";
 import { JuegoParejas } from "./JuegoParejas";
 import { JuegoVentanas, PortadaVentanas } from "./JuegoVentanas";
 import { JuegoPalabra } from "./JuegoPalabra";
-import { JuegoPago } from "./JuegoPago";
+import { JuegoPulperia, PortadaPulperia } from "../pueblo/Pulperia";
+import { Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
 import { JuegoOrientacion } from "./JuegoOrientacion";
 
 // Marco común de las actividades interactivas: inicio con la consigna, un
@@ -38,15 +39,21 @@ const JUEGOS: Record<string, ComponentType<any>> = {
   parejas: JuegoParejas,
   "recordar-posiciones": JuegoVentanas,
   "formar-palabra": JuegoPalabra,
-  "pago-exacto": JuegoPago,
+  "pago-exacto": JuegoPulperia,
   "orientacion-hoy": JuegoOrientacion,
 };
 
 // Actividades con escena propia: portada ilustrada y marco de noche.
 const PORTADAS: Record<string, ComponentType<{ final?: boolean }>> = {
   "recordar-posiciones": PortadaVentanas,
+  "pago-exacto": PortadaPulperia,
 };
 const NOCHE = new Set(["recordar-posiciones"]);
+// «Un día en el pueblo»: cada actividad es un lugar con su rótulo pintado y la
+// rueda de carreta que se pinta como progreso.
+const LUGARES: Record<string, string> = {
+  "pago-exacto": "La pulpería",
+};
 
 type Mensaje = { tipo: "ok" | "reintento" | "info"; texto: string } | null;
 
@@ -60,6 +67,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   const [pista, setPista] = useState(0);
   const [resuelto, setResuelto] = useState(false);
   const [mensaje, setMensaje] = useState<Mensaje>(null);
+  const [hechos, setHechos] = useState(0);
   const zona = useRef<HTMLDivElement>(null);
   useEffect(() => () => detenerVoz(), []);
 
@@ -81,6 +89,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       aviso: (texto) => setMensaje({ tipo: "info", texto }),
       listo: () => {
         setResuelto(true);
+        setHechos((n) => n + 1);
         setIntentos(0);
         setMensaje({ tipo: "ok", texto: "Muy bien." });
       },
@@ -104,6 +113,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   const total = ejercicios.length;
   const ultimo = indice + 1 >= total;
   const noche = NOCHE.has(def.tipo);
+  const lugar = LUGARES[def.tipo];
   const Portada = PORTADAS[def.tipo];
   const c = noche
     ? {
@@ -114,7 +124,17 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
         reintento: "bg-mostaza-vital/15 text-mostaza-vital font-semibold ring-1 ring-mostaza-vital/40",
         info: "text-white/85",
       }
-    : {
+    : lugar
+      ? {
+          // Sin tarjeta: la escena es el marco.
+          seccion: "min-w-0",
+          tinta: "text-tinta",
+          suave: "text-tinta-suave",
+          ok: "bg-mostaza-vital/45 text-tinta font-semibold",
+          reintento: "bg-aviso text-aviso-texto font-semibold",
+          info: "text-tinta-suave",
+        }
+      : {
         seccion: "rounded-[26px] bg-white border border-borde p-4 sm:p-6 min-w-0",
         tinta: "text-tinta",
         suave: "text-tinta-suave",
@@ -125,6 +145,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
 
   function empezar() {
     setIndice(0);
+    setHechos(0);
     setIntentos(0);
     setResuelto(false);
     setMensaje(null);
@@ -143,8 +164,13 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
     <section aria-label={def.nombre} className={c.seccion}>
       {fase === "inicio" && (
         <div className="flex flex-col items-center text-center gap-4 py-2">
+          {lugar ? (
+            <h3 className="m-0 -mb-1">
+              <Rotulo texto={lugar} size="lg" />
+            </h3>
+          ) : null}
           {Portada && <Portada />}
-          <h3 className={`m-0 font-serif font-normal leading-tight ${c.tinta} ${large ? "text-[34px]" : "text-[30px]"}`}>{def.nombre}</h3>
+          {!lugar && <h3 className={`m-0 font-serif font-normal leading-tight ${c.tinta} ${large ? "text-[34px]" : "text-[30px]"}`}>{def.nombre}</h3>}
           <p className={`m-0 leading-snug ${c.tinta} ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
           <BotonEscuchar texto={consigna} />
           <p className={`m-0 ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
@@ -159,9 +185,18 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       {fase === "juego" && Juego && (
         <div className="grid gap-4">
           <div ref={zona} tabIndex={-1} className="outline-none">
-            <p className={`m-0 font-semibold ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
-              Ejercicio {indice + 1} de {total}
-            </p>
+            {lugar ? (
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="m-0">
+                  <Rotulo texto={lugar} />
+                </h3>
+                <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
+              </div>
+            ) : (
+              <p className={`m-0 font-semibold ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
+                Ejercicio {indice + 1} de {total}
+              </p>
+            )}
           </div>
 
           <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
@@ -173,7 +208,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
               mensaje?.tipo === "ok" ? c.ok : mensaje?.tipo === "reintento" ? c.reintento : c.info
             }`}
           >
-            {mensaje?.tipo === "ok" && (
+            {mensaje?.tipo === "ok" && !lugar && (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
                 <path d="M5 12.5l4.2 4.2L19 7" />
               </svg>
@@ -211,6 +246,12 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
 
       {fase === "cierre" && (
         <div className="flex flex-col items-center text-center gap-3 py-4" role="status">
+          {lugar && hechos >= total && (
+            <div className="self-stretch flex items-center justify-between gap-3">
+              <Rotulo texto={lugar} />
+              <RuedaProgreso total={total} completados={total} actual={total} />
+            </div>
+          )}
           {Portada ? (
             <Portada final />
           ) : (
