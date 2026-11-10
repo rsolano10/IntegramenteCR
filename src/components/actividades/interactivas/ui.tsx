@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { foco } from "./comun";
+import { useContext, type ReactNode } from "react";
+import { TemaJuego, foco } from "./comun";
 
 // Piezas visuales comunes de las actividades interactivas. Toques de 56 px o
 // más, 12 px entre elementos, texto de 20 px o más; la selección y la
@@ -22,17 +22,21 @@ export function Boton({
   autoFocus?: boolean;
   large?: boolean;
 }) {
+  const noche = useContext(TemaJuego) === "noche";
+  const estilo = noche
+    ? variante === "primario"
+      ? "border-0 bg-mostaza-vital text-tinta shadow-[0_6px_24px_-6px_rgba(244,208,150,0.7)] hover:bg-white disabled:bg-white/15 disabled:text-white/70 disabled:shadow-none disabled:opacity-100"
+      : "border-2 border-white/45 bg-white/10 text-white hover:bg-white/20"
+    : variante === "primario"
+      ? "border-0 bg-verde-profundo text-white hover:bg-tinta"
+      : "border-2 border-verde-serenidad bg-white text-verde-profundo hover:bg-verde-tenue";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       autoFocus={autoFocus}
-      className={`inline-flex items-center justify-center gap-2 min-h-14 px-6 rounded-full font-sans font-semibold cursor-pointer disabled:opacity-45 disabled:cursor-default ${large ? "text-[22px]" : "text-[20px]"} ${
-        variante === "primario"
-          ? "border-0 bg-verde-profundo text-white hover:bg-tinta"
-          : "border-2 border-verde-serenidad bg-white text-verde-profundo hover:bg-verde-tenue"
-      } ${foco} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 min-h-14 px-6 rounded-full font-sans font-semibold cursor-pointer disabled:opacity-45 disabled:cursor-default ${large ? "text-[22px]" : "text-[20px]"} ${estilo} ${noche ? "focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-mostaza-vital" : foco} ${className}`}
     >
       {children}
     </button>

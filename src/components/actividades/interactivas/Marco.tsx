@@ -5,13 +5,13 @@ import { prepararSesion } from "../../../lib/actividades/registro";
 import { detenerVoz } from "../../../lib/voz";
 import { BotonEscuchar } from "../ClasificarNumeros";
 import { Boton } from "./ui";
-import type { Control } from "./comun";
+import { TemaJuego, type Control } from "./comun";
 import { JuegoClasificar } from "./JuegoClasificar";
 import { JuegoOrdenar } from "./JuegoOrdenar";
 import { JuegoIguales } from "./JuegoIguales";
 import { JuegoContar } from "./JuegoContar";
 import { JuegoParejas } from "./JuegoParejas";
-import { JuegoVentanas } from "./JuegoVentanas";
+import { JuegoVentanas, PortadaVentanas } from "./JuegoVentanas";
 import { JuegoPalabra } from "./JuegoPalabra";
 import { JuegoPago } from "./JuegoPago";
 import { JuegoOrientacion } from "./JuegoOrientacion";
@@ -41,6 +41,12 @@ const JUEGOS: Record<string, ComponentType<any>> = {
   "pago-exacto": JuegoPago,
   "orientacion-hoy": JuegoOrientacion,
 };
+
+// Actividades con escena propia: portada ilustrada y marco de noche.
+const PORTADAS: Record<string, ComponentType<{ final?: boolean }>> = {
+  "recordar-posiciones": PortadaVentanas,
+};
+const NOCHE = new Set(["recordar-posiciones"]);
 
 type Mensaje = { tipo: "ok" | "reintento" | "info"; texto: string } | null;
 
@@ -97,6 +103,25 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   const consigna = def.consigna(config);
   const total = ejercicios.length;
   const ultimo = indice + 1 >= total;
+  const noche = NOCHE.has(def.tipo);
+  const Portada = PORTADAS[def.tipo];
+  const c = noche
+    ? {
+        seccion: "rounded-[28px] p-4 sm:p-6 min-w-0 overflow-hidden text-white bg-[radial-gradient(130%_90%_at_85%_0%,var(--color-verde-profundo)_0%,var(--color-tinta)_62%)] shadow-elevada",
+        tinta: "text-white",
+        suave: "text-white/75",
+        ok: "bg-verde-serenidad/30 text-white font-semibold ring-1 ring-verde-serenidad/60",
+        reintento: "bg-mostaza-vital/15 text-mostaza-vital font-semibold ring-1 ring-mostaza-vital/40",
+        info: "text-white/85",
+      }
+    : {
+        seccion: "rounded-[26px] bg-white border border-borde p-4 sm:p-6 min-w-0",
+        tinta: "text-tinta",
+        suave: "text-tinta-suave",
+        ok: "bg-[#e3efe3] text-semaforo-verde-texto font-semibold",
+        reintento: "bg-aviso text-aviso-texto font-semibold",
+        info: "text-tinta-suave",
+      };
 
   function empezar() {
     setIndice(0);
@@ -114,13 +139,15 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   }
 
   return (
-    <section aria-label={def.nombre} className="rounded-[26px] bg-white border border-borde p-4 sm:p-6 min-w-0">
+    <TemaJuego.Provider value={noche ? "noche" : "claro"}>
+    <section aria-label={def.nombre} className={c.seccion}>
       {fase === "inicio" && (
         <div className="flex flex-col items-center text-center gap-4 py-2">
-          <h3 className={`m-0 font-serif font-normal leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>{def.nombre}</h3>
-          <p className={`m-0 leading-snug text-tinta ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
+          {Portada && <Portada />}
+          <h3 className={`m-0 font-serif font-normal leading-tight ${c.tinta} ${large ? "text-[34px]" : "text-[30px]"}`}>{def.nombre}</h3>
+          <p className={`m-0 leading-snug ${c.tinta} ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
           <BotonEscuchar texto={consigna} />
-          <p className={`m-0 text-tinta-suave ${large ? "text-[20px]" : "text-[18px]"}`}>
+          <p className={`m-0 ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
             Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
           </p>
           <Boton onClick={empezar} large={large} className="w-full max-w-xs">
@@ -132,7 +159,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       {fase === "juego" && Juego && (
         <div className="grid gap-4">
           <div ref={zona} tabIndex={-1} className="outline-none">
-            <p className={`m-0 font-semibold text-tinta-suave ${large ? "text-[20px]" : "text-[18px]"}`}>
+            <p className={`m-0 font-semibold ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
               Ejercicio {indice + 1} de {total}
             </p>
           </div>
@@ -143,7 +170,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
           <p
             aria-live="polite"
             className={`m-0 flex items-center gap-2.5 rounded-2xl ${mensaje ? "min-h-14 px-4 py-2" : "min-h-0 p-0"} ${large ? "text-[22px]" : "text-[20px]"} ${
-              mensaje?.tipo === "ok" ? "bg-[#e3efe3] text-semaforo-verde-texto font-semibold" : mensaje?.tipo === "reintento" ? "bg-aviso text-aviso-texto font-semibold" : "text-tinta-suave"
+              mensaje?.tipo === "ok" ? c.ok : mensaje?.tipo === "reintento" ? c.reintento : c.info
             }`}
           >
             {mensaje?.tipo === "ok" && (
@@ -184,13 +211,17 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
 
       {fase === "cierre" && (
         <div className="flex flex-col items-center text-center gap-3 py-4" role="status">
-          <span aria-hidden="true" className="w-16 h-16 rounded-full bg-[#e3efe3] text-semaforo-verde-texto flex items-center justify-center">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12.5l4.2 4.2L19 7" />
-            </svg>
-          </span>
-          <p className={`m-0 font-serif text-tinta leading-tight ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
-          <p className={`m-0 text-tinta-suave ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
+          {Portada ? (
+            <Portada final />
+          ) : (
+            <span aria-hidden="true" className="w-16 h-16 rounded-full bg-[#e3efe3] text-semaforo-verde-texto flex items-center justify-center">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12.5l4.2 4.2L19 7" />
+              </svg>
+            </span>
+          )}
+          <p className={`m-0 font-serif leading-tight ${c.tinta} ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
+          <p className={`m-0 ${c.suave} ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
           <Boton
             variante="secundario"
             large={large}
@@ -205,5 +236,6 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
         </div>
       )}
     </section>
+    </TemaJuego.Provider>
   );
 }

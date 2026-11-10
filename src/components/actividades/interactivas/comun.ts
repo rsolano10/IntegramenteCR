@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { createContext, useEffect, useRef } from "react";
 
 // Contrato entre el marco y cada juego, y ayudas comunes (sin componentes).
 
@@ -43,3 +43,8 @@ export function usePista(pista: number, aplicar: () => void) {
     fn.current();
   }, [pista]);
 }
+
+// Tema visual del marco: "noche" para las actividades con escena inmersiva
+// (por ahora, «Ventanas encendidas»). Los botones lo leen solos.
+export type Tema = "claro" | "noche";
+export const TemaJuego = createContext<Tema>("claro");
