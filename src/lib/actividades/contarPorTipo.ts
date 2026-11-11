@@ -36,13 +36,13 @@ export function revisarConteo(ej: EjercicioContar, conteos: Record<string, numbe
 export const contarPorTipo: DefActividad<ConfigContarPorTipo, EjercicioContar> = {
   tipo: "contar-por-tipo",
   version: 1,
-  nombre: "¿Cuántos hay?",
+  nombre: "El canasto",
   area: "Atención",
   funcion: "Atención selectiva",
   porNivel: {
-    suave: { tipos: 2, maxPorTipo: 4, banco: "mesa", agrupados: true, tamanoVariado: false },
-    medio: { tipos: 3, maxPorTipo: 6, banco: "mesa", agrupados: false, tamanoVariado: false },
-    retador: { tipos: 4, maxPorTipo: 9, banco: "mesa", agrupados: false, tamanoVariado: true },
+    suave: { tipos: 2, maxPorTipo: 4, banco: "canasto", agrupados: true, tamanoVariado: false },
+    medio: { tipos: 3, maxPorTipo: 6, banco: "canasto", agrupados: false, tamanoVariado: false },
+    retador: { tipos: 4, maxPorTipo: 9, banco: "canasto", agrupados: false, tamanoVariado: true },
   },
   campos: [
     {
@@ -50,7 +50,8 @@ export const contarPorTipo: DefActividad<ConfigContarPorTipo, EjercicioContar> =
       tipo: "opcion",
       etiqueta: "Escena",
       opciones: [
-        { valor: "mesa", etiqueta: "La mesa (cubiertos, platos, vasos)" },
+        { valor: "canasto", etiqueta: "El canasto (frutas de acá)" },
+        { valor: "mesa", etiqueta: "La mesa servida (cubiertos, platos, vasos)" },
         { valor: "frutas", etiqueta: "Frutas" },
         { valor: "figuras", etiqueta: "Figuras" },
       ],
@@ -68,5 +69,5 @@ export const contarPorTipo: DefActividad<ConfigContarPorTipo, EjercicioContar> =
     return e;
   },
   generar: (c, n, { azar }) => Array.from({ length: n }, () => generarContar(c, azar)),
-  consigna: () => "Contá cuántas cosas hay de cada tipo. Usá los botones − y + y después tocá «Listo».",
+  consigna: () => "Se volcó el canasto. Contá cuántas frutas hay de cada una con − y + y después tocá «Listo».",
 };

@@ -1,27 +1,20 @@
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { nuevaSemilla } from "../../../lib/actividades/azar";
 import type { ExtrasInteractiva } from "../../../lib/actividades/contrato";
 import { prepararSesion } from "../../../lib/actividades/registro";
 import { detenerVoz } from "../../../lib/voz";
 import { BotonEscuchar } from "../ClasificarNumeros";
 import { Boton } from "./ui";
-import { TemaJuego, type Control } from "./comun";
-import { JuegoClasificar } from "./JuegoClasificar";
-import { JuegoOrdenar } from "./JuegoOrdenar";
-import { JuegoIguales } from "./JuegoIguales";
-import { JuegoContar } from "./JuegoContar";
-import { JuegoParejas } from "./JuegoParejas";
-import { JuegoVentanas, PortadaVentanas } from "./JuegoVentanas";
-import { JuegoPalabra } from "./JuegoPalabra";
-import { JuegoPulperia, PortadaPulperia } from "../pueblo/Pulperia";
+import type { Control } from "./comun";
 import { Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
-import { JuegoOrientacion } from "./JuegoOrientacion";
 
-// Marco común de las actividades interactivas: inicio con la consigna, un
-// ejercicio por vez con progreso neutro («Ejercicio 2 de 5»), mensajes en una
-// región aria-live, «Ver una pista» tras 2 intentos en el mismo paso,
-// «Terminar por hoy» siempre a mano y un cierre sin resumen de desempeño.
-// No guarda nada ni toca el registro Sí / En parte / No.
+// Marco común de las actividades «Un día en el pueblo»: cada actividad es un
+// lugar con su rótulo pintado. Inicio con la escena y la consigna; un
+// ejercicio por vez con la rueda de carreta que se pinta como progreso
+// (para lectores: «Ejercicio 2 de 5»); mensajes en una región aria-live;
+// «Ver una pista» tras 2 intentos en el mismo paso; «Terminar por hoy»
+// siempre a mano; cierre con el momento final del lugar, sin resumen de
+// desempeño. No guarda nada ni toca el registro Sí / En parte / No.
 
 export interface PropsJuego {
   ejercicio: unknown;
@@ -29,33 +22,30 @@ export interface PropsJuego {
   ctl: Control;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const JUEGOS: Record<string, ComponentType<any>> = {
-  "clasificar-objetos": JuegoClasificar,
-  "ordenar-pasos": JuegoOrdenar,
-  "ordenar-secuencia": JuegoOrdenar,
-  "encontrar-iguales": JuegoIguales,
-  "contar-por-tipo": JuegoContar,
-  parejas: JuegoParejas,
-  "recordar-posiciones": JuegoVentanas,
-  "formar-palabra": JuegoPalabra,
-  "pago-exacto": JuegoPulperia,
-  "orientacion-hoy": JuegoOrientacion,
-};
-
-// Actividades con escena propia: portada ilustrada y marco de noche.
-const PORTADAS: Record<string, ComponentType<{ final?: boolean }>> = {
-  "recordar-posiciones": PortadaVentanas,
-  "pago-exacto": PortadaPulperia,
-};
-const NOCHE = new Set(["recordar-posiciones"]);
-// «Un día en el pueblo»: cada actividad es un lugar con su rótulo pintado y la
-// rueda de carreta que se pinta como progreso.
-const LUGARES: Record<string, string> = {
-  "pago-exacto": "La pulpería",
+// Cada escena se carga solo cuando se abre su actividad.
+type ModuloEscena = { Juego: ComponentType<PropsJuego>; Portada: ComponentType<{ final?: boolean; config?: Record<string, unknown> }> };
+function escena(cargar: () => Promise<ModuloEscena>) {
+  return {
+    Juego: lazy(() => cargar().then((m) => ({ default: m.Juego }))),
+    Portada: lazy(() => cargar().then((m) => ({ default: m.Portada }))),
+  };
+}
+const ESCENAS: Record<string, ReturnType<typeof escena>> = {
+  "clasificar-objetos": escena(() => import("../pueblo/Feria") as unknown as Promise<ModuloEscena>),
+  "pago-exacto": escena(() => import("../pueblo/Pulperia") as unknown as Promise<ModuloEscena>),
+  "ordenar-pasos": escena(() => import("../pueblo/Cafe") as unknown as Promise<ModuloEscena>),
+  "ordenar-secuencia": escena(() => import("../pueblo/Estacion") as unknown as Promise<ModuloEscena>),
+  "formar-palabra": escena(() => import("../pueblo/Rotulista") as unknown as Promise<ModuloEscena>),
+  parejas: escena(() => import("../pueblo/Mosaico") as unknown as Promise<ModuloEscena>),
+  "recordar-posiciones": escena(() => import("../pueblo/Ventanas") as unknown as Promise<ModuloEscena>),
+  "encontrar-iguales": escena(() => import("../pueblo/Taller") as unknown as Promise<ModuloEscena>),
+  "contar-por-tipo": escena(() => import("../pueblo/Canasto") as unknown as Promise<ModuloEscena>),
+  "orientacion-hoy": escena(() => import("../pueblo/Almanaque") as unknown as Promise<ModuloEscena>),
 };
 
 type Mensaje = { tipo: "ok" | "reintento" | "info"; texto: string } | null;
+
+const Cargando = () => <div className="min-h-[280px] rounded-[20px] bg-beige-serenidad/60" aria-busy="true" />;
 
 export default function ActividadInteractiva({ extras, size = "compact" }: { extras: ExtrasInteractiva; size?: "compact" | "large" }) {
   const large = size === "large";
@@ -76,6 +66,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
     if (fase === "juego") zona.current?.focus({ preventScroll: true });
   }, [indice, fase]);
 
+  const total = sesion.ok ? sesion.ejercicios.length : 0;
   const ctl: Control = useMemo(
     () => ({
       acierto: (texto = "Muy bien.") => {
@@ -95,11 +86,14 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       },
       pista,
       large,
+      indice,
+      total,
     }),
-    [pista, large],
+    [pista, large, indice, total],
   );
 
-  if (!sesion.ok)
+  const lugar = sesion.ok ? ESCENAS[sesion.def.tipo] : undefined;
+  if (!sesion.ok || !lugar)
     return (
       <section className="rounded-[26px] bg-white border border-borde p-6 text-center">
         <p className={`m-0 text-tinta ${large ? "text-[22px]" : "text-[20px]"}`}>Esta actividad no está disponible por ahora.</p>
@@ -108,40 +102,9 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
     );
 
   const { def, config, ejercicios } = sesion;
-  const Juego = JUEGOS[def.tipo];
+  const { Juego, Portada } = lugar;
   const consigna = def.consigna(config);
-  const total = ejercicios.length;
   const ultimo = indice + 1 >= total;
-  const noche = NOCHE.has(def.tipo);
-  const lugar = LUGARES[def.tipo];
-  const Portada = PORTADAS[def.tipo];
-  const c = noche
-    ? {
-        seccion: "rounded-[28px] p-4 sm:p-6 min-w-0 overflow-hidden text-white bg-[radial-gradient(130%_90%_at_85%_0%,var(--color-verde-profundo)_0%,var(--color-tinta)_62%)] shadow-elevada",
-        tinta: "text-white",
-        suave: "text-white/75",
-        ok: "bg-verde-serenidad/30 text-white font-semibold ring-1 ring-verde-serenidad/60",
-        reintento: "bg-mostaza-vital/15 text-mostaza-vital font-semibold ring-1 ring-mostaza-vital/40",
-        info: "text-white/85",
-      }
-    : lugar
-      ? {
-          // Sin tarjeta: la escena es el marco.
-          seccion: "min-w-0",
-          tinta: "text-tinta",
-          suave: "text-tinta-suave",
-          ok: "bg-mostaza-vital/45 text-tinta font-semibold",
-          reintento: "bg-aviso text-aviso-texto font-semibold",
-          info: "text-tinta-suave",
-        }
-      : {
-        seccion: "rounded-[26px] bg-white border border-borde p-4 sm:p-6 min-w-0",
-        tinta: "text-tinta",
-        suave: "text-tinta-suave",
-        ok: "bg-[#e3efe3] text-semaforo-verde-texto font-semibold",
-        reintento: "bg-aviso text-aviso-texto font-semibold",
-        info: "text-tinta-suave",
-      };
 
   function empezar() {
     setIndice(0);
@@ -160,20 +123,18 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   }
 
   return (
-    <TemaJuego.Provider value={noche ? "noche" : "claro"}>
-    <section aria-label={def.nombre} className={c.seccion}>
+    <section aria-label={def.nombre} className="min-w-0">
       {fase === "inicio" && (
-        <div className="flex flex-col items-center text-center gap-4 py-2">
-          {lugar ? (
-            <h3 className="m-0 -mb-1">
-              <Rotulo texto={lugar} size="lg" />
-            </h3>
-          ) : null}
-          {Portada && <Portada />}
-          {!lugar && <h3 className={`m-0 font-serif font-normal leading-tight ${c.tinta} ${large ? "text-[34px]" : "text-[30px]"}`}>{def.nombre}</h3>}
-          <p className={`m-0 leading-snug ${c.tinta} ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
+        <div className="flex flex-col items-center text-center gap-4 py-1">
+          <h3 className="m-0 -mb-1">
+            <Rotulo texto={def.nombre} size="lg" />
+          </h3>
+          <Suspense fallback={<Cargando />}>
+            <Portada config={config} />
+          </Suspense>
+          <p className={`m-0 leading-snug text-tinta ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
           <BotonEscuchar texto={consigna} />
-          <p className={`m-0 ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
+          <p className={`m-0 text-tinta-suave ${large ? "text-[20px]" : "text-[18px]"}`}>
             Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
           </p>
           <Boton onClick={empezar} large={large} className="w-full max-w-xs">
@@ -182,37 +143,26 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
         </div>
       )}
 
-      {fase === "juego" && Juego && (
+      {fase === "juego" && (
         <div className="grid gap-4">
-          <div ref={zona} tabIndex={-1} className="outline-none">
-            {lugar ? (
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="m-0">
-                  <Rotulo texto={lugar} />
-                </h3>
-                <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
-              </div>
-            ) : (
-              <p className={`m-0 font-semibold ${c.suave} ${large ? "text-[20px]" : "text-[18px]"}`}>
-                Ejercicio {indice + 1} de {total}
-              </p>
-            )}
+          <div ref={zona} tabIndex={-1} className="outline-none flex items-center justify-between gap-3">
+            <h3 className="m-0 min-w-0">
+              <Rotulo texto={def.nombre} />
+            </h3>
+            <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
           </div>
 
-          <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+          <Suspense fallback={<Cargando />}>
+            <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+          </Suspense>
 
           {/* Lo que pasó, en palabras (también para lectores de pantalla). */}
           <p
             aria-live="polite"
             className={`m-0 flex items-center gap-2.5 rounded-2xl ${mensaje ? "min-h-14 px-4 py-2" : "min-h-0 p-0"} ${large ? "text-[22px]" : "text-[20px]"} ${
-              mensaje?.tipo === "ok" ? c.ok : mensaje?.tipo === "reintento" ? c.reintento : c.info
+              mensaje?.tipo === "ok" ? "bg-mostaza-vital/45 text-tinta font-semibold" : mensaje?.tipo === "reintento" ? "bg-aviso text-aviso-texto font-semibold" : "text-tinta-suave"
             }`}
           >
-            {mensaje?.tipo === "ok" && !lugar && (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
-                <path d="M5 12.5l4.2 4.2L19 7" />
-              </svg>
-            )}
             <span>{mensaje?.texto ?? ""}</span>
           </p>
 
@@ -245,24 +195,16 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       )}
 
       {fase === "cierre" && (
-        <div className="flex flex-col items-center text-center gap-3 py-4" role="status">
-          {lugar && hechos >= total && (
-            <div className="self-stretch flex items-center justify-between gap-3">
-              <Rotulo texto={lugar} />
-              <RuedaProgreso total={total} completados={total} actual={total} />
-            </div>
-          )}
-          {Portada ? (
-            <Portada final />
-          ) : (
-            <span aria-hidden="true" className="w-16 h-16 rounded-full bg-[#e3efe3] text-semaforo-verde-texto flex items-center justify-center">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12.5l4.2 4.2L19 7" />
-              </svg>
-            </span>
-          )}
-          <p className={`m-0 font-serif leading-tight ${c.tinta} ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
-          <p className={`m-0 ${c.suave} ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
+        <div className="flex flex-col items-center text-center gap-3 py-1" role="status">
+          <div className="self-stretch flex items-center justify-between gap-3">
+            <Rotulo texto={def.nombre} />
+            {hechos >= total && <RuedaProgreso total={total} completados={total} actual={total} />}
+          </div>
+          <Suspense fallback={<Cargando />}>
+            <Portada final config={config} />
+          </Suspense>
+          <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
+          <p className={`m-0 text-tinta-suave ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
           <Boton
             variante="secundario"
             large={large}
@@ -277,6 +219,5 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
         </div>
       )}
     </section>
-    </TemaJuego.Provider>
   );
 }

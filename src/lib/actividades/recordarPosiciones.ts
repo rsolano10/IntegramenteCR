@@ -47,7 +47,7 @@ export function revisarPosiciones(ej: EjercicioPosiciones, marcadas: number[]): 
 export const recordarPosiciones: DefActividad<ConfigRecordarPosiciones, EjercicioPosiciones> = {
   tipo: "recordar-posiciones",
   version: 1,
-  nombre: "Ventanas encendidas",
+  nombre: "Las ventanas del pueblo",
   area: "Memoria",
   funcion: "Memoria episódica (visoespacial)",
   porNivel: {

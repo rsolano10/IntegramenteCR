@@ -86,7 +86,19 @@ export function RuedaProgreso({ total, completados, actual, size = 60 }: { total
 export function Rotulo({ texto, size = "md", color = P.naranja, className = "" }: { texto: string; size?: "md" | "lg"; color?: string; className?: string }) {
   return (
     <span
-      className={`relative inline-flex items-center gap-2.5 font-rotulo leading-none text-[#F6F1E4] ${size === "lg" ? "px-6 py-3 text-[34px]" : "px-4 py-2 text-[24px]"} ${className}`}
+      className={`relative inline-flex items-center gap-2.5 font-rotulo leading-none whitespace-nowrap text-[#F6F1E4] ${
+        size === "lg"
+          ? texto.length > 20
+            ? "px-4 py-3 text-[24px]"
+            : texto.length > 16
+              ? "px-5 py-3 text-[27px]"
+              : "px-6 py-3 text-[34px]"
+          : texto.length > 20
+            ? "px-3 py-2 text-[16px]"
+            : texto.length > 16
+              ? "px-3 py-2 text-[19px]"
+              : "px-4 py-2 text-[24px]"
+      } ${className}`}
       style={{ background: color, borderRadius: "6px 6px 8px 8px", boxShadow: `0 4px 0 ${P.tierra}55` }}
     >
       <span aria-hidden="true" className="w-2 h-2 rounded-full" style={{ background: P.mostaza }} />

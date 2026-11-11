@@ -16,6 +16,8 @@ export interface ConfigOrientacion {
   cercanos: boolean;
   // Meses de la época seca (1 = enero). El resto es lluviosa.
   mesesSeca: number[];
+  // La escena muestra la luz del momento y la lluvia en época lluviosa.
+  pistasEnEscena: boolean;
   semilla?: number;
 }
 
@@ -121,17 +123,18 @@ const TODAS: { valor: Pregunta; etiqueta: string }[] = [
 export const orientacionHoy: DefActividad<ConfigOrientacion, EjercicioOrientacion> = {
   tipo: "orientacion-hoy",
   version: 1,
-  nombre: "El día de hoy",
+  nombre: "El almanaque",
   area: "Orientación",
   funcion: "Orientación temporal",
   porNivel: {
-    suave: { preguntas: ["dia-semana", "parte-dia"], opciones: 3, cercanos: false, mesesSeca: [12, 1, 2, 3, 4] },
-    medio: { preguntas: ["dia-semana", "parte-dia", "mes", "epoca"], opciones: 3, cercanos: false, mesesSeca: [12, 1, 2, 3, 4] },
-    retador: { preguntas: ["dia-semana", "parte-dia", "mes", "epoca", "anio", "ayer", "manana"], opciones: 4, cercanos: true, mesesSeca: [12, 1, 2, 3, 4] },
+    suave: { preguntas: ["dia-semana", "parte-dia"], opciones: 3, cercanos: false, mesesSeca: [12, 1, 2, 3, 4], pistasEnEscena: true },
+    medio: { preguntas: ["dia-semana", "parte-dia", "mes", "epoca"], opciones: 3, cercanos: false, mesesSeca: [12, 1, 2, 3, 4], pistasEnEscena: true },
+    retador: { preguntas: ["dia-semana", "parte-dia", "mes", "epoca", "anio", "ayer", "manana"], opciones: 4, cercanos: true, mesesSeca: [12, 1, 2, 3, 4], pistasEnEscena: false },
   },
   campos: [
     { clave: "preguntas", tipo: "multiple", etiqueta: "Preguntas", opciones: TODAS },
     { clave: "opciones", tipo: "numero", etiqueta: "Opciones por pregunta", min: 3, max: 4 },
+    { clave: "pistasEnEscena", tipo: "booleano", etiqueta: "La escena muestra la luz del momento y la lluvia (ayuda)" },
     { clave: "cercanos", tipo: "booleano", etiqueta: "Opciones cercanas (el día o el mes de al lado)" },
     {
       clave: "mesesSeca",

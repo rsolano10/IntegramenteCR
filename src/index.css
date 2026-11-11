@@ -342,18 +342,6 @@
   }
 }
 
-/* «Ventanas encendidas»: la luz entra con calidez (una vez, sin parpadeo). */
-@keyframes vent-luz {
-  from { filter: brightness(0.55) saturate(0.6); transform: scale(0.94); }
-  to { filter: none; transform: none; }
-}
-/* Casa iluminada al resolver: un resplandor que aparece y se asienta. */
-@keyframes vent-fiesta {
-  0% { opacity: 0; transform: scale(0.9); }
-  45% { opacity: 1; transform: scale(1.04); }
-  100% { opacity: 0.85; transform: none; }
-}
-
 /* ─── Actividades «Un día en el pueblo» ─── */
 /* Pincel: el trazo se pinta de punta a punta. */
 @keyframes pueblo-pincel {
@@ -385,4 +373,24 @@
 .pueblo-grano {
   background-image: url("./assets/grano.png");
   background-size: 96px 96px;
+}
+/* El tren sale despacio del andén (una vez). */
+@keyframes pueblo-salida {
+  to { transform: translateX(115%); }
+}
+/* Ambiente muy lento (vapor, gotas): solo con movimiento permitido. */
+@keyframes pueblo-vapor {
+  0% { opacity: 0; transform: translateY(6px); }
+  40% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes pueblo-gota {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(14px); opacity: 0; }
+}
+/* Se arranca la hoja del almanaque. */
+@keyframes pueblo-arranque {
+  0% { transform: none; opacity: 1; }
+  100% { transform: translate(18px, -26px) rotate(18deg); opacity: 0; }
 }

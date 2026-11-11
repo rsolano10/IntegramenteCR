@@ -10,7 +10,7 @@ import { formarPalabra, generarPalabra, palabraFormada, prefijoCorrecto } from "
 import { continuar, estadoParejas, generarParejas, parejas, parejasCompletas, voltear } from "./parejas.ts";
 import { generarPosiciones, revisarPosiciones } from "./recordarPosiciones.ts";
 import { generarIguales, indicesObjetivo, revisarIguales } from "./encontrarIguales.ts";
-import { generarContar, revisarConteo } from "./contarPorTipo.ts";
+import { contarPorTipo, generarContar, revisarConteo } from "./contarPorTipo.ts";
 import { generarPregunta, momentoCR, orientacionHoy, parteDelDia } from "./orientacionHoy.ts";
 import { esInteractivo } from "../clasificarNumeros.ts";
 
@@ -319,4 +319,48 @@ test("orientación: respuestas correctas, opciones sin repetir y con la correcta
   assert.equal(dic.correcta, "la época seca (verano)");
   const s = prepararSesion(ex("orientacion-hoy", { nivel: "suave", ejercicios: 9 }), 1, AHORA);
   assert.ok(s.ok && s.ejercicios.length === 2);
+});
+
+// ─── «Un día en el pueblo»: contenido generado ───
+
+test("taller: ruedas generadas, la modelo distinta de las demás, más parecidas en «alto»", async () => {
+  const { claveRoseton } = await import("./roseton.ts");
+  for (const parecido of ["bajo", "medio", "alto"] as const)
+    for (let s = 1; s < 25; s++) {
+      const ej = generarIguales({ contenido: "ruedas", total: 12, objetivos: 4, parecido }, crearAzar(s));
+      assert.equal(ej.celdas.length, 12);
+      assert.equal(indicesObjetivo(ej).length, 4);
+      assert.ok(ej.ruedas && ej.celdas.every((k) => ej.ruedas![k] && claveRoseton(ej.ruedas![k]) === k));
+    }
+  // En «alto» cambia un solo detalle; en «bajo», varios.
+  const cambios = (parecido: "bajo" | "alto") => {
+    const ej = generarIguales({ contenido: "ruedas", total: 6, objetivos: 2, parecido }, crearAzar(3));
+    const m = ej.ruedas![ej.modelo];
+    const otra = ej.ruedas![ej.celdas.find((k) => k !== ej.modelo)!];
+    return (["petalos", "anillos", "forma", "colores", "puntos"] as const).filter((k) => JSON.stringify(m[k]) !== JSON.stringify(otra[k])).length;
+  };
+  assert.equal(cambios("alto"), 1);
+  assert.ok(cambios("bajo") >= 2);
+});
+
+test("mosaico: baldosas distintas entre parejas, iguales dentro de cada pareja", () => {
+  const ej = generarParejas(parejas.porNivel.retador, crearAzar(4));
+  const claves = new Map<number, string[]>();
+  for (const c of ej.cartas) claves.set(c.pareja, [...(claves.get(c.pareja) ?? []), c.cara.tipo === "baldosa" ? c.cara.valor : ""]);
+  assert.equal(claves.size, 8);
+  for (const [, v] of claves) assert.equal(v[0], v[1]);
+  assert.equal(new Set([...claves.values()].map((v) => v[0])).size, 8);
+});
+
+test("feria y canasto: contenido de acá por defecto", () => {
+  const f = generarClasificar(clasificarObjetos.porNivel.suave, crearAzar(2));
+  assert.ok(f.grupos.every((g) => ["frutas", "verduras", "raices", "olores"].includes(g.id)));
+  assert.ok(f.elementos.every((e) => e.dibujo));
+  const c = generarContar(contarPorTipo.porNivel.medio, crearAzar(2));
+  assert.ok(c.tipos.every((t) => ["mango", "jocote", "pejibaye", "cas", "mamon"].includes(t.id)));
+});
+
+test("almanaque: pistas en la escena en suave, no en retador", () => {
+  assert.equal(orientacionHoy.porNivel.suave.pistasEnEscena, true);
+  assert.equal(orientacionHoy.porNivel.retador.pistasEnEscena, false);
 });

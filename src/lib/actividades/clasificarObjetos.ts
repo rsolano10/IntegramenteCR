@@ -1,5 +1,5 @@
 import { barajar, type Azar } from "./azar";
-import { PAQUETES, type GrupoBanco } from "./bancos/clasificar";
+import { PAQUETES, type DibujoProducto, type GrupoBanco } from "./bancos/clasificar";
 import { enRango, type DefActividad } from "./contrato";
 
 // «Cada cosa en su lugar»: tocar un elemento y después el grupo donde va.
@@ -14,7 +14,7 @@ export interface ConfigClasificarObjetos {
 
 export interface EjercicioClasificar {
   grupos: GrupoBanco[];
-  elementos: { texto: string; validos: string[] }[];
+  elementos: { texto: string; validos: string[]; dibujo?: DibujoProducto }[];
   // Un elemento ya ubicado en cada grupo, como ejemplo (si hay ayuda).
   ejemplos: { texto: string; grupo: string }[];
 }
@@ -24,7 +24,7 @@ export function generarClasificar(c: ConfigClasificarObjetos, azar: Azar): Ejerc
   const grupos = barajar(paquete.grupos, azar).slice(0, c.grupos);
   const ids = new Set(grupos.map((g) => g.id));
   const candidatos = barajar(paquete.elementos, azar)
-    .map((e) => ({ texto: e.texto, validos: e.grupos.filter((g) => ids.has(g)) }))
+    .map((e) => ({ texto: e.texto, validos: e.grupos.filter((g) => ids.has(g)), ...(e.dibujo ? { dibujo: e.dibujo } : {}) }))
     .filter((e) => e.validos.length > 0);
   const usados = new Set<string>();
   const tomar = (e: { texto: string }) => usados.add(e.texto);
@@ -63,13 +63,13 @@ export const esGrupoValido = (e: { validos: string[] }, grupo: string) => e.vali
 export const clasificarObjetos: DefActividad<ConfigClasificarObjetos, EjercicioClasificar> = {
   tipo: "clasificar-objetos",
   version: 1,
-  nombre: "Cada cosa en su lugar",
+  nombre: "La feria",
   area: "Funciones ejecutivas",
   funcion: "Razonamiento (categorización)",
   porNivel: {
-    suave: { paquete: "cocina", grupos: 2, elementosPorEjercicio: 4, mostrarAyuda: true },
-    medio: { paquete: "cocina", grupos: 3, elementosPorEjercicio: 8, mostrarAyuda: false },
-    retador: { paquete: "cocina", grupos: 4, elementosPorEjercicio: 12, mostrarAyuda: false },
+    suave: { paquete: "feria", grupos: 2, elementosPorEjercicio: 4, mostrarAyuda: true },
+    medio: { paquete: "feria", grupos: 3, elementosPorEjercicio: 8, mostrarAyuda: false },
+    retador: { paquete: "feria", grupos: 4, elementosPorEjercicio: 12, mostrarAyuda: false },
   },
   campos: [
     { clave: "paquete", tipo: "opcion", etiqueta: "Contenido", opciones: PAQUETES.map((p) => ({ valor: p.id, etiqueta: p.nombre })) },
@@ -92,5 +92,5 @@ export const clasificarObjetos: DefActividad<ConfigClasificarObjetos, EjercicioC
     return e;
   },
   generar: (c, n, { azar }) => Array.from({ length: n }, () => generarClasificar(c, azar)),
-  consigna: () => "Tocá cada cosa y después el lugar donde va.",
+  consigna: () => "Ayudá a acomodar el tramo: tocá cada producto y después el canasto donde va.",
 };

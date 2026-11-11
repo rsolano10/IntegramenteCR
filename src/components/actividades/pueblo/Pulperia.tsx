@@ -12,7 +12,7 @@ import { BILLETES, MONEDA, P, sombraPapel } from "./paleta";
 // Escena y mesa son un solo dibujo. La recompensa es la escena: el sello de
 // «Pagado» en la libreta y, al final, la bolsa de la compra.
 
-export function JuegoPulperia({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago; config: { mostrarSuma: boolean }; ctl: Control }) {
+export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago; config: { mostrarSuma: boolean }; ctl: Control }) {
   const [pago, setPago] = useState<{ id: number; valor: number }[]>([]);
   const [sugerida, setSugerida] = useState<number[] | null>(null);
   const [hecho, setHecho] = useState(false);
@@ -121,7 +121,7 @@ export function JuegoPulperia({ ejercicio: ej, config, ctl }: { ejercicio: Ejerc
 }
 
 // Portada: la pulpería esperando (inicio) o la bolsa de la compra lista (cierre).
-export function PortadaPulperia({ final = false }: { final?: boolean }) {
+export function Portada({ final = false }: { final?: boolean }) {
   return (
     <div className="relative w-full max-w-[420px] overflow-hidden rounded-[20px]" style={{ boxShadow: sombraPapel(4, "rgba(51,36,28,0.25)") }} aria-hidden="true">
       <Fondo />

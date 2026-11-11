@@ -36,7 +36,15 @@ export const FORMAS: FiguraBanco[] = [
 ];
 
 // Escenas para «¿Cuántos hay?».
-export const ESCENAS: Record<"mesa" | "frutas" | "figuras", FiguraBanco[]> = {
+export const ESCENAS: Record<"canasto" | "mesa" | "frutas" | "figuras", FiguraBanco[]> = {
+  // Frutas de acá, como se dicen en Costa Rica.
+  canasto: [
+    f("mango", "el mango", "los mangos"),
+    f("jocote", "el jocote", "los jocotes"),
+    f("pejibaye", "el pejibaye", "los pejibayes"),
+    f("cas", "el cas", "los cases"),
+    f("mamon", "el mamón chino", "los mamones chinos"),
+  ],
   mesa: [f("cuchara", "la cuchara", "las cucharas"), f("tenedor", "el tenedor", "los tenedores"), f("plato", "el plato", "los platos"), f("vaso", "el vaso", "los vasos")],
   frutas: [f("manzana", "la manzana", "las manzanas"), f("banano", "el banano", "los bananos"), f("naranja", "la naranja", "las naranjas"), f("uvas", "el racimo de uvas", "los racimos de uvas")],
   figuras: FORMAS.slice(0, 4),

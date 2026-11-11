@@ -80,7 +80,7 @@ export function revisarPago(monto: number, piezas: number[]): ResultadoPago {
 export const pagoExacto: DefActividad<ConfigPagoExacto, EjercicioPago> = {
   tipo: "pago-exacto",
   version: 1,
-  nombre: "Pagar justo",
+  nombre: "La pulpería",
   area: "Funciones ejecutivas",
   funcion: "Memoria de trabajo (cálculo)",
   porNivel: {
@@ -115,5 +115,5 @@ export const pagoExacto: DefActividad<ConfigPagoExacto, EjercicioPago> = {
     const cc = { ...c, denominaciones: c.denominaciones.map(Number) };
     return Array.from({ length: n }, () => generarPago(cc, azar));
   },
-  consigna: () => "Tocá las monedas y los billetes hasta pagar justo el monto. Después tocá «Listo».",
+  consigna: () => "En la pulpería: tocá la plata hasta pagar justo la cuenta. Después tocá «Listo».",
 };

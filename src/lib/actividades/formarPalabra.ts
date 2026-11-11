@@ -65,7 +65,7 @@ function candidatas(c: ConfigFormarPalabra): { palabra: string; pista: string | 
 export const formarPalabra: DefActividad<ConfigFormarPalabra, EjercicioPalabra> = {
   tipo: "formar-palabra",
   version: 1,
-  nombre: "Armá la palabra",
+  nombre: "El rotulista",
   area: "Lenguaje",
   funcion: "Vocabulario",
   porNivel: {
@@ -112,5 +112,5 @@ export const formarPalabra: DefActividad<ConfigFormarPalabra, EjercicioPalabra> 
       return generarPalabra(w.palabra, w.pista, c, azar, banco);
     });
   },
-  consigna: () => "Tocá las letras en orden para armar la palabra.",
+  consigna: () => "El rotulista necesita ayuda: tocá las letras en orden para pintar el rótulo.",
 };

@@ -6,9 +6,15 @@ export interface GrupoBanco {
   id: string;
   nombre: string;
 }
+// Dibujo simple de un producto (la escena lo pinta con formas planas).
+export interface DibujoProducto {
+  forma: "redonda" | "alargada" | "manojo" | "racimo" | "raiz";
+  color: string;
+}
 export interface ElementoBanco {
   texto: string;
   grupos: string[];
+  dibujo?: DibujoProducto;
 }
 export interface PaqueteBanco {
   id: string;
@@ -19,11 +25,54 @@ export interface PaqueteBanco {
 }
 
 const el = (grupos: string, ...textos: string[]): ElementoBanco[] => textos.map((texto) => ({ texto, grupos: grupos.split("|") }));
+const pr = (grupos: string, texto: string, forma: DibujoProducto["forma"], color: string): ElementoBanco => ({ texto, grupos: grupos.split("|"), dibujo: { forma, color } });
+
+// Colores de los productos (de la paleta de ilustración).
+const NAR = "#E2582A", GRA = "#A8232B", MOS = "#f4d096", AMA = "#E2B13A", VER = "#6a969c", VEO = "#3f6a70", TIE = "#8A5A36", GUA = "#8A4B9A", CRE = "#D9A66B";
 
 export const PAQUETES: PaqueteBanco[] = [
   {
+    id: "feria",
+    nombre: "La feria",
+    revisado: false,
+    grupos: [
+      { id: "frutas", nombre: "Frutas" },
+      { id: "verduras", nombre: "Verduras" },
+      { id: "raices", nombre: "Raíces" },
+      { id: "olores", nombre: "Olores" },
+    ],
+    elementos: [
+      pr("frutas", "Mango", "redonda", AMA),
+      pr("frutas", "Papaya", "alargada", NAR),
+      pr("frutas", "Piña", "redonda", MOS),
+      pr("frutas", "Banano", "alargada", MOS),
+      pr("frutas", "Mamón chino", "racimo", GRA),
+      pr("frutas", "Naranja", "redonda", NAR),
+      pr("frutas", "Guayaba", "redonda", VER),
+      pr("verduras", "Chayote", "redonda", VER),
+      pr("verduras", "Zanahoria", "alargada", NAR),
+      pr("verduras", "Vainica", "alargada", VEO),
+      pr("verduras", "Chile dulce", "redonda", GRA),
+      pr("verduras", "Ayote", "redonda", AMA),
+      pr("verduras", "Repollo", "redonda", VER),
+      pr("verduras|frutas", "Tomate", "redonda", GRA),
+      pr("raices", "Yuca", "raiz", CRE),
+      pr("raices", "Papa", "redonda", CRE),
+      pr("raices", "Camote", "raiz", GUA),
+      pr("raices", "Ñampí", "raiz", TIE),
+      pr("raices", "Tiquizque", "raiz", TIE),
+      pr("raices", "Malanga", "raiz", CRE),
+      pr("olores", "Culantro", "manojo", VEO),
+      pr("olores", "Cebollino", "manojo", VER),
+      pr("olores", "Apio", "manojo", VER),
+      pr("olores", "Hierbabuena", "manojo", VEO),
+      pr("olores", "Orégano", "manojo", VEO),
+      pr("olores", "Culantro de coyote", "manojo", VER),
+    ],
+  },
+  {
     id: "cocina",
-    nombre: "La cocina",
+    nombre: "La cocina de la casa",
     revisado: false,
     grupos: [
       { id: "refri", nombre: "Refrigeradora" },
@@ -58,7 +107,7 @@ export const PAQUETES: PaqueteBanco[] = [
   },
   {
     id: "reciclaje",
-    nombre: "Reciclaje",
+    nombre: "El patio (reciclaje)",
     revisado: false,
     grupos: [
       { id: "organico", nombre: "Orgánico" },

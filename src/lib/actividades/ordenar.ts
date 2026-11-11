@@ -65,7 +65,7 @@ export function generarPasos(c: ConfigOrdenarPasos, cantidad: number, azar: Azar
 export const ordenarPasos: DefActividad<ConfigOrdenarPasos, EjercicioOrdenar> = {
   tipo: "ordenar-pasos",
   version: 1,
-  nombre: "Ordenar los pasos",
+  nombre: "El café de la tarde",
   area: "Funciones ejecutivas",
   funcion: "Planificación (secuenciación)",
   porNivel: {
@@ -135,7 +135,7 @@ export function generarSecuencia(c: ConfigOrdenarSecuencia, azar: Azar): Ejercic
 export const ordenarSecuencia: DefActividad<ConfigOrdenarSecuencia, EjercicioOrdenar> = {
   tipo: "ordenar-secuencia",
   version: 1,
-  nombre: "En orden",
+  nombre: "La estación",
   area: "Funciones ejecutivas",
   funcion: "Memoria de trabajo",
   porNivel: {
@@ -183,6 +183,6 @@ export const ordenarSecuencia: DefActividad<ConfigOrdenarSecuencia, EjercicioOrd
     const que = c.contenido === "numeros" ? "los números" : c.contenido === "letras" ? "las letras" : "las palabras";
     const como =
       c.contenido === "numeros" ? (c.sentido === "ascendente" ? "de menor a mayor" : "de mayor a menor") : c.sentido === "ascendente" ? "en orden alfabético, de la A a la Z" : "de la Z a la A";
-    return `Tocá ${que} ${como}.`;
+    return `Enganchá los vagones al tren: tocá ${que} ${como}.`;
   },
 };
