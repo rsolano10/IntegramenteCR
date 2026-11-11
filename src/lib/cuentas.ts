@@ -50,3 +50,29 @@ export function validacionesCuenta(f: Pick<FilaCuenta, "telefono" | "paciente_ed
   return v;
 }
 
+
+const DIA_MS = 86_400_000;
+const diasHasta = (iso: string | null) => (iso ? Math.ceil((new Date(iso).getTime() - Date.now()) / DIA_MS) : null);
+const diasDesde = (iso: string | null) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / DIA_MS) : null);
+
+// Detalle corto según el estado: cuánto le queda a la demo, hace cuánto
+// terminó, última actividad.
+export function detalleCuenta(f: FilaCuenta): string | null {
+  if (f.estado === "en_demo") {
+    const d = diasHasta(f.demo_fin);
+    if (d === null) return null;
+    return d <= 0 ? "La semana gratis termina hoy" : d === 1 ? "La semana gratis termina mañana" : `Quedan ${d} días de semana gratis`;
+  }
+  if (f.estado === "demo_finalizada") {
+    const d = diasDesde(f.demo_fin);
+    return d === null ? null : d === 0 ? "Terminó hoy" : `Terminó hace ${d} ${d === 1 ? "día" : "días"}`;
+  }
+  if (f.estado === "activa" || f.estado === "inactiva") {
+    const d = diasDesde(f.ultima_actividad);
+    return d === null ? "Sin actividad registrada" : d === 0 ? "Activo hoy" : `Última actividad hace ${d} ${d === 1 ? "día" : "días"}`;
+  }
+  if (f.estado === "pendiente_aprobacion" && f.requiere_contacto) return `Requiere contacto${f.requiere_contacto_nota ? `: ${f.requiere_contacto_nota}` : ""}`;
+  if (f.estado === "rechazada" && f.rechazo_motivo) return `Motivo: ${f.rechazo_motivo}`;
+  return null;
+}
+

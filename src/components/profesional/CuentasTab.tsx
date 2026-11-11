@@ -11,16 +11,17 @@ import { normalizeCrPhone } from "../../lib/phone";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { EstadoChip } from "./CuentaSeguimiento";
 import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
+import { Avatar } from "./usuarios/piezas";
 
-// The secondary half of Usuarios — clinic/admin accounts, and any
-// familiar/paciente account invited but not yet attached to a patient. Both
-// are things you look at, almost never act on, so this stays a couple of
-// quiet lists instead of PacientesTab's full filter/sort/card grid.
+// Las otras dos pestañas de Usuarios: cuentas de familia invitadas pero
+// todavía sin paciente, y el equipo de la clínica.
 export function CuentasTab({
+  seccion,
   patients,
   onChanged,
   onOpenAccount,
 }: {
+  seccion: "sin_paciente" | "equipo";
   patients: { id: string; nombre: string }[];
   onChanged: (message: string, isError?: boolean) => void;
   onOpenAccount: (account: ManagedAccount) => void;
@@ -59,17 +60,17 @@ export function CuentasTab({
   function AccountRow({ a }: { a: ManagedAccount }) {
     const confirmed = !!a.email_confirmed_at;
     return (
-      <div
-        onClick={() => onOpenAccount(a)}
-        className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-campo hover:bg-borde-suave cursor-pointer transition-colors"
-      >
-        <div className="min-w-0">
-          <p className="m-0 font-bold text-tinta truncate">{a.nombre}</p>
-          <p className="m-0 text-[13px] text-tinta-tenue truncate">
+      <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-borde-suave last:border-b-0 hover:bg-[#fcfbf6]">
+        <button type="button" onClick={() => onOpenAccount(a)} className="flex items-center gap-3 min-w-0 flex-1 text-left bg-transparent border-0 p-0 cursor-pointer font-sans">
+          <Avatar id={a.id} nombre={a.nombre} size={38} />
+          <span className="min-w-0">
+          <span className="block font-bold text-tinta truncate">{a.nombre}</span>
+          <span className="block text-[13px] text-tinta-suave truncate">
             {a.email}
             {a.especialidad ? ` · ${a.especialidad}` : ""}
-          </p>
-        </div>
+          </span>
+          </span>
+        </button>
         <div className="flex items-center gap-2 shrink-0">
           {a.role !== "profesional" && a.is_active && <EstadoChip estado={porCuenta.get(a.id)?.estado ?? null} />}
           {!a.is_active ? (
@@ -79,7 +80,7 @@ export function CuentasTab({
           ) : (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-aviso text-semaforo-amarillo-texto">Pendiente</span>
           )}
-          <div onClick={(e) => e.stopPropagation()}>
+          <div>
             <RowMenu
               items={[
                 { label: "Ver detalle", onClick: () => onOpenAccount(a) },
@@ -95,56 +96,34 @@ export function CuentasTab({
     );
   }
 
+  const lista = seccion === "sin_paciente" ? orphans : staff;
   return (
-    <div className="px-5 py-6 sm:px-8 sm:py-7 grid grid-cols-1 gap-6">
-      {isLoading && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <p className="m-0 text-[14px] text-tinta-suave max-w-[60ch]">
+          {seccion === "sin_paciente"
+            ? "Cuentas de familia invitadas o registradas que todavía no están vinculadas a ningún paciente. Abrí una para vincularla."
+            : "Las cuentas de la clínica. Casi nunca vas a necesitar tocar esto."}
+        </p>
+        <Button variant="secondary" size="sm" onClick={() => setCreateFor(seccion === "sin_paciente" ? "familiar_admin" : "profesional")} className="shrink-0">
+          {seccion === "sin_paciente" ? "+ Invitar cuenta" : "+ Agregar cuenta"}
+        </Button>
+      </div>
+      {isLoading && <p className="m-0 text-sm text-tinta-suave">Cargando…</p>}
       {loadError && <p className="m-0 text-sm text-alerta-texto">No pudimos cargar las cuentas.</p>}
-
-      {!isLoading && (
-        <div className={orphans.length > 0 ? "rounded-2xl border-[1.5px] border-riesgo-borde bg-riesgo/40 p-4" : "rounded-2xl border border-borde-suave p-4"}>
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div>
-              <p className={`m-0 mb-0.5 text-[13px] font-bold ${orphans.length > 0 ? "text-riesgo-texto" : "text-tinta-suave"}`}>
-                Cuentas sin paciente asignado{orphans.length > 0 ? ` (${orphans.length})` : ""}
-              </p>
-              <p className={`m-0 text-[12.5px] ${orphans.length > 0 ? "text-riesgo-texto/80" : "text-tinta-tenue"}`}>
-                {orphans.length > 0 ? "Invitadas, pero todavía no vinculadas a ningún paciente." : "Ninguna por ahora."}
-              </p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => setCreateFor("familiar_admin")} className="shrink-0">
-              + Invitar cuenta
-            </Button>
-          </div>
-          {orphans.length > 0 && (
-            <div className="grid grid-cols-1 gap-2">
-              {orphans.map((a) => (
-                <AccountRow key={a.id} a={a} />
-              ))}
-            </div>
-          )}
+      {!isLoading && lista.length === 0 && (
+        <div className="rounded-[20px] border-[1.5px] border-dashed border-borde-campo bg-white/50 py-10 px-6 text-center">
+          <p className="m-0 font-serif text-[20px] text-tinta">{seccion === "sin_paciente" ? "Ninguna cuenta suelta" : "Ninguna cuenta de clínica todavía"}</p>
+          <p className="m-0 mt-1 text-[14px] text-tinta-suave">{seccion === "sin_paciente" ? "Todas las cuentas de familia están vinculadas a un paciente." : "Agregá la primera con «Agregar cuenta»."}</p>
         </div>
       )}
-
-      <div>
-        <div className="flex items-end justify-between gap-3 mb-3">
-          <div>
-            <p className="m-0 mb-0.5 text-[11px] uppercase tracking-[0.1em] text-tinta-tenue font-semibold">Equipo y administración</p>
-            <p className="m-0 text-[13px] text-tinta-tenue">Cuentas de la clínica — casi nunca vas a necesitar tocar esto.</p>
-          </div>
-          <Button variant="secondary" size="sm" onClick={() => setCreateFor("profesional")} className="shrink-0">
-            + Agregar cuenta
-          </Button>
+      {lista.length > 0 && (
+        <div className="bg-white border border-borde rounded-[20px] overflow-hidden">
+          {lista.map((a) => (
+            <AccountRow key={a.id} a={a} />
+          ))}
         </div>
-        {!isLoading && staff.length === 0 ? (
-          <p className="m-0 text-sm text-tinta-tenue">Ninguna cuenta de clínica todavía.</p>
-        ) : (
-          <div className="grid grid-cols-1 gap-2">
-            {staff.map((a) => (
-              <AccountRow key={a.id} a={a} />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {createFor && (
         <CreateAccountModal

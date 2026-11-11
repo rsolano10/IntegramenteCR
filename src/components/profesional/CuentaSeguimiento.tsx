@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { estadoInfo, validacionesCuenta, type FilaCuenta } from "../../lib/cuentas";
-import { diasDesde, diasHasta } from "../../lib/usePanelCuentas";
+import { detalleCuenta, estadoInfo, validacionesCuenta, type FilaCuenta } from "../../lib/cuentas";
 import type { EstadoCuenta } from "../../lib/useMyPatient";
 import type { Answers } from "../../lib/onboardingSchema";
 import { Modal } from "../ui/Modal";
@@ -20,27 +19,6 @@ export function EstadoChip({ estado }: { estado: EstadoCuenta | null }) {
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold whitespace-nowrap ${e.clase}`}>{e.label}</span>;
 }
 
-// Detalle corto según el estado: cuánto le queda a la demo, hace cuánto
-// terminó, última actividad.
-function detalle(f: FilaCuenta): string | null {
-  if (f.estado === "en_demo") {
-    const d = diasHasta(f.demo_fin);
-    if (d === null) return null;
-    return d <= 0 ? "La semana gratis termina hoy" : d === 1 ? "La semana gratis termina mañana" : `Quedan ${d} días de semana gratis`;
-  }
-  if (f.estado === "demo_finalizada") {
-    const d = diasDesde(f.demo_fin);
-    return d === null ? null : d === 0 ? "Terminó hoy" : `Terminó hace ${d} ${d === 1 ? "día" : "días"}`;
-  }
-  if (f.estado === "activa" || f.estado === "inactiva") {
-    const d = diasDesde(f.ultima_actividad);
-    return d === null ? "Sin actividad registrada" : d === 0 ? "Activo hoy" : `Última actividad hace ${d} ${d === 1 ? "día" : "días"}`;
-  }
-  if (f.estado === "pendiente_aprobacion" && f.requiere_contacto) return `Requiere contacto${f.requiere_contacto_nota ? `: ${f.requiere_contacto_nota}` : ""}`;
-  if (f.estado === "rechazada" && f.rechazo_motivo) return `Motivo: ${f.rechazo_motivo}`;
-  return null;
-}
-
 // Franja de la tarjeta: estado, detalle y la acción principal.
 export function CuentaLinea({
   fila,
@@ -55,7 +33,7 @@ export function CuentaLinea({
   onAprobar: () => void;
   onPagar: () => void;
 }) {
-  const d = detalle(fila);
+  const d = detalleCuenta(fila);
   const validaciones = fila.estado === "pendiente_aprobacion" ? validacionesCuenta(fila, answers) : [];
   const accion =
     fila.estado === "pendiente_aprobacion" ? (

@@ -394,3 +394,9 @@
   0% { transform: none; opacity: 1; }
   100% { transform: translate(18px, -26px) rotate(18deg); opacity: 0; }
 }
+
+/* Vista rápida de Usuarios: el panel entra desde la derecha. */
+@keyframes vista-entra {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
