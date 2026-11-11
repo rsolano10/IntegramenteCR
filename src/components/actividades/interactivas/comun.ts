@@ -18,6 +18,8 @@ export interface Control {
   // escena responda al avance (por ejemplo, el sol que sale en la feria).
   indice: number;
   total: number;
+  // Lugar de la barra de acciones del marco (ver <Acciones>).
+  barra: HTMLElement | null;
 }
 
 export const foco = "focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo";

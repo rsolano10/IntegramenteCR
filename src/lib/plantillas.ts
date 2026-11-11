@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import type { ResourceModulo } from "./modulos";
 import { DIAS } from "./planWeek";
-import type { MediaResource } from "./mediaResources";
+import type { MediaResource, ResourceExtras } from "./mediaResources";
+import type { Nivel } from "./actividades/contrato";
 import type { DraftTask } from "../components/profesional/paciente/TaskEditorModal";
 import { evaluarAsignacion, gruposDeLaSemana, type PerfilRecursos } from "./reglasRecursos";
 import type { TareaIA, CambioIA } from "../../supabase/functions/_shared/validarCambiosIA.ts";
@@ -17,6 +18,9 @@ export interface TareaPlantilla {
   titulo: string;
   codigo: string | null;
   modulo: ResourceModulo;
+  // Dificultad de una actividad interactiva (vacío = la del recurso).
+  nivel_interactivo: Nivel | null;
+  extras: ResourceExtras | null;
 }
 
 export interface Plantilla {
@@ -35,8 +39,10 @@ interface FilaTarea {
   hora: string | null;
   media_resource_id: string;
   orden: number;
-  media_resources: { titulo: string; codigo: string | null; modulo: ResourceModulo } | { titulo: string; codigo: string | null; modulo: ResourceModulo }[] | null;
+  nivel_interactivo: Nivel | null;
+  media_resources: FilaRecurso | FilaRecurso[] | null;
 }
+type FilaRecurso = { titulo: string; codigo: string | null; modulo: ResourceModulo; extras: ResourceExtras | null };
 
 export const uno = <T,>(x: T | T[] | null): T | null => (Array.isArray(x) ? (x[0] ?? null) : x);
 
@@ -46,7 +52,7 @@ export function usePlantillas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("plantillas_semana")
-        .select("id, nombre, descripcion, perfil_objetivo, archivada, updated_at, plantilla_tareas(id, dia_idx, hora, media_resource_id, orden, media_resources(titulo, codigo, modulo))")
+        .select("id, nombre, descripcion, perfil_objetivo, archivada, updated_at, plantilla_tareas(id, dia_idx, hora, media_resource_id, orden, nivel_interactivo, media_resources(titulo, codigo, modulo, extras))")
         .order("nombre");
       if (error) throw error;
       return (data ?? []).map((p) => ({
@@ -55,7 +61,17 @@ export function usePlantillas() {
           .sort((a, b) => a.dia_idx - b.dia_idx || a.orden - b.orden)
           .map((t) => {
             const r = uno(t.media_resources);
-            return { key: t.id, dia_idx: t.dia_idx, hora: t.hora ?? "", media_resource_id: t.media_resource_id, titulo: r?.titulo ?? "Recurso", codigo: r?.codigo ?? null, modulo: r?.modulo ?? "cognicion" };
+            return {
+              key: t.id,
+              dia_idx: t.dia_idx,
+              hora: t.hora ?? "",
+              media_resource_id: t.media_resource_id,
+              titulo: r?.titulo ?? "Recurso",
+              codigo: r?.codigo ?? null,
+              modulo: r?.modulo ?? "cognicion",
+              nivel_interactivo: t.nivel_interactivo ?? null,
+              extras: r?.extras ?? null,
+            };
           }),
       })) as Plantilla[];
     },
@@ -79,7 +95,7 @@ export function useCatalogo() {
 // ─── Partir de una plantilla en el planificador (Fases 4.4 y 4.5) ─────
 
 let seqDraft = 0;
-export function draftDesdeRecurso(r: MediaResource, dia: string, hora: string): DraftTask {
+export function draftDesdeRecurso(r: MediaResource, dia: string, hora: string, nivel: Nivel | null = null): DraftTask {
   seqDraft += 1;
   return {
     key: `p${seqDraft}`,
@@ -96,6 +112,7 @@ export function draftDesdeRecurso(r: MediaResource, dia: string, hora: string): 
     mediaResourceId: r.id,
     modulo: r.modulo,
     indicacionIndividual: "",
+    nivelInteractivo: r.extras?.modo === "interactiva" ? nivel : null,
   };
 }
 
@@ -171,7 +188,8 @@ export function aplicarCambios(
       fueraDeSemana.push(recurso.titulo);
       continue;
     }
-    drafts.push(draftDesdeRecurso(recurso, dia, t.hora));
+    // La dificultad elegida en la plantilla se conserva si el recurso no cambió.
+    drafts.push(draftDesdeRecurso(recurso, dia, t.hora, recurso.id === t.media_resource_id ? t.nivel_interactivo : null));
   }
   return { drafts, visibles, fueraDeSemana };
 }

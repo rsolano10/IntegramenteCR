@@ -159,5 +159,6 @@ export const orientacionHoy: DefActividad<ConfigOrientacion, EjercicioOrientacio
     return c.preguntas.map((p) => generarPregunta(p, cc, ahora, azar));
   },
   cantidadFija: (c) => c.preguntas.length,
+  resumen: (c) => `${c.preguntas.length} preguntas con ${c.opciones} opciones${c.pistasEnEscena ? "; la escena muestra la luz y el tiempo del día" : ""}.`,
   consigna: () => "Vamos a conversar sobre el día de hoy. Tocá la respuesta que te parezca. Si querés, mirá un calendario o un reloj.",
 };

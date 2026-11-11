@@ -17,6 +17,11 @@ import {
 import { CalendarioSemana } from "../CalendarioSemana";
 import { Button } from "../../ui/Button";
 import { TaskEditorModal, type DraftTask } from "./TaskEditorModal";
+import { useCatalogo } from "../../../lib/plantillas";
+import { esInteractivo } from "../../../lib/clasificarNumeros";
+import { nivelLabel } from "../../../lib/actividades/contrato";
+import { IconoInteractivo } from "../NivelInteractivo";
+
 import type { PlanSummary } from "./SemanaTab";
 import { DesdePlantilla, type CargaPlantilla } from "./DesdePlantilla";
 import type { CambioVisible } from "../../../lib/plantillas";
@@ -207,6 +212,10 @@ export function PlanificadorTab({
     return [...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k);
   }, [existentes, draftsInWeek]);
 
+  // Recursos interactivos (para marcarlos en el calendario).
+  const { data: catalogo } = useCatalogo();
+  const interactivos = useMemo(() => new Set((catalogo ?? []).filter((r) => esInteractivo(r.extras)).map((r) => r.id)), [catalogo]);
+
   function cellItems(dia: string, hour: number | null) {
     return {
       existing: existentes.filter((t) => t.dia === dia && enFila(t.hora, hour)),
@@ -254,6 +263,7 @@ export function PlanificadorTab({
       if (t.notaClinica.trim()) task.nota_clinica = t.notaClinica.trim();
       if (t.mediaResourceId) task.media_resource_id = t.mediaResourceId;
       if (t.indicacionIndividual?.trim()) task.indicacion_individual = t.indicacionIndividual.trim();
+      if (t.nivelInteractivo) task.nivel_interactivo = t.nivelInteractivo;
       return task;
     });
 
@@ -462,6 +472,7 @@ export function PlanificadorTab({
                     return (
                       <div key={t.id} className="relative rounded-lg bg-beige-serenidad border border-borde px-2 py-1.5 pr-6 text-[12px] leading-tight text-tinta-suave">
                         {t.hora && <span className="block text-[10.5px] text-tinta-tenue">{formatHora(t.hora)}</span>}
+                        {t.media_resource_id && interactivos.has(t.media_resource_id) && <IconoInteractivo className="mr-1 -mt-0.5 text-verde-profundo" />}
                         {t.titulo}
                         {!editable && <span className="block text-[10.5px] text-[#22663f] mt-0.5">✓ registrada</span>}
                         {editable && (
@@ -488,7 +499,13 @@ export function PlanificadorTab({
                     >
                       {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
                       <span className="font-semibold">{t.titulo}</span>
-                      {t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>}
+                      {t.mediaResourceId && interactivos.has(t.mediaResourceId) ? (
+                        <span className="flex items-center gap-1 text-[10.5px] opacity-90">
+                          <IconoInteractivo /> Interactivo{t.nivelInteractivo ? ` · ${nivelLabel[t.nivelInteractivo]}` : ""}
+                        </span>
+                      ) : (
+                        t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>
+                      )}
                     </button>
                   ))}
                 </>

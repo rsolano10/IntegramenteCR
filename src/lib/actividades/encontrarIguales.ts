@@ -178,4 +178,5 @@ export const encontrarIguales: DefActividad<ConfigEncontrarIguales, EjercicioIgu
   },
   generar: (c, n, { azar }) => Array.from({ length: n }, () => generarIguales(c, azar)),
   consigna: () => "Mirá la rueda que cuelga en la pared. Tocá todas las ruedas iguales a ella y después «Listo».",
+  resumen: (c) => `${c.total} ruedas, ${c.objetivos} iguales al modelo; las demás se parecen ${c.parecido === "bajo" ? "poco" : c.parecido === "medio" ? "algo" : "mucho"}.`,
 };

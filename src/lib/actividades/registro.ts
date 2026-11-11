@@ -1,7 +1,7 @@
 import { crearAzar } from "./azar";
 import { clasificarObjetos } from "./clasificarObjetos";
 import { contarPorTipo } from "./contarPorTipo";
-import { cantidadEjercicios, resolverConfig, type DefActividad, type ExtrasInteractiva } from "./contrato";
+import { cantidadEjercicios, resolverConfig, type DefActividad, type ExtrasInteractiva, type Nivel } from "./contrato";
 import { encontrarIguales } from "./encontrarIguales";
 import { formarPalabra } from "./formarPalabra";
 import { ordenarPasos, ordenarSecuencia } from "./ordenar";
@@ -58,4 +58,15 @@ export function prepararSesion(ex: ExtrasInteractiva, semilla: number, ahora = n
 export function erroresDeActividad(ex: ExtrasInteractiva): string[] {
   const s = prepararSesion(ex, 1);
   return s.ok ? [] : s.errores;
+}
+
+// Resumen de un nivel de una actividad (para elegir la dificultad al asignar).
+export function resumenNivel(ex: ExtrasInteractiva, nivel: Nivel): string | null {
+  const def = actividadPorTipo(ex.tipo);
+  if (!def) return null;
+  try {
+    return def.resumen(resolverConfig(def, { ...ex, nivel }));
+  } catch {
+    return null;
+  }
 }

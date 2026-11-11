@@ -93,4 +93,5 @@ export const clasificarObjetos: DefActividad<ConfigClasificarObjetos, EjercicioC
   },
   generar: (c, n, { azar }) => Array.from({ length: n }, () => generarClasificar(c, azar)),
   consigna: () => "Ayudá a acomodar el tramo: tocá cada producto y después el canasto donde va.",
+  resumen: (c) => `${c.grupos} canastos y ${c.elementosPorEjercicio} productos${c.mostrarAyuda ? ", con un ejemplo en cada canasto" : ""}.`,
 };

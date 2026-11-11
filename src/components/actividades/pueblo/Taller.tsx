@@ -3,7 +3,7 @@ import { nombreFigura, nombreFlecha } from "../../../lib/actividades/bancos/figu
 import { revisarIguales, type EjercicioIguales } from "../../../lib/actividades/encontrarIguales";
 import type { ParamsRoseton } from "../../../lib/actividades/roseton";
 import { usePista, type Control } from "../interactivas/comun";
-import { Boton } from "../interactivas/ui";
+import { Acciones, Boton } from "../interactivas/ui";
 import { Figura } from "../interactivas/Figura";
 import { Roseton } from "./Ornamento";
 import { P } from "./paleta";
@@ -94,9 +94,11 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioIguales; ctl
         </div>
       </div>
       {!hecho && (
-        <Boton onClick={listo} disabled={!marcadas.length} large={L} className="w-full">
-          Listo
-        </Boton>
+        <Acciones ctl={ctl}>
+          <Boton onClick={listo} disabled={!marcadas.length} large={L}>
+            Listo
+          </Boton>
+        </Acciones>
       )}
       <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{hecho ? "¡La carreta ya tiene sus ruedas!" : "Tocá todas las ruedas iguales a la del clavo."}</p>
     </div>

@@ -7,6 +7,9 @@ import { Button } from "../../ui/Button";
 import { PillToggle } from "../../ui/PillToggle";
 import { evaluarAsignacion, gruposDeLaSemana, type Resultado } from "../../../lib/reglasRecursos";
 import { usePerfilRecursos } from "../../../lib/usePerfilRecursos";
+import { esInteractivo } from "../../../lib/clasificarNumeros";
+import type { Nivel } from "../../../lib/actividades/contrato";
+import { FiltroInteractivos, MarcaInteractivo, NivelInteractivo } from "../NivelInteractivo";
 
 export interface DraftTask {
   key: string;
@@ -24,6 +27,8 @@ export interface DraftTask {
   modulo: ResourceModulo | null;
   // Dosis (GER) o porción del plan individual (PRE) para esta persona.
   indicacionIndividual?: string;
+  // Dificultad de una actividad interactiva para esta persona (vacío = la del recurso).
+  nivelInteractivo?: Nivel | null;
 }
 
 const TIPOS = ["actividad", "video", "estrategia", "neuroproteccion"] as const;
@@ -74,6 +79,8 @@ export function TaskEditorModal({
   const [porQue, setPorQue] = useState(initial.mediaResourceId ? "" : (initial.porQue ?? ""));
   const [notaClinica, setNotaClinica] = useState(initial.notaClinica ?? "");
   const [indicacion, setIndicacion] = useState(initial.indicacionIndividual ?? "");
+  const [nivel, setNivel] = useState<Nivel | null>(initial.nivelInteractivo ?? null);
+  const [soloInteractivos, setSoloInteractivos] = useState(false);
   const { data: perfil } = usePerfilRecursos(patientId);
   const [guardarEnBiblioteca, setGuardarEnBiblioteca] = useState(false);
   const [nuevoModulo, setNuevoModulo] = useState<ResourceModulo>("movimiento");
@@ -102,7 +109,10 @@ export function TaskEditorModal({
   const evaluacionSeleccionado = selected ? evaluar(selected) : null;
   const q = search.trim().toLowerCase();
   const filtered = (resources ?? []).filter(
-    (r) => (moduloFiltro === "todos" || r.modulo === moduloFiltro) && (!q || r.titulo.toLowerCase().includes(q) || (r.codigo ?? "").toLowerCase().includes(q)),
+    (r) =>
+      (moduloFiltro === "todos" || r.modulo === moduloFiltro) &&
+      (!soloInteractivos || esInteractivo(r.extras)) &&
+      (!q || r.titulo.toLowerCase().includes(q) || (r.codigo ?? "").toLowerCase().includes(q)),
   );
 
   async function save() {
@@ -131,6 +141,7 @@ export function TaskEditorModal({
         mediaResourceId: selected.id,
         modulo: selected.modulo,
         indicacionIndividual: indicacion.trim(),
+        nivelInteractivo: selected.extras?.modo === "interactiva" ? nivel : null,
       });
       return;
     }
@@ -228,12 +239,14 @@ export function TaskEditorModal({
                   {selected.duracion ? ` · ${selected.duracion}` : ""}
                 </p>
                 <p className="m-0 mt-1 font-serif text-[20px] text-tinta">{selected.titulo}</p>
+                {esInteractivo(selected.extras) && <MarcaInteractivo className="mt-1.5" />}
               </div>
-              <button type="button" onClick={() => setResourceId(null)} className="shrink-0 text-[13px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none">
+              <button type="button" onClick={() => { setResourceId(null); setNivel(null); }} className="shrink-0 text-[13px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none">
                 Cambiar
               </button>
             </div>
             {selected.por_que && <p className="m-0 mt-2.5 text-[14px] leading-relaxed text-tinta-suave">{selected.por_que}</p>}
+            {selected.extras?.modo === "interactiva" && <NivelInteractivo extras={selected.extras} valor={nivel} onChange={setNivel} />}
             {selected.precaucion && (
               <p className="m-0 mt-2 text-[13px] leading-relaxed text-aviso-texto">
                 <strong>Precaución:</strong> {selected.precaucion}
@@ -278,6 +291,7 @@ export function TaskEditorModal({
                   {m === "todos" ? "Todos" : moduloLabel[m]}
                 </button>
               ))}
+              <FiltroInteractivos activo={soloInteractivos} onChange={setSoloInteractivos} />
             </div>
             <div className="grid gap-1.5 max-h-60 overflow-y-auto pr-1">
               {isLoading && <p className="m-0 text-[13px] text-tinta-tenue">Cargando biblioteca…</p>}
@@ -294,7 +308,10 @@ export function TaskEditorModal({
                       ev.permitido ? "border-borde-campo hover:border-verde-serenidad" : "border-borde-suave opacity-60"
                     }`}
                   >
-                    <span className="block text-[14.5px] font-semibold text-tinta">{r.titulo}</span>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] font-semibold text-tinta">
+                      {r.titulo}
+                      {esInteractivo(r.extras) && <MarcaInteractivo />}
+                    </span>
                     <span className="block text-[12.5px] text-tinta-tenue">
                       {moduloLabel[r.modulo]}
                       {r.duracion ? ` · ${r.duracion}` : ""}

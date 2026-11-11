@@ -4,7 +4,7 @@ import type { ExtrasInteractiva } from "../../../lib/actividades/contrato";
 import { prepararSesion } from "../../../lib/actividades/registro";
 import { detenerVoz } from "../../../lib/voz";
 import { BotonEscuchar } from "../ClasificarNumeros";
-import { Boton } from "./ui";
+import { Boton, IconoAmpliar, IconoPista, IconoReducir, IconoSalir, IconoSiguiente } from "./ui";
 import type { Control } from "./comun";
 import { Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
 
@@ -58,7 +58,9 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   const [resuelto, setResuelto] = useState(false);
   const [mensaje, setMensaje] = useState<Mensaje>(null);
   const [hechos, setHechos] = useState(0);
+  const [barra, setBarra] = useState<HTMLDivElement | null>(null);
   const zona = useRef<HTMLDivElement>(null);
+  const cine = usePantallaCompleta();
   useEffect(() => () => detenerVoz(), []);
 
   // Al cambiar de ejercicio, el foco vuelve al comienzo (teclado y lectores).
@@ -88,8 +90,9 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       large,
       indice,
       total,
+      barra,
     }),
-    [pista, large, indice, total],
+    [pista, large, indice, total, barra],
   );
 
   const lugar = sesion.ok ? ESCENAS[sesion.def.tipo] : undefined;
@@ -122,102 +125,201 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
     setMensaje(null);
   }
 
+  const botonCine = (
+    <Boton variante="texto" large={large} onClick={cine.alternar} icono={cine.activo ? <IconoReducir /> : <IconoAmpliar />}>
+      {cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
+    </Boton>
+  );
+
   return (
-    <section aria-label={def.nombre} className="min-w-0">
-      {fase === "inicio" && (
-        <div className="flex flex-col items-center text-center gap-4 py-1">
-          <h3 className="m-0 -mb-1">
-            <Rotulo texto={def.nombre} size="lg" />
-          </h3>
-          <Suspense fallback={<Cargando />}>
-            <Portada config={config} />
-          </Suspense>
-          <p className={`m-0 leading-snug text-tinta ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
-          <BotonEscuchar texto={consigna} />
-          <p className={`m-0 text-tinta-suave ${large ? "text-[20px]" : "text-[18px]"}`}>
-            Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
-          </p>
-          <Boton onClick={empezar} large={large} className="w-full max-w-xs">
-            Empezar
-          </Boton>
-        </div>
-      )}
-
-      {fase === "juego" && (
-        <div className="grid gap-4">
-          <div ref={zona} tabIndex={-1} className="outline-none flex items-center justify-between gap-3">
-            <h3 className="m-0 min-w-0">
-              <Rotulo texto={def.nombre} />
+    <section
+      ref={cine.ref}
+      aria-label={def.nombre}
+      className={cine.activo ? `${cine.nativo ? "" : "fixed inset-0 z-[70]"} overflow-y-auto overscroll-contain bg-fondo-papel` : "min-w-0"}
+    >
+      <div className={cine.activo ? "mx-auto w-full max-w-[880px] min-h-full px-4 py-5 sm:px-8 sm:py-8 flex flex-col" : ""}>
+        {fase === "inicio" && (
+          <div className="flex flex-col items-center text-center gap-4 py-1">
+            <h3 className="m-0 -mb-1">
+              <Rotulo texto={def.nombre} size="lg" />
             </h3>
-            <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
+            <Suspense fallback={<Cargando />}>
+              <Portada config={config} />
+            </Suspense>
+            <p className={`m-0 leading-snug text-tinta ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
+            <BotonEscuchar texto={consigna} />
+            <p className={`m-0 text-tinta-suave ${large ? "text-[20px]" : "text-[18px]"}`}>
+              Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
+            </p>
+            <div className="w-full max-w-sm grid gap-1">
+              <Boton onClick={empezar} large={large} className="w-full">
+                Empezar
+              </Boton>
+              {!cine.activo && (
+                <Boton variante="texto" large={large} onClick={cine.alternar} icono={<IconoAmpliar />} className="w-full">
+                  Jugar en pantalla completa
+                </Boton>
+              )}
+            </div>
           </div>
+        )}
 
-          <Suspense fallback={<Cargando />}>
-            <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
-          </Suspense>
+        {fase === "juego" && (
+          <div className="grid gap-4">
+            <div ref={zona} tabIndex={-1} className="outline-none flex items-center justify-between gap-3">
+              <h3 className="m-0 min-w-0">
+                <Rotulo texto={def.nombre} />
+              </h3>
+              <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
+            </div>
 
-          {/* Lo que pasó, en palabras (también para lectores de pantalla). */}
-          <p
-            aria-live="polite"
-            className={`m-0 flex items-center gap-2.5 rounded-2xl ${mensaje ? "min-h-14 px-4 py-2" : "min-h-0 p-0"} ${large ? "text-[22px]" : "text-[20px]"} ${
-              mensaje?.tipo === "ok" ? "bg-mostaza-vital/45 text-tinta font-semibold" : mensaje?.tipo === "reintento" ? "bg-aviso text-aviso-texto font-semibold" : "text-tinta-suave"
-            }`}
-          >
-            <span>{mensaje?.texto ?? ""}</span>
-          </p>
+            <Suspense fallback={<Cargando />}>
+              <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+            </Suspense>
 
-          {resuelto && (
-            <Boton onClick={siguiente} autoFocus large={large} className="w-full">
-              {ultimo ? "Terminar" : "Siguiente ejercicio"}
-            </Boton>
-          )}
+            {/* Barra de acciones: lo que pasó, la acción principal y las salidas. */}
+            <div className={`grid gap-3 ${cine.activo ? "sticky bottom-0 -mx-4 px-4 pt-3 pb-4 sm:-mx-8 sm:px-8 bg-fondo-papel/95 backdrop-blur border-t border-borde" : ""}`}>
+              <p
+                aria-live="polite"
+                className={`m-0 flex items-center gap-2.5 rounded-2xl leading-snug ${mensaje ? "min-h-12 px-4 py-2.5" : "min-h-0 p-0"} ${large ? "text-[20px]" : "text-[18px]"} ${
+                  mensaje?.tipo === "ok" ? "bg-mostaza-vital/45 text-tinta font-semibold" : mensaje?.tipo === "reintento" ? "bg-aviso text-aviso-texto font-semibold" : "text-tinta-suave"
+                }`}
+              >
+                {mensaje?.texto ?? ""}
+              </p>
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            {intentos >= 2 && !resuelto && (
+              {/* Acciones del juego (Listo, Vaciar…) y la pista; o «Siguiente» cuando se resolvió. */}
+              {resuelto ? (
+                <Boton onClick={siguiente} autoFocus large={large} icono={ultimo ? undefined : <IconoSiguiente />} className="w-full flex-row-reverse">
+                  {ultimo ? "Terminar" : "Siguiente ejercicio"}
+                </Boton>
+              ) : (
+                <div className="flex gap-3 empty:hidden">
+                  <div ref={setBarra} className="flex flex-1 min-w-0 gap-3 empty:hidden [&>*]:shrink-0 [&>*:first-child]:flex-1 [&>*:first-child]:shrink [&>*:first-child]:min-w-[6rem]" />
+                  {intentos >= 2 && (
+                    <Boton
+                      variante="secundario"
+                      large={large}
+                      icono={<IconoPista />}
+                      className="shrink-0 !px-4"
+                      onClick={() => {
+                        setPista((n) => n + 1);
+                        setIntentos(0);
+                      }}
+                    >
+                      Pista
+                    </Boton>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 border-t border-borde-suave pt-1">
+                {!(resuelto && ultimo) ? (
+                  <Boton variante="texto" large={large} onClick={() => setFase("cierre")} icono={<IconoSalir />} className="-ml-3">
+                    Terminar por hoy
+                  </Boton>
+                ) : (
+                  <span />
+                )}
+                <button
+                  type="button"
+                  onClick={cine.alternar}
+                  aria-label={cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
+                  title={cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
+                  className="-mr-2 inline-flex items-center justify-center w-14 h-14 rounded-2xl border-0 bg-transparent text-tinta-suave cursor-pointer hover:bg-black/[0.04] hover:text-tinta focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+                >
+                  {cine.activo ? <IconoReducir /> : <IconoAmpliar />}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {fase === "cierre" && (
+          <div className="flex flex-col items-center text-center gap-3 py-1" role="status">
+            <div className="self-stretch flex items-center justify-between gap-3">
+              <Rotulo texto={def.nombre} />
+              {hechos >= total && <RuedaProgreso total={total} completados={total} actual={total} />}
+            </div>
+            <Suspense fallback={<Cargando />}>
+              <Portada final config={config} />
+            </Suspense>
+            <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
+            <p className={`m-0 text-tinta-suave ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
+            <div className="w-full max-w-sm grid gap-1 mt-2">
               <Boton
                 variante="secundario"
                 large={large}
+                className="w-full"
                 onClick={() => {
-                  setPista((n) => n + 1);
-                  setIntentos(0);
+                  setSemilla(nuevaSemilla());
+                  setFase("inicio");
                 }}
               >
-                Ver una pista
+                Volver al inicio
               </Boton>
-            )}
-            {!(resuelto && ultimo) && (
-              <Boton variante="secundario" large={large} onClick={() => setFase("cierre")}>
-                Terminar por hoy
-              </Boton>
-            )}
+              {cine.activo && botonCine}
+            </div>
           </div>
-        </div>
-      )}
-
-      {fase === "cierre" && (
-        <div className="flex flex-col items-center text-center gap-3 py-1" role="status">
-          <div className="self-stretch flex items-center justify-between gap-3">
-            <Rotulo texto={def.nombre} />
-            {hechos >= total && <RuedaProgreso total={total} completados={total} actual={total} />}
-          </div>
-          <Suspense fallback={<Cargando />}>
-            <Portada final config={config} />
-          </Suspense>
-          <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
-          <p className={`m-0 text-tinta-suave ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
-          <Boton
-            variante="secundario"
-            large={large}
-            className="mt-2 w-full max-w-xs"
-            onClick={() => {
-              setSemilla(nuevaSemilla());
-              setFase("inicio");
-            }}
-          >
-            Volver al inicio
-          </Boton>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
+}
+
+// Pantalla completa («modo cine»): usa la API del navegador cuando existe
+// (computadora, Android); en iPhone, donde no está disponible para páginas,
+// la actividad cubre la pantalla con una capa fija. Escape siempre sale.
+function usePantallaCompleta() {
+  const ref = useRef<HTMLElement | null>(null);
+  const [activo, setActivo] = useState(false);
+  const [nativo, setNativo] = useState(false);
+
+  useEffect(() => {
+    const cambio = () => {
+      if (!document.fullscreenElement && nativo) {
+        setActivo(false);
+        setNativo(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", cambio);
+    return () => document.removeEventListener("fullscreenchange", cambio);
+  }, [nativo]);
+
+  // Capa fija: bloquea el scroll de la página y sale con Escape.
+  useEffect(() => {
+    if (!activo || nativo) return;
+    const previo = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && setActivo(false);
+    window.addEventListener("keydown", tecla);
+    return () => {
+      document.body.style.overflow = previo;
+      window.removeEventListener("keydown", tecla);
+    };
+  }, [activo, nativo]);
+
+  async function alternar() {
+    if (activo) {
+      if (nativo && document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      setActivo(false);
+      setNativo(false);
+      return;
+    }
+    const el = ref.current;
+    if (el && document.fullscreenEnabled && el.requestFullscreen) {
+      try {
+        await el.requestFullscreen({ navigationUI: "hide" });
+        setNativo(true);
+        setActivo(true);
+        return;
+      } catch {
+        // Si el navegador no deja, se usa la capa fija.
+      }
+    }
+    setNativo(false);
+    setActivo(true);
+  }
+
+  return { ref, activo, nativo, alternar };
 }

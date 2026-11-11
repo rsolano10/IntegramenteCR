@@ -87,6 +87,7 @@ export const ordenarPasos: DefActividad<ConfigOrdenarPasos, EjercicioOrdenar> = 
   },
   generar: (c, n, { azar }) => generarPasos(c, n, azar),
   consigna: () => "Tocá los pasos en el orden en que se hacen, del primero al último.",
+  resumen: (c) => `Rutinas de ${c.pasos} pasos.`,
 };
 
 // ─── En orden ───
@@ -185,4 +186,6 @@ export const ordenarSecuencia: DefActividad<ConfigOrdenarSecuencia, EjercicioOrd
       c.contenido === "numeros" ? (c.sentido === "ascendente" ? "de menor a mayor" : "de mayor a menor") : c.sentido === "ascendente" ? "en orden alfabético, de la A a la Z" : "de la Z a la A";
     return `Enganchá los vagones al tren: tocá ${que} ${como}.`;
   },
+  resumen: (c) =>
+    `${c.cantidad} vagones con ${c.contenido === "numeros" ? `números hasta ${c.numeroMax}` : c.contenido === "letras" ? "letras" : "palabras"}${c.sentido === "descendente" ? ", de mayor a menor" : ""}.`,
 };

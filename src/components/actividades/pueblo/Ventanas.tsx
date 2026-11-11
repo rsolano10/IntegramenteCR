@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { revisarPosiciones, type EjercicioPosiciones } from "../../../lib/actividades/recordarPosiciones";
 import { usePista, type Control } from "../interactivas/comun";
-import { Boton } from "../interactivas/ui";
+import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
 import { sombraCapa } from "./pieza";
 
@@ -61,28 +61,26 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPosi
         {fase === "mirar" ? "Mirá qué ventanas tienen luz." : fase === "responder" ? "Se apagaron las luces. ¿Cuáles estaban encendidas?" : "¡Encendiste las ventanas!"}
       </p>
 
-      {fase === "mirar" && (
-        <div className="grid gap-3">
-          <p className={`m-0 text-tinta-suave ${L ? "text-[20px]" : "text-[18px]"}`}>Tomate el tiempo que necesités.</p>
-          <Boton onClick={() => setFase("responder")} large={L} className="w-full">
+      {fase === "mirar" && <p className={`m-0 -mt-2 text-tinta-suave ${L ? "text-[20px]" : "text-[18px]"}`}>Tomate el tiempo que necesités.</p>}
+      {fase === "responder" && <Medidor total={n} llevas={Math.min(marcadas.length, n)} large={L} />}
+
+      <Acciones ctl={ctl}>
+        {fase === "mirar" && (
+          <Boton onClick={() => setFase("responder")} large={L}>
             Ya lo memoricé
           </Boton>
-        </div>
-      )}
-
-      {fase === "responder" && (
-        <div className="grid gap-3">
-          <Medidor total={n} llevas={Math.min(marcadas.length, n)} large={L} />
-          <Boton onClick={listo} disabled={!marcadas.length} large={L} className="w-full">
+        )}
+        {fase === "responder" && (
+          <Boton onClick={listo} disabled={!marcadas.length} large={L}>
             Listo
           </Boton>
-          {config.permitirVerDeNuevo && (
-            <Boton variante="secundario" onClick={() => setFase("mirar")} large={L} className="w-full">
-              Ver las ventanas de nuevo
-            </Boton>
-          )}
-        </div>
-      )}
+        )}
+        {fase === "responder" && config.permitirVerDeNuevo && (
+          <Boton variante="secundario" onClick={() => setFase("mirar")} large={L}>
+            Mirar de nuevo
+          </Boton>
+        )}
+      </Acciones>
     </div>
   );
 }

@@ -5,6 +5,9 @@ import { moduloLabel, type MediaResource } from "../../lib/mediaResources";
 import type { ResourceModulo } from "../../lib/modulos";
 import { Button } from "../../components/ui/Button";
 import { SelectorRecurso } from "../../components/profesional/SelectorRecurso";
+import { IconoInteractivo, NivelInteractivo } from "../../components/profesional/NivelInteractivo";
+import { esInteractivo } from "../../lib/clasificarNumeros";
+import { nivelLabel } from "../../lib/actividades/contrato";
 import { usePlantillas, uno, type Plantilla, type TareaPlantilla } from "../../lib/plantillas";
 import { DIAS, enFila, formatHora } from "../../lib/planWeek";
 import { CalendarioSemana } from "../../components/profesional/CalendarioSemana";
@@ -31,8 +34,11 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
   const [error, setError] = useState("");
 
   function agregar(dia: number, hora: string, r: MediaResource) {
-    setTareas((t) => [...t, { key: nuevaKey(), dia_idx: dia, hora, media_resource_id: r.id, titulo: r.titulo, codigo: r.codigo, modulo: r.modulo }]);
+    const nueva: TareaPlantilla = { key: nuevaKey(), dia_idx: dia, hora, media_resource_id: r.id, titulo: r.titulo, codigo: r.codigo, modulo: r.modulo, nivel_interactivo: null, extras: r.extras ?? null };
+    setTareas((t) => [...t, nueva]);
     setAgregarEn(null);
+    // Actividad interactiva: se pregunta la dificultad al agregarla.
+    if (r.extras?.modo === "interactiva") setEditandoTarea(nueva);
   }
   const cambiarTarea = (t: TareaPlantilla) => {
     setTareas((xs) => xs.map((x) => (x.key === t.key ? t : x)));
@@ -63,7 +69,16 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
     if (tareas.length) {
       const { error: eIns } = await supabase
         .from("plantilla_tareas")
-        .insert(tareas.map((t, i) => ({ plantilla_id: id, dia_idx: t.dia_idx, hora: t.hora || null, media_resource_id: t.media_resource_id, orden: i })));
+        .insert(
+          tareas.map((t, i) => ({
+            plantilla_id: id,
+            dia_idx: t.dia_idx,
+            hora: t.hora || null,
+            media_resource_id: t.media_resource_id,
+            orden: i,
+            nivel_interactivo: t.extras?.modo === "interactiva" ? t.nivel_interactivo : null,
+          })),
+        );
       if (eIns) return fallo(eIns.message);
     }
     setGuardando(false);
@@ -117,10 +132,16 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
                 >
                   {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
                   <span className="font-semibold">{t.titulo}</span>
-                  <span className="block text-[10.5px] opacity-80">
-                    {t.codigo ? `${t.codigo} · ` : ""}
-                    {moduloLabel[t.modulo]}
-                  </span>
+                  {esInteractivo(t.extras) ? (
+                    <span className="flex items-center gap-1 text-[10.5px] opacity-90">
+                      <IconoInteractivo /> Interactivo{t.nivel_interactivo ? ` · ${nivelLabel[t.nivel_interactivo]}` : ""}
+                    </span>
+                  ) : (
+                    <span className="block text-[10.5px] opacity-80">
+                      {t.codigo ? `${t.codigo} · ` : ""}
+                      {moduloLabel[t.modulo]}
+                    </span>
+                  )}
                 </button>
               )),
             };
@@ -183,7 +204,7 @@ function EditorTareaPlantilla({
       <SelectorRecurso
         titulo="Cambiar el recurso"
         onElegir={(r) => {
-          setT({ ...t, media_resource_id: r.id, titulo: r.titulo, codigo: r.codigo, modulo: r.modulo });
+          setT({ ...t, media_resource_id: r.id, titulo: r.titulo, codigo: r.codigo, modulo: r.modulo, extras: r.extras ?? null, nivel_interactivo: null });
           setElegir(false);
         }}
         onClose={() => setElegir(false)}
@@ -212,6 +233,7 @@ function EditorTareaPlantilla({
           <input type="time" className={campo} value={t.hora} onChange={(e) => setT({ ...t, hora: e.target.value })} />
         </label>
       </div>
+      {t.extras?.modo === "interactiva" && <NivelInteractivo extras={t.extras} valor={t.nivel_interactivo} onChange={(n) => setT({ ...t, nivel_interactivo: n })} />}
       <button type="button" onClick={() => setElegir(true)} className="mt-4 min-h-10 px-0 bg-transparent border-0 font-sans text-[14px] font-semibold text-verde-profundo cursor-pointer underline underline-offset-4">
         Cambiar por otro recurso
       </button>

@@ -59,6 +59,8 @@ export interface DefActividad<C, E> {
   generar: (c: C, cantidad: number, ctx: Contexto) => E[];
   // Consigna para la persona (voseo, sin afirmaciones de salud).
   consigna: (c: C) => string;
+  // Qué implica la configuración, en una línea, para elegir el nivel al asignar.
+  resumen: (c: C) => string;
   // Si la actividad fija su propia cantidad de ejercicios (orientación).
   cantidadFija?: (c: C) => number;
 }

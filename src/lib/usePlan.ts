@@ -32,6 +32,7 @@ interface PlanTaskRow {
   nota_clinica: string | null;
   media_resource_id: string | null;
   indicacion_individual: string | null;
+  nivel_interactivo?: "suave" | "medio" | "retador" | null;
   // PostgREST embeds a to-one FK as a single object at runtime, but
   // supabase-js's generic (non-codegen'd) types infer embeds as arrays —
   // accept both shapes here and normalize in toPlanTask().
@@ -103,7 +104,8 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     materiales: resource?.materiales ?? null,
     adaptacion: resource?.adaptacion ?? null,
     ciencia: resource?.ciencia ?? null,
-    extras: resource?.extras ?? null,
+    // La dificultad elegida al asignar pisa el nivel del recurso.
+    extras: resource?.extras && resource.extras.modo === "interactiva" && row.nivel_interactivo ? { ...resource.extras, nivel: row.nivel_interactivo } : (resource?.extras ?? null),
     codigo: resource?.codigo ?? null,
     posterPath: resource?.poster_path ?? null,
     intro: resource?.detalle ?? null,
@@ -154,7 +156,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, nivel_interactivo, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });

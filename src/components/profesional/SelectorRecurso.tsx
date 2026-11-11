@@ -3,15 +3,18 @@ import { moduloLabel, type MediaResource } from "../../lib/mediaResources";
 import { useCatalogo } from "../../lib/plantillas";
 import type { ResourceModulo } from "../../lib/modulos";
 import { Modal } from "../ui/Modal";
+import { esInteractivo } from "../../lib/clasificarNumeros";
+import { FiltroInteractivos, MarcaInteractivo } from "./NivelInteractivo";
 
 // Elegir un recurso del catálogo (plantillas y recursos de bienvenida).
 export function SelectorRecurso({ titulo, onElegir, onClose }: { titulo: string; onElegir: (r: MediaResource) => void; onClose: () => void }) {
   const { data: recursos } = useCatalogo();
   const [buscar, setBuscar] = useState("");
   const [modulo, setModulo] = useState<ResourceModulo | "todos">("todos");
+  const [soloInteractivos, setSoloInteractivos] = useState(false);
   const q = buscar.trim().toLowerCase();
   const lista = (recursos ?? []).filter(
-    (r) => (modulo === "todos" || r.modulo === modulo) && (!q || r.titulo.toLowerCase().includes(q) || (r.codigo ?? "").toLowerCase().includes(q)),
+    (r) => (modulo === "todos" || r.modulo === modulo) && (!soloInteractivos || esInteractivo(r.extras)) && (!q || r.titulo.toLowerCase().includes(q) || (r.codigo ?? "").toLowerCase().includes(q)),
   );
   return (
     <Modal onClose={onClose} size="lg">
@@ -33,6 +36,9 @@ export function SelectorRecurso({ titulo, onElegir, onClose }: { titulo: string;
           ))}
         </select>
       </div>
+      <div className="mb-3">
+        <FiltroInteractivos activo={soloInteractivos} onChange={setSoloInteractivos} />
+      </div>
       <ul className="list-none m-0 p-0 grid gap-1.5 max-h-[55vh] overflow-y-auto">
         {lista.map((r) => (
           <li key={r.id}>
@@ -41,7 +47,10 @@ export function SelectorRecurso({ titulo, onElegir, onClose }: { titulo: string;
               onClick={() => onElegir(r)}
               className="w-full text-left rounded-xl border border-borde bg-white hover:border-verde-serenidad px-4 py-2.5 cursor-pointer font-sans"
             >
-              <span className="block text-[14.5px] font-semibold text-tinta">{r.titulo}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] font-semibold text-tinta">
+                {r.titulo}
+                {esInteractivo(r.extras) && <MarcaInteractivo />}
+              </span>
               <span className="block text-[12.5px] text-tinta-tenue">
                 {r.codigo ? `${r.codigo} · ` : ""}
                 {moduloLabel[r.modulo]}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { revisarConteo, type EjercicioContar } from "../../../lib/actividades/contarPorTipo";
 import { usePista, type Control } from "../interactivas/comun";
-import { Boton } from "../interactivas/ui";
+import { Acciones, Boton } from "../interactivas/ui";
 import { Figura } from "../interactivas/Figura";
 import { P } from "./paleta";
 import { sombraCapa } from "./pieza";
@@ -107,9 +107,11 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioContar; ctl:
         </ul>
       </div>
       {!hecho && (
-        <Boton onClick={listo} large={L} className="w-full">
-          Listo
-        </Boton>
+        <Acciones ctl={ctl}>
+          <Boton onClick={listo} large={L}>
+            Listo
+          </Boton>
+        </Acciones>
       )}
       <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{hecho ? "¡Las frutas volvieron al canasto!" : "¿Cuántas hay de cada una?"}</p>
     </div>

@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { colones, combinacion, esBillete, revisarPago, type EjercicioPago } from "../../../lib/actividades/pagoExacto";
 import { usePista, type Control } from "../interactivas/comun";
-import { Boton } from "../interactivas/ui";
+import { Acciones, Boton } from "../interactivas/ui";
 import { roseton } from "../../../lib/actividades/roseton";
 import { Roseton } from "./Ornamento";
 import { BILLETES, MONEDA, P, sombraPapel } from "./paleta";
@@ -106,14 +106,14 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
       {!hecho && (
         <>
           <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>Tocá la plata para pagar justo.</p>
-          <div className="grid grid-cols-[1fr_auto] gap-3">
+          <Acciones ctl={ctl}>
             <Boton onClick={listo} disabled={!pago.length} large={L}>
               Listo
             </Boton>
             <Boton variante="secundario" onClick={() => setPago([])} disabled={!pago.length} large={L}>
               Vaciar
             </Boton>
-          </div>
+          </Acciones>
         </>
       )}
     </div>

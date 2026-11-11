@@ -3,7 +3,7 @@ import { companera, continuar, estadoParejas, generarBaldosas, parejasCompletas,
 import { crearAzar } from "../../../lib/actividades/azar";
 import { roseton } from "../../../lib/actividades/roseton";
 import { usePista, type Control } from "../interactivas/comun";
-import { Boton } from "../interactivas/ui";
+import { Acciones, Boton } from "../interactivas/ui";
 import { Figura } from "../interactivas/Figura";
 import { P } from "./paleta";
 import { clasePieza, sombraCapa } from "./pieza";
@@ -86,9 +86,11 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPare
         </div>
       </div>
       {e.esperando && (
-        <Boton onClick={() => setE(continuar(e))} autoFocus large={L} className="w-full">
-          Continuar
-        </Boton>
+        <Acciones ctl={ctl}>
+          <Boton onClick={() => setE(continuar(e))} autoFocus large={L}>
+            Continuar
+          </Boton>
+        </Acciones>
       )}
       <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
         {completo ? "¡El piso quedó completo!" : e.esperando ? "Mirá bien dónde están." : "Tocá dos baldosas."}

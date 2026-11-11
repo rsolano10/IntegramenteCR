@@ -113,4 +113,5 @@ export const formarPalabra: DefActividad<ConfigFormarPalabra, EjercicioPalabra> 
     });
   },
   consigna: () => "El rotulista necesita ayuda: tocá las letras en orden para pintar el rótulo.",
+  resumen: (c) => `Palabras de ${c.longitudMin} a ${c.longitudMax} letras${c.primeraLetra ? ", con la primera letra puesta" : ""}${c.mostrarPista ? " y una pista" : ""}.`,
 };

@@ -148,4 +148,5 @@ export const parejas: DefActividad<ConfigParejas, EjercicioParejas> = {
       : c.contenido === "baldosas"
         ? "Tocá dos baldosas para darles vuelta. Buscá las que tienen el mismo dibujo."
         : "Tocá dos cartas para darles vuelta. Buscá las que son iguales.",
+  resumen: (c) => `${c.pares} parejas${c.numerarReverso ? ", con las baldosas numeradas" : ""}.`,
 };

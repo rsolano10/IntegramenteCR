@@ -70,4 +70,5 @@ export const contarPorTipo: DefActividad<ConfigContarPorTipo, EjercicioContar> =
   },
   generar: (c, n, { azar }) => Array.from({ length: n }, () => generarContar(c, azar)),
   consigna: () => "Se volcó el canasto. Contá cuántas frutas hay de cada una con − y + y después tocá «Listo».",
+  resumen: (c) => `${c.tipos} frutas distintas, hasta ${c.maxPorTipo} de cada una${c.agrupados ? ", agrupadas" : ", mezcladas"}.`,
 };

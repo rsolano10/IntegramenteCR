@@ -116,4 +116,5 @@ export const pagoExacto: DefActividad<ConfigPagoExacto, EjercicioPago> = {
     return Array.from({ length: n }, () => generarPago(cc, azar));
   },
   consigna: () => "En la pulpería: tocá la plata hasta pagar justo la cuenta. Después tocá «Listo».",
+  resumen: (c) => `Cuentas de ${colones(c.montoMin)} a ${colones(c.montoMax)}, con ${c.denominaciones.length} monedas y billetes${c.mostrarSuma ? "; muestra cuánto lleva" : ""}.`,
 };

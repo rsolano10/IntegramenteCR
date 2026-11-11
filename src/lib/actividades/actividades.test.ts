@@ -364,3 +364,13 @@ test("almanaque: pistas en la escena en suave, no en retador", () => {
   assert.equal(orientacionHoy.porNivel.suave.pistasEnEscena, true);
   assert.equal(orientacionHoy.porNivel.retador.pistasEnEscena, false);
 });
+
+test("cada actividad resume sus tres niveles (para elegir la dificultad al asignar)", async () => {
+  const { resumenNivel } = await import("./registro.ts");
+  for (const def of ACTIVIDADES)
+    for (const nivel of NIVELES) {
+      const r = resumenNivel(ex(def.tipo), nivel);
+      assert.ok(r && r.length > 8 && !r.includes("undefined") && !r.includes("NaN"), `${def.tipo} ${nivel}: ${r}`);
+    }
+  assert.notEqual(resumenNivel(ex("parejas"), "suave"), resumenNivel(ex("parejas"), "retador"));
+});

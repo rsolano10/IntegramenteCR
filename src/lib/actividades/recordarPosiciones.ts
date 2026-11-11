@@ -71,4 +71,5 @@ export const recordarPosiciones: DefActividad<ConfigRecordarPosiciones, Ejercici
   },
   generar: (c, n, { azar }) => Array.from({ length: n }, () => generarPosiciones(c, azar)),
   consigna: () => "Mirá qué ventanas tienen la luz encendida. Cuando las tengás en mente, tocá «Ya lo memoricé» y después tocá las que estaban encendidas.",
+  resumen: (c) => `Casa de ${c.filas} pisos y ${c.columnas} ventanas por piso; ${c.encendidas} con luz${c.permitirVerDeNuevo ? ". Puede volver a mirarlas" : ""}.`,
 };
