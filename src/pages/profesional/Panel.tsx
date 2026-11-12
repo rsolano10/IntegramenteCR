@@ -249,7 +249,9 @@ export function Panel() {
           <p className="m-0 mt-2 text-[16px] text-tinta-suave max-w-[62ch]">
             {total > 0 ? (
               <>
-                Tenés <strong className="text-tinta">{total === 1 ? "1 pendiente" : `${total} pendientes`}</strong>. Empezá por {GRUPOS[primero.id].titulo.toLowerCase()}.
+                Empezá por {GRUPOS[primero.id].titulo.toLowerCase()}:{" "}
+                <strong className="text-tinta">{primero.items[0].kind === "familia" ? primero.items[0].p.nombre : primero.items[0].r.patient_nombre}</strong>
+                {primero.items.length > 1 ? ` y ${primero.items.length - 1} más.` : "."}
               </>
             ) : (
               "No hay nada pendiente. Las familias están avanzando con su semana."
@@ -269,101 +271,106 @@ export function Panel() {
 
       <AlertasRiesgoBanner />
 
-      {cargando ? (
-        <Esqueleto />
-      ) : total === 0 ? (
-        <TodoAlDia alDia={alDia} />
-      ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-8 items-start">
-          {/* Filtros: columna en escritorio, fila deslizable en celular */}
-          <nav aria-label="Filtrar pendientes" className="min-w-0 lg:sticky lg:top-6">
-            <div className="flex lg:grid gap-2 lg:gap-1 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 pb-1 lg:pb-0 [scrollbar-width:none]">
-              <Filtro activo={!filtroActivo} onClick={() => setFiltro(null)} n={total} label="Todo" />
-              {grupos.map((g) => (
-                <Filtro
-                  key={g.id}
-                  activo={filtroActivo === g.id}
-                  onClick={() => setFiltro(filtroActivo === g.id ? null : g.id)}
-                  n={g.items.length}
-                  label={GRUPOS[g.id].corto}
-                  icono={g.id}
-                  urgente={g.id === "asistente" && g.items.some((i) => i.kind === "asistente" && i.urgente)}
-                />
-              ))}
-            </div>
-            {alDia > 0 && (
-              <Link
-                to="/app/profesional/usuarios?vista=todas"
-                className="hidden lg:flex items-center gap-2.5 mt-5 px-3.5 py-3 rounded-2xl bg-verde-tenue text-[13.5px] text-verde-profundo no-underline hover:bg-[#ebf3f3]"
-              >
-                <Chequecito />
-                <span>
-                  <strong>{alDia === 1 ? "1 familia" : `${alDia} familias`}</strong> al día, sin nada pendiente
-                </span>
-              </Link>
-            )}
-          </nav>
+      <Caja total={cargando ? null : total} alDia={alDia}>
+        {cargando ? (
+          <Esqueleto />
+        ) : total === 0 ? (
+          <TodoAlDia alDia={alDia} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)]">
+            {/* Filtros: columna en escritorio, fila deslizable en celular */}
+            <nav aria-label="Filtrar pendientes" className="min-w-0 bg-[#faf7ee] border-b lg:border-b-0 lg:border-r border-borde-suave">
+              <div className="lg:sticky lg:top-4 lg:p-4">
+                <p className="hidden lg:block m-0 mb-2 px-2 text-[11.5px] font-extrabold tracking-[0.14em] uppercase text-tinta-tenue">Ver</p>
+                <div className="flex lg:grid gap-2 lg:gap-1 overflow-x-auto px-4 py-3 lg:p-0 [scrollbar-width:none]">
+                  <Filtro activo={!filtroActivo} onClick={() => setFiltro(null)} n={total} label="Todo" />
+                  {grupos.map((g) => (
+                    <Filtro
+                      key={g.id}
+                      activo={filtroActivo === g.id}
+                      onClick={() => setFiltro(filtroActivo === g.id ? null : g.id)}
+                      n={g.items.length}
+                      label={GRUPOS[g.id].corto}
+                      icono={g.id}
+                      urgente={g.id === "asistente" && g.items.some((i) => i.kind === "asistente" && i.urgente)}
+                    />
+                  ))}
+                </div>
+                {alDia > 0 && (
+                  <Link
+                    to="/app/profesional/usuarios?vista=todas"
+                    className="hidden lg:flex items-center gap-2.5 mt-5 px-3 py-3 rounded-2xl bg-white border border-borde-suave text-[13px] leading-snug text-verde-profundo no-underline hover:border-verde-serenidad"
+                  >
+                    <Chequecito />
+                    <span>
+                      <strong>{alDia === 1 ? "1 familia" : `${alDia} familias`}</strong> al día, sin nada pendiente
+                    </span>
+                  </Link>
+                )}
+              </div>
+            </nav>
 
-          {/* La cola */}
-          <div className="grid gap-5 min-w-0">
-            {visibles.map((g, gi) => {
-              const meta = GRUPOS[g.id];
-              const enTodo = !filtroActivo;
-              const items = enTodo ? g.items.slice(0, POR_GRUPO_EN_TODO) : g.items;
-              const resto = g.items.length - items.length;
-              return (
-                <section key={g.id} aria-labelledby={`grupo-${g.id}`} className="bg-white border border-borde rounded-[22px] overflow-hidden shadow-[0_1px_0_rgba(31,51,56,0.03)]">
-                  <div className="flex items-start gap-3.5 px-5 pt-4.5 pb-3.5 sm:px-6">
-                    <Icono id={g.id} />
-                    <div className="min-w-0 flex-1">
-                      <h2 id={`grupo-${g.id}`} className="m-0 text-[17px] font-extrabold text-tinta">
-                        {meta.titulo}{" "}
-                        <span className="ml-1 align-[2px] min-w-[24px] h-[22px] px-1.5 rounded-full bg-campo border border-borde text-[12.5px] font-extrabold text-tinta-suave inline-flex items-center justify-center">{g.items.length}</span>
-                      </h2>
-                      <p className="m-0 mt-0.5 text-[13.5px] text-tinta-suave leading-snug">{meta.desc}</p>
+            {/* La cola */}
+            <div className="min-w-0">
+              {visibles.map((g, gi) => {
+                const meta = GRUPOS[g.id];
+                const enTodo = !filtroActivo;
+                const items = enTodo ? g.items.slice(0, POR_GRUPO_EN_TODO) : g.items;
+                const resto = g.items.length - items.length;
+                return (
+                  <section key={g.id} aria-labelledby={`grupo-${g.id}`} className={gi > 0 ? "border-t-[6px] border-[#f6f2e6]" : ""}>
+                    <div className="flex items-start gap-3.5 px-5 pt-5 pb-3.5 sm:px-7">
+                      <Icono id={g.id} />
+                      <div className="min-w-0 flex-1">
+                        <h3 id={`grupo-${g.id}`} className="m-0 text-[17px] font-extrabold text-tinta">
+                          {meta.titulo}{" "}
+                          <span className="ml-1 align-[2px] min-w-[24px] h-[22px] px-1.5 rounded-full bg-campo border border-borde text-[12.5px] font-extrabold text-tinta-suave inline-flex items-center justify-center">{g.items.length}</span>
+                        </h3>
+                        <p className="m-0 mt-0.5 text-[13.5px] text-tinta-suave leading-snug">{meta.desc}</p>
+                      </div>
+                      {meta.vista && !enTodo && (
+                        <Link to={`/app/profesional/usuarios?vista=${meta.vista}`} className="hidden sm:inline shrink-0 mt-1 text-[13px] font-bold text-verde-profundo no-underline hover:underline">
+                          Ver en Usuarios
+                        </Link>
+                      )}
                     </div>
-                    {meta.vista && !enTodo && (
-                      <Link to={`/app/profesional/usuarios?vista=${meta.vista}`} className="hidden sm:inline shrink-0 mt-1 text-[13px] font-bold text-verde-profundo no-underline hover:underline">
-                        Ver en Usuarios
-                      </Link>
+                    <ul className="list-none m-0 p-0 border-t border-borde-suave">
+                      {items.map((it, i) => (
+                        <li key={it.id} className="border-b border-borde-suave last:border-b-0">
+                          {it.kind === "familia" ? (
+                            <FilaFamilia
+                              it={it}
+                              primero={enTodo && gi === 0 && i === 0}
+                              ocupado={fam.ocupado === it.p.id}
+                              onAbrir={() => fam.abrir(it.p.id)}
+                              onAccion={() => fam.accion(it.paso, it.p, it.f)}
+                              menu={fam.menuDe(it.p, it.f)}
+                            />
+                          ) : (
+                            <FilaAsistente it={it} primero={enTodo && gi === 0 && i === 0} onAbrir={() => navigate(patientPath(it.r.patient_id, "asistente"))} />
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {resto > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFiltro(g.id);
+                          document.getElementById("pendientes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                        className="w-full px-5 sm:px-7 py-3 border-0 border-t border-borde-suave bg-[#fcfbf6] font-sans text-[13.5px] font-bold text-verde-profundo cursor-pointer text-left hover:bg-campo"
+                      >
+                        Ver {resto === 1 ? "1 más" : `los ${resto} restantes`} →
+                      </button>
                     )}
-                  </div>
-                  <ul className="list-none m-0 p-0 border-t border-borde-suave">
-                    {items.map((it, i) => (
-                      <li key={it.id} className="border-b border-borde-suave last:border-b-0">
-                        {it.kind === "familia" ? (
-                          <FilaFamilia
-                            it={it}
-                            primero={enTodo && gi === 0 && i === 0}
-                            ocupado={fam.ocupado === it.p.id}
-                            onAbrir={() => fam.abrir(it.p.id)}
-                            onAccion={() => fam.accion(it.paso, it.p, it.f)}
-                            menu={fam.menuDe(it.p, it.f)}
-                          />
-                        ) : (
-                          <FilaAsistente it={it} primero={enTodo && gi === 0 && i === 0} onAbrir={() => navigate(patientPath(it.r.patient_id, "asistente"))} />
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  {resto > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFiltro(g.id);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="w-full px-6 py-3 border-0 border-t border-borde-suave bg-[#fcfbf6] font-sans text-[13.5px] font-bold text-verde-profundo cursor-pointer text-left hover:bg-campo"
-                    >
-                      Ver {resto === 1 ? "1 más" : `los ${resto} restantes`} →
-                    </button>
-                  )}
-                </section>
-              );
-            })}
+                  </section>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Caja>
 
       {esAdmin && <MetricasGenerales patients={patients ?? []} />}
 
@@ -383,6 +390,54 @@ export function Panel() {
   );
 }
 
+// La caja de pendientes: encabezado con el total y, adentro, filtros y cola.
+function Caja({ total, alDia, children }: { total: number | null; alDia: number; children: ReactNode }) {
+  return (
+    <section id="pendientes" aria-labelledby="pendientes-titulo" className="scroll-mt-24 relative bg-white border border-borde rounded-[28px] overflow-hidden shadow-elevada">
+      <div className="relative overflow-hidden flex flex-wrap items-center justify-between gap-x-6 gap-y-4 px-5 py-5 sm:px-8 sm:py-6 border-b border-borde-suave bg-[linear-gradient(120deg,#fbf3df_0%,#fdf9ef_38%,#ffffff_75%)]">
+        <Roseta />
+        <div className="relative min-w-0">
+          <p className="m-0 mb-1 text-[12.5px] font-extrabold tracking-[0.16em] uppercase text-aviso-texto">Pendientes</p>
+          <h2 id="pendientes-titulo" className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight text-tinta">
+            Lo que necesita atención hoy
+          </h2>
+        </div>
+        {total !== null && total > 0 && (
+          <div className="relative max-sm:hidden flex items-center gap-3">
+            {alDia > 0 && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/80 border border-borde-suave text-[13px] font-semibold text-verde-profundo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12.5l4.2 4.2L19 7" />
+                </svg>
+                {alDia} al día
+              </span>
+            )}
+            <span className="flex items-center gap-2.5 h-12 pl-1.5 pr-4 rounded-full bg-tinta text-white">
+              <span className="min-w-9 h-9 px-1.5 rounded-full bg-mostaza-vital text-tinta font-serif text-[20px] leading-none inline-flex items-center justify-center">{total}</span>
+              <span className="text-[14px] font-bold">{total === 1 ? "pendiente" : "pendientes"}</span>
+            </span>
+          </div>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+// Adorno: un rosetón tenue en la esquina del encabezado.
+function Roseta() {
+  const petalos = Array.from({ length: 12 }, (_, i) => i * 30);
+  return (
+    <svg className="pointer-events-none absolute -right-10 -top-14 w-[220px] h-[220px] text-mostaza-vital opacity-40 max-sm:hidden" viewBox="-50 -50 100 100" aria-hidden="true">
+      {petalos.map((r) => (
+        <ellipse key={r} cx="0" cy="-26" rx="6.5" ry="17" fill="none" stroke="currentColor" strokeWidth="1.2" transform={`rotate(${r})`} />
+      ))}
+      <circle r="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <circle r="3.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 function Filtro({ activo, onClick, n, label, icono, urgente }: { activo: boolean; onClick: () => void; n: number; label: string; icono?: GrupoId; urgente?: boolean }) {
   return (
     <button
@@ -390,7 +445,7 @@ function Filtro({ activo, onClick, n, label, icono, urgente }: { activo: boolean
       aria-pressed={activo}
       onClick={onClick}
       className={`shrink-0 flex items-center gap-2.5 h-[42px] lg:h-[46px] pl-2 pr-3.5 lg:pr-3 rounded-full lg:rounded-xl font-sans text-[14px] cursor-pointer whitespace-nowrap text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${
-        activo ? "border-0 bg-tinta text-white font-bold" : "border-[1.5px] lg:border-0 border-borde bg-white lg:bg-transparent text-tinta font-semibold hover:bg-campo"
+        activo ? "border-0 bg-tinta text-white font-bold" : "border-[1.5px] lg:border-0 border-borde bg-white lg:bg-transparent text-tinta font-semibold hover:bg-white"
       }`}
     >
       {icono ? (
@@ -501,7 +556,7 @@ function Chequecito() {
 
 function TodoAlDia({ alDia }: { alDia: number }) {
   return (
-    <div className="rounded-[26px] border border-borde bg-white px-6 py-14 sm:py-16 text-center">
+    <div className="px-6 py-14 sm:py-16 text-center">
       <span className="mx-auto mb-4 w-16 h-16 rounded-full bg-verde-tenue text-semaforo-verde inline-flex items-center justify-center" aria-hidden="true">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12.5l4.2 4.2L19 7" />
@@ -520,13 +575,13 @@ function TodoAlDia({ alDia }: { alDia: number }) {
 
 function Esqueleto() {
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-8" aria-busy="true" aria-label="Cargando pendientes">
-      <div className="hidden lg:grid gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)]" aria-busy="true" aria-label="Cargando pendientes">
+      <div className="hidden lg:grid content-start gap-2 p-4 bg-[#faf7ee] border-r border-borde-suave">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-[46px] rounded-xl bg-campo animate-pulse" />
+          <div key={i} className="h-[46px] rounded-xl bg-white animate-pulse" />
         ))}
       </div>
-      <div className="bg-white border border-borde rounded-[22px] p-6 grid gap-4">
+      <div className="p-6 sm:p-7 grid gap-5">
         {[0, 1, 2].map((i) => (
           <div key={i} className="flex items-center gap-3.5">
             <div className="w-[42px] h-[42px] rounded-full bg-campo animate-pulse" />
