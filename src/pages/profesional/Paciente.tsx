@@ -17,6 +17,8 @@ import { ContactoWhatsApp } from "../../components/profesional/paciente/Contacto
 import { AsistenteTab } from "../../components/profesional/paciente/AsistenteTab";
 import { usePendientesAsistente } from "../../lib/asistenteRevision";
 import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
+import { Caja, CajaAviso, CajaPestanas, Pagina } from "../../components/profesional/Caja";
+import { Avatar } from "../../components/profesional/usuarios/piezas";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 import { PerfilRecursosCard } from "../../components/profesional/paciente/PerfilRecursosCard";
 
@@ -134,13 +136,13 @@ export function Paciente() {
   const rol = answers ? rolRespondente(answers) : null;
 
   return (
-    <div className="im-in max-w-[1240px] mx-auto px-5 py-7 pb-16 sm:px-8 lg:py-9">
-      <Link to="/app/profesional/panel" className="inline-block mb-4 text-[14.5px] text-verde-profundo">
+    <Pagina ancho="max-w-[1240px]">
+      <Link to="/app/profesional/panel" className="justify-self-start -mb-2 text-[14.5px] font-semibold text-verde-profundo no-underline hover:underline">
         ‹ Panel
       </Link>
 
       {patient.posible_duplicado_de && (
-        <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl px-5 py-3.5 mb-5">
+        <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl px-5 py-3.5">
           <p className="m-0 text-[14px] text-riesgo-texto">
             <strong>Posible duplicado:</strong> la familia indicó que podría ser la misma persona que{" "}
             <strong>{patient.posible_duplicado_nombre ?? "otro registro"}</strong>. No se combinó nada automáticamente — revisá ambos registros.
@@ -148,80 +150,47 @@ export function Paciente() {
         </div>
       )}
 
-      <header className="flex flex-wrap items-start justify-between gap-5 mb-6">
-        <div className="flex items-center gap-4 min-w-0">
-          <span className="w-14 h-14 rounded-full bg-beige-serenidad text-verde-profundo font-serif text-[22px] flex items-center justify-center shrink-0">
-            {patient.nombre
-              .split(" ")
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase()}
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-serif font-normal text-[30px] sm:text-[36px] leading-tight m-0">{patient.nombre}</h1>
-            <p className="m-0 mt-0.5 text-[14.5px] text-tinta-tenue">
-              {[
-                patient.edad ? `${patient.edad} años` : null,
-                familiar ? `Familiar: ${familiar.nombre}` : "Sin familiar vinculado",
-                rol ? `Respondió ${respondenteLabel[rol] ?? rol}` : null,
-                `Registrado el ${new Date(patient.created_at).toLocaleDateString("es-CR", { day: "numeric", month: "long" })}`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ContactoWhatsApp patientId={patient.id} patientNombre={patient.nombre} />
-          {attention && (
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold ${attentionMeta[attention].bg} ${attentionMeta[attention].text}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${attentionMeta[attention].dot}`} />
-              {attentionMeta[attention].label}
-            </span>
-          )}
-          <ProgramaSelector
-            patientId={patient.id}
-            modalidad={patient.modalidad}
-            label={
-              pendiente && !extra?.programa_elegido_en
-                ? "Programa sin elegir"
-                : `Programa ${tier?.nombre ?? patient.modalidad}${pendiente ? " · elegido por la familia" : ""}`
-            }
-            onChanged={changed}
-          />
-        </div>
-      </header>
-
       <AlertasRiesgoBanner patientId={patient.id} />
 
-      {statusMsg && (
-        <div className={`flex items-center justify-between gap-4 px-5 py-3 rounded-2xl mb-5 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-verde-tenue text-verde-profundo"}`}>
-          <span>{statusMsg.text}</span>
-          <button type="button" onClick={() => setStatusMsg(null)} className="border-none bg-transparent font-sans text-[13px] font-semibold cursor-pointer text-inherit">
-            Cerrar
-          </button>
-        </div>
-      )}
+      <Caja
+        eyebrow="Paciente"
+        inicio={<Avatar id={patient.id} nombre={patient.nombre} size={56} />}
+        titulo={patient.nombre}
+        descripcion={[
+          patient.edad ? `${patient.edad} años` : null,
+          familiar ? `Familiar: ${familiar.nombre}` : "Sin familiar vinculado",
+          rol ? `Respondió ${respondenteLabel[rol] ?? rol}` : null,
+          `Registrado el ${new Date(patient.created_at).toLocaleDateString("es-CR", { day: "numeric", month: "long" })}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        acciones={
+          <>
+            <ContactoWhatsApp patientId={patient.id} patientNombre={patient.nombre} />
+            {attention && (
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold ${attentionMeta[attention].bg} ${attentionMeta[attention].text}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${attentionMeta[attention].dot}`} />
+                {attentionMeta[attention].label}
+              </span>
+            )}
+            <ProgramaSelector
+              patientId={patient.id}
+              modalidad={patient.modalidad}
+              label={
+                pendiente && !extra?.programa_elegido_en
+                  ? "Programa sin elegir"
+                  : `Programa ${tier?.nombre ?? patient.modalidad}${pendiente ? " · elegido por la familia" : ""}`
+              }
+              onChanged={changed}
+            />
+          </>
+        }
+        pie={<CajaPestanas etiqueta="Secciones del paciente" activa={tab} onCambiar={setTab} pestanas={tabs.map((t) => ({ id: t.id, label: t.label, aviso: t.dot }))} />}
+      >
+        {statusMsg ? <CajaAviso texto={statusMsg.text} error={statusMsg.error} onCerrar={() => setStatusMsg(null)} /> : undefined}
+      </Caja>
 
-      <nav role="tablist" className="flex gap-1 border-b border-borde mb-6 overflow-x-auto">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`shrink-0 inline-flex items-center gap-2 px-4 py-3 text-[15px] font-semibold border-b-2 -mb-px cursor-pointer bg-transparent ${
-              tab === t.id ? "border-verde-serenidad text-tinta" : "border-transparent text-tinta-tenue hover:text-tinta"
-            }`}
-          >
-            {t.label}
-            {t.dot && <span className="w-2 h-2 rounded-full bg-semaforo-amarillo" aria-label="requiere atención" />}
-          </button>
-        ))}
-      </nav>
-
+      <div className="grid gap-6 min-w-0">
       {tab === "evaluacion" &&
         (pendiente ? (
           <EvaluacionTab
@@ -282,7 +251,8 @@ export function Paciente() {
 
       {tab === "asistente" && <AsistenteTab patientId={patient.id} />}
       {tab === "cuentas" && <VinculosTab patient={patient} onChanged={changed} />}
-    </div>
+      </div>
+    </Pagina>
   );
 }
 

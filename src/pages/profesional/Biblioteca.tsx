@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
+import { Caja, CajaAviso, CajaBarra, CajaCuerpo, Pagina } from "../../components/profesional/Caja";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { RowMenu } from "../../components/ui/RowMenu";
@@ -96,32 +97,25 @@ export function Biblioteca() {
   }
 
   return (
-    <div className="im-in max-w-[1200px] mx-auto px-5 py-8 pb-14 sm:px-8 lg:px-8 lg:py-10 lg:pb-20">
-      <div className="bg-white border border-borde rounded-3xl overflow-hidden shadow-elevada">
-        <div className="px-5 py-5 sm:px-8 sm:py-6.5 border-b border-borde-suave flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Biblioteca</p>
-            <h2 className="font-serif font-normal text-2xl sm:text-[30px] m-0">Recursos multimedia</h2>
-          </div>
+    <Pagina>
+      <Caja
+        eyebrow="Biblioteca"
+        titulo="Recursos multimedia"
+        descripcion={resources ? `${resources.length} recursos para armar las semanas de las familias.` : null}
+        acciones={
           <Button dense onClick={() => setEditing("new")}>
-            Nuevo recurso
+            + Nuevo recurso
           </Button>
-        </div>
-
-        {statusMsg && (
-          <div className={`px-5 py-3 sm:px-8 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-verde-serenidad/10 text-verde-profundo"}`}>
-            {statusMsg.text}
-          </div>
-        )}
-
-        <div className="px-5 py-6 sm:px-8 sm:py-7">
-          <div className="flex flex-wrap items-end gap-4 mb-5">
+        }
+      >
+        {statusMsg && <CajaAviso texto={statusMsg.text} error={statusMsg.error} onCerrar={() => setStatusMsg(null)} />}
+        <CajaBarra>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar recurso o código"
-              className="flex-1 min-w-[220px] min-h-11 px-4 rounded-full border-[1.5px] border-borde-campo bg-campo font-sans text-[15px] text-tinta"
+              className="flex-1 min-w-[220px] min-h-11 px-4 rounded-full border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta focus:border-verde-serenidad focus:outline-none"
             />
             <FilterDropdown
               label="Módulo"
@@ -141,8 +135,9 @@ export function Biblioteca() {
               value={duracionFilter}
               onChange={(v) => setDuracionFilter(v as DuracionBucket | "")}
             />
-          </div>
+        </CajaBarra>
 
+        <CajaCuerpo>
           {isLoading && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
           {loadError && <p className="m-0 text-sm text-alerta-texto">No pudimos cargar los recursos.</p>}
           {filtered.length === 0 && !isLoading && <p className="m-0 text-sm text-tinta-tenue">Ningún recurso coincide con estos filtros.</p>}
@@ -166,8 +161,8 @@ export function Biblioteca() {
               />
             ))}
           </div>
-        </div>
-      </div>
+        </CajaCuerpo>
+      </Caja>
 
       {editing && (
         <ResourceEditor
@@ -196,6 +191,6 @@ export function Biblioteca() {
           <NotasDelEquipo resourceId={previewing.id} />
         </Modal>
       )}
-    </div>
+    </Pagina>
   );
 }

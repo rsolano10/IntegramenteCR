@@ -112,7 +112,7 @@ export function CuentaCelda({ f }: { f: FilaCuenta | undefined }) {
   const d = detalleCuenta(f);
   return (
     <span className="grid gap-1 min-w-0">
-      <span className={`justify-self-start inline-flex items-center h-[26px] px-2.5 rounded-full text-[12.5px] font-bold whitespace-nowrap ${e.clase}`}>
+      <span className={`justify-self-start inline-flex items-center min-h-[26px] py-0.5 px-2.5 rounded-[13px] text-[12.5px] font-bold leading-tight ${e.clase}`}>
         {e.label}
         {f.pagada_desde ? " · pagada" : ""}
       </span>

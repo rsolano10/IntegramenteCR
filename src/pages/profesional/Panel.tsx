@@ -18,6 +18,7 @@ import { Avatar, BotonPaso } from "../../components/profesional/usuarios/piezas"
 import { useFamiliaAcciones } from "../../components/profesional/usuarios/useFamiliaAcciones";
 import { BadgeRol } from "../../components/ui/AccountMenu";
 import { RowMenu } from "../../components/ui/RowMenu";
+import { Caja, CajaAviso, CajaCuerpo, Pagina } from "../../components/profesional/Caja";
 
 // Panel de la clínica: una sola cola de pendientes, agrupada por tipo y en
 // orden de urgencia, con la acción de cada familia a un toque. El
@@ -223,55 +224,50 @@ export function Panel() {
   const primero = grupos[0];
 
   return (
-    <div className="im-in max-w-[1200px] mx-auto px-5 py-8 pb-14 sm:px-8 lg:py-10 lg:pb-20">
-      {/* Encabezado */}
-      <header className="mb-7">
-        <p className="m-0 mb-1.5 flex flex-wrap items-center gap-2.5 text-[13.5px] font-semibold text-tinta-suave">
-          {fechaLarga()}
-          {esAdmin && (
+    <Pagina>
+      <AlertasRiesgoBanner />
+
+      <Caja
+        id="pendientes"
+        eyebrow={
+          <>
+            {fechaLarga()}
+            {esAdmin && <BadgeRol texto="Administrador" />}
+          </>
+        }
+        titulo={
+          <>
+            {saludo()}
+            {nombre ? `, ${nombre.split(" ")[0]}` : ""}
+          </>
+        }
+        descripcion={
+          cargando ? null : total > 0 ? (
             <>
-              <BadgeRol texto="Administrador" />
+              Empezá por {GRUPOS[primero.id].titulo.toLowerCase()}:{" "}
+              <strong className="text-tinta">{primero.items[0].kind === "familia" ? primero.items[0].p.nombre : primero.items[0].r.patient_nombre}</strong>
+              {primero.items.length > 1 ? ` y ${primero.items.length - 1} más.` : "."}
+            </>
+          ) : (
+            "No hay nada pendiente. Las familias están avanzando con su semana."
+          )
+        }
+        acciones={
+          <>
+            {esAdmin && (
               <button
                 type="button"
                 onClick={() => document.getElementById("metricas")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="border-0 bg-transparent p-0 font-sans text-[13px] font-bold text-verde-profundo underline decoration-dotted underline-offset-4 cursor-pointer"
+                className="h-9 px-3.5 rounded-full border-[1.5px] border-borde-campo bg-white/80 font-sans text-[13px] font-bold text-verde-profundo cursor-pointer hover:border-verde-profundo"
               >
-                Ver métricas generales ↓
+                Métricas generales ↓
               </button>
-            </>
-          )}
-        </p>
-        <h1 className="m-0 font-serif font-normal text-[32px] sm:text-[40px] leading-[1.1]">
-          {saludo()}
-          {nombre ? `, ${nombre.split(" ")[0]}` : ""}
-        </h1>
-        {!cargando && (
-          <p className="m-0 mt-2 text-[16px] text-tinta-suave max-w-[62ch]">
-            {total > 0 ? (
-              <>
-                Empezá por {GRUPOS[primero.id].titulo.toLowerCase()}:{" "}
-                <strong className="text-tinta">{primero.items[0].kind === "familia" ? primero.items[0].p.nombre : primero.items[0].r.patient_nombre}</strong>
-                {primero.items.length > 1 ? ` y ${primero.items.length - 1} más.` : "."}
-              </>
-            ) : (
-              "No hay nada pendiente. Las familias están avanzando con su semana."
             )}
-          </p>
-        )}
-      </header>
-
-      {statusMsg && (
-        <div role="status" className={`flex items-center justify-between gap-4 px-5 py-3 rounded-2xl mb-5 text-[14px] ${statusMsg.error ? "bg-alerta text-alerta-texto" : "bg-verde-tenue text-verde-profundo"}`}>
-          <span>{statusMsg.text}</span>
-          <button type="button" onClick={() => setStatusMsg(null)} className="border-none bg-transparent font-sans text-[13px] font-semibold cursor-pointer text-inherit">
-            Cerrar
-          </button>
-        </div>
-      )}
-
-      <AlertasRiesgoBanner />
-
-      <Caja total={cargando ? null : total} alDia={alDia}>
+            {!cargando && total > 0 && <Medallon total={total} alDia={alDia} />}
+          </>
+        }
+      >
+        {statusMsg && <CajaAviso texto={statusMsg.text} error={statusMsg.error} onCerrar={() => setStatusMsg(null)} />}
         {cargando ? (
           <Esqueleto />
         ) : total === 0 ? (
@@ -386,55 +382,27 @@ export function Panel() {
           }}
         />
       )}
-    </div>
+    </Pagina>
   );
 }
 
-// La caja de pendientes: encabezado con el total y, adentro, filtros y cola.
-function Caja({ total, alDia, children }: { total: number | null; alDia: number; children: ReactNode }) {
+// El total de pendientes, en una píldora oscura con el número en mostaza.
+function Medallon({ total, alDia }: { total: number; alDia: number }) {
   return (
-    <section id="pendientes" aria-labelledby="pendientes-titulo" className="scroll-mt-24 relative bg-white border border-borde rounded-[28px] overflow-hidden shadow-elevada">
-      <div className="relative overflow-hidden flex flex-wrap items-center justify-between gap-x-6 gap-y-4 px-5 py-5 sm:px-8 sm:py-6 border-b border-borde-suave bg-[linear-gradient(120deg,#fbf3df_0%,#fdf9ef_38%,#ffffff_75%)]">
-        <Roseta />
-        <div className="relative min-w-0">
-          <p className="m-0 mb-1 text-[12.5px] font-extrabold tracking-[0.16em] uppercase text-aviso-texto">Pendientes</p>
-          <h2 id="pendientes-titulo" className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight text-tinta">
-            Lo que necesita atención hoy
-          </h2>
-        </div>
-        {total !== null && total > 0 && (
-          <div className="relative max-sm:hidden flex items-center gap-3">
-            {alDia > 0 && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/80 border border-borde-suave text-[13px] font-semibold text-verde-profundo">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M5 12.5l4.2 4.2L19 7" />
-                </svg>
-                {alDia} al día
-              </span>
-            )}
-            <span className="flex items-center gap-2.5 h-12 pl-1.5 pr-4 rounded-full bg-tinta text-white">
-              <span className="min-w-9 h-9 px-1.5 rounded-full bg-mostaza-vital text-tinta font-serif text-[20px] leading-none inline-flex items-center justify-center">{total}</span>
-              <span className="text-[14px] font-bold">{total === 1 ? "pendiente" : "pendientes"}</span>
-            </span>
-          </div>
-        )}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-// Adorno: un rosetón tenue en la esquina del encabezado.
-function Roseta() {
-  const petalos = Array.from({ length: 12 }, (_, i) => i * 30);
-  return (
-    <svg className="pointer-events-none absolute -right-10 -top-14 w-[220px] h-[220px] text-mostaza-vital opacity-40 max-sm:hidden" viewBox="-50 -50 100 100" aria-hidden="true">
-      {petalos.map((r) => (
-        <ellipse key={r} cx="0" cy="-26" rx="6.5" ry="17" fill="none" stroke="currentColor" strokeWidth="1.2" transform={`rotate(${r})`} />
-      ))}
-      <circle r="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <circle r="3.5" fill="currentColor" />
-    </svg>
+    <span className="max-sm:hidden flex items-center gap-3">
+      {alDia > 0 && (
+        <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-white/80 border border-borde-suave text-[13px] font-semibold text-verde-profundo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 12.5l4.2 4.2L19 7" />
+          </svg>
+          {alDia} al día
+        </span>
+      )}
+      <span className="flex items-center gap-2.5 h-12 pl-1.5 pr-4 rounded-full bg-tinta text-white">
+        <span className="min-w-9 h-9 px-1.5 rounded-full bg-mostaza-vital text-tinta font-serif text-[20px] leading-none inline-flex items-center justify-center">{total}</span>
+        <span className="text-[14px] font-bold">{total === 1 ? "pendiente" : "pendientes"}</span>
+      </span>
+    </span>
   );
 }
 
@@ -621,26 +589,21 @@ function MetricasGenerales({ patients }: { patients: PatientRow[] }) {
   const ejeLabel: Record<string, string> = { cognitivo: "Cognitivo", fisico: "Físico", funcional: "Funcional", nutricional: "Nutricional" };
 
   return (
-    <section aria-labelledby="metricas" className="mt-10 pt-8 border-t border-dashed border-borde-campo">
-      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
-        <div>
-          <p className="m-0 mb-1.5">
-            <BadgeRol texto="Solo administrador" />
-          </p>
-          <h2 id="metricas" className="scroll-mt-24 m-0 font-serif font-normal text-[26px]">
-            Métricas generales
-          </h2>
-        </div>
-        <p className="m-0 text-[13.5px] text-tinta-suave">El programa en conjunto. El resto del equipo no ve esta sección.</p>
-      </div>
-
+    <Caja
+      id="metricas"
+      nivel={2}
+      eyebrow={<BadgeRol texto="Solo administrador" />}
+      titulo="Métricas generales"
+      descripcion="El programa en conjunto. El resto del equipo no ve esta sección."
+    >
+      <CajaCuerpo>
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_2fr_1fr] gap-4">
-        <div className="bg-white border border-borde rounded-[20px] px-6 py-5">
+        <div className="bg-campo border border-borde-suave rounded-[20px] px-6 py-5">
           <div className="font-serif text-[40px] leading-none text-verde-profundo">{patients.length}</div>
           <p className="m-0 mt-2 text-[14px] text-tinta-suave">pacientes en el programa</p>
         </div>
 
-        <div className="bg-white border border-borde rounded-[20px] px-6 py-5 sm:col-span-2 lg:col-span-1 sm:order-last lg:order-none">
+        <div className="bg-campo border border-borde-suave rounded-[20px] px-6 py-5 sm:col-span-2 lg:col-span-1 sm:order-last lg:order-none">
           <p className="m-0 mb-3 text-[14px] text-tinta-suave">Evaluación por eje · 4 ejes independientes</p>
           <div className="grid grid-cols-1 min-[440px]:grid-cols-2 gap-x-6 gap-y-2.5">
             {ejes.map(({ eje, counts }) => {
@@ -658,7 +621,7 @@ function MetricasGenerales({ patients }: { patients: PatientRow[] }) {
                       ))}
                     </span>
                   </div>
-                  <div className="flex h-2 rounded-full overflow-hidden bg-campo border border-borde-suave" aria-hidden="true">
+                  <div className="flex h-2 rounded-full overflow-hidden bg-white border border-borde-suave" aria-hidden="true">
                     {n > 0 &&
                       (["verde", "amarillo", "rojo"] as Semaforo[]).map((s) => (
                         <span key={s} className={semaforoData[s].dot} style={{ width: `${(counts[s] / n) * 100}%` }} />
@@ -670,13 +633,14 @@ function MetricasGenerales({ patients }: { patients: PatientRow[] }) {
           </div>
         </div>
 
-        <div className="bg-white border border-borde rounded-[20px] px-6 py-5">
+        <div className="bg-campo border border-borde-suave rounded-[20px] px-6 py-5">
           <div className="font-serif text-[40px] leading-none text-verde-profundo">{total > 0 ? `${Math.round((done / total) * 100)}%` : "—"}</div>
           <p className="m-0 mt-2 text-[14px] text-tinta-suave">
             {total > 0 ? `adherencia · ${done} de ${total} actividades realizadas` : "adherencia · todavía no hay actividades registradas"}
           </p>
         </div>
       </div>
-    </section>
+      </CajaCuerpo>
+    </Caja>
   );
 }

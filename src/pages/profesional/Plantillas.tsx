@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { moduloLabel, type MediaResource } from "../../lib/mediaResources";
-import type { ResourceModulo } from "../../lib/modulos";
+import { moduloTheme, type ResourceModulo } from "../../lib/modulos";
 import { Button } from "../../components/ui/Button";
 import { SelectorRecurso } from "../../components/profesional/SelectorRecurso";
 import { IconoInteractivo, NivelInteractivo } from "../../components/profesional/NivelInteractivo";
@@ -13,6 +13,8 @@ import { DIAS, enFila, formatHora } from "../../lib/planWeek";
 import { CalendarioSemana } from "../../components/profesional/CalendarioSemana";
 import { Modal } from "../../components/ui/Modal";
 import { ResourceEditor } from "../../components/profesional/ResourceEditor";
+import { RowMenu } from "../../components/ui/RowMenu";
+import { Caja, CajaAviso, CajaBarra, CajaCuerpo, CajaPestanas, Pagina } from "../../components/profesional/Caja";
 
 // Plantillas de semana (Fase 4.4) y recursos automáticos (antes «de bienvenida»).
 // Una plantilla es una semana tipo (recursos por día, de domingo a sábado) para
@@ -92,8 +94,7 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
 
   const campo = "min-h-11 px-3.5 rounded-xl border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta w-full";
   return (
-    <section className="rounded-3xl bg-white border border-borde p-5 sm:p-6 grid gap-5">
-      <h2 className="m-0 font-serif font-normal text-[24px]">{inicial ? "Editar plantilla" : "Nueva plantilla"}</h2>
+    <div className="grid gap-5">
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1.5 text-[13.5px] font-semibold text-tinta-suave">
           Nombre
@@ -110,8 +111,8 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
       </div>
       {/* Mismo calendario que el planificador del paciente, con una semana
           genérica de domingo a sábado (sin fechas). */}
-      <div className="rounded-3xl border border-borde overflow-hidden">
-        <p className="m-0 px-5 py-3 border-b border-borde-suave text-[14px] text-tinta-suave">
+      <div className="rounded-[22px] border border-borde overflow-hidden">
+        <p className="m-0 px-5 py-3 bg-[#fcfbf6] border-b border-borde-suave text-[14px] text-tinta-suave">
           <strong className="text-tinta">{tareas.length}</strong> {tareas.length === 1 ? "actividad" : "actividades"} ·{" "}
           <strong className="text-tinta">{7 - diasVacios.length}</strong> de 7 días con actividades · Tocá una celda para agregar un recurso.
         </p>
@@ -180,7 +181,7 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
           onClose={() => setEditandoTarea(null)}
         />
       )}
-    </section>
+    </div>
   );
 }
 
@@ -252,83 +253,128 @@ function EditorTareaPlantilla({
   );
 }
 
-function ListaPlantillas() {
+// Mini semana para la tarjeta: una columna por día con un punto por recurso,
+// del color de su módulo (como la franja de las tarjetas de Biblioteca).
+function SemanaMini({ p }: { p: Plantilla }) {
+  return (
+    <div className="relative h-32 shrink-0 overflow-hidden bg-[linear-gradient(135deg,#6a969c,#3f6a70)] px-4 pt-3.5 pb-3 flex flex-col">
+      <span className="self-start inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/18 text-white text-[10.5px] font-semibold uppercase tracking-[0.06em] backdrop-blur-sm">
+        Semana tipo
+      </span>
+      <div className="mt-auto grid grid-cols-7 gap-1.5 items-end" aria-hidden="true">
+        {DIAS.map((d, i) => {
+          const del = p.tareas.filter((t) => t.dia_idx === i);
+          return (
+            <div key={d} className="grid gap-1 justify-items-center">
+              <div className="flex flex-col-reverse items-center gap-[3px] min-h-[46px]">
+                {del.slice(0, 6).map((t) => (
+                  <span key={t.key} className="w-3.5 h-[6px] rounded-full" style={{ background: moduloTheme[t.modulo]?.from ?? "#fff" }} />
+                ))}
+              </div>
+              <span className="text-[10px] font-bold text-white/75">{d.slice(0, 2)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verArchivadas: boolean; busqueda: string; onEditar: (p: Plantilla | "nueva") => void; onAviso: (texto: string, error?: boolean) => void }) {
   const queryClient = useQueryClient();
   const { data: plantillas, isLoading } = usePlantillas();
-  const [editando, setEditando] = useState<Plantilla | "nueva" | null>(null);
-  const [verArchivadas, setVerArchivadas] = useState(false);
-  const [error, setError] = useState("");
 
   async function duplicar(p: Plantilla) {
     const { error: e } = await supabase.rpc("duplicar_plantilla", { p_id: p.id });
-    if (e) setError(e.message);
+    if (e) onAviso(e.message, true);
+    else onAviso(`Se duplicó «${p.nombre}».`);
     queryClient.invalidateQueries({ queryKey: ["plantillas-semana"] });
   }
   async function archivar(p: Plantilla, archivada: boolean) {
     const { error: e } = await supabase.from("plantillas_semana").update({ archivada }).eq("id", p.id);
-    if (e) setError(e.message);
+    if (e) onAviso(e.message, true);
+    else onAviso(archivada ? `«${p.nombre}» se archivó.` : `«${p.nombre}» volvió a las activas.`);
     queryClient.invalidateQueries({ queryKey: ["plantillas-semana"] });
   }
   async function borrar(p: Plantilla) {
     if (!window.confirm(`¿Borrar la plantilla «${p.nombre}»? No afecta a las semanas ya publicadas.`)) return;
     const { error: e } = await supabase.from("plantillas_semana").delete().eq("id", p.id);
-    if (e) setError(e.message);
+    if (e) onAviso(e.message, true);
+    else onAviso(`«${p.nombre}» se borró.`);
     queryClient.invalidateQueries({ queryKey: ["plantillas-semana"] });
   }
 
-  if (editando) return <EditorPlantilla inicial={editando === "nueva" ? null : editando} onCerrar={() => setEditando(null)} />;
-  const visibles = (plantillas ?? []).filter((p) => p.archivada === verArchivadas);
-  return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <label className="flex items-center gap-2 text-[14px] text-tinta-suave cursor-pointer">
-          <input type="checkbox" checked={verArchivadas} onChange={(e) => setVerArchivadas(e.target.checked)} /> Ver archivadas
-        </label>
-        <Button dense onClick={() => setEditando("nueva")}>
-          + Nueva plantilla
-        </Button>
+  const q = busqueda.trim().toLowerCase();
+  const visibles = (plantillas ?? []).filter((p) => p.archivada === verArchivadas && (!q || `${p.nombre} ${p.perfil_objetivo ?? ""} ${p.descripcion ?? ""}`.toLowerCase().includes(q)));
+  if (isLoading) return <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>;
+  if (visibles.length === 0)
+    return (
+      <div className="rounded-[22px] border-[1.5px] border-dashed border-borde-campo bg-campo/50 py-12 px-6 text-center">
+        <p className="m-0 font-serif text-[22px] text-tinta">{q ? "Ninguna plantilla coincide" : verArchivadas ? "No hay plantillas archivadas" : "Todavía no hay plantillas"}</p>
+        <p className="m-0 mt-1 text-[14px] text-tinta-suave">{q ? "Probá con otra búsqueda." : verArchivadas ? "Las que archives aparecen acá." : "Creá la primera con los recursos de una semana tipo."}</p>
+        {!q && !verArchivadas && (
+          <div className="mt-5">
+            <Button dense onClick={() => onEditar("nueva")}>
+              + Nueva plantilla
+            </Button>
+          </div>
+        )}
       </div>
-      {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
-      {isLoading ? null : visibles.length === 0 ? (
-        <p className="m-0 rounded-3xl bg-white border border-borde p-6 text-[15px] text-tinta-suave">
-          {verArchivadas ? "No hay plantillas archivadas." : "Todavía no hay plantillas. Creá la primera con los recursos de una semana tipo."}
-        </p>
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {visibles.map((p) => {
-            const dias = new Set(p.tareas.map((t) => t.dia_idx)).size;
-            const porModulo = new Map<string, number>();
-            for (const t of p.tareas) porModulo.set(moduloLabel[t.modulo], (porModulo.get(moduloLabel[t.modulo]) ?? 0) + 1);
-            return (
-              <article key={p.id} className="rounded-3xl bg-white border border-borde p-5 grid gap-3">
-                <div>
-                  <h3 className="m-0 text-[17px] font-bold">{p.nombre}</h3>
-                  {p.perfil_objetivo && <p className="m-0 mt-0.5 text-[13.5px] font-semibold text-verde-profundo">{p.perfil_objetivo}</p>}
-                  {p.descripcion && <p className="m-0 mt-1.5 text-[14px] leading-relaxed text-tinta-suave">{p.descripcion}</p>}
-                </div>
-                <p className="m-0 text-[13px] text-tinta-tenue">
-                  {p.tareas.length} recursos en {dias} {dias === 1 ? "día" : "días"}
-                  {porModulo.size > 0 && ` · ${[...porModulo.entries()].map(([m, n]) => `${m} ${n}`).join(", ")}`}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button dense variant="secondary" onClick={() => setEditando(p)}>
-                    Editar
-                  </Button>
-                  <Button dense variant="secondary" onClick={() => duplicar(p)}>
-                    Duplicar
-                  </Button>
-                  <Button dense variant="secondary" onClick={() => archivar(p, !p.archivada)}>
-                    {p.archivada ? "Restaurar" : "Archivar"}
-                  </Button>
-                  <button type="button" onClick={() => borrar(p)} className="min-h-10 px-3 bg-transparent border-0 text-[13.5px] text-alerta-texto cursor-pointer">
-                    Borrar
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+    );
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      {visibles.map((p) => {
+        const dias = new Set(p.tareas.map((t) => t.dia_idx)).size;
+        const porModulo = new Map<ResourceModulo, number>();
+        for (const t of p.tareas) porModulo.set(t.modulo, (porModulo.get(t.modulo) ?? 0) + 1);
+        return (
+          <article
+            key={p.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => onEditar(p)}
+            onKeyDown={(e) => {
+              if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                onEditar(p);
+              }
+            }}
+            className={`group relative flex flex-col rounded-[22px] border overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-[3px] hover:shadow-elevada focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${
+              p.archivada ? "border-borde-suave bg-campo/60 opacity-80" : "border-borde bg-white"
+            }`}
+          >
+            <SemanaMini p={p} />
+            <div className="absolute top-2.5 right-2.5" onClick={(e) => e.stopPropagation()}>
+              <span className="w-9 h-9 rounded-full bg-white/90 inline-flex items-center justify-center">
+                <RowMenu
+                  items={[
+                    { label: "Editar", onClick: () => onEditar(p) },
+                    { label: "Duplicar", onClick: () => duplicar(p) },
+                    { label: p.archivada ? "Restaurar" : "Archivar", onClick: () => archivar(p, !p.archivada) },
+                    { label: "Borrar", danger: true, onClick: () => borrar(p) },
+                  ]}
+                />
+              </span>
+            </div>
+            <div className="flex flex-col flex-1 gap-2 p-4.5">
+              <h3 className="m-0 text-[17px] font-bold leading-snug text-tinta group-hover:text-verde-profundo">{p.nombre}</h3>
+              {p.perfil_objetivo && <p className="m-0 text-[13.5px] font-semibold text-verde-profundo">{p.perfil_objetivo}</p>}
+              {p.descripcion && <p className="m-0 text-[14px] leading-relaxed text-tinta-suave line-clamp-3">{p.descripcion}</p>}
+              <div className="mt-auto pt-2 flex flex-wrap gap-1.5">
+                <span className="inline-flex items-center h-6 px-2.5 rounded-full bg-campo border border-borde-suave text-[12px] font-bold text-tinta-suave">
+                  {p.tareas.length} {p.tareas.length === 1 ? "recurso" : "recursos"} · {dias} {dias === 1 ? "día" : "días"}
+                </span>
+                {[...porModulo.entries()].map(([m, n]) => (
+                  <span key={m} className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[12px] font-bold" style={{ background: `${moduloTheme[m]?.from}55`, color: moduloTheme[m]?.ink }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: moduloTheme[m]?.to }} />
+                    {moduloLabel[m]} {n}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -455,14 +501,10 @@ function RecursosAutomaticos() {
   }
 
   return (
-    <div className="grid gap-5">
-      <p className="m-0 text-[14.5px] leading-relaxed text-tinta-suave max-w-[56em]">
-        Recursos que se agregan solos al plan de cada cuenta según lo que pase: al crearla, al aprobarla, al asignar sus semanas o una sola vez,
-        cuando vos decidas. Se ven igual que los recursos que asignás a mano. Un recurso que ya está en esa semana no se repite.
-      </p>
-      {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
+    <div className="grid">
+      {error && <p className="m-0 mb-4 rounded-2xl bg-alerta px-4 py-2.5 text-[14px] text-alerta-texto">{error}</p>}
       {aviso && (
-        <p className="m-0 rounded-2xl bg-verde-tenue px-4 py-2.5 text-[14px] text-verde-profundo" role="status">
+        <p className="m-0 mb-4 rounded-2xl bg-verde-tenue px-4 py-2.5 text-[14px] text-verde-profundo" role="status">
           {aviso}
         </p>
       )}
@@ -471,13 +513,13 @@ function RecursosAutomaticos() {
         const grupo = (filas ?? []).filter((f) => f.disparador === d.id);
         const inmediato = d.id === "inmediato";
         return (
-          <section key={d.id} className="rounded-3xl bg-white border border-borde p-5 sm:p-6 grid gap-3.5" aria-labelledby={`disp-${d.id}`}>
+          <section key={d.id} className="grid gap-3.5 py-6 first-of-type:pt-0 last:pb-0 border-t first-of-type:border-t-0 border-borde-suave" aria-labelledby={`disp-${d.id}`}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 max-w-[46em]">
-                <h2 id={`disp-${d.id}`} className="m-0 text-[17px] font-bold text-tinta">
+                <h3 id={`disp-${d.id}`} className="m-0 text-[17px] font-extrabold text-tinta">
                   {d.titulo}
-                  <span className="ml-2 align-middle rounded-full bg-campo px-2.5 py-0.5 text-[12.5px] font-semibold text-tinta-suave">{grupo.length}</span>
-                </h2>
+                  <span className="ml-2 align-middle rounded-full bg-campo border border-borde px-2.5 py-0.5 text-[12.5px] font-extrabold text-tinta-suave">{grupo.length}</span>
+                </h3>
                 <p className="m-0 mt-1 text-[14px] leading-relaxed text-tinta-suave">{d.detalle}</p>
                 <p className="m-0 mt-0.5 text-[13px] text-tinta-tenue">{d.dia}</p>
               </div>
@@ -592,34 +634,114 @@ function RecursosAutomaticos() {
   );
 }
 
+type PestanaPlantillas = "plantillas" | "automaticos";
+
 export function Plantillas() {
-  const [tab, setTab] = useState<"plantillas" | "automaticos">("plantillas");
+  const [tab, setTab] = useState<PestanaPlantillas>("plantillas");
+  const [editando, setEditando] = useState<Plantilla | "nueva" | null>(null);
+  const [verArchivadas, setVerArchivadas] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [aviso, setAviso] = useState<{ texto: string; error?: boolean } | null>(null);
+  const { data: plantillas } = usePlantillas();
+  const activas = (plantillas ?? []).filter((p) => !p.archivada).length;
+  const archivadas = (plantillas ?? []).length - activas;
+
+  if (editando)
+    return (
+      <Pagina>
+        <Caja
+          eyebrow="Plantillas · semana tipo"
+          titulo={editando === "nueva" ? "Nueva plantilla" : editando.nombre}
+          descripcion="Elegí los recursos de cada día. En el planificador del paciente se puede partir de esta semana."
+          acciones={
+            <Button dense variant="secondary" onClick={() => setEditando(null)}>
+              ← Volver a las plantillas
+            </Button>
+          }
+        >
+          <CajaCuerpo>
+            <EditorPlantilla
+              inicial={editando === "nueva" ? null : editando}
+              onCerrar={() => {
+                setEditando(null);
+              }}
+            />
+          </CajaCuerpo>
+        </Caja>
+      </Pagina>
+    );
+
   return (
-    <div className="im-in max-w-[1180px] mx-auto px-5 py-8 sm:px-8 lg:py-10 grid gap-6">
-      <div>
-        <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Plantillas</p>
-        <h1 className="m-0 font-serif font-normal text-[30px] sm:text-[36px]">Semanas tipo y recursos automáticos</h1>
-      </div>
-      <div role="tablist" className="flex flex-wrap gap-2">
-        {(
-          [
-            ["plantillas", "Plantillas de semana"],
-            ["automaticos", "Recursos automáticos"],
-          ] as const
-        ).map(([k, t]) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={tab === k}
-            onClick={() => setTab(k)}
-            className={`min-h-10 px-4 rounded-full border-0 font-sans font-semibold text-[14.5px] cursor-pointer ${tab === k ? "bg-tinta text-white" : "bg-campo text-tinta-suave"}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-      {tab === "plantillas" ? <ListaPlantillas /> : <RecursosAutomaticos />}
-    </div>
+    <Pagina>
+      <Caja
+        eyebrow="Plantillas"
+        titulo="Semanas tipo y recursos automáticos"
+        descripcion={
+          tab === "plantillas"
+            ? "Semanas armadas para un perfil, listas para usar como punto de partida al planificar."
+            : "Recursos que se agregan solos al plan de cada cuenta: al crearla, al aprobarla, al asignar sus semanas o una sola vez, cuando vos decidas. Un recurso que ya está en esa semana no se repite."
+        }
+        acciones={
+          tab === "plantillas" ? (
+            <Button dense onClick={() => setEditando("nueva")}>
+              + Nueva plantilla
+            </Button>
+          ) : undefined
+        }
+        pie={
+          <CajaPestanas
+            etiqueta="Plantillas"
+            activa={tab}
+            onCambiar={(t) => {
+              setTab(t);
+              setAviso(null);
+            }}
+            pestanas={[
+              { id: "plantillas", label: "Plantillas de semana", n: activas },
+              { id: "automaticos", label: "Recursos automáticos" },
+            ]}
+          />
+        }
+      >
+        {aviso && <CajaAviso texto={aviso.texto} error={aviso.error} onCerrar={() => setAviso(null)} />}
+        {tab === "plantillas" && (
+          <CajaBarra>
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar plantilla o perfil"
+              aria-label="Buscar plantilla o perfil"
+              className="flex-1 min-w-[220px] max-w-[520px] min-h-11 px-4 rounded-full border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta focus:border-verde-serenidad focus:outline-none"
+            />
+            <div role="group" aria-label="Mostrar" className="inline-flex p-1 rounded-full bg-white border-[1.5px] border-borde-campo">
+              {(
+                [
+                  [false, `Activas · ${activas}`],
+                  [true, `Archivadas · ${archivadas}`],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={String(v)}
+                  type="button"
+                  aria-pressed={verArchivadas === v}
+                  onClick={() => setVerArchivadas(v)}
+                  className={`h-9 px-3.5 rounded-full border-0 font-sans text-[13.5px] cursor-pointer ${verArchivadas === v ? "bg-tinta text-white font-bold" : "bg-transparent text-tinta-suave font-semibold hover:text-tinta"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </CajaBarra>
+        )}
+        <CajaCuerpo>
+          {tab === "plantillas" ? (
+            <ListaPlantillas verArchivadas={verArchivadas} busqueda={busqueda} onEditar={setEditando} onAviso={(texto, error) => setAviso({ texto, error })} />
+          ) : (
+            <RecursosAutomaticos />
+          )}
+        </CajaCuerpo>
+      </Caja>
+    </Pagina>
   );
 }
