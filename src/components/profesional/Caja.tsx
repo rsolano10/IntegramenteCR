@@ -52,8 +52,8 @@ export function Caja({
   return (
     <section id={id} aria-labelledby={id ? `${id}-titulo` : undefined} className="scroll-mt-24 min-w-0 bg-white border border-borde rounded-[28px] overflow-hidden shadow-elevada">
       <div className={`relative overflow-hidden bg-[linear-gradient(120deg,#fbf3df_0%,#fdf9ef_38%,#ffffff_75%)] ${children ? "border-b border-borde-suave" : ""}`}>
-        <Roseta />
-        <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-4 px-5 py-5 sm:px-8 sm:py-6">
+        <SelloMarca />
+        <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-4 px-5 py-5 pr-14 sm:px-8 sm:py-6 sm:pr-[136px]">
           <div className="flex items-center gap-4 min-w-0">
             {inicio}
             <div className="min-w-0">
@@ -132,17 +132,22 @@ export function CajaAviso({ texto, error, onCerrar }: { texto: string; error?: b
   );
 }
 
-// Adorno: un rosetón tenue en la esquina del encabezado (el sello de la
-// clínica en todas las pantallas).
-function Roseta() {
-  const petalos = Array.from({ length: 12 }, (_, i) => i * 30);
+// Sello de la marca: el isotipo de IntegraMente (las tres gotas: verde
+// serenidad, beige y mostaza) grande y tenue, asomando por la esquina del
+// encabezado. Dibujado en SVG para que se vea nítido a cualquier tamaño.
+// Gota de 100×100 con la punta abajo a la derecha.
+const GOTA = "M0 50A50 50 0 0 1 50 0A50 50 0 0 1 100 50V100H50A50 50 0 0 1 0 50Z";
+
+export function Isotipo({ className = "" }: { className?: string }) {
   return (
-    <svg className="pointer-events-none absolute -right-10 -top-14 w-[220px] h-[220px] text-mostaza-vital opacity-40 max-sm:hidden" viewBox="-50 -50 100 100" aria-hidden="true">
-      {petalos.map((r) => (
-        <ellipse key={r} cx="0" cy="-26" rx="6.5" ry="17" fill="none" stroke="currentColor" strokeWidth="1.2" transform={`rotate(${r})`} />
-      ))}
-      <circle r="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <circle r="3.5" fill="currentColor" />
+    <svg className={className} viewBox="0 0 138 132" aria-hidden="true">
+      <path d={GOTA} fill="#58979d" transform="translate(40 40) rotate(8) scale(0.7) translate(-50 -50)" />
+      <path d={GOTA} fill="#ede8d0" transform="translate(109 40) rotate(98) scale(0.57) translate(-50 -50)" />
+      <path d={GOTA} fill="#f4c372" transform="translate(29 106) rotate(-82) scale(0.57) translate(-50 -50)" />
     </svg>
   );
+}
+
+function SelloMarca() {
+  return <Isotipo className="pointer-events-none absolute right-6 top-5 w-[84px] h-auto opacity-[0.55] max-sm:w-[46px] max-sm:right-4 max-sm:top-4 max-sm:opacity-[0.45]" />;
 }
