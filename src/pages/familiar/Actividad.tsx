@@ -13,6 +13,7 @@ import { origenDeActividad, useVolver } from "../../lib/useVolver";
 import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 import type { PlanDayStatus } from "../../lib/mockData";
 import { BotonVolver } from "../../components/ui/BotonVolver";
+import { RegistroJuegoContexto, type RegistroJuego } from "../../lib/actividades/registroJuego";
 
 const regMessages: Record<string, string> = {
   done: "Registrado. ¡Bien hecho!",
@@ -121,6 +122,19 @@ export function Actividad() {
     );
   }
 
+  // Juego de hoy sin registrar: el cierre del juego registra.
+  // Se mantiene después de guardar para que el cierre muestre «Registrado».
+  const registroJuego: RegistroJuego | null = realizable || saved
+    ? {
+        guardar: async (v, dificultad, comentario) => {
+          await markRegistro(task.id, v, comentario, dificultad);
+          setSaved(v);
+        },
+        onListo: () => navigate(origen.ruta, { replace: true }),
+        textoListo: `Volver a ${origen.nombre}`,
+      }
+    : null;
+
   // Datos de la actividad, discretos, debajo del título: área, hora y duración.
   const datos = [
     task.modulo ? moduloLabel[task.modulo] : null,
@@ -202,7 +216,9 @@ export function Actividad() {
 
       <div className="grid gap-4.5 mb-4.5">
         {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia />}
-        <ResourceDetailView content={contenidoDeTarea(task, "", etapas, pasos)} />
+        <RegistroJuegoContexto.Provider value={registroJuego}>
+          <ResourceDetailView content={contenidoDeTarea(task, "", etapas, pasos)} />
+        </RegistroJuegoContexto.Provider>
       </div>
 
       {task.notaClinica && (

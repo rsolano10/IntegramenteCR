@@ -23,7 +23,7 @@ export function Modal({
   // "lg" is for forms/content too dense for the 520px default (patient and
   // account detail, media resources, plan assignment) — a pure width swap,
   // every modal's internal layout already wraps responsively.
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
   // No inner padding — for modals that draw their own full-bleed header
   // (MiPerfilModal). The × floats over the corner instead of in the flow.
   bare?: boolean;
@@ -53,7 +53,7 @@ export function Modal({
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const sizeClass = size === "lg" ? "sm:max-w-[700px]" : "sm:max-w-[520px]";
+  const sizeClass = size === "xl" ? "sm:max-w-[1000px]" : size === "lg" ? "sm:max-w-[700px]" : "sm:max-w-[520px]";
   const toneClass = tone === "danger" ? "border-[1.5px] border-alerta-borde" : "";
 
   return (

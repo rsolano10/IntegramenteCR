@@ -8,7 +8,8 @@ import { PillToggle } from "../../ui/PillToggle";
 import { evaluarAsignacion, gruposDeLaSemana, type Resultado } from "../../../lib/reglasRecursos";
 import { usePerfilRecursos } from "../../../lib/usePerfilRecursos";
 import { esInteractivo } from "../../../lib/clasificarNumeros";
-import type { Nivel } from "../../../lib/actividades/contrato";
+import { nivelDe, type Nivel } from "../../../lib/actividades/contrato";
+import type { OrigenNivel } from "../../../lib/actividades/nivelSugerido";
 import { FiltroInteractivos, MarcaInteractivo, NivelInteractivo } from "../NivelInteractivo";
 
 export interface DraftTask {
@@ -50,6 +51,7 @@ export function TaskEditorModal({
   days,
   patientId,
   recursosSemana = [],
+  nivelPara,
   initial,
   onSave,
   onDelete,
@@ -58,6 +60,8 @@ export function TaskEditorModal({
   days: { dia: string; date: Date }[];
   patientId: string;
   recursosSemana?: string[];
+  /** Nivel con el que se propone asignar cada juego a esta persona. */
+  nivelPara?: (resourceId: string, delRecurso: Nivel) => { nivel: Nivel; origen: OrigenNivel };
   initial: Partial<DraftTask> & { dia: string };
   onSave: (task: DraftTask) => void;
   onDelete?: () => void;
@@ -98,6 +102,8 @@ export function TaskEditorModal({
   });
 
   const selected = (resources ?? []).find((r) => r.id === resourceId) ?? null;
+  const esJuego = selected?.extras?.modo === "interactiva";
+  const sugerido = esJuego && selected?.extras?.modo === "interactiva" && nivelPara ? nivelPara(selected.id, nivelDe(selected.extras)) : undefined;
 
   // Reglas de seguridad (src/lib/reglasRecursos.ts) con el perfil del
   // paciente y lo que ya tiene esta semana.
@@ -141,7 +147,7 @@ export function TaskEditorModal({
         mediaResourceId: selected.id,
         modulo: selected.modulo,
         indicacionIndividual: indicacion.trim(),
-        nivelInteractivo: selected.extras?.modo === "interactiva" ? nivel : null,
+        nivelInteractivo: selected.extras?.modo === "interactiva" ? (nivel ?? sugerido?.nivel ?? nivelDe(selected.extras)) : null,
       });
       return;
     }
@@ -246,7 +252,7 @@ export function TaskEditorModal({
               </button>
             </div>
             {selected.por_que && <p className="m-0 mt-2.5 text-[14px] leading-relaxed text-tinta-suave">{selected.por_que}</p>}
-            {selected.extras?.modo === "interactiva" && <NivelInteractivo extras={selected.extras} valor={nivel} onChange={setNivel} />}
+            {selected.extras?.modo === "interactiva" && <NivelInteractivo extras={selected.extras} valor={nivel} onChange={setNivel} sugerido={sugerido} />}
             {selected.precaucion && (
               <p className="m-0 mt-2 text-[13px] leading-relaxed text-aviso-texto">
                 <strong>Precaución:</strong> {selected.precaucion}

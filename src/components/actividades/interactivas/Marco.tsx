@@ -1,4 +1,6 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { Suspense, lazy, useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { RegistroJuegoContexto, type RegistroJuego, type ValorRegistro } from "../../../lib/actividades/registroJuego";
+import { DIFICULTADES, dificultadLabel, type Dificultad } from "../../../lib/actividades/nivelSugerido";
 import { nuevaSemilla } from "../../../lib/actividades/azar";
 import type { ExtrasInteractiva } from "../../../lib/actividades/contrato";
 import { prepararSesion } from "../../../lib/actividades/registro";
@@ -14,7 +16,9 @@ import { Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
 // (para lectores: «Ejercicio 2 de 5»); mensajes en una región aria-live;
 // «Ver una pista» tras 2 intentos en el mismo paso; «Terminar por hoy»
 // siempre a mano; cierre con el momento final del lugar, sin resumen de
-// desempeño. No guarda nada ni toca el registro Sí / En parte / No.
+// desempeño. Si la pantalla da un registro (actividad de hoy sin
+// registrar), el cierre pregunta «¿Cómo le resultó?» y «¿Lo pudieron
+// hacer?» y lo guarda; si no, no guarda nada.
 
 export interface PropsJuego {
   ejercicio: unknown;
@@ -43,6 +47,19 @@ const ESCENAS: Record<string, ReturnType<typeof escena>> = {
   "orientacion-hoy": escena(() => import("../pueblo/Almanaque") as unknown as Promise<ModuloEscena>),
 };
 
+// Portada de un juego (la escena de su lugar), para las tarjetas de la
+// Biblioteca. Sin la escena (juegos anteriores), nada.
+export function PortadaDeJuego({ tipo }: { tipo: string }) {
+  const lugar = ESCENAS[tipo];
+  if (!lugar) return null;
+  const { Portada } = lugar;
+  return (
+    <Suspense fallback={<Cargando />}>
+      <Portada />
+    </Suspense>
+  );
+}
+
 type Mensaje = { tipo: "ok" | "reintento" | "info"; texto: string } | null;
 
 const Cargando = () => <div className="min-h-[280px] rounded-[20px] bg-beige-serenidad/60" aria-busy="true" />;
@@ -61,6 +78,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   const [barra, setBarra] = useState<HTMLDivElement | null>(null);
   const zona = useRef<HTMLDivElement>(null);
   const cine = usePantallaCompleta();
+  const registro = useContext(RegistroJuegoContexto);
   useEffect(() => () => detenerVoz(), []);
 
   // Al cambiar de ejercicio, el foco vuelve al comienzo (teclado y lectores).
@@ -246,9 +264,10 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
             </Suspense>
             <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
             <p className={`m-0 text-tinta-suave ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
+            {registro && <CierreConRegistro registro={registro} large={large} />}
             <div className="w-full max-w-sm grid gap-1 mt-2">
               <Boton
-                variante="secundario"
+                variante={registro ? "texto" : "secundario"}
                 large={large}
                 className="w-full"
                 onClick={() => {
@@ -256,7 +275,7 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
                   setFase("inicio");
                 }}
               >
-                Volver al inicio
+                {registro ? "Jugar otra vez" : "Volver al inicio"}
               </Boton>
               {cine.activo && botonCine}
             </div>
@@ -264,6 +283,110 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
         )}
       </div>
     </section>
+  );
+}
+
+// Registro en el cierre: cómo le resultó (opcional) y si lo pudieron hacer.
+// «En parte» pide qué ayuda necesitó, como en el resto de la app.
+function CierreConRegistro({ registro, large }: { registro: RegistroJuego; large: boolean }) {
+  const [dificultad, setDificultad] = useState<Dificultad | null>(null);
+  const [paso, setPaso] = useState<"preguntas" | "ayuda" | "listo">("preguntas");
+  const [ayuda, setAyuda] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+  const texto = large ? "text-[20px]" : "text-[18px]";
+  const titulo = `m-0 font-semibold text-tinta ${large ? "text-[22px]" : "text-[19px]"}`;
+
+  async function guardar(v: ValorRegistro, comentario?: string) {
+    setGuardando(true);
+    setError("");
+    try {
+      await registro.guardar(v, dificultad, comentario);
+      setPaso("listo");
+    } catch {
+      setError("No pudimos guardar. Probá de nuevo.");
+    }
+    setGuardando(false);
+  }
+
+  if (paso === "listo")
+    return (
+      <div className="w-full max-w-md grid gap-3 mt-2">
+        <p className={`m-0 rounded-2xl bg-fila-fria px-4 py-3 text-semaforo-verde-texto ${texto}`}>Registrado. ¡Gracias por contarnos!</p>
+        {registro.onListo && (
+          <Boton large={large} className="w-full" onClick={registro.onListo} autoFocus>
+            {registro.textoListo ?? "Volver"}
+          </Boton>
+        )}
+      </div>
+    );
+
+  if (paso === "ayuda")
+    return (
+      <div className="w-full max-w-md grid gap-3 mt-2 text-left">
+        <label className={titulo} htmlFor="ayuda-juego">
+          ¿Qué ayuda necesitó?
+        </label>
+        <textarea
+          id="ayuda-juego"
+          value={ayuda}
+          onChange={(e) => setAyuda(e.target.value)}
+          rows={3}
+          autoFocus
+          placeholder="Ej.: hubo que recordarle la consigna, le ayudamos a tocar las piezas…"
+          className={`w-full rounded-2xl border-[1.5px] border-borde-campo bg-white px-4 py-3 font-sans leading-relaxed text-tinta resize-y ${large ? "text-[19px]" : "text-[17px]"}`}
+        />
+        {error && <p className="m-0 text-[15px] text-alerta-texto">{error}</p>}
+        <div className="grid grid-cols-2 gap-2">
+          <Boton variante="secundario" large={large} onClick={() => setPaso("preguntas")} disabled={guardando}>
+            Atrás
+          </Boton>
+          <Boton large={large} onClick={() => ayuda.trim() && guardar("partial", ayuda.trim())} disabled={!ayuda.trim() || guardando}>
+            {guardando ? "Guardando…" : "Guardar"}
+          </Boton>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="w-full max-w-md grid gap-5 mt-3 rounded-[24px] bg-white/80 border border-borde px-4 py-5 sm:px-6">
+      <fieldset className="m-0 p-0 border-0 grid gap-2.5">
+        <legend className={`${titulo} mb-2.5 mx-auto`}>¿Cómo le resultó?</legend>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup">
+          {DIFICULTADES.map((d) => (
+            <button
+              key={d}
+              type="button"
+              role="radio"
+              aria-checked={dificultad === d}
+              onClick={() => setDificultad(dificultad === d ? null : d)}
+              className={`min-h-14 rounded-2xl border-2 font-sans font-semibold cursor-pointer focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${texto} ${
+                dificultad === d ? "border-tinta bg-tinta text-white" : "border-borde-campo bg-white text-tinta hover:border-verde-serenidad"
+              }`}
+            >
+              {dificultadLabel[d]}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <div className="grid gap-2.5">
+        <p className={titulo}>¿Lo pudieron hacer?</p>
+        <div className="grid gap-2">
+          <Boton large={large} onClick={() => guardar("done")} disabled={guardando}>
+            Sí
+          </Boton>
+          <div className="grid grid-cols-2 gap-2">
+            <Boton variante="secundario" large={large} onClick={() => setPaso("ayuda")} disabled={guardando}>
+              En parte
+            </Boton>
+            <Boton variante="secundario" large={large} onClick={() => guardar("no")} disabled={guardando}>
+              No
+            </Boton>
+          </div>
+        </div>
+        {error && <p className="m-0 text-[15px] text-alerta-texto">{error}</p>}
+      </div>
+    </div>
   );
 }
 

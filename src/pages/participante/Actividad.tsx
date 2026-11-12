@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
+import { RegistroJuegoContexto, type RegistroJuego } from "../../lib/actividades/registroJuego";
 import { BigActionButton } from "../../components/ui/BigActionButton";
 import { OptionGroup } from "../../components/ui/OptionGroup";
 import { PlayIcon } from "../../components/ui/Icons";
@@ -39,6 +40,7 @@ export function ParticipanteActividad() {
   const [razon, setRazon] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [registradoEnJuego, setRegistradoEnJuego] = useState(false);
 
   if (loadingPlan) return <div className="flex-1" />;
 
@@ -54,6 +56,18 @@ export function ParticipanteActividad() {
   }
 
   const showReg = estadoToReg[task.estado] ?? null;
+  // Juego sin registrar: el cierre del juego registra.
+  const registroJuego: RegistroJuego | null =
+    showReg && !registradoEnJuego
+      ? null
+      : {
+        guardar: async (v, dificultad, comentario) => {
+          await markRegistro(task.id, v, comentario, dificultad);
+          setRegistradoEnJuego(true);
+        },
+        onListo: () => navigate("/app/participante/hoy"),
+        textoListo: "Volver a Hoy",
+      };
   const pasos = task.pasos && task.pasos.length > 0 ? task.pasos : task.detalle ? [task.detalle] : [];
 
   function pick(v: "done" | "partial" | "no") {
@@ -197,10 +211,12 @@ export function ParticipanteActividad() {
 
       <div className="grid gap-4">
         {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia large />}
-        <ResourceDetailView
-          size="large"
-          content={contenidoDeTarea(task, `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas, pasos)}
-        />
+        <RegistroJuegoContexto.Provider value={registroJuego}>
+          <ResourceDetailView
+            size="large"
+            content={contenidoDeTarea(task, `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas, pasos)}
+          />
+        </RegistroJuegoContexto.Provider>
       </div>
 
       {task.notaClinica && (

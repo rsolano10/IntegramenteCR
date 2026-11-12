@@ -13,6 +13,7 @@ import { Button } from "./Button";
 import { BigActionButton } from "./BigActionButton";
 import { WarningIcon } from "./Icons";
 import { MaterialDeApoyo } from "./ResourceDetailView";
+import { RegistroJuegoContexto } from "../../lib/actividades/registroJuego";
 
 // Modo paso a paso: una cosa por pantalla, a pantalla completa (se llega
 // desde "Empezar" en Hoy, desde la actividad o desde el recordatorio de
@@ -267,8 +268,22 @@ export function StepByStepActivity({
     if (fase.tipo === "juego" && task.extras) {
       return shell(
         <div>
-          <MaterialDeApoyo extras={task.extras} large={large} />
-          {/* Terminar el juego no registra la actividad: eso lo hace la persona o su familiar. */}
+          {/* El cierre del juego pregunta cómo le resultó y lo registra. */}
+          <RegistroJuegoContexto.Provider
+            value={
+              task.estado === "pendiente" || task.estado === "futuro"
+                ? {
+                    guardar: async (v, dificultad, comentario) => {
+                      await markRegistro(task.id, v, comentario, dificultad);
+                      setSaved(v);
+                      setScreen("registro");
+                    },
+                  }
+                : null
+            }
+          >
+            <MaterialDeApoyo extras={task.extras} large={large} />
+          </RegistroJuegoContexto.Provider>
           {navegacion(fases[faseIdx + 1] ? "Siguiente" : "Registrar cómo les fue")}
         </div>,
         progreso,

@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { Caja, CajaAviso, CajaBarra, CajaCuerpo, Pagina } from "../../components/profesional/Caja";
+import { Caja, CajaAviso, CajaBarra, CajaCuerpo, CajaPestanas, Pagina } from "../../components/profesional/Caja";
+import { FichaJuego, GrillaJuegos } from "../../components/profesional/JuegosPueblo";
+import { esInteractivo } from "../../lib/clasificarNumeros";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { RowMenu } from "../../components/ui/RowMenu";
@@ -57,17 +59,28 @@ export function Biblioteca() {
   const [previewing, setPreviewing] = useState<MediaResource | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [pestana, setPestana] = useState<"recursos" | "juegos">("recursos");
+  const [juegoAbierto, setJuegoAbierto] = useState<MediaResource | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (resources ?? []).filter((r) => {
+      // Los juegos tienen su propia pestaña.
+      if ((pestana === "juegos") !== esInteractivo(r.extras)) return false;
       if (moduloFilter && r.modulo !== moduloFilter) return false;
       if (nivelFilter && !(r.niveles_cognitivos ?? []).includes(nivelFilter)) return false;
       if (duracionFilter && !matchesDuracionBucket(r, duracionFilter)) return false;
       if (q && !r.titulo.toLowerCase().includes(q) && !(r.detalle ?? "").toLowerCase().includes(q) && !(r.codigo ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [resources, search, moduloFilter, nivelFilter, duracionFilter]);
+  }, [resources, search, moduloFilter, nivelFilter, duracionFilter, pestana]);
+  const nJuegos = (resources ?? []).filter((r) => esInteractivo(r.extras)).length;
+  const menuDe = (r: MediaResource) => [
+    { label: "Vista previa", onClick: () => (esInteractivo(r.extras) ? setJuegoAbierto(r) : setPreviewing(r)) },
+    { label: esInteractivo(r.extras) ? "Ajustes avanzados" : "Editar", onClick: () => setEditing(r) },
+    { label: r.activo ? "Desactivar" : "Activar", onClick: () => toggleActivo(r) },
+    { label: deleting === r.id ? "Eliminando…" : "Eliminar", danger: true, onClick: () => deleteResource(r) },
+  ];
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ["media-resources"] });
@@ -101,7 +114,24 @@ export function Biblioteca() {
       <Caja
         eyebrow="Biblioteca"
         titulo="Recursos multimedia"
-        descripcion={resources ? `${resources.length} recursos para armar las semanas de las familias.` : null}
+        descripcion={
+          pestana === "juegos"
+            ? "Juegos en pantalla, cada uno en un lugar del pueblo. Elegís cuál y en qué nivel para cada persona."
+            : resources
+              ? `${resources.length - nJuegos} recursos para armar las semanas de las familias.`
+              : null
+        }
+        pie={
+          <CajaPestanas
+            etiqueta="Biblioteca"
+            activa={pestana}
+            onCambiar={setPestana}
+            pestanas={[
+              { id: "recursos", label: "Recursos", n: resources ? resources.length - nJuegos : undefined },
+              { id: "juegos", label: "Juegos del pueblo", n: resources ? nJuegos : undefined },
+            ]}
+          />
+        }
         acciones={
           <Button dense onClick={() => setEditing("new")}>
             + Nuevo recurso
@@ -114,53 +144,48 @@ export function Biblioteca() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar recurso o código"
+              placeholder={pestana === "juegos" ? "Buscar juego" : "Buscar recurso o código"}
               className="flex-1 min-w-[220px] min-h-11 px-4 rounded-full border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta focus:border-verde-serenidad focus:outline-none"
             />
+            {pestana === "recursos" && (
             <FilterDropdown
               label="Módulo"
               options={modulos.map((m) => ({ value: m, label: moduloLabel[m] }))}
               value={moduloFilter}
               onChange={(v) => setModuloFilter(v as ResourceModulo | "")}
             />
+            )}
             <FilterDropdown
               label="Nivel cognitivo"
               options={nivelesCognitivos.map((n) => ({ value: n, label: nivelCognitivoLabel[n] }))}
               value={nivelFilter}
               onChange={(v) => setNivelFilter(v as NivelCognitivo | "")}
             />
+            {pestana === "recursos" && (
             <FilterDropdown
               label="Duración"
               options={(Object.keys(duracionBucketLabel) as DuracionBucket[]).map((b) => ({ value: b, label: duracionBucketLabel[b] }))}
               value={duracionFilter}
               onChange={(v) => setDuracionFilter(v as DuracionBucket | "")}
             />
+            )}
         </CajaBarra>
 
         <CajaCuerpo>
           {isLoading && <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>}
           {loadError && <p className="m-0 text-sm text-alerta-texto">No pudimos cargar los recursos.</p>}
-          {filtered.length === 0 && !isLoading && <p className="m-0 text-sm text-tinta-tenue">Ningún recurso coincide con estos filtros.</p>}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {filtered.map((r) => (
-              <ResourceCard
-                key={r.id}
-                resource={r}
-                onClick={() => setPreviewing(r)}
-                actions={
-                  <RowMenu
-                    items={[
-                      { label: "Vista previa", onClick: () => setPreviewing(r) },
-                      { label: "Editar", onClick: () => setEditing(r) },
-                      { label: r.activo ? "Desactivar" : "Activar", onClick: () => toggleActivo(r) },
-                      { label: deleting === r.id ? "Eliminando…" : "Eliminar", danger: true, onClick: () => deleteResource(r) },
-                    ]}
-                  />
-                }
-              />
-            ))}
-          </div>
+          {pestana === "juegos" ? (
+            !isLoading && <GrillaJuegos juegos={filtered} onAbrir={setJuegoAbierto} menu={menuDe} />
+          ) : (
+            <>
+              {filtered.length === 0 && !isLoading && <p className="m-0 text-sm text-tinta-tenue">Ningún recurso coincide con estos filtros.</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {filtered.map((r) => (
+                  <ResourceCard key={r.id} resource={r} onClick={() => setPreviewing(r)} actions={<RowMenu items={menuDe(r)} />} />
+                ))}
+              </div>
+            </>
+          )}
         </CajaCuerpo>
       </Caja>
 
@@ -173,6 +198,18 @@ export function Biblioteca() {
             invalidate();
           }}
           onError={(msg) => setStatusMsg({ text: msg, error: true })}
+        />
+      )}
+
+      {juegoAbierto && (
+        <FichaJuego
+          r={juegoAbierto}
+          onClose={() => setJuegoAbierto(null)}
+          onAjustes={() => {
+            setEditing(juegoAbierto);
+            setJuegoAbierto(null);
+          }}
+          menu={menuDe(juegoAbierto).filter((m) => m.label !== "Vista previa" && m.label !== "Ajustes avanzados")}
         />
       )}
 

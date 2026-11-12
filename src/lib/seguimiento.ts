@@ -19,6 +19,8 @@ export interface TaskRow {
   titulo: string;
   estado: "pendiente" | "realizado" | "parcial" | "no" | "futuro";
   comentario: string | null;
+  // Juegos: «¿Cómo le resultó?» al cerrar (lo que perciben, no un puntaje).
+  dificultad_percibida?: "facil" | "justo" | "dificil" | null;
   sort_order: number;
   modulo: string | null;
 }

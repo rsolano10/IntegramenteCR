@@ -1,3 +1,4 @@
+import { dificultadLabel } from "../../../lib/actividades/nivelSugerido";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
@@ -50,7 +51,14 @@ export function SemanaDetalle({
                         {t.titulo}
                         {t.hora && <span className="text-[12.5px] text-tinta-tenue"> · {formatHora(t.hora)}</span>}
                       </p>
-                      <span className={`shrink-0 text-[11.5px] font-semibold rounded-full px-2 py-0.5 ${estadoMeta[t.estado].chip}`}>{estadoMeta[t.estado].label}</span>
+                      <span className="shrink-0 flex flex-wrap justify-end gap-1">
+                        {t.dificultad_percibida && (
+                          <span className="text-[11.5px] font-semibold rounded-full px-2 py-0.5 bg-white border border-borde text-tinta-suave" title="Cómo le resultó el juego, según la familia">
+                            Le resultó {dificultadLabel[t.dificultad_percibida].toLowerCase()}
+                          </span>
+                        )}
+                        <span className={`text-[11.5px] font-semibold rounded-full px-2 py-0.5 ${estadoMeta[t.estado].chip}`}>{estadoMeta[t.estado].label}</span>
+                      </span>
                     </div>
                     {t.comentario && (
                       <p className="m-0 mt-1.5 text-[13px] leading-relaxed text-aviso-texto">

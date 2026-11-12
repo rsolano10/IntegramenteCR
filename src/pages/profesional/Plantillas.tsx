@@ -39,8 +39,8 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
     const nueva: TareaPlantilla = { key: nuevaKey(), dia_idx: dia, hora, media_resource_id: r.id, titulo: r.titulo, codigo: r.codigo, modulo: r.modulo, nivel_interactivo: null, extras: r.extras ?? null };
     setTareas((t) => [...t, nueva]);
     setAgregarEn(null);
-    // Actividad interactiva: se pregunta la dificultad al agregarla.
-    if (r.extras?.modo === "interactiva") setEditandoTarea(nueva);
+    // Los juegos entran «según el perfil»: cada paciente recibe el nivel de
+    // su etapa. Se puede fijar uno tocando la actividad.
   }
   const cambiarTarea = (t: TareaPlantilla) => {
     setTareas((xs) => xs.map((x) => (x.key === t.key ? t : x)));
@@ -135,7 +135,7 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
                   <span className="font-semibold">{t.titulo}</span>
                   {esInteractivo(t.extras) ? (
                     <span className="flex items-center gap-1 text-[10.5px] opacity-90">
-                      <IconoInteractivo /> Interactivo{t.nivel_interactivo ? ` · ${nivelLabel[t.nivel_interactivo]}` : ""}
+                      <IconoInteractivo /> Juego · {t.nivel_interactivo ? nivelLabel[t.nivel_interactivo] : "según el perfil"}
                     </span>
                   ) : (
                     <span className="block text-[10.5px] opacity-80">
@@ -234,7 +234,7 @@ function EditorTareaPlantilla({
           <input type="time" className={campo} value={t.hora} onChange={(e) => setT({ ...t, hora: e.target.value })} />
         </label>
       </div>
-      {t.extras?.modo === "interactiva" && <NivelInteractivo extras={t.extras} valor={t.nivel_interactivo} onChange={(n) => setT({ ...t, nivel_interactivo: n })} />}
+      {t.extras?.modo === "interactiva" && <NivelInteractivo extras={t.extras} valor={t.nivel_interactivo} onChange={(n) => setT({ ...t, nivel_interactivo: n })} segunPerfil />}
       <button type="button" onClick={() => setElegir(true)} className="mt-4 min-h-10 px-0 bg-transparent border-0 font-sans text-[14px] font-semibold text-verde-profundo cursor-pointer underline underline-offset-4">
         Cambiar por otro recurso
       </button>

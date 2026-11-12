@@ -264,9 +264,11 @@ export function useMarkRegistro(patientId: string | undefined) {
   const session = useSession();
   const userId = session.status === "authed" ? session.session.user.id : null;
 
-  return async function markRegistro(taskId: string, v: "done" | "partial" | "no", comentario?: string) {
+  return async function markRegistro(taskId: string, v: "done" | "partial" | "no", comentario?: string, dificultad?: "facil" | "justo" | "dificil" | null) {
     const update: Record<string, unknown> = { estado: estadoByReg[v] };
     if (comentario && comentario.trim()) update.comentario = comentario.trim();
+    // «¿Cómo le resultó?» al cerrar un juego (lo que perciben, no un puntaje).
+    if (dificultad) update.dificultad_percibida = dificultad;
     const { error } = await supabase.from("plan_tasks").update(update).eq("id", taskId);
     if (error) throw error;
     if (patientId && userId) {

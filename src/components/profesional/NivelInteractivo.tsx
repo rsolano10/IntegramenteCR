@@ -1,6 +1,7 @@
 import { Suspense, lazy, useState } from "react";
 import { NIVELES, nivelDe, nivelLabel, type ExtrasInteractiva, type Nivel } from "../../lib/actividades/contrato";
 import { resumenNivel } from "../../lib/actividades/registro";
+import type { OrigenNivel } from "../../lib/actividades/nivelSugerido";
 import { Modal } from "../ui/Modal";
 
 const ActividadInteractiva = lazy(() => import("../actividades/interactivas/Marco"));
@@ -13,40 +14,85 @@ export function MarcaInteractivo({ className = "" }: { className?: string }) {
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4.2 15.6a1.5 1.5 0 0 1 2.3-1.9L9 16" />
       </svg>
-      Interactivo
+      Juego
     </span>
   );
 }
 
-// Elegir la dificultad de una actividad interactiva al asignarla. `valor`
-// null = la del recurso (se muestra marcada como «del recurso»).
-export function NivelInteractivo({ extras, valor, onChange }: { extras: ExtrasInteractiva; valor: Nivel | null; onChange: (n: Nivel) => void }) {
+// Elegir la dificultad de un juego al asignarlo. `valor` null = el
+// sugerido (por la última vez que se le asignó, por su etapa o, si no hay
+// datos, el del recurso). En plantillas, null = «Según el perfil» de cada
+// paciente.
+const ORIGEN: Record<OrigenNivel, string> = {
+  elegido: "el que elegiste para esta persona",
+  ultimo: "el mismo de la última vez",
+  etapa: "sugerido por su etapa",
+  recurso: "sugerido del juego",
+};
+
+export function NivelInteractivo({
+  extras,
+  valor,
+  onChange,
+  sugerido,
+  segunPerfil = false,
+}: {
+  extras: ExtrasInteractiva;
+  valor: Nivel | null;
+  onChange: (n: Nivel | null) => void;
+  sugerido?: { nivel: Nivel; origen: OrigenNivel };
+  /** Plantillas: agrega «Según el perfil» (valor null). */
+  segunPerfil?: boolean;
+}) {
   const [probando, setProbando] = useState(false);
-  const delRecurso = nivelDe(extras);
-  const actual = valor ?? delRecurso;
+  const base = sugerido ?? { nivel: nivelDe(extras), origen: "recurso" as const };
+  const actual = valor ?? base.nivel;
+  const perfilElegido = segunPerfil && valor === null;
   return (
     <fieldset className="m-0 mt-3 p-0 border-0 grid gap-2">
-      <legend className="mb-1.5 text-[13px] font-semibold text-tinta-suave">Dificultad para esta persona</legend>
-      <div className="grid grid-cols-3 gap-1.5" role="radiogroup">
-        {NIVELES.map((n) => (
+      <legend className="mb-1.5 text-[13px] font-semibold text-tinta-suave">{segunPerfil ? "Nivel del juego" : "Nivel para esta persona"}</legend>
+      <div className={`grid ${segunPerfil ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"} gap-1.5`} role="radiogroup">
+        {segunPerfil && (
           <button
-            key={n}
             type="button"
             role="radio"
-            aria-checked={actual === n}
-            onClick={() => onChange(n)}
+            aria-checked={perfilElegido}
+            onClick={() => onChange(null)}
             className={`min-h-11 rounded-xl text-[14px] font-semibold cursor-pointer border-[1.5px] ${
-              actual === n ? "bg-verde-profundo border-verde-profundo text-white" : "bg-white border-borde-campo text-tinta-suave hover:border-verde-serenidad"
+              perfilElegido ? "bg-verde-profundo border-verde-profundo text-white" : "bg-white border-borde-campo text-tinta-suave hover:border-verde-serenidad"
             }`}
           >
-            {nivelLabel[n]}
+            Según el perfil
           </button>
-        ))}
+        )}
+        {NIVELES.map((n) => {
+          const marcado = !perfilElegido && actual === n;
+          return (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={marcado}
+              onClick={() => onChange(n)}
+              className={`min-h-11 rounded-xl text-[14px] font-semibold cursor-pointer border-[1.5px] ${
+                marcado ? "bg-verde-profundo border-verde-profundo text-white" : "bg-white border-borde-campo text-tinta-suave hover:border-verde-serenidad"
+              }`}
+            >
+              {nivelLabel[n]}
+            </button>
+          );
+        })}
       </div>
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <p className="m-0 flex-1 min-w-[12rem] text-[13px] leading-relaxed text-tinta-suave">
-          {resumenNivel(extras, actual)}
-          {actual === delRecurso && <span className="text-tinta-tenue"> (nivel del recurso)</span>}
+          {perfilElegido ? (
+            "Cada paciente recibe el nivel de su etapa: suave con demencia, medio con deterioro cognitivo leve, retador en preventivo."
+          ) : (
+            <>
+              {resumenNivel(extras, actual)}
+              {!segunPerfil && valor === null && <span className="text-tinta-tenue"> ({ORIGEN[base.origen]})</span>}
+            </>
+          )}
         </p>
         <button type="button" onClick={() => setProbando(true)} className="shrink-0 text-[13px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none p-0">
           Probar este nivel
@@ -87,7 +133,7 @@ export function FiltroInteractivos({ activo, onChange }: { activo: boolean; onCh
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4.2 15.6a1.5 1.5 0 0 1 2.3-1.9L9 16" />
       </svg>
-      Solo interactivos
+      Solo juegos
     </button>
   );
 }

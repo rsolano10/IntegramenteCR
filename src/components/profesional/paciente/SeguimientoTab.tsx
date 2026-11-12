@@ -1,3 +1,6 @@
+import { useHistorialJuegos } from "../../../lib/useHistorialJuegos";
+import { useCatalogo } from "../../../lib/plantillas";
+import { SugerenciasNivel } from "./SugerenciasNivel";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
@@ -73,12 +76,14 @@ export function SeguimientoTab({
   onPlanNext: () => void;
 }) {
   const planIds = plans.map((p) => p.id);
+  const { sugerencias } = useHistorialJuegos(patientId);
+  const { data: catalogo } = useCatalogo();
   const { data: tasks, isLoading: loadingTasks } = useQuery({
     queryKey: ["seguimiento-tasks", patientId, planIds.join(",")],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("plan_tasks")
-        .select("id, plan_id, dia, hora, titulo, estado, comentario, sort_order, media_resources(modulo)")
+        .select("id, plan_id, dia, hora, titulo, estado, comentario, dificultad_percibida, sort_order, media_resources(modulo)")
         .in("plan_id", planIds)
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -123,6 +128,7 @@ export function SeguimientoTab({
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] items-start">
       <div className="grid gap-6 min-w-0">
+        <SugerenciasNivel sugerencias={sugerencias} titulo={(id) => catalogo?.find((r) => r.id === id)?.titulo ?? "Juego"} onIrAPlanificar={onPlanNext} />
         <PanoramaIA patientId={patientId} />
 
         <div className="grid gap-4 md:grid-cols-2">

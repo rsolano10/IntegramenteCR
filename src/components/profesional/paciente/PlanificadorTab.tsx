@@ -19,7 +19,9 @@ import { Button } from "../../ui/Button";
 import { TaskEditorModal, type DraftTask } from "./TaskEditorModal";
 import { useCatalogo } from "../../../lib/plantillas";
 import { esInteractivo } from "../../../lib/clasificarNumeros";
-import { nivelLabel } from "../../../lib/actividades/contrato";
+import { NIVELES, nivelDe, nivelLabel, type Nivel } from "../../../lib/actividades/contrato";
+import { useHistorialJuegos } from "../../../lib/useHistorialJuegos";
+import { SugerenciasNivel } from "./SugerenciasNivel";
 import { IconoInteractivo } from "../NivelInteractivo";
 
 import type { PlanSummary } from "./SemanaTab";
@@ -139,7 +141,7 @@ export function PlanificadorTab({
 
   function cargarPlantilla(c: CargaPlantilla) {
     if (drafts.length > 0 && !window.confirm("Esto reemplaza las actividades nuevas que ya pusiste en el borrador. ¿Seguimos?")) return;
-    setDrafts(c.drafts);
+    setDrafts(c.drafts.map(conNivel));
     setBorrador({ cambios: c.cambios, aviso: c.aviso, plantillaId: c.plantillaId, iaId: c.iaId });
   }
   async function descartarBorrador() {
@@ -216,6 +218,31 @@ export function PlanificadorTab({
   const { data: catalogo } = useCatalogo();
   const interactivos = useMemo(() => new Set((catalogo ?? []).filter((r) => esInteractivo(r.extras)).map((r) => r.id)), [catalogo]);
 
+  // Juegos: nivel propuesto para esta persona (lo que eligió la clínica en
+  // esta sesión, la última vez que se le asignó, o su etapa) y sugerencias
+  // de subir o bajar según cómo le resultó.
+  const historialJuegos = useHistorialJuegos(patientId);
+  const [preferidos, setPreferidos] = useState<Record<string, Nivel>>({});
+  const juegoPorId = useMemo(() => new Map((catalogo ?? []).filter((r) => r.extras?.modo === "interactiva").map((r) => [r.id, r])), [catalogo]);
+  function nivelPara(resourceId: string, delRecurso: Nivel) {
+    const pref = preferidos[resourceId];
+    return pref ? { nivel: pref, origen: "elegido" as const } : historialJuegos.nivelPara(resourceId, delRecurso);
+  }
+  // Juegos sin nivel (p. ej. de una plantilla «según el perfil»): el propuesto.
+  function conNivel(d: DraftTask): DraftTask {
+    if (!d.mediaResourceId || d.nivelInteractivo) return d;
+    const r = juegoPorId.get(d.mediaResourceId);
+    if (!r || r.extras?.modo !== "interactiva") return d;
+    return { ...d, nivelInteractivo: nivelPara(r.id, nivelDe(r.extras)).nivel };
+  }
+  function cambiarNivelDraft(key: string, nivel: Nivel) {
+    setDrafts((prev) => prev.map((p) => (p.key === key ? { ...p, nivelInteractivo: nivel } : p)));
+  }
+  function aplicarSugerencia(resourceId: string, nivel: Nivel) {
+    setPreferidos((p) => ({ ...p, [resourceId]: nivel }));
+    setDrafts((prev) => prev.map((p) => (p.mediaResourceId === resourceId ? { ...p, nivelInteractivo: nivel } : p)));
+  }
+
   function cellItems(dia: string, hour: number | null) {
     return {
       existing: existentes.filter((t) => t.dia === dia && enFila(t.hora, hour)),
@@ -247,7 +274,7 @@ export function PlanificadorTab({
       return;
     }
     setSaving(true);
-    const payload = draftsInWeek.map((t) => {
+    const payload = draftsInWeek.map(conNivel).map((t) => {
       const task: Record<string, unknown> = {
         dia: t.dia,
         is_today: t.dia === days[0].dia,
@@ -341,6 +368,12 @@ export function PlanificadorTab({
       )}
 
       <DesdePlantilla patientId={patientId} days={days} onCargar={cargarPlantilla} />
+
+      <SugerenciasNivel
+        sugerencias={historialJuegos.sugerencias.filter((sg) => preferidos[sg.resourceId] !== sg.nivel && juegoPorId.has(sg.resourceId))}
+        titulo={(id) => juegoPorId.get(id)?.titulo ?? "Juego"}
+        onAplicar={aplicarSugerencia}
+      />
 
       {borrador && (
         <section className="rounded-3xl bg-white border-[1.5px] border-verde-serenidad p-5 sm:p-6 grid gap-3">
@@ -490,24 +523,34 @@ export function PlanificadorTab({
                       </div>
                     );
                   })}
-                  {items.drafts.map((t) => (
-                    <button
-                      key={t.key}
-                      type="button"
-                      onClick={() => setEditor({ mode: "edit", task: t })}
-                      className="text-left rounded-lg bg-verde-serenidad text-white px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none hover:bg-verde-profundo font-sans"
-                    >
-                      {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
-                      <span className="font-semibold">{t.titulo}</span>
-                      {t.mediaResourceId && interactivos.has(t.mediaResourceId) ? (
-                        <span className="flex items-center gap-1 text-[10.5px] opacity-90">
-                          <IconoInteractivo /> Interactivo{t.nivelInteractivo ? ` · ${nivelLabel[t.nivelInteractivo]}` : ""}
-                        </span>
-                      ) : (
-                        t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>
-                      )}
-                    </button>
-                  ))}
+                  {items.drafts.map((t) => {
+                    const juego = !!t.mediaResourceId && interactivos.has(t.mediaResourceId);
+                    return (
+                      <div key={t.key} className="rounded-lg bg-verde-serenidad text-white overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setEditor({ mode: "edit", task: t })}
+                          className="w-full text-left px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none bg-transparent text-white hover:bg-verde-profundo font-sans"
+                        >
+                          {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
+                          <span className="font-semibold">{t.titulo}</span>
+                          {!juego && t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>}
+                        </button>
+                        {juego && t.nivelInteractivo && (
+                          <button
+                            type="button"
+                            onClick={() => cambiarNivelDraft(t.key, NIVELES[(NIVELES.indexOf(t.nivelInteractivo!) + 1) % NIVELES.length])}
+                            title="Tocá para cambiar el nivel"
+                            aria-label={`Nivel ${nivelLabel[t.nivelInteractivo]}. Tocá para cambiarlo`}
+                            className="w-full flex items-center gap-1 px-2 py-1 border-0 border-t border-white/20 bg-black/10 text-white text-[10.5px] font-semibold cursor-pointer hover:bg-black/20 font-sans"
+                          >
+                            <IconoInteractivo /> {nivelLabel[t.nivelInteractivo]}
+                            <span aria-hidden="true" className="ml-auto opacity-75">↻</span>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </>
               ),
             };
@@ -592,6 +635,7 @@ export function PlanificadorTab({
             ...draftsInWeek.filter((d) => editor.mode !== "edit" || d.key !== editor.task.key).map((d) => d.mediaResourceId),
           ].filter((x): x is string => !!x)}
           initial={editor.mode === "edit" ? editor.task : { dia: editor.dia, hora: editor.hora }}
+          nivelPara={nivelPara}
           onSave={upsertDraft}
           onDelete={
             editor.mode === "edit"

@@ -39,7 +39,7 @@ export function EditorActividadInteractiva({ valor, onChange }: { valor: ExtrasI
     <section className="rounded-2xl border border-borde bg-campo/60 p-4 grid gap-3.5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="m-0 text-[15px] font-bold text-tinta">Configuración de la actividad</p>
+          <p className="m-0 text-[15px] font-bold text-tinta">Ajustes avanzados del juego</p>
           <p className="m-0 text-[13px] text-tinta-suave">
             {def.nombre} · solo para el equipo: {def.area}, {def.funcion.toLowerCase()}.
           </p>
@@ -56,7 +56,7 @@ export function EditorActividadInteractiva({ valor, onChange }: { valor: ExtrasI
 
       <div className="grid gap-3 sm:grid-cols-2">
         <fieldset className="m-0 p-0 border-0 grid gap-1">
-          <legend className="text-[13px] font-semibold text-tinta-suave mb-1">Nivel</legend>
+          <legend className="text-[13px] font-semibold text-tinta-suave mb-1">Nivel sugerido</legend>
           <div className="flex gap-1.5" role="radiogroup">
             {NIVELES.map((n) => (
               <button
@@ -73,6 +73,9 @@ export function EditorActividadInteractiva({ valor, onChange }: { valor: ExtrasI
               </button>
             ))}
           </div>
+          <span className="text-[12.5px] leading-snug text-tinta-tenue">
+            Solo se usa si no hay otro dato: al asignar, el nivel sale de la última vez que se le dio a esa persona o de su etapa.
+          </span>
         </fieldset>
         {!def.cantidadFija && (
           <label className={etiqueta}>
