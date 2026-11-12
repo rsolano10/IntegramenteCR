@@ -12,6 +12,8 @@ import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { EstadoChip } from "./CuentaSeguimiento";
 import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
 import { Avatar } from "./usuarios/piezas";
+import { BadgeRol } from "../ui/AccountMenu";
+import { useIdsAdministradores } from "../../lib/useEsAdmin";
 
 // Las otras dos pestañas de Usuarios: cuentas de familia invitadas pero
 // todavía sin paciente, y el equipo de la clínica.
@@ -38,6 +40,7 @@ export function CuentasTab({
   // Estado de la cuenta (registrado, cuestionario pendiente…) para las que
   // todavía no tienen paciente.
   const { porCuenta } = useCuentaPorPaciente();
+  const admins = useIdsAdministradores();
   const [createFor, setCreateFor] = useState<"profesional" | "familiar_admin" | null>(null);
   const [deleteFor, setDeleteFor] = useState<ManagedAccount | null>(null);
   const [permanentDeleteFor, setPermanentDeleteFor] = useState<ManagedAccount | null>(null);
@@ -55,7 +58,8 @@ export function CuentasTab({
   });
 
   const orphans = (accounts ?? []).filter((a) => a.role !== "profesional" && a.links.length === 0);
-  const staff = (accounts ?? []).filter((a) => a.role === "profesional");
+  // El administrador primero; después el resto del equipo.
+  const staff = (accounts ?? []).filter((a) => a.role === "profesional").sort((x, y) => Number(admins.has(y.id)) - Number(admins.has(x.id)));
 
   function AccountRow({ a }: { a: ManagedAccount }) {
     const confirmed = !!a.email_confirmed_at;
@@ -64,10 +68,13 @@ export function CuentasTab({
         <button type="button" onClick={() => onOpenAccount(a)} className="flex items-center gap-3 min-w-0 flex-1 text-left bg-transparent border-0 p-0 cursor-pointer font-sans">
           <Avatar id={a.id} nombre={a.nombre} size={38} />
           <span className="min-w-0">
-          <span className="block font-bold text-tinta truncate">{a.nombre}</span>
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="font-bold text-tinta truncate">{a.nombre}</span>
+            {admins.has(a.id) && <BadgeRol texto="Administrador" />}
+          </span>
           <span className="block text-[13px] text-tinta-suave truncate">
             {a.email}
-            {a.especialidad ? ` · ${a.especialidad}` : ""}
+            {a.especialidad && !admins.has(a.id) ? ` · ${a.especialidad}` : ""}
           </span>
           </span>
         </button>
@@ -103,7 +110,7 @@ export function CuentasTab({
         <p className="m-0 text-[14px] text-tinta-suave max-w-[60ch]">
           {seccion === "sin_paciente"
             ? "Cuentas de familia invitadas o registradas que todavía no están vinculadas a ningún paciente. Abrí una para vincularla."
-            : "Las cuentas de la clínica. Casi nunca vas a necesitar tocar esto."}
+            : "Las cuentas de la clínica. Todas ven y atienden a las familias; el administrador además ve las métricas generales del programa."}
         </p>
         <Button variant="secondary" size="sm" onClick={() => setCreateFor(seccion === "sin_paciente" ? "familiar_admin" : "profesional")} className="shrink-0">
           {seccion === "sin_paciente" ? "+ Invitar cuenta" : "+ Agregar cuenta"}

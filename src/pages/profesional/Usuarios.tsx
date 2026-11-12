@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabase";
 import { patientPath, type PatientRow } from "../../lib/patients";
 import type { ManagedAccount } from "../../lib/adminAccounts";
 import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
-import { siguientePaso } from "../../lib/siguientePaso";
+import { siguientePaso, type Vista } from "../../lib/siguientePaso";
 import { AccountDetailModal } from "../../components/profesional/AccountDetailModal";
 import { AjustesCuentasModal } from "../../components/profesional/CuentaSeguimiento";
 import { CuentasTab } from "../../components/profesional/CuentasTab";
@@ -169,7 +169,7 @@ export function Usuarios() {
       </div>
 
       <div role="tabpanel">
-        {pestana === "familias" && <ListaFamilias search={search} onChanged={handleChanged} onOpenAccount={setOpenAccount} />}
+        {pestana === "familias" && <ListaFamilias search={search} vistaInicial={(searchParams.get("vista") as Vista | null) ?? undefined} onChanged={handleChanged} onOpenAccount={setOpenAccount} />}
         {pestana !== "familias" && <CuentasTab seccion={pestana} patients={existingPatients} onChanged={handleChanged} onOpenAccount={setOpenAccount} />}
       </div>
 

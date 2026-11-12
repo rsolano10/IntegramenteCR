@@ -1,21 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import type { ManagedAccount } from "../../../lib/adminAccounts";
 import { patientHaystack } from "../../../lib/usuariosSearch";
-import { patientPath, type PatientRow } from "../../../lib/patients";
+import type { PatientRow } from "../../../lib/patients";
 import { planTiers } from "../../../lib/mockData";
 import { useCuentaPorPaciente } from "../../../lib/usePanelCuentas";
 import { ORDEN_PASOS, enVista, siguientePaso, type Paso, type Vista } from "../../../lib/siguientePaso";
-import { waLink } from "../../../lib/whatsapp";
-import type { FilaCuenta } from "../../../lib/cuentas";
 import { Pagination } from "../../ui/Pagination";
-import { RowMenu, type RowMenuItem } from "../../ui/RowMenu";
-import { DeleteConfirmModal } from "../DeleteConfirmModal";
-import { useAccionesCuenta } from "../useAccionesCuenta";
+import { RowMenu } from "../../ui/RowMenu";
 import { AlDia, Avatar, BotonPaso, CuentaCelda, EjesChips, FamiliaAvatares } from "./piezas";
-import { VistaRapida } from "./VistaRapida";
+import { useFamiliaAcciones } from "./useFamiliaAcciones";
 
 // Familias de la clínica: vistas rápidas con conteo (lo urgente primero),
 // una fila por familia con su siguiente paso, y la vista rápida al tocarla.
@@ -36,14 +31,15 @@ const VISTAS: { id: Vista; label: string; aviso?: boolean }[] = [
 
 export function ListaFamilias({
   search,
+  vistaInicial,
   onChanged,
   onOpenAccount,
 }: {
   search: string;
+  vistaInicial?: Vista;
   onChanged: (message: string, isError?: boolean) => void;
   onOpenAccount: (account: ManagedAccount) => void;
 }) {
-  const navigate = useNavigate();
   const { data: patients, isLoading, error: loadError } = useQuery({
     queryKey: ["patients"],
     queryFn: async () => {
@@ -52,24 +48,14 @@ export function ListaFamilias({
       return data as PatientRow[];
     },
   });
-  const { data: accounts } = useQuery({
-    queryKey: ["managed-accounts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_managed_accounts");
-      if (error) throw error;
-      return data as ManagedAccount[];
-    },
-  });
-  const cuentasPorId = useMemo(() => new Map((accounts ?? []).map((a) => [a.id, a])), [accounts]);
   const { porPaciente: cuentas } = useCuentaPorPaciente();
-  const acciones = useAccionesCuenta(onChanged);
+  const fam = useFamiliaAcciones({ patients, cuentas, onChanged, onOpenAccount });
+  const { cuentasPorId, accion, menuDe } = fam;
 
-  const [vista, setVista] = useState<Vista | null>(null);
+  const [vista, setVista] = useState<Vista | null>(vistaInicial ?? null);
   const [orden, setOrden] = useState<Orden>("urgente");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [abierto, setAbierto] = useState<string | null>(null);
-  const [borrar, setBorrar] = useState<PatientRow | null>(null);
 
   // Cada familia con su siguiente paso.
   const filas = useMemo(() => (patients ?? []).map((p) => ({ p, f: cuentas.get(p.id), paso: siguientePaso(p, cuentas.get(p.id)) })), [patients, cuentas]);
@@ -94,36 +80,6 @@ export function ListaFamilias({
   const pageCount = Math.max(1, Math.ceil(lista.length / pageSize));
   const pagina = Math.min(page, pageCount);
   const visibles = lista.slice((pagina - 1) * pageSize, pagina * pageSize);
-  const filaAbierta = abierto ? filas.find((x) => x.p.id === abierto) : undefined;
-
-  function accion(paso: Paso, p: PatientRow, f: FilaCuenta | undefined, desdeVista = false) {
-    switch (paso.tipo) {
-      case "aprobar":
-        // Desde la lista, aprobar abre primero la vista rápida para revisar.
-        if (!desdeVista || !f) return setAbierto(p.id);
-        return acciones.aprobar(f);
-      case "pagar":
-        return f && acciones.pagar(f, true);
-      case "evaluar":
-        return navigate(patientPath(p.id, "evaluacion"));
-      case "revisar":
-        return navigate(patientPath(p.id, "semana"));
-      case "asignar":
-        return navigate(patientPath(p.id, "planificar"));
-      case "duplicado":
-        return navigate(patientPath(p.id));
-      case "contactar":
-        if (f?.telefono) return void window.open(waLink(f.telefono, `Hola ${f.nombre.split(" ")[0]}, te escribimos de IntegraMente en Casa.`), "_blank", "noopener");
-        return setAbierto(p.id);
-    }
-  }
-
-  const menuDe = (p: PatientRow, f: FilaCuenta | undefined): RowMenuItem[] => [
-    { label: "Vista rápida", onClick: () => setAbierto(p.id) },
-    { label: "Abrir la ficha completa", onClick: () => navigate(patientPath(p.id)) },
-    ...acciones.menu(f),
-    { label: "Eliminar paciente", danger: true, onClick: () => setBorrar(p) },
-  ];
 
   const meta = (p: PatientRow) => `${p.edad ? `${p.edad} años` : "Edad sin registrar"} · ${modalidad[p.modalidad] ?? p.modalidad}`;
 
@@ -194,7 +150,7 @@ export function ListaFamilias({
               <li key={p.id} className="border-b border-borde-suave last:border-b-0">
                 {/* Escritorio: una fila */}
                 <div className="hidden lg:grid grid-cols-[minmax(0,2.2fr)_minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,1.15fr)_minmax(0,1.5fr)_40px] gap-4 items-center px-5 py-3.5 hover:bg-[#fcfbf6]">
-                  <button type="button" onClick={() => setAbierto(p.id)} className="flex items-center gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer font-sans group">
+                  <button type="button" onClick={() => fam.abrir(p.id)} className="flex items-center gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer font-sans group">
                     <Avatar id={p.id} nombre={p.nombre} />
                     <span className="min-w-0">
                       <span className="block font-serif text-[18px] leading-tight text-tinta group-hover:text-verde-profundo group-hover:underline decoration-1 underline-offset-4 truncate">{p.nombre}</span>
@@ -204,7 +160,7 @@ export function ListaFamilias({
                   <div className="min-w-0">
                     {paso ? (
                       <>
-                        <BotonPaso paso={paso} onClick={() => accion(paso, p, f)} ocupado={acciones.ocupado === p.id} />
+                        <BotonPaso paso={paso} onClick={() => accion(paso, p, f)} ocupado={fam.ocupado === p.id} />
                         <span className="block mt-1 text-[12.5px] text-tinta-suave leading-snug">{paso.porque}</span>
                       </>
                     ) : (
@@ -220,7 +176,7 @@ export function ListaFamilias({
                 {/* Celular y tableta: una tarjeta */}
                 <div className="lg:hidden p-4 grid gap-3">
                   <div className="flex items-start gap-3">
-                    <button type="button" onClick={() => setAbierto(p.id)} className="flex flex-1 items-center gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer font-sans">
+                    <button type="button" onClick={() => fam.abrir(p.id)} className="flex flex-1 items-center gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer font-sans">
                       <Avatar id={p.id} nombre={p.nombre} size={42} />
                       <span className="min-w-0">
                         <span className="block font-serif text-[19px] leading-tight text-tinta">{p.nombre}</span>
@@ -236,7 +192,7 @@ export function ListaFamilias({
                   <FamiliaAvatares p={p} cuentas={cuentasPorId} />
                   {paso ? (
                     <div className="grid gap-1">
-                      <BotonPaso paso={paso} onClick={() => accion(paso, p, f)} ocupado={acciones.ocupado === p.id} grande />
+                      <BotonPaso paso={paso} onClick={() => accion(paso, p, f)} ocupado={fam.ocupado === p.id} grande />
                       <span className="text-[12.5px] text-tinta-suave text-center">{paso.porque}</span>
                     </div>
                   ) : (
@@ -267,38 +223,7 @@ export function ListaFamilias({
         }}
       />
 
-      {filaAbierta && (
-        <VistaRapida
-          p={filaAbierta.p}
-          f={filaAbierta.f}
-          cuentas={cuentasPorId}
-          menu={menuDe(filaAbierta.p, filaAbierta.f).filter((m) => m.label !== "Vista rápida" && m.label !== "Abrir la ficha completa")}
-          ocupado={acciones.ocupado === filaAbierta.p.id}
-          onAccion={(paso) => accion(paso, filaAbierta.p, filaAbierta.f, true)}
-          onAbrirCuenta={(a) => {
-            setAbierto(null);
-            onOpenAccount(a);
-          }}
-          onClose={() => setAbierto(null)}
-        />
-      )}
-
-      {acciones.modalHistorial}
-
-      {borrar && (
-        <DeleteConfirmModal
-          title={`¿Eliminar a ${borrar.nombre}?`}
-          message="Se borran su perfil, su plan y todos sus registros. No se puede deshacer."
-          onCancel={() => setBorrar(null)}
-          onConfirm={async () => {
-            const { error } = await supabase.from("patients").delete().eq("id", borrar.id);
-            if (error) onChanged(error.message, true);
-            else onChanged(`${borrar.nombre} fue eliminado.`);
-            setBorrar(null);
-            setAbierto(null);
-          }}
-        />
-      )}
+      {fam.elementos}
     </>
   );
 }

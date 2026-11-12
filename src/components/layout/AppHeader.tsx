@@ -5,6 +5,7 @@ import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
+import { useEsAdmin } from "../../lib/useEsAdmin";
 import { AccountMenu } from "../ui/AccountMenu";
 import { Modal } from "../ui/Modal";
 import { MiPerfilModal } from "../ui/MiPerfilModal";
@@ -58,6 +59,7 @@ export function AppHeader() {
   const nombre = session.status === "authed" ? session.profile.nombre : "";
   const especialidad = session.status === "authed" ? session.profile.especialidad : null;
   const { data: myPatient } = useMyPatient();
+  const esAdmin = useEsAdmin();
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
@@ -158,7 +160,8 @@ export function AppHeader() {
               .toUpperCase() || "P"
           }
           name={nombre}
-          subtitle={especialidad ?? "Equipo clínico"}
+          subtitle={esAdmin ? "Administrador del sistema" : (especialidad ?? "Equipo clínico")}
+          badge={esAdmin ? "Administrador" : undefined}
           items={[
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
             { label: "Historial de auditoría", onClick: () => setModal("auditoria") },
