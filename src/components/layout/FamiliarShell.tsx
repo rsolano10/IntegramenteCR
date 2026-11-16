@@ -102,6 +102,19 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
   );
 }
 
+// Hoy: la fecha (confirma que son las actividades de hoy) y el saludo, sin
+// fondo y en chico, como parte del contenido.
+function SaludoDelDia({ nombre }: { nombre: string }) {
+  return (
+    <div className="mb-4">
+      <p className="m-0 text-[14px] text-tinta-suave first-letter:uppercase">
+        {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
+      </p>
+      <p className="m-0 font-serif text-[24px] leading-tight text-tinta">Hola, {nombre}</p>
+    </div>
+  );
+}
+
 export function FamiliarShell() {
   const session = useSession();
   // isPending, not isLoading — see the comment on the same call in App.tsx's RouteGuard.
@@ -137,9 +150,6 @@ export function FamiliarShell() {
   }, [onboardingRow, hydrateOnboarding]);
 
   const nombreFamiliar = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
-  // Saludo solo en las tres pestañas. En una actividad, la emergencia, la
-  // evaluación o el historial, lo importante queda arriba.
-  const esPestana = pathname === "/app/hoy" || pathname === "/app/plan" || pathname === "/app/ayuda";
   // El aviso de la semana gratis, solo donde se mira el plan: nunca en una
   // emergencia ni en medio de una actividad.
   const conAvisoCuenta = pathname === "/app/hoy" || pathname === "/app/plan";
@@ -155,7 +165,10 @@ export function FamiliarShell() {
       className={modoChat ? "im-in flex flex-col overflow-hidden" : "im-in min-h-full pb-24 md:pb-0"}
       style={modoChat ? { height: altoChat ?? "calc(100dvh - 72px)" } : undefined}
     >
-      {(esPestana || pendiente) && (
+      {/* La franja con el saludo solo mientras la cuenta está pendiente
+          (es casi lo único en pantalla). Con la app en uso, el saludo y la
+          fecha van dentro de Hoy, sin fondo: el contenido empieza arriba. */}
+      {pendiente && (
       <div className="shrink-0 bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
         <div className="max-w-3xl mx-auto">
           <p className="m-0 mb-1 text-sm text-[#c4dbdb] first-letter:uppercase">
@@ -187,6 +200,7 @@ export function FamiliarShell() {
           <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeAyuda={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} />
         ) : (
           <>
+            {pathname === "/app/hoy" && <SaludoDelDia nombre={nombreFamiliar} />}
             {myPatient && conAvisoCuenta && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
             <Outlet />
           </>

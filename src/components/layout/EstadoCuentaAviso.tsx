@@ -51,14 +51,19 @@ export function AvisoEstadoCuenta({ patient, nombreCuenta }: { patient: MyPatien
     case "en_demo": {
       const n = diasRestantes(patient.demo_fin);
       return (
-        <div className={`${caja} bg-fila-calida border border-mostaza-vital`}>
-          <div className="flex-1">
-            <p className="m-0 text-[15.5px] font-semibold text-tinta">
-              Semana gratis: {n <= 1 ? "último día" : `te quedan ${n} días`}
-            </p>
-            <p className="m-0 mt-0.5 text-[14px] text-tinta-suave">Si te gusta, activá tu programa y seguimos juntos.</p>
-          </div>
-          {boton("Activar mi programa")}
+        // En una sola línea: que no le robe lugar a lo del día.
+        <div className="rounded-2xl px-4 py-2 mb-5 flex items-center gap-3 bg-fila-calida border border-mostaza-vital">
+          <p className="m-0 flex-1 text-[15px] leading-snug font-semibold text-tinta">
+            Semana gratis: {n <= 1 ? "último día" : `te quedan ${n} días`}
+          </p>
+          <button
+            type="button"
+            onClick={comprar}
+            disabled={abriendo}
+            className="shrink-0 inline-flex items-center justify-center min-h-10 px-4 rounded-full bg-verde-profundo text-white font-semibold text-[14.5px] border-0 cursor-pointer hover:bg-tinta disabled:opacity-60"
+          >
+            Activar
+          </button>
         </div>
       );
     }

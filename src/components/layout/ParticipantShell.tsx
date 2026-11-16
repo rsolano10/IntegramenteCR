@@ -248,14 +248,16 @@ export function ParticipantShell() {
           <Logo size="sm" />
         </div>
       </div>
+      {/* Compacto: el día y el saludo ayudan a orientarse, sin robarle
+          lugar a las actividades. */}
       {conSaludo && (
-      <div className="bg-beige-serenidad px-5 py-6 sm:px-8">
+      <div className="bg-beige-serenidad px-5 py-3 sm:px-8">
         <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
           <div>
-            <p className="m-0 mb-1.5 text-lg text-tinta-suave first-letter:uppercase">
+            <p className="m-0 text-[17px] leading-snug text-tinta-suave first-letter:uppercase">
               {new Date().toLocaleDateString("es-CR", { weekday: "long", timeZone: "America/Costa_Rica" })}
             </p>
-            <h1 className="font-serif font-normal text-[28px] sm:text-[32px] m-0">Hola, {nombre}</h1>
+            <h1 className="font-serif font-normal text-[26px] leading-tight m-0">Hola, {nombre}</h1>
           </div>
           <AvatarMenu />
         </div>
