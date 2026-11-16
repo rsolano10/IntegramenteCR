@@ -4,6 +4,7 @@ import { Modal } from "../ui/Modal";
 import { ModuloIcon } from "../ui/ModuloIcon";
 import { Icono } from "../sesion/Icono";
 import { MisionSemana } from "../sesion/ResumenSesion";
+import { CienciaActividad } from "./CienciaActividad";
 import { esInteractivo } from "../../lib/clasificarNumeros";
 import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, guionDe, resumenPasos, type PasoResumen, type Progreso } from "../../lib/sesiones";
@@ -59,12 +60,12 @@ export function PanelActividad({
   // La ciencia de la actividad: el texto de la ficha que explica por qué sirve.
   const ciencia =
     task.ciencia && (task.ciencia.gancho || task.ciencia.evidencia || task.ciencia.cierre)
-      ? [task.ciencia.gancho, task.ciencia.evidencia, task.ciencia.cierre].filter(Boolean)
+      ? task.ciencia
       : task.sabiasQue
-        ? [task.sabiasQue]
+        ? { gancho: task.sabiasQue }
         : task.porQue
-          ? [task.porQue]
-          : [];
+          ? { gancho: task.porQue }
+          : null;
   const aMano = guion ? aTenerAMano(guion) : [];
   const frase = guion?.frase ?? task.intro ?? task.detalle ?? "";
   const t = {
@@ -131,21 +132,7 @@ export function PanelActividad({
       </section>
 
       {/* La ciencia de esta actividad */}
-      {ciencia.length > 0 && (
-        <section className="relative overflow-hidden rounded-[22px] bg-beige-serenidad px-4 py-4">
-          <p className={`m-0 mb-2 flex items-center gap-2 tracking-[0.12em] uppercase font-semibold text-tinta ${t.seccion}`}>
-            <Icono nombre="luz" className="w-6 h-6 text-tinta" relleno="#f4c372" />
-            La ciencia de esta actividad
-          </p>
-          <div className={`grid gap-2 leading-relaxed text-tinta-suave ${t.cuerpo}`}>
-            {ciencia.map((c, i) => (
-              <p key={i} className={`m-0 ${i === ciencia.length - 1 && ciencia.length > 1 ? "font-semibold text-tinta" : ""}`}>
-                {c}
-              </p>
-            ))}
-          </div>
-        </section>
-      )}
+      {ciencia && <CienciaActividad ciencia={ciencia} large={large} />}
 
       {/* Lo que mandó el equipo */}
       {task.notaClinica && (
