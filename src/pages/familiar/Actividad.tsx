@@ -1,7 +1,6 @@
 import { useLocation, useParams } from "react-router-dom";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useGuardarProgreso, useCurrentPlanMeta } from "../../lib/usePlan";
-import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { origenDeActividad } from "../../lib/useVolver";
 import { BotonVolver } from "../../components/ui/BotonVolver";
 import { PanelActividad } from "../../components/actividad/PanelActividad";
@@ -11,7 +10,6 @@ import { PanelActividad } from "../../components/actividad/PanelActividad";
 // con «Empezar» al final; el registro se hace solo dentro de la actividad
 // (StepByStepActivity), nunca desde acá.
 export function Actividad() {
-  const { data: perfilRecursos } = usePerfilRecursos();
   const { pathname } = useLocation();
   const { taskId } = useParams();
   const origen = origenDeActividad(pathname);
@@ -43,7 +41,6 @@ export function Actividad() {
           task={task}
           dia={dia}
           rutaPasos={`${pathname}/pasos`}
-          etapas={perfilRecursos?.etapas ?? null}
           publishAt={planMeta?.publish_at ?? null}
           onGuardarProgreso={(p) => guardarProgreso(task.id, p)}
         />

@@ -211,19 +211,19 @@ Arriba: la fecha y «Hola, [nombre]». Menú de pestañas: **Hoy · Mi semana ·
 
 ### 6.10 Hacer una actividad (sesión guiada)
 
-**La pantalla de la actividad** (al tocarla en Hoy o en Mi semana) es un tablero:
-- Arriba, qué es: el dibujo (o la portada del juego), el nombre y una frase.
-- Después:
-  - el **"Mensaje de tu equipo"**, si lo hay;
-  - **"Así va a ser"**, con los pasos numerados;
-  - **"Para tener a mano"**;
-  - la **"Misión de la semana"**, si la tiene;
-  - **"Ver la ficha completa"**, plegada, con todo el texto y las precauciones.
-- Al final, el botón:
-  - **"Empezar"**: la actividad de hoy, todavía sin registrar.
-  - **"Volver a hacerla"**: si ya está registrada. Pregunta si **"Hacerla y cambiar el registro"** (lo nuevo reemplaza lo anterior) o **"Hacerla sin registrar"** (para practicar).
-  - **"Hacerla sin registrar"**: si es de otro día. Un aviso explica que se registra ese día o que ya no se registra.
-- **Registrar se hace solo dentro de la actividad, al final.** Desde esta pantalla no se registra.
+**La pantalla de la actividad** (al tocarla en Hoy o en Mi semana) es un tablero, en este orden:
+1. Qué es: el dibujo (o la portada del juego), el nombre y una frase.
+2. **"La ciencia de esta actividad"**: por qué sirve. Los juegos no tienen esta sección.
+3. El **"Mensaje de tu equipo"**, si lo hay.
+4. La **"Misión de la semana"**, si la tiene.
+5. **"Para tener a mano"**: lo que conviene preparar.
+6. **"Así va a ser"**: una línea de tiempo de arriba hacia abajo, con cada paso y cómo se hace.
+7. Al final, el botón:
+   - **"Empezar"**: la actividad de hoy, todavía sin registrar.
+   - **"Volver a hacerla"**: si ya está registrada. Pregunta si **"Hacerla y cambiar el registro"** (lo nuevo reemplaza lo anterior) o **"Hacerla sin registrar"** (para practicar).
+   - **"Hacerla sin registrar"**: si es de otro día. El aviso usa la fecha: «era para el lunes 16 de noviembre» si ya pasó, «es para el jueves 19 de noviembre» si todavía no llega.
+
+**Registrar se hace solo dentro de la actividad, al final.** Desde esta pantalla no se registra.
 
 **Dentro de la actividad** hay una idea por pantalla, con dibujos y botones grandes.
 1. La primera pantalla dice en una frase de qué se trata. Ahí se puede activar **"Leer cada pantalla en voz alta"**.

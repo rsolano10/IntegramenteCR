@@ -1,22 +1,20 @@
 import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ResourceDetailView } from "../ui/ResourceDetailView";
 import { Modal } from "../ui/Modal";
 import { ModuloIcon } from "../ui/ModuloIcon";
 import { Icono } from "../sesion/Icono";
 import { MisionSemana } from "../sesion/ResumenSesion";
-import { contenidoDeTarea } from "../../lib/contenidoRecurso";
 import { esInteractivo } from "../../lib/clasificarNumeros";
 import { moduloTheme } from "../../lib/modulos";
-import { aTenerAMano, guionDe, resumenPasos, type Progreso } from "../../lib/sesiones";
-import type { NivelCognitivo } from "../../lib/mediaResources";
+import { aTenerAMano, guionDe, resumenPasos, type PasoResumen, type Progreso } from "../../lib/sesiones";
 import type { PlanDay, PlanTask } from "../../lib/mockData";
 import { cuandoEsElDia, diaConFecha } from "../../lib/planWeek";
 
 // La pantalla de una actividad antes de empezar, como un tablero: arriba,
-// qué es (con su dibujo o la portada del juego); después, cómo va a ser,
-// qué tener a mano y lo que mandó el equipo; la ficha completa plegada; y
-// al final «Empezar». Registrar se hace solo dentro de la actividad.
+// qué es (con su dibujo o la portada del juego); después, lo que mandó el
+// equipo, la ciencia de la actividad, qué tener a mano y cómo va a ser
+// (una línea de tiempo con cómo se hace cada paso); al final «Empezar».
+// Registrar se hace solo dentro de la actividad.
 // Una actividad ya registrada se puede repetir: se elige si el nuevo
 // registro reemplaza al anterior o si se hace sin registrar.
 
@@ -34,7 +32,6 @@ export function PanelActividad({
   task,
   dia,
   rutaPasos,
-  etapas,
   publishAt,
   large = false,
   onGuardarProgreso,
@@ -42,7 +39,6 @@ export function PanelActividad({
   task: PlanTask;
   dia: PlanDay;
   rutaPasos: string;
-  etapas: NivelCognitivo[] | null;
   // Inicio del plan, para saber la fecha real de cada día.
   publishAt: string | null;
   large?: boolean;
@@ -56,9 +52,19 @@ export function PanelActividad({
   const hecha = ESTADO[task.estado] ?? null;
   const hoyPendiente = !!dia.isToday && (task.estado === "pendiente" || task.estado === "futuro");
   const cuando = cuandoEsElDia(dia.dia, publishAt);
-  const pasos = guion
+  // Sin guion (los juegos): sus pasos, tal como están en la ficha.
+  const pasos: PasoResumen[] = guion
     ? resumenPasos(guion, task.mediaKind === "video" && !!(task.storagePath || task.externalUrl))
-    : (task.pasos ?? []).map((texto) => ({ icono: "estrella" as const, texto }));
+    : (task.pasos ?? []).map((texto, i, todos) => ({ icono: i === todos.length - 1 ? ("estrella" as const) : ("lista" as const), texto }));
+  // La ciencia de la actividad: el texto de la ficha que explica por qué sirve.
+  const ciencia =
+    task.ciencia && (task.ciencia.gancho || task.ciencia.evidencia || task.ciencia.cierre)
+      ? [task.ciencia.gancho, task.ciencia.evidencia, task.ciencia.cierre].filter(Boolean)
+      : task.sabiasQue
+        ? [task.sabiasQue]
+        : task.porQue
+          ? [task.porQue]
+          : [];
   const aMano = guion ? aTenerAMano(guion) : [];
   const frase = guion?.frase ?? task.intro ?? task.detalle ?? "";
   const t = {
@@ -124,6 +130,23 @@ export function PanelActividad({
         <span className="block clear-both" aria-hidden="true" />
       </section>
 
+      {/* La ciencia de esta actividad */}
+      {ciencia.length > 0 && (
+        <section className="relative overflow-hidden rounded-[22px] bg-beige-serenidad px-4 py-4">
+          <p className={`m-0 mb-2 flex items-center gap-2 tracking-[0.12em] uppercase font-semibold text-tinta ${t.seccion}`}>
+            <Icono nombre="luz" className="w-6 h-6 text-tinta" relleno="#f4c372" />
+            La ciencia de esta actividad
+          </p>
+          <div className={`grid gap-2 leading-relaxed text-tinta-suave ${t.cuerpo}`}>
+            {ciencia.map((c, i) => (
+              <p key={i} className={`m-0 ${i === ciencia.length - 1 && ciencia.length > 1 ? "font-semibold text-tinta" : ""}`}>
+                {c}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Lo que mandó el equipo */}
       {task.notaClinica && (
         <section className="rounded-[22px] border-[1.5px] border-verde-serenidad bg-verde-tenue px-4 py-3.5">
@@ -135,25 +158,7 @@ export function PanelActividad({
       {/* La misión de la semana, si la actividad la tiene */}
       {task.progreso?.mision && <MisionSemana key={task.progreso.mision.marcas.join()} progreso={task.progreso} modulo={task.modulo ?? null} onGuardar={onGuardarProgreso} large={large} />}
 
-      {/* Cómo va a ser */}
-      {pasos.length > 0 && (
-        <section className="rounded-[22px] bg-white border border-borde px-4 py-4">
-          <p className={`m-0 mb-3 tracking-[0.12em] uppercase font-semibold text-tinta-tenue ${t.seccion}`}>Así va a ser</p>
-          <ol className="m-0 p-0 list-none grid gap-2 sm:grid-cols-2">
-            {pasos.map((p, i) => (
-              <li key={i} className="flex items-center gap-3 rounded-2xl px-3 py-2.5" style={{ background: `${tema.from}40` }}>
-                <span className="relative shrink-0 w-11 h-11 rounded-full bg-white flex items-center justify-center" aria-hidden="true">
-                  <Icono nombre={p.icono} className="w-7 h-7 text-tinta" relleno={`${tema.to}80`} />
-                  <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-tinta text-white text-[11px] font-bold flex items-center justify-center">{i + 1}</span>
-                </span>
-                <span className={`leading-snug text-tinta ${large ? "text-[18px]" : "text-[15.5px]"}`}>{p.texto}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-
-      {/* Qué tener a mano */}
+      {/* Qué tener a mano (antes de cómo va a ser) */}
       {aMano.length > 0 && (
         <section className="rounded-[22px] bg-white border border-borde px-4 py-4">
           <p className={`m-0 mb-3 tracking-[0.12em] uppercase font-semibold text-tinta-tenue ${t.seccion}`}>Para tener a mano</p>
@@ -168,6 +173,41 @@ export function PanelActividad({
         </section>
       )}
 
+      {/* Cómo va a ser: una línea de tiempo hacia abajo, con cómo se hace cada paso */}
+      {pasos.length > 0 && (
+        <section className="rounded-[22px] bg-white border border-borde px-4 pt-4 pb-2">
+          <p className={`m-0 mb-4 tracking-[0.12em] uppercase font-semibold text-tinta-tenue ${t.seccion}`}>Así va a ser</p>
+          <ol className="m-0 p-0 list-none">
+            {pasos.map((p, i) => {
+              const ultimo = i === pasos.length - 1;
+              return (
+                <li key={i} className="relative grid grid-cols-[48px_1fr] gap-3 pb-5">
+                  {/* La línea que une un paso con el siguiente */}
+                  {!ultimo && <span className="absolute left-[23px] top-12 bottom-0 w-[2px] rounded-full" style={{ background: `${tema.to}55` }} aria-hidden="true" />}
+                  <span className="relative z-[1] w-12 h-12 rounded-full flex items-center justify-center border-2 bg-white" style={{ borderColor: `${tema.to}88` }} aria-hidden="true">
+                    <Icono nombre={p.icono} className="w-8 h-8 text-tinta" relleno={`${tema.to}80`} />
+                  </span>
+                  <div className="pt-1 min-w-0">
+                    <p className={`m-0 tracking-[0.1em] uppercase font-semibold ${large ? "text-[13px]" : "text-[11.5px]"}`} style={{ color: tema.ink }}>
+                      {ultimo && guion ? "Al final" : `Paso ${i + 1}`}
+                    </p>
+                    <p className={`m-0 font-semibold leading-snug text-tinta ${large ? "text-[20px]" : "text-[16.5px]"}`}>{p.texto}</p>
+                    {p.detalle && <p className={`m-0 mt-1 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{p.detalle}</p>}
+                    {p.lista && (
+                      <ol className={`m-0 mt-1.5 pl-5 list-decimal grid gap-1 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>
+                        {p.lista.map((x) => (
+                          <li key={x}>{x}</li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
       {/* Cómo le fue la vez pasada (si contaron qué ayuda necesitó) */}
       {task.comentario && (
         <section className="rounded-[22px] bg-fila-calida px-4 py-3.5">
@@ -175,21 +215,6 @@ export function PanelActividad({
           <p className={`m-0 leading-relaxed text-tinta-suave ${t.cuerpo}`}>{task.comentario}</p>
         </section>
       )}
-
-      {/* La ficha completa, plegada (incluye las precauciones) */}
-      <details className="group rounded-[22px] border border-borde bg-white">
-        <summary className={`flex items-center justify-between gap-3 cursor-pointer list-none px-4 py-3.5 font-semibold text-tinta ${large ? "text-[18px]" : "text-[15.5px]"}`}>
-          Ver la ficha completa
-          <svg className="shrink-0 transition-transform group-open:rotate-180" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </summary>
-        <div className="grid gap-4 px-4 pb-4">
-          {task.precaucion && <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-3.5 py-3">{task.precaucion}</p>}
-          {/* Sin el juego adentro: se juega con «Empezar». */}
-          <ResourceDetailView content={{ ...contenidoDeTarea(task, "", etapas, task.pasos), extras: juego ? null : task.extras }} size={large ? "large" : "compact"} />
-        </div>
-      </details>
 
       {/* Al final, la acción */}
       <div className="grid gap-2 pt-1">

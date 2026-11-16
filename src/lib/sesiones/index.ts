@@ -177,75 +177,80 @@ export function textosDeVoz(g: Guion): string[] {
 export interface PasoResumen {
   icono: import("./iconos").NombreIcono;
   texto: string;
+  // Cómo se hace ese paso, en una frase, o sus consignas de a una.
+  detalle?: string;
+  lista?: string[];
 }
 
-// Cómo va a ser la sesión, en pocos pasos con dibujo. Las consignas
-// seguidas se juntan en uno («3 consignas, de a una»).
+const conY = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} o ${xs[xs.length - 1]}`);
+
+// Cómo va a ser la sesión: cada paso con su dibujo y cómo se hace. Las
+// consignas seguidas se juntan en un paso con su lista.
 export function resumenPasos(g: Guion, conVideo: boolean): PasoResumen[] {
   const out: PasoResumen[] = [];
   const r: Respuestas = {};
+  const tx = (t: string) => plantilla(t, g, r);
   for (let k = 0; k < g.escenas.length; k++) {
     const e = g.escenas[k];
     if (e.si) continue;
     switch (e.tipo) {
       case "seguridad":
-        out.push({ icono: "rechazo", texto: "Repasar cuándo parar" });
+        out.push({ icono: "rechazo", texto: "Repasar cuándo parar", detalle: "Las señales para detenerse, con dibujos." });
         break;
       case "preparar":
-        out.push({ icono: e.items[0]?.icono ?? "lista", texto: e.titulo });
+        out.push({ icono: e.items[0]?.icono ?? "lista", texto: e.titulo, detalle: e.items.length > 1 ? "Marcan en una lista lo que ya tienen listo." : e.nota });
         break;
       case "video":
-        if (conVideo) out.push({ icono: "volumen", texto: "Ver el video" });
+        if (conVideo) out.push({ icono: "volumen", texto: "Ver el video", detalle: "Miran juntos cómo se hace." });
         break;
       case "consigna": {
-        let n = 1;
-        while (g.escenas[k + n]?.tipo === "consigna" && !g.escenas[k + n].si) n++;
-        out.push({ icono: e.icono ?? "estrella", texto: n > 1 ? `${n} consignas, de a una` : e.titulo });
-        k += n - 1;
+        const grupo = [e];
+        while (g.escenas[k + grupo.length]?.tipo === "consigna" && !g.escenas[k + grupo.length].si) grupo.push(g.escenas[k + grupo.length] as typeof e);
+        if (grupo.length > 1) out.push({ icono: e.icono ?? "estrella", texto: "Las consignas, de a una", lista: grupo.map((c) => (c.tipo === "consigna" ? tx(c.texto) : "")) });
+        else out.push({ icono: e.icono ?? "estrella", texto: e.titulo, detalle: tx(e.texto) });
+        k += grupo.length - 1;
         break;
       }
       case "decir":
-        out.push({ icono: e.icono ?? "conversar", texto: e.titulo });
+        out.push({ icono: e.icono ?? "conversar", texto: e.titulo, detalle: `«${tx(e.frase)}»${e.nota ? ` ${e.nota}` : ""}` });
         break;
       case "elegir":
-        out.push({ icono: e.opciones[0]?.icono ?? "estrella", texto: plantilla(e.titulo, g, r) });
+        out.push({ icono: e.opciones[0]?.icono ?? "estrella", texto: tx(e.titulo), detalle: `Eligen entre ${conY([...e.opciones.map((o) => o.texto.toLowerCase()), ...(e.libre ? [e.libre.toLowerCase()] : [])])}.` });
         break;
       case "lista":
       case "ordenar":
-        out.push({ icono: "lista", texto: plantilla(e.titulo, g, r) });
+        out.push({ icono: "lista", texto: tx(e.titulo), detalle: e.nota });
         break;
       case "repeticiones":
-        out.push({ icono: "corazon", texto: e.titulo });
-        break;
       case "tiempo":
-        out.push({ icono: "reloj", texto: e.titulo });
+        out.push({ icono: e.tipo === "tiempo" ? "reloj" : "corazon", texto: e.titulo, detalle: e.nota });
         break;
       case "descanso":
-        out.push({ icono: "luna", texto: e.titulo });
+        out.push({ icono: "luna", texto: e.titulo, detalle: e.texto });
         break;
       case "sentir":
-        out.push({ icono: "bien", texto: "Contar cómo se siente" });
+        out.push({ icono: "bien", texto: "Contar cómo se siente", detalle: "Bien, con cansancio o con molestia." });
         break;
       case "repaso":
-        out.push({ icono: "libreta", texto: e.titulo });
+        out.push({ icono: "libreta", texto: e.titulo, detalle: e.nota ?? "Repasan juntos lo que armaron." });
         break;
       case "mision":
-        out.push({ icono: "calendario", texto: e.titulo });
+        out.push({ icono: "calendario", texto: e.titulo, detalle: tx(e.texto) });
         break;
       case "cuidados":
-        out.push({ icono: "corazon", texto: e.titulo });
+        out.push({ icono: "corazon", texto: e.titulo, lista: e.items.map((i) => i.texto) });
         break;
       case "leer":
-        out.push({ icono: e.icono ?? "libro", texto: e.titulo });
+        out.push({ icono: e.icono ?? "libro", texto: e.titulo, detalle: "Un texto corto para leer en voz alta, despacio." });
         break;
       case "material":
-        out.push({ icono: "libreta", texto: e.titulo });
+        out.push({ icono: "libreta", texto: e.titulo, detalle: e.nota });
         break;
       case "ritmo":
-        out.push({ icono: "palmas", texto: e.titulo });
+        out.push({ icono: "palmas", texto: e.titulo, detalle: e.nota });
         break;
       case "cierre":
-        out.push({ icono: "estrella", texto: "Terminar y contar cómo les fue" });
+        out.push({ icono: "estrella", texto: "Terminar y contar cómo les fue", detalle: "Cuentan si pudieron hacerla y si fue fácil de seguir." });
         break;
     }
   }

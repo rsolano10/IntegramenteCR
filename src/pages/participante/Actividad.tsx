@@ -5,14 +5,12 @@ import { speak } from "../../lib/speech";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useGuardarProgreso, useCurrentPlanMeta } from "../../lib/usePlan";
 import { guionDe } from "../../lib/sesiones";
-import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { PanelActividad } from "../../components/actividad/PanelActividad";
 
 // La actividad, vista por la persona: el mismo tablero que la familia, en
 // letra grande, con «Escuchar» y «Necesito ayuda». Se registra al terminar
 // la actividad, no desde acá.
 export function ParticipanteActividad() {
-  const { data: perfilRecursos } = usePerfilRecursos();
   const navigate = useNavigate();
   const { taskId } = useParams();
   const { data: myPatient } = useMyPatient();
@@ -49,7 +47,6 @@ export function ParticipanteActividad() {
         task={task}
         dia={today}
         rutaPasos={`/app/participante/actividad/${task.id}/pasos`}
-        etapas={perfilRecursos?.etapas ?? null}
         publishAt={planMeta?.publish_at ?? null}
         onGuardarProgreso={(p) => guardarProgreso(task.id, p)}
         large
