@@ -4,6 +4,7 @@ import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../compon
 import { siguienteDia } from "../../lib/siguienteDia";
 import { AvisoEvaluarSemana, AvisoSemanaEnRevision } from "../../components/familiar/AvisoEvaluarSemana";
 import { Cargando } from "../../components/ui/Cargando";
+import { estaRegistrada } from "../../lib/estadoActividad";
 
 const rutaActividad = (id: string) => `/app/participante/actividad/${id}`;
 
@@ -26,7 +27,7 @@ export function ParticipanteHoy() {
         <>
           <ResumenDelDia tasks={tasks} quien={null} size="large" />
           <LineaDelDia tasks={tasks} size="large" rutaActividad={rutaActividad} />
-          {!weekComplete && <CierreDelDia size="large" pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} />}
+          {!weekComplete && <CierreDelDia size="large" pendientes={tasks.filter((t) => !estaRegistrada(t)).length} siguiente={siguienteDia(days ?? [])} />}
         </>
       )}
 

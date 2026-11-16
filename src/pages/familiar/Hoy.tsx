@@ -5,6 +5,7 @@ import { siguienteDia } from "../../lib/siguienteDia";
 import { AvisoPedidoAyuda } from "../../components/familiar/AvisoPedidoAyuda";
 import { AvisoEvaluarSemana, AvisoSemanaEnRevision } from "../../components/familiar/AvisoEvaluarSemana";
 import { Cargando } from "../../components/ui/Cargando";
+import { estaRegistrada } from "../../lib/estadoActividad";
 
 const rutaActividad = (id: string) => `/app/hoy/actividad/${id}`;
 
@@ -33,7 +34,7 @@ export function Hoy() {
         <>
           <ResumenDelDia tasks={tasks} quien={quien} />
           <LineaDelDia tasks={tasks} rutaActividad={rutaActividad} />
-          {!weekComplete && <CierreDelDia pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} extras={extras} />}
+          {!weekComplete && <CierreDelDia pendientes={tasks.filter((t) => !estaRegistrada(t)).length} siguiente={siguienteDia(days ?? [])} extras={extras} />}
         </>
       )}
 

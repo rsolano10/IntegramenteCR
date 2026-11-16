@@ -129,12 +129,18 @@ export function CierreDelDia({ pendientes, siguiente, size = "compact", extras }
           </svg>
         )}
       </span>
-      <p className={`m-0 mt-2.5 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{titulo}</p>
-      <p className={`m-0 mt-1 max-w-[26em] text-tinta-suave ${large ? "text-[18px]" : "text-[15px]"}`}>{detalle}</p>
-      {extras && (
-        <div className="mt-2">
-          <EnlaceExtras to={extras} />
-        </div>
+      {/* El texto (lo de mañana y las actividades extra) aparece recién
+          cuando no queda nada pendiente hoy; antes, solo el ícono. */}
+      {pendientes === 0 && (
+        <>
+          <p className={`m-0 mt-2.5 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{titulo}</p>
+          <p className={`m-0 mt-1 max-w-[26em] text-tinta-suave ${large ? "text-[18px]" : "text-[15px]"}`}>{detalle}</p>
+          {extras && (
+            <div className="mt-2">
+              <EnlaceExtras to={extras} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
