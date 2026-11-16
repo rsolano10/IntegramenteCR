@@ -15,6 +15,7 @@ import { generarPregunta, momentoCR, orientacionHoy, parteDelDia } from "./orien
 import { esInteractivo } from "../clasificarNumeros.ts";
 import { generarIntruso } from "./intruso.ts";
 import { CONJUNTOS } from "./bancos/intrusos.ts";
+import { LUGARES, OBJETOS, generarCorredor, lugarEsPiso, revisarCorredor } from "./queCambio.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
 // Martes 10 de noviembre de 2026, 9 a. m. en Costa Rica (15:00 UTC).
@@ -38,7 +39,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 11);
+  assert.equal(ACTIVIDADES.length, 12);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -409,4 +410,47 @@ test("olla: no repite el mismo conjunto dos veces seguidas", () => {
     const ids = (s.ejercicios as { conjunto: string }[]).map((e) => e.conjunto);
     for (let i = 1; i < ids.length; i++) assert.notEqual(ids[i], ids[i - 1]);
   }
+});
+
+test("corredor: la cantidad de cosas y de cambios, cada cambio en una cosa distinta", () => {
+  const azar = crearAzar(11);
+  for (const [objetos, cambios, tipos] of [
+    [6, 1, ["quitar"]],
+    [9, 2, ["quitar", "color"]],
+    [12, 3, ["quitar", "color", "mover"]],
+  ] as const) {
+    for (let r = 0; r < 20; r++) {
+      const ej = generarCorredor({ objetos, cambios, tiposDeCambio: [...tipos], permitirVerDeNuevo: true }, azar);
+      assert.equal(ej.antes.length, LUGARES);
+      assert.equal(ej.antes.filter(Boolean).length, objetos);
+      assert.equal(ej.cambios.length, cambios);
+      assert.equal(new Set(ej.cambios.map((c) => c.objeto)).size, cambios);
+      // Con los tres tipos y tres cambios, aparece cada tipo.
+      if (cambios === 3) assert.deepEqual(new Set(ej.cambios.map((c) => c.tipo)), new Set(tipos));
+      for (const c of ej.cambios) {
+        const o = OBJETOS.find((x) => x.id === c.objeto)!;
+        if (c.tipo === "quitar") assert.equal(ej.despues[c.lugares[0]], null);
+        if (c.tipo === "color") assert.notEqual(ej.despues[c.lugares[0]]!.color, ej.antes[c.lugares[0]]!.color);
+        if (c.tipo === "mover") {
+          assert.equal(ej.antes[c.lugares[1]], null);
+          assert.equal(ej.despues[c.lugares[1]]!.objeto, c.objeto);
+          assert.equal(lugarEsPiso(c.lugares[0]), lugarEsPiso(c.lugares[1]));
+        }
+        // Las cosas del piso van en el piso.
+        for (const i of c.lugares) if (ej.antes[i]) assert.equal(lugarEsPiso(i), o.piso);
+      }
+    }
+  }
+});
+
+test("corredor: el lugar vacío cuenta; lo que no cambió sobra; mover vale de los dos lados", () => {
+  const ej = generarCorredor({ objetos: 12, cambios: 3, tiposDeCambio: ["quitar", "color", "mover"], permitirVerDeNuevo: false }, crearAzar(4));
+  const mov = ej.cambios.find((c) => c.tipo === "mover")!;
+  const otros = ej.cambios.filter((c) => c !== mov).map((c) => c.lugares[0]);
+  assert.ok(revisarCorredor(ej, [...otros, mov.lugares[0]]).completo);
+  assert.ok(revisarCorredor(ej, [...otros, mov.lugares[1]]).completo);
+  const sinCambio = ej.antes.findIndex((p, i) => p && !ej.cambios.some((c) => c.lugares.includes(i)));
+  const r = revisarCorredor(ej, [otros[0], sinCambio]);
+  assert.deepEqual(r.sobran, [sinCambio]);
+  assert.equal(r.faltan, 2);
 });

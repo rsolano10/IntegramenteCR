@@ -5,6 +5,7 @@ import { cantidadEjercicios, resolverConfig, type DefActividad, type ExtrasInter
 import { encontrarIguales } from "./encontrarIguales";
 import { formarPalabra } from "./formarPalabra";
 import { intruso } from "./intruso";
+import { queCambio } from "./queCambio";
 import { ordenarPasos, ordenarSecuencia } from "./ordenar";
 import { orientacionHoy } from "./orientacionHoy";
 import { pagoExacto } from "./pagoExacto";
@@ -30,6 +31,7 @@ export const ACTIVIDADES: Def[] = [
   orientacionHoy,
   // Fase 2
   intruso,
+  queCambio,
 ];
 
 export const actividadPorTipo = (tipo: string | undefined): Def | undefined => ACTIVIDADES.find((a) => a.tipo === tipo);
