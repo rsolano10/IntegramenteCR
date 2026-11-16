@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GUIONES, ayudaDeEtapa, escenasVisibles, guionDe, opcionDe, opcionesSegun, palabras, plantilla, puedeSeguir, textoPrincipal, LIBRE } from "./index.ts";
+import { GUIONES, LISTA_GUIONES, ayudaDeEtapa, escenasVisibles, guionDe, opcionDe, opcionesSegun, palabras, plantilla, puedeSeguir, textoPrincipal, LIBRE } from "./index.ts";
 import { NOMBRES_ICONOS } from "./iconos.ts";
 import type { Escena, Guion } from "./tipos.ts";
 
@@ -38,6 +38,7 @@ test("sesiones: cada guion está registrado con su código", () => {
     assert.equal(g.codigo, codigo);
     assert.equal(guionDe(codigo), g);
   }
+  assert.equal(Object.keys(GUIONES).length, LISTA_GUIONES.length, "códigos repetidos en la lista");
   assert.equal(guionDe("NO-EXISTE"), null);
   assert.equal(guionDe(null), null);
 });
@@ -55,7 +56,8 @@ test("sesiones: presupuesto de palabras (una idea por pantalla)", () => {
     assert.ok(palabras(g.frase) <= 16, `${codigo}: frase de portada`);
     for (const e of g.escenas) {
       const t = textoPrincipal(e);
-      assert.ok(palabras(t) <= 16, `${codigo} ${e.tipo}: «${t}» tiene ${palabras(t)} palabras`);
+      const tope = e.tipo === "leer" ? 55 : 16;
+      assert.ok(palabras(t) <= tope, `${codigo} ${e.tipo}: «${t}» tiene ${palabras(t)} palabras`);
       if ("titulo" in e) assert.ok(palabras(e.titulo) <= 7, `${codigo}: título «${e.titulo}»`);
       if ("nota" in e && e.nota) assert.ok(palabras(e.nota) <= 22, `${codigo}: nota «${e.nota}»`);
       if ("opciones" in e) for (const o of e.opciones) assert.ok(palabras(o.texto) <= 6, `${codigo}: opción «${o.texto}»`);

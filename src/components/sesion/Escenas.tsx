@@ -4,6 +4,7 @@ import { moduloLabel } from "../../lib/modulos";
 import { LIBRE, opcionDe, opcionesSegun, plantilla, puedeSeguir, valorLista, valorUno, type Escena, type Opcion } from "../../lib/sesiones";
 import type { NombreIcono } from "../../lib/sesiones/iconos";
 import { Icono } from "./Icono";
+import { MaterialDeApoyo } from "../ui/ResourceDetailView";
 import { Ceja, Marca, Nota, Pie, Titulo } from "./comun";
 import { useSesion, useTam } from "./contexto";
 
@@ -207,6 +208,7 @@ export function Decir({ e }: { e: De<"decir"> }) {
   const t = useTam();
   const frases = [e.frase, ...(e.otras ?? [])];
   const [i, setI] = useState(0);
+  const [cuenta, setCuenta] = useState(0);
   const frase = plantilla(frases[i], guion, respuestas);
   return (
     <>
@@ -235,6 +237,23 @@ export function Decir({ e }: { e: De<"decir"> }) {
           </svg>
           Otra pregunta
         </button>
+      )}
+      {e.contar && (
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCuenta((n) => n + 1)}
+            className={`min-h-12 px-5 inline-flex items-center gap-2 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer hover:bg-tinta ${t.chico}`}
+          >
+            <Icono nombre="estrella" className="w-6 h-6" relleno="#f4c372" />
+            {e.contar}
+          </button>
+          {cuenta > 0 && (
+            <span key={cuenta} className={`ses-marca font-serif text-tinta ${t.grande}`} aria-live="polite">
+              {cuenta}
+            </span>
+          )}
+        </div>
       )}
       {!participante && e.nota && <Nota className="mt-4">{e.nota}</Nota>}
       <Pie etiqueta="Siguiente" />
@@ -423,6 +442,54 @@ export function Ordenar({ e }: { e: De<"ordenar"> }) {
   );
 }
 
+// ─── Leer: un texto breve para leerle despacio ───
+export function Leer({ e }: { e: De<"leer"> }) {
+  const { guion, respuestas, participante, tema } = useSesion();
+  const t = useTam();
+  const texto = plantilla(e.texto, guion, respuestas);
+  // La palabra resaltada, en todas sus apariciones (sin distinguir mayúsculas).
+  const partes = e.resaltar ? texto.split(new RegExp(`(${e.resaltar})`, "gi")) : [texto];
+  return (
+    <>
+      <Titulo>{e.titulo}</Titulo>
+      {!participante && <Ceja><span className="block mt-4">{e.resaltar ? "Leele despacio" : "Leele despacio, con pausas"}</span></Ceja>}
+      <div className="relative rounded-[28px] bg-white border border-borde px-6 py-6 shadow-elevada">
+        {e.icono && (
+          <span className="absolute -top-6 right-5 w-14 h-14 rounded-full bg-white border border-borde flex items-center justify-center" aria-hidden="true">
+            <Icono nombre={e.icono} className="w-10 h-10 text-tinta" relleno={tema.relleno} />
+          </span>
+        )}
+        <p className={`m-0 font-serif leading-relaxed text-tinta ${t.grande}`}>
+          {partes.map((p, i) =>
+            e.resaltar && p.toLowerCase() === e.resaltar.toLowerCase() ? (
+              <mark key={i} className="rounded-md px-1 text-tinta" style={{ background: `${tema.fuerte}40` }}>
+                {p}
+              </mark>
+            ) : (
+              <span key={i}>{p}</span>
+            ),
+          )}
+        </p>
+      </div>
+      {e.nota && <Nota className="mt-4">{e.nota}</Nota>}
+      <Pie etiqueta="Siguiente" />
+    </>
+  );
+}
+
+// ─── Material de apoyo del recurso (tabla, tarjetas, temporizador) ───
+export function Material({ e }: { e: De<"material"> }) {
+  const { datos, large } = useSesion();
+  return (
+    <>
+      <Titulo>{e.titulo}</Titulo>
+      {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
+      <div className="mt-5">{datos.extras ? <MaterialDeApoyo extras={datos.extras} large={large} /> : <Nota>El material no está disponible ahora.</Nota>}</div>
+      <Pie etiqueta="Siguiente" />
+    </>
+  );
+}
+
 // ─── Repeticiones: un anillo que se completa ───
 function Anillo({ hechas, min, max, onTocar }: { hechas: number; min: number; max: number; onTocar: () => void }) {
   const { tema, large } = useSesion();
@@ -467,33 +534,206 @@ function Anillo({ hechas, min, max, onTocar }: { hechas: number; min: number; ma
   );
 }
 
+// Etiqueta del lado cuando el ejercicio se hace de los dos lados.
+function Lado({ lado }: { lado: number }) {
+  const { tema } = useSesion();
+  const t = useTam();
+  return (
+    <span className={`ses-marca inline-flex items-center gap-2 rounded-full px-3.5 py-1 font-semibold ${t.chico}`} style={{ background: `${tema.fuerte}26`, color: tema.tinta }}>
+      {lado === 0 ? "Primer lado" : "Ahora, el otro lado"}
+    </span>
+  );
+}
+
+function IndicacionEquipo() {
+  const { datos } = useSesion();
+  const t = useTam();
+  if (!datos.indicacionIndividual) return null;
+  return (
+    <p className={`m-0 mt-4 rounded-2xl bg-verde-tenue border border-verde-serenidad/40 px-4 py-3 text-tinta ${t.chico}`}>
+      <strong>Indicación de su equipo:</strong> {datos.indicacionIndividual}
+    </p>
+  );
+}
+
 export function Repeticiones({ e }: { e: De<"repeticiones"> }) {
   const { datos } = useSesion();
   const t = useTam();
+  const [lado, setLado] = useState(0);
   const [hechas, setHechas] = useState(0);
+  const tope = datos.indicacionIndividual ? 99 : e.max;
+  const falta = e.lados && lado === 0;
   const recordatorio = e.recordatorios[hechas % e.recordatorios.length];
-  const mensaje = hechas >= e.max ? "¡Serie completa!" : hechas >= e.min ? `Ya van ${hechas}. Pueden seguir hasta ${e.max} si se siente bien.` : recordatorio;
+  const mensaje =
+    hechas >= e.max
+      ? falta
+        ? "¡Listo este lado!"
+        : "¡Serie completa!"
+      : hechas >= e.min
+        ? `Ya van ${hechas}. Pueden seguir hasta ${e.max} si se siente bien.`
+        : recordatorio;
+  const terminado = !falta && hechas >= e.min;
   return (
     <>
       <Titulo>{e.titulo}</Titulo>
       <Nota className="mt-2">{e.nota}</Nota>
-      {datos.indicacionIndividual && (
-        <p className={`m-0 mt-4 rounded-2xl bg-verde-tenue border border-verde-serenidad/40 px-4 py-3 text-tinta ${t.chico}`}>
-          <strong>Indicación de su equipo:</strong> {datos.indicacionIndividual}
-        </p>
-      )}
+      <IndicacionEquipo />
       <div className="mt-6 flex flex-col items-center">
-        <Anillo hechas={hechas} min={e.min} max={e.max} onTocar={() => setHechas((h) => Math.min(h + 1, datos.indicacionIndividual ? 99 : e.max))} />
+        {e.lados && (
+          <div className="mb-4" key={`lado-${lado}`}>
+            <Lado lado={lado} />
+          </div>
+        )}
+        <Anillo key={`anillo-${lado}`} hechas={hechas} min={e.min} max={e.max} onTocar={() => setHechas((h) => Math.min(h + 1, tope))} />
         <p key={mensaje} className={`ses-sube m-0 mt-5 min-h-[2.8em] max-w-sm text-center font-semibold leading-snug text-tinta ${t.cuerpo}`} aria-live="polite">
           {mensaje}
         </p>
-        {hechas > 0 && (
+        {falta && hechas >= e.min && (
+          <button
+            type="button"
+            onClick={() => {
+              setLado(1);
+              setHechas(0);
+            }}
+            className={`ses-sube min-h-12 px-6 rounded-full border-[1.5px] border-verde-profundo bg-verde-tenue text-verde-profundo font-semibold cursor-pointer ${t.chico}`}
+          >
+            Pasar al otro lado
+          </button>
+        )}
+        {hechas > 0 && !(falta && hechas >= e.min) && (
           <button type="button" onClick={() => setHechas((h) => h - 1)} className={`mt-1 border-0 bg-transparent p-0 text-tinta-tenue underline decoration-dotted cursor-pointer ${t.chico}`}>
             Me equivoqué, restar una
           </button>
         )}
       </div>
-      <Pie etiqueta={hechas >= e.min ? "Terminamos" : "Terminar acá"} tono={hechas >= e.min ? "principal" : "suave"} />
+      <Pie etiqueta={terminado ? "Terminamos" : "Terminar acá"} tono={terminado ? "principal" : "suave"} />
+    </>
+  );
+}
+
+// ─── Tiempo: sostener una posición o hacer un recorrido ───
+export function Tiempo({ e }: { e: De<"tiempo"> }) {
+  const { tema, large } = useSesion();
+  const t = useTam();
+  const [lado, setLado] = useState(0);
+  const [intento, setIntento] = useState(0); // intentos ya hechos en este lado
+  const [corriendo, setCorriendo] = useState(false);
+  const [seg, setSeg] = useState(0);
+  const sostener = e.modo === "sostener";
+  useEffect(() => {
+    if (!corriendo) return;
+    if (sostener && seg >= e.segundos) {
+      setCorriendo(false);
+      setIntento((i) => i + 1);
+      return;
+    }
+    const id = setTimeout(() => setSeg((x) => x + 1), 1000);
+    return () => clearTimeout(id);
+  }, [corriendo, seg, sostener, e.segundos]);
+
+  const ladosTotales = e.lados ? 2 : 1;
+  const ladoListo = intento >= e.intentos;
+  const todo = ladoListo && lado === ladosTotales - 1;
+  const empezar = () => {
+    setSeg(0);
+    setCorriendo(true);
+  };
+  const parar = () => {
+    setCorriendo(false);
+    setIntento((i) => i + 1);
+  };
+  const frac = Math.min(1, seg / e.segundos);
+  const tam = large ? 250 : 224;
+  const c = 2 * Math.PI * 100;
+  const centro = corriendo ? (sostener ? Math.max(0, e.segundos - seg) : seg) : null;
+  const recordatorio = e.recordatorios[(intento + lado) % e.recordatorios.length];
+  const mensaje = corriendo
+    ? sostener
+      ? recordatorio
+      : e.minimo && seg >= e.minimo
+        ? "Pueden terminar cuando quieran."
+        : recordatorio
+    : todo
+      ? "¡Muy bien! Terminaron."
+      : ladoListo
+        ? "¡Listo este lado!"
+        : intento > 0
+          ? "Bien. Descansen un momento y sigan."
+          : sostener
+            ? `Tocá «Empezar» y sostengan ${e.segundos} segundos.`
+            : "Tocá «Empezar» cuando arranquen.";
+
+  return (
+    <>
+      <Titulo>{e.titulo}</Titulo>
+      <Nota className="mt-2">{e.nota}</Nota>
+      <IndicacionEquipo />
+      <div className="mt-5 flex flex-col items-center">
+        <div className="mb-3 flex items-center gap-3">
+          {e.lados && <Lado key={lado} lado={lado} />}
+          {e.intentos > 1 && (
+            <span className="flex gap-1.5" aria-label={`Intento ${Math.min(intento + 1, e.intentos)} de ${e.intentos}`}>
+              {Array.from({ length: e.intentos }, (_, i) => (
+                <span key={i} className="w-3 h-3 rounded-full" style={{ background: i < intento ? tema.fuerte : "#e4dfc7" }} />
+              ))}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={corriendo ? parar : ladoListo ? undefined : empezar}
+          disabled={ladoListo && !corriendo}
+          aria-label={corriendo ? (sostener ? `Quedan ${centro} segundos. Tocá para terminar antes` : "Llegamos") : "Empezar"}
+          className="relative rounded-full border-0 bg-transparent p-0 cursor-pointer disabled:cursor-default"
+          style={{ width: tam, height: tam }}
+        >
+          <svg viewBox="0 0 240 240" className="w-full h-full -rotate-90" aria-hidden="true">
+            <circle cx="120" cy="120" r="84" fill="#fff" />
+            <circle cx="120" cy="120" r="100" fill="none" stroke="#efeada" strokeWidth="18" />
+            <circle
+              cx="120"
+              cy="120"
+              r="100"
+              fill="none"
+              stroke={tema.fuerte}
+              strokeWidth="18"
+              strokeLinecap="round"
+              opacity={corriendo || ladoListo ? 1 : 0}
+              strokeDasharray={`${c * (corriendo ? frac : ladoListo ? 1 : 0)} ${c}`}
+              style={{ transition: "stroke-dasharray 1s linear" }}
+            />
+          </svg>
+          <span className="absolute inset-0 flex flex-col items-center justify-center">
+            {centro !== null ? (
+              <>
+                <span className={`font-serif leading-none text-tinta ${large ? "text-[76px]" : "text-[66px]"}`}>{centro}</span>
+                <span className="mt-1 text-[14px] font-semibold text-tinta-tenue">{sostener ? "segundos" : "tocá al llegar"}</span>
+              </>
+            ) : ladoListo ? (
+              <Marca className="w-16 h-16 [&_svg]:w-8 [&_svg]:h-8" />
+            ) : (
+              <span className={`font-semibold text-tinta ${large ? "text-[24px]" : "text-[21px]"}`}>Empezar</span>
+            )}
+          </span>
+        </button>
+        <p key={mensaje} className={`ses-sube m-0 mt-5 min-h-[2.8em] max-w-sm text-center font-semibold leading-snug text-tinta ${t.cuerpo}`} aria-live="polite">
+          {mensaje}
+        </p>
+        {ladoListo && !todo && (
+          <button
+            type="button"
+            onClick={() => {
+              setLado(1);
+              setIntento(0);
+              setSeg(0);
+            }}
+            className={`ses-sube min-h-12 px-6 rounded-full border-[1.5px] border-verde-profundo bg-verde-tenue text-verde-profundo font-semibold cursor-pointer ${t.chico}`}
+          >
+            Pasar al otro lado
+          </button>
+        )}
+      </div>
+      <Pie etiqueta={todo ? "Terminamos" : "Terminar acá"} tono={todo ? "principal" : "suave"} />
     </>
   );
 }
@@ -814,6 +1054,12 @@ export function VistaEscena({ e }: { e: Escena }) {
       return <Ordenar e={e} />;
     case "repeticiones":
       return <Repeticiones e={e} />;
+    case "tiempo":
+      return <Tiempo e={e} />;
+    case "leer":
+      return <Leer e={e} />;
+    case "material":
+      return <Material e={e} />;
     case "descanso":
       return <Descanso e={e} />;
     case "sentir":

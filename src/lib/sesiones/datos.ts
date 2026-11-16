@@ -12,6 +12,10 @@ export function datosDeTarea(t: PlanTask): DatosSesion {
     posterUrl: t.posterPath ? (resourceUrl({ storage_path: t.posterPath, external_url: null }) ?? undefined) : undefined,
     sabiasQue: t.sabiasQue ?? null,
     indicacionIndividual: t.indicacionIndividual ?? null,
+    extras: t.extras ?? null,
+    ayuda: t.ayuda ?? null,
+    adaptacion: t.adaptacion ?? null,
+    adaptacionPorEtapa: t.adaptacionPorEtapa ?? null,
   };
 }
 
@@ -23,5 +27,9 @@ export function datosDeRecurso(r: MediaResource): DatosSesion {
     posterUrl: r.poster_path ? (resourceUrl({ storage_path: r.poster_path, external_url: null }) ?? undefined) : undefined,
     sabiasQue: r.sabias_que,
     indicacionIndividual: null,
+    extras: r.extras,
+    ayuda: r.ayuda,
+    adaptacion: r.adaptacion,
+    adaptacionPorEtapa: r.adaptacion_por_etapa,
   };
 }

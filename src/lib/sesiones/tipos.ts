@@ -38,7 +38,22 @@ export type Escena = Base &
     | { tipo: "preparar"; titulo: string; nota?: string; items: Item[] }
     | { tipo: "video"; titulo: string; nota?: string }
     | { tipo: "consigna"; titulo: string; texto: string; icono?: NombreIcono; nota?: string; paso?: { n: number; de: number } }
-    | { tipo: "decir"; titulo: string; frase: string; icono?: NombreIcono; nota?: string; otras?: string[]; pista?: string }
+    | {
+        tipo: "decir";
+        titulo: string;
+        frase: string;
+        icono?: NombreIcono;
+        nota?: string;
+        otras?: string[];
+        pista?: string;
+        // Un contador para festejar cada hallazgo («Lo encontró»).
+        contar?: string;
+      }
+    // Un texto breve para leerle en voz alta (noticia, escena, mensaje).
+    // `resaltar` marca una palabra dentro del texto.
+    | { tipo: "leer"; titulo: string; texto: string; nota?: string; resaltar?: string; icono?: NombreIcono }
+    // El material de apoyo del recurso (tabla, tarjetas, temporizador).
+    | { tipo: "material"; titulo: string; nota?: string }
     | {
         tipo: "elegir";
         clave: string;
@@ -73,7 +88,20 @@ export type Escena = Base &
         minimo: number;
         pista?: string;
       }
-    | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[] }
+    | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[]; lados?: boolean }
+    // Sostener una posición unos segundos (cuenta regresiva) o hacer un
+    // recorrido (cuenta hacia arriba, con un mínimo).
+    | {
+        tipo: "tiempo";
+        modo: "sostener" | "recorrido";
+        titulo: string;
+        nota: string;
+        segundos: number;
+        minimo?: number;
+        intentos: number;
+        lados?: boolean;
+        recordatorios: string[];
+      }
     | { tipo: "descanso"; titulo: string; segundos: number; texto: string }
     | { tipo: "sentir"; titulo: string }
     | { tipo: "repaso"; titulo: string; nota?: string; partes: { etiqueta: string; clave: string }[] }

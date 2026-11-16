@@ -168,6 +168,108 @@ const D: Record<NombreIcono, ReactNode> = {
       <path d="M28 16l-6 7M28 16l6 7" />
     </>
   ),
+  "figura-rodilla": (
+    <>
+      <path d="M8 26h14v14M8 12v28" opacity=".55" />
+      <circle cx="19" cy="9" r="4" fill={R} />
+      <path d="M19 13v12h11l10-2M40 23l1 4" />
+      <path d="M19 17l7 5" />
+      <path d="M33 16l3-2M38 17l3-1" opacity=".6" />
+    </>
+  ),
+  "figura-rodilla-arriba": (
+    <>
+      <path d="M8 26h14v14M8 12v28" opacity=".55" />
+      <circle cx="19" cy="9" r="4" fill={R} />
+      <path d="M19 13v12l10-5 1 12M30 32h4" />
+      <path d="M19 25h8v14" opacity=".4" />
+      <path d="M19 17l7 5" />
+      <path d="M31 14v-4M28 12l3-3 3 3" opacity=".6" />
+    </>
+  ),
+  "figura-escalon": (
+    <>
+      <path d="M26 40v-7h18v7z" fill={R} />
+      <path d="M4 20h14M8 20v20" opacity=".55" />
+      <circle cx="24" cy="8" r="4" fill={R} />
+      <path d="M24 12v15l-2 13M24 27l6 2v4M20 40h4M30 33h4" />
+      <path d="M24 16l-8 4" />
+    </>
+  ),
+  "figura-un-pie": (
+    <>
+      <path d="M4 20h16M9 20v20" opacity=".55" />
+      <circle cx="28" cy="8" r="4" fill={R} />
+      <path d="M28 12v16l-2 12M24 40h4M28 28l6 4-1 5" />
+      <path d="M28 16l-9 4" />
+      <path d="M38 36l2 2M38 40l2-2" opacity=".5" />
+    </>
+  ),
+  "figura-tandem": (
+    <>
+      <path d="M4 20h16M9 20v20" opacity=".55" />
+      <circle cx="28" cy="8" r="4" fill={R} />
+      <path d="M28 12v16l-5 12M28 28l5 12M20 40h4M31 40h5" />
+      <path d="M28 16l-9 4" />
+    </>
+  ),
+  "figura-camina": (
+    <>
+      <circle cx="22" cy="8" r="4" fill={R} />
+      <path d="M22 12l1 16-6 12M23 28l6 11M14 40h4M28 39h4" />
+      <path d="M22 16l-6 7M22 16l7 5" />
+      <path d="M36 40l3-7 3 7z" fill={R} />
+      <path d="M33 30l2-5 2 5z" fill={R} opacity=".7" />
+    </>
+  ),
+  "figura-lado": (
+    <>
+      <path d="M4 20h16M9 20v20" opacity=".55" />
+      <circle cx="27" cy="8" r="4" fill={R} />
+      <path d="M27 12v16l-2 12M23 40h4M27 28l9 9M35 39l3-2" />
+      <path d="M27 16l-8 4" />
+      <path d="M24 33c3 2 7 2 10 0" stroke="#c0664f" />
+    </>
+  ),
+  "figura-pelota": (
+    <>
+      <path d="M4 20h16M9 20v20" opacity=".55" />
+      <circle cx="26" cy="8" r="4" fill={R} />
+      <path d="M26 12v16l-1 12M22 40h4M26 28l6 5 2 3" />
+      <path d="M26 16l-7 4" />
+      <circle cx="38" cy="38" r="4" fill={R} />
+    </>
+  ),
+  escalon: (
+    <>
+      <path d="M6 40V30h18v-8h18v18z" fill={R} />
+      <path d="M8 34h14M26 26h14" opacity=".5" />
+    </>
+  ),
+  banda: (
+    <>
+      <path d="M10 24c0-7 6-12 14-12s14 5 14 12-6 12-14 12-14-5-14-12z" fill="none" stroke="#c0664f" strokeWidth="4" />
+      <path d="M17 24c0-4 3-6 7-6s7 2 7 6-3 6-7 6-7-2-7-6z" opacity=".25" />
+    </>
+  ),
+  pelota: (
+    <>
+      <circle cx="24" cy="24" r="15" fill={R} />
+      <path d="M11 18c8 4 18 4 26 0M11 30c8-4 18-4 26 0M24 9v30" opacity=".55" />
+    </>
+  ),
+  marcas: (
+    <>
+      <path d="M8 38l5-14 5 14zM30 38l5-14 5 14z" fill={R} />
+      <path d="M6 38h14M28 38h14M20 30c2-6 6-8 10-8" strokeDasharray="2 4" />
+    </>
+  ),
+  volumen: (
+    <>
+      <path d="M8 19v10h7l9 8V11l-9 8z" fill={R} />
+      <path d="M30 18a8 8 0 0 1 0 12M35 13a15 15 0 0 1 0 22" />
+    </>
+  ),
   casa: (
     <>
       <path d="M8 22L24 9l16 13" />

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { NivelCognitivo } from "../../lib/mediaResources";
+import type { AdaptacionPorEtapa, NivelCognitivo, ResourceExtras } from "../../lib/mediaResources";
 import type { ResourceModulo } from "../../lib/modulos";
 import type { Guion, Progreso, Respuestas } from "../../lib/sesiones";
 
@@ -12,6 +12,13 @@ export interface DatosSesion {
   sabiasQue: string | null;
   // Dosis autorizada para esta persona (plan_tasks.indicacion_individual).
   indicacionIndividual: string | null;
+  // Material de apoyo del recurso (tabla, tarjetas, temporizador).
+  extras?: ResourceExtras | null;
+  // La ayuda validada de la ficha: se ofrece en «Ayuda» cuando el guion no
+  // trae la suya.
+  ayuda?: string | null;
+  adaptacion?: string | null;
+  adaptacionPorEtapa?: AdaptacionPorEtapa | null;
 }
 
 export interface Tema {

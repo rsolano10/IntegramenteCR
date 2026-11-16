@@ -85,6 +85,10 @@ export function SesionGuiada({
     [escenaMision, guion, veces],
   );
 
+  // «Ayuda»: lo del guion y, si no trae, la ayuda validada de la ficha.
+  const consejos = guion.ayuda.length ? guion.ayuda : datos.ayuda ? [datos.ayuda] : [];
+  const porEtapa = ayudaDeEtapa(guion.ayudaPorEtapa ?? datos.adaptacionPorEtapa, etapas);
+
   const ctx: CtxSesion = {
     guion,
     datos,
@@ -102,7 +106,7 @@ export function SesionGuiada({
     },
     siguiente: () => setIdx((i) => Math.min(i + 1, escenas.length - 1)),
     anterior: idx >= 0 ? () => setIdx((i) => i - 1) : null,
-    abrirAyuda: guion.ayuda.length || guion.ayudaPorEtapa ? () => setPanel("ayuda") : null,
+    abrirAyuda: consejos.length || porEtapa.length || datos.adaptacion ? () => setPanel("ayuda") : null,
     abrirParar: () => setPanel("parar"),
     terminar: (extra) => onTerminar(armarProgreso(respuestas, marcas, { terminada: new Date().toISOString(), ...extra })),
     textoTerminar,
@@ -118,7 +122,6 @@ export function SesionGuiada({
         : plantilla(textoPrincipal(escena), guion, respuestas);
 
   const pista = escena && "pista" in escena && escena.pista ? plantilla(escena.pista, guion, respuestas) : null;
-  const porEtapa = ayudaDeEtapa(guion, etapas);
 
   return (
     <SesionContexto.Provider value={ctx}>
@@ -181,20 +184,21 @@ export function SesionGuiada({
               </div>
             )}
             <ul className="m-0 p-0 list-none grid gap-2.5">
-              {guion.ayuda.map((a) => (
+              {consejos.map((a) => (
                 <li key={a} className="flex items-start gap-2.5">
                   <span className="mt-2 w-2 h-2 shrink-0 rounded-full" style={{ background: tema.fuerte }} aria-hidden="true" />
                   {a}
                 </li>
               ))}
             </ul>
+            {!porEtapa.length && datos.adaptacion && <p className="m-0 rounded-2xl bg-fila-fria px-4 py-3 whitespace-pre-line">{datos.adaptacion}</p>}
             {porEtapa.length > 0 && (
               <div className="rounded-2xl bg-fila-fria px-4 py-3 grid gap-1.5">
                 <p className="m-0 text-[12.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{etapas.length ? "Para su etapa" : "Según la etapa"}</p>
                 {porEtapa.map((a) => (
                   <p key={a.etapa} className="m-0">
                     {!etapas.length && <strong className="font-semibold">{nivelCognitivoLabel[a.etapa]}: </strong>}
-                    {a.texto}
+                    {etapas.length ? a.texto.charAt(0).toUpperCase() + a.texto.slice(1) : a.texto}
                   </p>
                 ))}
               </div>

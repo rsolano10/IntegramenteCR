@@ -1,6 +1,7 @@
 import type { NivelCognitivo } from "../mediaResources";
 import { cog005 } from "./guiones/cog005";
 import { ger003 } from "./guiones/ger003";
+import { ger001, ger002, ger004, ger005, ger006, ger007, ger008, ger009, ger010 } from "./guiones/gerontogimnasia";
 import { pre005 } from "./guiones/pre005";
 import type { Escena, Guion, Opcion, Respuestas } from "./tipos";
 
@@ -8,11 +9,25 @@ export type { Escena, Guion, Opcion, Progreso, Respuestas } from "./tipos";
 
 // Recursos con sesión guiada propia. Los demás usan el paso a paso
 // automático (lib/pasoAPaso.ts).
-export const GUIONES: Record<string, Guion> = {
-  [ger003.codigo]: ger003,
-  [cog005.codigo]: cog005,
-  [pre005.codigo]: pre005,
-};
+export const LISTA_GUIONES: Guion[] = [
+  // Gerontogimnasia
+  ger001,
+  ger002,
+  ger003,
+  ger004,
+  ger005,
+  ger006,
+  ger007,
+  ger008,
+  ger009,
+  ger010,
+  // Reminiscencia y cognición
+  cog005,
+  // Nutrición
+  pre005,
+];
+
+export const GUIONES: Record<string, Guion> = Object.fromEntries(LISTA_GUIONES.map((g) => [g.codigo, g]));
 
 export const guionDe = (codigo: string | null | undefined): Guion | null => (codigo ? (GUIONES[codigo] ?? null) : null);
 
@@ -90,8 +105,11 @@ export function puedeSeguir(e: Escena, r: Respuestas): boolean {
 
 // Ayuda por etapa: solo la de la persona; sin etapa (clínica), todas.
 const ORDEN: NivelCognitivo[] = ["preventivo", "dcl", "leve", "moderada", "avanzada"];
-export function ayudaDeEtapa(g: Guion, etapas: NivelCognitivo[]): { etapa: NivelCognitivo; texto: string }[] {
-  const por = g.ayudaPorEtapa ?? {};
+export function ayudaDeEtapa(
+  g: Guion | Partial<Record<NivelCognitivo, string>> | null | undefined,
+  etapas: NivelCognitivo[],
+): { etapa: NivelCognitivo; texto: string }[] {
+  const por: Partial<Record<NivelCognitivo, string>> = (g && "escenas" in g ? g.ayudaPorEtapa : g) ?? {};
   return ORDEN.filter((e) => por[e] && (!etapas.length || etapas.includes(e))).map((e) => ({ etapa: e, texto: por[e]! }));
 }
 
@@ -105,6 +123,8 @@ export function textoPrincipal(e: Escena): string {
       return e.texto;
     case "decir":
       return e.frase;
+    case "leer":
+      return e.texto;
     case "mision":
       return e.texto;
     case "cierre":
