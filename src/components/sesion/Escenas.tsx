@@ -198,7 +198,7 @@ export function Preparar({ e }: { e: De<"preparar"> }) {
       {e.items.length > 1 && <p className={`m-0 mt-3 text-tinta-tenue ${t.chico}`} aria-live="polite">
         {todos ? "¡Todo listo!" : faltan === e.items.length ? "Si algo no hace falta, igual pueden seguir." : `Faltan ${faltan}. Si algo no hace falta, igual pueden seguir.`}
       </p>}
-      <Pie etiqueta={todos ? "Todo listo, seguir" : "Seguir"} tono={todos ? "principal" : "suave"} />
+      <Pie etiqueta="Siguiente" tono={todos ? "principal" : "suave"} />
     </>
   );
 }
@@ -363,7 +363,7 @@ function CampoLibre({ etiqueta, valor, onCambio, onAgregar }: { etiqueta: string
           type="button"
           onClick={onAgregar}
           disabled={!valor.trim()}
-          className={`shrink-0 min-h-[52px] px-5 rounded-2xl border-0 bg-tinta text-white font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${t.chico}`}
+          className={`shrink-0 min-h-[52px] px-5 rounded-2xl border-0 bg-verde-profundo text-white font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${t.chico}`}
         >
           Agregar
         </button>
@@ -974,7 +974,7 @@ export function Descanso({ e }: { e: De<"descanso"> }) {
           {restante > 0 ? fase : "Bien. Seguimos cuando quieran."}
         </p>
       </div>
-      <Pie etiqueta={restante > 0 ? "Saltar el descanso" : "Seguir"} tono={restante > 0 ? "suave" : "principal"} />
+      <Pie etiqueta={restante > 0 ? "Saltar el descanso" : "Siguiente"} tono={restante > 0 ? "suave" : "principal"} />
     </>
   );
 }
@@ -1267,6 +1267,18 @@ export function Cierre({ e }: { e: De<"cierre"> }) {
   const [error, setError] = useState(false);
   const clara = valorUno(respuestas, "_clara") as "si" | "masomenos" | "no" | null;
   const listo = !registro || (v !== null && (v !== "partial" || ayuda.trim().length > 0));
+  // El festejo, recién cuando cuentan que salió (entera o en parte): si
+  // responden «No», un «¡Lo lograron!» contradiría la respuesta.
+  const salio = !registro || v === "done" || v === "partial";
+  const ceja = paradaAntes
+    ? "Por hoy, hasta acá"
+    : salio
+      ? participante ? "¡Lo lograste!" : "¡Lo lograron!"
+      : v === "no"
+        ? "Gracias por contarlo"
+        : participante ? "Llegaste al final" : "Llegaron al final";
+  // Por qué todavía no se puede guardar, dicho en palabras.
+  const falta = !registro || guardando ? null : v === null ? "Elegí una respuesta para guardar." : v === "partial" && !ayuda.trim() ? "Contá qué ayuda hizo falta para guardar." : null;
 
   async function terminarAhora() {
     setGuardando(true);
@@ -1282,12 +1294,12 @@ export function Cierre({ e }: { e: De<"cierre"> }) {
   return (
     <>
       <div className="relative flex flex-col items-center text-center pt-4">
-        {!paradaAntes && <Petalos />}
+        {!paradaAntes && salio && <Petalos />}
         <div className="ses-sube w-[120px] h-[120px] rounded-full bg-white border border-borde flex items-center justify-center shadow-elevada">
           <Icono nombre={paradaAntes ? "corazon" : "estrella"} className="w-16 h-16 text-tinta" relleno="#f4c372" />
         </div>
         <Ceja>
-          <span className="block mt-5">{paradaAntes ? "Por hoy, hasta acá" : "¡Lo lograron!"}</span>
+          <span className="block mt-5">{ceja}</span>
         </Ceja>
         <p className={`m-0 max-w-md font-serif italic leading-snug text-verde-profundo ${t.grande}`}>{paradaAntes ? "Parar a tiempo también es cuidarse." : e.texto}</p>
         {!paradaAntes && e.dato && datos.sabiasQue && <Dato texto={datos.sabiasQue} />}
@@ -1356,6 +1368,11 @@ export function Cierre({ e }: { e: De<"cierre"> }) {
           onElegir={(x) => responder("_clara", x)}
         />
         {error && <p className="m-0 text-[15px] text-alerta-texto">No pudimos guardar. Revisá la conexión y probá de nuevo.</p>}
+        {falta && (
+          <p className={`m-0 rounded-2xl bg-campo px-4 py-2.5 font-semibold text-tinta-suave ${t.chico}`} aria-live="polite">
+            {falta}
+          </p>
+        )}
       </section>
       <Pie etiqueta={guardando ? "Guardando…" : registro ? "Guardar y terminar" : "Terminar"} onClick={terminarAhora} habilitado={listo && !guardando} solo />
     </>

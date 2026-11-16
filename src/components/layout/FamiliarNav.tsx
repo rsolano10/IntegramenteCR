@@ -79,7 +79,7 @@ export function FamiliarNav() {
               }`}
             >
               {item.icon(active)}
-              <span className={`text-[12px] ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
+              <span className={`text-[14px] ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
               <span className={`h-[3px] w-6 rounded-full ${active ? "bg-verde-serenidad" : "bg-transparent"}`} />
             </Link>
           );

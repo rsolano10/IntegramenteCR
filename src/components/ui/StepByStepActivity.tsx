@@ -92,7 +92,7 @@ export function StepByStepActivity({
     return shell(
       <div>
         <p className={`m-0 ${large ? "text-2xl" : "text-lg"} text-tinta-suave`}>No encontramos esa actividad.</p>
-        <Button variant="ink" onClick={volver} className="mt-6">
+        <Button variant="principal" onClick={volver} className="mt-6">
           Volver
         </Button>
       </div>,
@@ -193,7 +193,7 @@ export function StepByStepActivity({
           Anterior
         </Button>
       )}
-      <Button variant="ink" fullWidth onClick={siguiente}>
+      <Button variant="principal" fullWidth onClick={siguiente}>
         {etiqueta}
       </Button>
     </div>
@@ -363,7 +363,7 @@ export function StepByStepActivity({
           <Button variant="secondary" onClick={() => setScreen("registro")} disabled={saving}>
             Cancelar
           </Button>
-          <Button variant="ink" onClick={confirmHelp} disabled={!helpText.trim() || saving}>
+          <Button variant="principal" onClick={confirmHelp} disabled={!helpText.trim() || saving}>
             {saving ? "Guardando…" : "Guardar"}
           </Button>
         </div>
@@ -383,7 +383,7 @@ export function StepByStepActivity({
       <div>
         <p className={`m-0 mb-6 ${large ? "text-[24px]" : "text-[20px]"} leading-relaxed text-verde-profundo`}>{messages[saved]}</p>
         <div className="grid gap-3">
-          <Button variant="ink" fullWidth onClick={() => navigate(backTo, { replace: true })}>
+          <Button variant="principal" fullWidth onClick={() => navigate(backTo, { replace: true })}>
             Volver
           </Button>
           {large && saved === "no" && (

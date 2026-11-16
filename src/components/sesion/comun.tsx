@@ -78,7 +78,7 @@ export function Pie({
           disabled={!habilitado}
           onClick={onClick ?? siguiente}
           className={`flex-1 min-w-0 ${alto} px-4 sm:px-6 whitespace-nowrap rounded-full font-semibold cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
-            tono === "principal" ? "border-0 bg-tinta text-white hover:bg-verde-profundo" : "border-[1.5px] border-borde bg-white text-tinta hover:border-verde-serenidad"
+            tono === "principal" ? "border-0 bg-verde-profundo text-white hover:bg-tinta" : "border-[1.5px] border-borde bg-white text-tinta hover:border-verde-serenidad"
           }`}
         >
           {etiqueta}

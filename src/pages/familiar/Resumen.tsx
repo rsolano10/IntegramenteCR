@@ -80,7 +80,7 @@ export function Resumen() {
         <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute -right-10 -top-8 w-44 opacity-[0.12] rotate-12 select-none" />
         <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute -left-12 -bottom-12 w-40 opacity-[0.08] -rotate-12 select-none" />
         {r.pct >= 0.3 && <Petalos />}
-        <p className="relative m-0 text-[12.5px] tracking-[0.16em] uppercase font-semibold text-[#c4dbdb]">
+        <p className="relative m-0 text-[13px] tracking-[0.16em] uppercase font-semibold text-[#c4dbdb]">
           Tu semana{semana ? ` del ${semana}` : ""}
         </p>
         <AnilloLogro logradas={r.logradas} total={r.total} />
@@ -122,7 +122,7 @@ export function Resumen() {
           <svg aria-hidden="true" width="80" height="80" viewBox="0 0 24 24" className="absolute -right-3 -top-3 text-white/35" fill="currentColor">
             <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" />
           </svg>
-          <p className="relative m-0 text-[12.5px] tracking-[0.14em] uppercase font-bold text-[#7a5a1f]">{esPropia ? "Lo que más disfrutaste" : "Lo que más disfrutó"}</p>
+          <p className="relative m-0 text-[13px] tracking-[0.14em] uppercase font-bold text-[#7a5a1f]">{esPropia ? "Lo que más disfrutaste" : "Lo que más disfrutó"}</p>
           <p className="relative m-0 mt-1.5 font-serif text-[24px] sm:text-[26px] leading-snug text-tinta">«{favorita}»</p>
         </section>
       )}
@@ -130,7 +130,7 @@ export function Resumen() {
       {/* ─── Ánimo de la semana ─── */}
       {mood && (
         <p className="m-0 flex items-center gap-3 rounded-[20px] px-4 py-3.5 text-[15px] leading-relaxed" style={{ background: mood.fondo, color: mood.tinta }}>
-          <span className="shrink-0 rounded-full bg-white/70 px-3 py-1 text-[13px] font-bold">Ánimo: {mood.texto}</span>
+          <span className="shrink-0 rounded-full bg-white/70 px-3 py-1 text-[14px] font-bold">Ánimo: {mood.texto}</span>
           <span className="text-tinta">{mood.frase}</span>
         </p>
       )}
@@ -151,7 +151,7 @@ export function Resumen() {
                   <div className="min-w-0 flex-1">
                     <p className="m-0 flex items-baseline justify-between gap-2 text-[15px]">
                       <span className="font-semibold text-tinta">{moduloLabel[a.modulo as ResourceModulo] ?? a.modulo}</span>
-                      <span className="text-[13.5px] text-tinta-suave">
+                      <span className="text-[14px] text-tinta-suave">
                         {a.hechas} de {a.total}
                       </span>
                     </p>
@@ -169,7 +169,7 @@ export function Resumen() {
       {/* ─── Mensaje del equipo ─── */}
       {planMeta?.feedback_mensaje ? (
         <section className="relative rounded-[26px] bg-white border border-borde px-5 py-5 sm:px-6 shadow-[0_18px_40px_-34px_rgba(31,51,56,0.7)]">
-          <p className="m-0 text-[12.5px] tracking-[0.14em] uppercase font-bold text-verde-profundo">Un mensaje de tu equipo</p>
+          <p className="m-0 text-[13px] tracking-[0.14em] uppercase font-bold text-verde-profundo">Un mensaje de tu equipo</p>
           <p className="m-0 mt-2.5 font-serif text-[20px] leading-relaxed text-tinta whitespace-pre-line">{planMeta.feedback_mensaje}</p>
           <p className="m-0 mt-4 flex items-center gap-2.5 text-[14px] font-semibold text-tinta-suave">
             <img src="/marca/isotipo.png" alt="" className="w-7 h-auto" />
@@ -208,7 +208,7 @@ export function Resumen() {
 
       {preocupacion && (
         <section className="rounded-[20px] bg-campo border border-borde-suave px-4 py-3.5">
-          <p className="m-0 text-[13px] font-bold text-tinta-suave">Lo que nos contaste</p>
+          <p className="m-0 text-[14px] font-bold text-tinta-suave">Lo que nos contaste</p>
           <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta">{preocupacion}</p>
         </section>
       )}
@@ -234,7 +234,7 @@ function AnilloLogro({ logradas, total }: { logradas: number; total: number }) {
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
         <span className="font-serif text-[44px] leading-none">{Math.round(logradas * progreso)}</span>
-        <span className="mt-1 text-[13px] font-semibold text-white/75">de {total}</span>
+        <span className="mt-1 text-[14px] font-semibold text-white/75">de {total}</span>
       </span>
     </div>
   );
@@ -269,7 +269,7 @@ function Dato({ valor, etiqueta, fondo, tinta, children }: { valor: string; etiq
   return (
     <div className="rounded-[20px] px-2 py-3.5 text-center" style={{ background: fondo, color: tinta }}>
       <p className="m-0 font-serif text-[30px] leading-none">{valor}</p>
-      <p className="m-0 mt-1 text-[12.5px] font-semibold leading-tight">{etiqueta}</p>
+      <p className="m-0 mt-1 text-[14px] font-semibold leading-tight">{etiqueta}</p>
       {children}
     </div>
   );

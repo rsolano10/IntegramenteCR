@@ -210,7 +210,7 @@ function MasActividades() {
               </span>
             ))}
             </span>
-            <span className="block text-[12px] tracking-[0.14em] uppercase text-tinta-suave font-semibold">¿Con ganas de más?</span>
+            <span className="block text-[13px] tracking-[0.14em] uppercase text-tinta-suave font-semibold">¿Con ganas de más?</span>
             <span className="block mt-1 font-serif text-[20px] sm:text-[21px] leading-snug text-tinta">Actividades sugeridas para hacer juntos</span>
             <span className="block mt-1 text-[14px] text-tinta-suave">
               {isLoading ? "Buscando…" : `${(resources ?? []).length} ideas según el perfil, además del plan.`}
@@ -236,7 +236,7 @@ function MasActividades() {
         <button
           type="button"
           onClick={() => setAbierto(false)}
-          className="shrink-0 text-[13.5px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none"
+          className="shrink-0 text-[14px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none"
         >
           Ocultar
         </button>

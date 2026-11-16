@@ -76,7 +76,7 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
           <li key={paso.titulo} className="grid grid-cols-[28px_1fr] gap-3.5">
             <div className="flex flex-col items-center">
               <span
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0 ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-[14px] font-semibold shrink-0 ${
                   paso.estado === "hecho"
                     ? "bg-verde-serenidad text-white"
                     : paso.estado === "actual"
@@ -91,7 +91,7 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
             <div className={i < pasosRevision.length - 1 ? "pb-5" : ""}>
               <p className={`m-0 text-[16px] font-semibold ${paso.estado === "pendiente" ? "text-tinta-tenue" : "text-tinta"}`}>
                 {paso.titulo}
-                {paso.estado === "actual" && <span className="ml-2 text-[12px] font-normal text-aviso-texto">en curso</span>}
+                {paso.estado === "actual" && <span className="ml-2 text-[14px] font-normal text-aviso-texto">en curso</span>}
               </p>
               <p className="m-0 mt-0.5 text-[14px] leading-relaxed text-tinta-suave">{paso.detalle}</p>
             </div>

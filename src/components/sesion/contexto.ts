@@ -76,6 +76,6 @@ export function useTam() {
     grande: large ? "text-[28px]" : "text-[23px] sm:text-[25px]",
     cuerpo: large ? "text-[21px]" : "text-[17.5px]",
     chico: large ? "text-[18px]" : "text-[15px]",
-    ceja: large ? "text-[14px]" : "text-[12.5px]",
+    ceja: large ? "text-[14px]" : "text-[14px]",
   };
 }

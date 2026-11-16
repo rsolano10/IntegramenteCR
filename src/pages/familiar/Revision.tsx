@@ -52,7 +52,7 @@ export function Revision() {
                 className="text-left flex items-center justify-between gap-3 bg-white border border-borde rounded-2xl px-4 py-3.5 cursor-pointer hover:border-verde-serenidad"
               >
                 <span className="text-[15px] font-semibold text-tinta">Semana del {formatWeekOf(p.publishAt)}</span>
-                <span className="text-[13px] font-semibold text-verde-profundo">Evaluar ›</span>
+                <span className="text-[14px] font-semibold text-verde-profundo">Evaluar ›</span>
               </button>
             ))}
           </div>
@@ -113,7 +113,7 @@ export function Revision() {
         </div>
       </div>
       {error && <p className="m-0 mb-4 text-[14px] text-alerta-texto">{error}</p>}
-      <Button variant="ink" fullWidth onClick={submit} disabled={saving}>
+      <Button variant="principal" fullWidth onClick={submit} disabled={saving}>
         {saving ? "Guardando…" : "Ver resumen de la semana"}
       </Button>
     </div>

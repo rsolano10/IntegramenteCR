@@ -28,7 +28,7 @@ export function Emergencia() {
   return (
     <div className="im-in">
       <BotonVolver respaldo="/app/hoy" className="mb-2" />
-      <p className="m-0 mb-2.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">¿Qué está pasando?</p>
+      <p className="m-0 mb-2.5 text-[13px] sm:text-sm tracking-[0.16em] uppercase text-tinta-suave">¿Qué está pasando?</p>
       <h1 className="font-serif font-normal text-[26px] sm:text-[34px] leading-[1.16] m-0 mb-3">Contame para orientarte mejor</h1>
       <p className="m-0 mb-7 text-base sm:text-[17px] leading-relaxed text-tinta-suave">
         Elegí lo que más se parece a lo que está pasando. Si es una urgencia médica que no puede esperar, llamá al{" "}

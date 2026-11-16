@@ -46,7 +46,7 @@ function SesionesEnVivo({ paciente }: { paciente?: string }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-semibold text-tinta">¿Querés sesiones con el equipo?</span>
-          <span className="block mt-0.5 text-[13.5px] leading-snug text-tinta-tenue">Conocé el programa con sesiones profesionales.</span>
+          <span className="block mt-0.5 text-[14px] leading-snug text-tinta-tenue">Conocé el programa con sesiones profesionales.</span>
         </span>
         <span aria-hidden="true" className={`text-[20px] text-tinta-tenue transition-transform ${abierto ? "rotate-90" : ""}`}>
           ›
@@ -62,7 +62,7 @@ function SesionesEnVivo({ paciente }: { paciente?: string }) {
               </li>
             ))}
           </ul>
-          {orientado.requisito && <p className="m-0 mt-3 text-[13.5px] leading-relaxed text-tinta-suave">{orientado.requisito}</p>}
+          {orientado.requisito && <p className="m-0 mt-3 text-[14px] leading-relaxed text-tinta-suave">{orientado.requisito}</p>}
           <a
             href={waEquipo("Quiero información para pasarnos al programa con sesiones profesionales.", paciente)}
             target="_blank"

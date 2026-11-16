@@ -38,7 +38,7 @@ export function CienciaActividad({ ciencia, large = false }: { ciencia: TextoCie
       {/* Las gotas del isotipo, grandes y suaves, como marca de agua */}
       <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 w-44 rotate-12 opacity-[0.13] select-none" />
 
-      <p className={`relative m-0 flex items-center gap-2 tracking-[0.16em] uppercase font-semibold text-verde-profundo ${large ? "text-[14px]" : "text-[12px]"}`}>
+      <p className={`relative m-0 flex items-center gap-2 tracking-[0.16em] uppercase font-semibold text-verde-profundo ${large ? "text-[14px]" : "text-[13px]"}`}>
         <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="w-5 h-auto" />
         La ciencia de esta actividad
       </p>
@@ -56,7 +56,7 @@ export function CienciaActividad({ ciencia, large = false }: { ciencia: TextoCie
 
       {/* Firma de la marca */}
       <div className="relative mt-4 flex items-center justify-between gap-3 border-t border-verde-serenidad/20 pt-3">
-        <span className={`text-tinta-tenue ${large ? "text-[15px]" : "text-[12.5px]"}`}>Explicado por el equipo de</span>
+        <span className={`text-tinta-tenue ${large ? "text-[15px]" : "text-[14px]"}`}>Explicado por el equipo de</span>
         <span className="inline-flex items-center gap-1.5 h-6">
           <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="h-full w-auto" />
           <img src="/marca/logotipo.png" alt="IntegraMente" className="h-[80%] w-auto" />

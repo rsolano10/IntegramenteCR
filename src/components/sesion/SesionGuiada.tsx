@@ -239,7 +239,7 @@ export function SesionGuiada({
           <div className="grid gap-3 text-[16px] leading-relaxed text-tinta">
             {pista && (
               <div className="rounded-2xl bg-beige-serenidad px-4 py-3">
-                <p className="m-0 mb-1 text-[12.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">Una pista</p>
+                <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">Una pista</p>
                 <p className="m-0">{pista}</p>
               </div>
             )}
@@ -253,7 +253,7 @@ export function SesionGuiada({
             </ul>
             {porEtapa.length > 0 && (
               <div className="rounded-2xl bg-fila-fria px-4 py-3 grid gap-1.5">
-                <p className="m-0 text-[12.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{etapas.length ? "Para su etapa" : "Según la etapa"}</p>
+                <p className="m-0 text-[13px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{etapas.length ? "Para su etapa" : "Según la etapa"}</p>
                 {porEtapa.map((a) => (
                   <p key={a.etapa} className="m-0">
                     {!etapas.length && <strong className="font-semibold">{nivelCognitivoLabel[a.etapa]}: </strong>}
@@ -291,7 +291,7 @@ export function SesionGuiada({
                 setParadaAntes(true);
                 setIdx(escenas.length - 1);
               }}
-              className="min-h-[54px] rounded-full border-0 bg-tinta text-white font-semibold text-[17px] cursor-pointer hover:bg-verde-profundo"
+              className="min-h-[54px] rounded-full border-0 bg-verde-profundo text-white font-semibold text-[17px] cursor-pointer hover:bg-tinta"
             >
               Terminar por hoy
             </button>

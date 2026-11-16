@@ -9,7 +9,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 // replace Button — the two registers coexist on purpose (e.g.
 // StepByStepActivity uses Button for "Siguiente/Anterior" nav and
 // BigActionButton for the big yes/no decision at the end of each activity).
-type Variant = "ink" | "primary" | "secondary" | "soft" | "caution" | "tertiary";
+type Variant = "ink" | "principal" | "primary" | "secondary" | "soft" | "caution" | "tertiary";
 
 const base = "border-none rounded-2xl font-sans font-bold cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -20,6 +20,8 @@ const sizes = {
 
 const variants: Record<Variant, string> = {
   ink: "bg-tinta text-white hover:bg-verde-profundo",
+  // La acción principal: el mismo verde que el resto de la app de la familia.
+  principal: "bg-verde-profundo text-white hover:bg-tinta",
   primary: "bg-verde-serenidad text-white hover:bg-verde-profundo",
   secondary: "border-2 border-borde bg-white text-tinta",
   soft: "border-2 border-verde-serenidad bg-verde-tenue text-verde-profundo",

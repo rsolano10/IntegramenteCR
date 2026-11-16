@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-type Variant = "primary" | "secondary" | "ink" | "urgency" | "caution";
+type Variant = "primary" | "secondary" | "ink" | "principal" | "urgency" | "caution";
 
 const base = "inline-flex items-center justify-center rounded-full font-sans font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -21,6 +21,8 @@ const sizes = {
 const variants: Record<Variant, string> = {
   primary: "bg-verde-serenidad text-white hover:bg-verde-profundo",
   ink: "bg-tinta text-white hover:bg-verde-profundo",
+  // La acción principal en las pantallas de la familia y del participante.
+  principal: "bg-verde-profundo text-white hover:bg-tinta",
   secondary: "bg-transparent border-[1.5px] border-borde text-tinta hover:border-verde-serenidad",
   urgency: "bg-semaforo-rojo text-white hover:bg-alerta-texto font-bold",
   caution: "bg-aviso text-semaforo-amarillo-texto border-2 border-mostaza-vital font-bold hover:bg-mostaza-vital",

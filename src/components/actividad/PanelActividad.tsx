@@ -67,7 +67,7 @@ export function PanelActividad({
   const t = {
     titulo: large ? "text-[32px]" : "text-[28px]",
     cuerpo: large ? "text-[20px]" : "text-[16.5px]",
-    seccion: large ? "text-[15px]" : "text-[13px]",
+    seccion: large ? "text-[15px]" : "text-[14px]",
   };
 
   const ir = (modo: ModoInicio) => navigate(modo === "normal" ? rutaPasos : `${rutaPasos}?modo=${modo}`);
@@ -165,7 +165,7 @@ export function PanelActividad({
                     <Icono nombre={p.icono} className="w-8 h-8 text-tinta" relleno={`${tema.to}80`} />
                   </span>
                   <div className="pt-1 min-w-0">
-                    <p className={`m-0 tracking-[0.1em] uppercase font-semibold ${large ? "text-[13px]" : "text-[11.5px]"}`} style={{ color: tema.ink }}>
+                    <p className={`m-0 tracking-[0.1em] uppercase font-semibold ${large ? "text-[13px]" : "text-[13px]"}`} style={{ color: tema.ink }}>
                       {ultimo && guion ? "Al final" : `Paso ${i + 1}`}
                     </p>
                     <p className={`m-0 font-semibold leading-snug text-tinta ${large ? "text-[20px]" : "text-[16.5px]"}`}>{p.texto}</p>

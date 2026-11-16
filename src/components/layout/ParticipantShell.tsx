@@ -168,7 +168,7 @@ function AvatarMenu() {
             <BigActionButton variant="secondary" size="md" onClick={() => setScreen("password")}>
               Cambiar contraseña
             </BigActionButton>
-            <BigActionButton variant="ink" size="md" onClick={doLogout}>
+            <BigActionButton variant="principal" size="md" onClick={doLogout}>
               Cerrar sesión
             </BigActionButton>
           </div>
@@ -183,7 +183,7 @@ function AvatarMenu() {
           <p className="m-0 mb-4 text-[20px] leading-relaxed text-tinta">¿Cómo querés que te llamemos?</p>
           <input type="text" value={nombreValue} onChange={(e) => setNombreValue(e.target.value)} className={`${bigInputClass} mb-4`} />
           {error && <p className="m-0 mb-4 text-[15px] text-alerta-texto">{error}</p>}
-          <BigActionButton variant="ink" disabled={savingNombre || !nombreValue.trim()} onClick={saveNombre}>
+          <BigActionButton variant="principal" disabled={savingNombre || !nombreValue.trim()} onClick={saveNombre}>
             {savingNombre ? "Guardando…" : "Guardar"}
           </BigActionButton>
         </Modal>
@@ -202,7 +202,7 @@ function AvatarMenu() {
             <input type="password" placeholder="Confirmar nueva contraseña" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} className={bigInputClass} />
           </div>
           {pwError && <p className="m-0 mb-4 text-[15px] text-alerta-texto">{pwError}</p>}
-          <BigActionButton variant="ink" disabled={pwLoading || !currentPw || !newPw || !confirmPw} onClick={submitPassword}>
+          <BigActionButton variant="principal" disabled={pwLoading || !currentPw || !newPw || !confirmPw} onClick={submitPassword}>
             {pwLoading ? "Guardando…" : "Guardar contraseña"}
           </BigActionButton>
         </Modal>

@@ -87,7 +87,7 @@ export function Ayuda() {
         </p>
         <p className="m-0 text-[20px] leading-relaxed text-tinta-suave">¿Querés continuar?</p>
         <div className="grid gap-3">
-          <BigActionButton variant="ink" size="md" onClick={pedirAyuda} disabled={enviando}>
+          <BigActionButton variant="principal" size="md" onClick={pedirAyuda} disabled={enviando}>
             {enviando ? "Avisando…" : "Sí, continuar"}
           </BigActionButton>
           <BigActionButton variant="secondary" size="md" onClick={() => navigate("/app/participante/hoy")}>

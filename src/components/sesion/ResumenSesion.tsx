@@ -35,7 +35,7 @@ export function MisionSemana({
   }
   return (
     <section className="rounded-[24px] border-[1.5px] px-4 py-4 mb-5" style={{ borderColor: `${tema.to}66`, background: `${tema.from}33` }}>
-      <p className={`m-0 mb-1 tracking-[0.14em] uppercase font-semibold ${large ? "text-[14px]" : "text-[12.5px]"}`} style={{ color: tema.ink }}>
+      <p className={`m-0 mb-1 tracking-[0.14em] uppercase font-semibold ${large ? "text-[14px]" : "text-[13px]"}`} style={{ color: tema.ink }}>
         Misión de la semana
       </p>
       <p className={`m-0 font-serif leading-snug text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{m.texto}</p>

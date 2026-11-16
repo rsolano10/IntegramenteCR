@@ -38,7 +38,7 @@ export function WelcomeMessageModal({ patientId }: { patientId: string }) {
         <p className="m-0 mb-1 text-[13px] tracking-[0.12em] uppercase text-verde-profundo">Mensaje de tu equipo clínico</p>
         <p className="m-0 text-[16px] leading-relaxed text-tinta">{mensaje}</p>
       </div>
-      <Button variant="ink" fullWidth onClick={dismiss}>
+      <Button variant="principal" fullWidth onClick={dismiss}>
         Empezar
       </Button>
     </Modal>
