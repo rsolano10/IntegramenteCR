@@ -56,16 +56,23 @@ L["cognicion"] = ("Atención y memoria", "#d5e0e7", mezcla("#c3d2dc","#5b7489",0
 <path d="M108 212 H132 L126 222 H114 Z" fill="{INK}"/>
 ''')
 
-# Gerontogimnasia: persona sentada estirando los brazos.
+# Gerontogimnasia: de pie en un pie, con la mano apoyada en el respaldo de
+# una silla firme (el ejercicio seguro y acompañado).
 L["gerontogimnasia"] = ("Gerontogimnasia", "#fbe6bb", mezcla("#f4d096","#c99a45",0.55), f'''
 {escenario()}
-<g stroke="{INK}" stroke-width="7" stroke-linecap="round" fill="none"><path d="M78 118 L78 212"/><path d="M78 162 L160 162"/><path d="M150 162 L150 212"/></g>
-<path d="M98 160 C96 132 102 112 118 106 C134 112 140 132 138 160 Z" fill="{VP}"/>
-<circle cx="118" cy="86" r="17" fill="{VP}"/>
-<g stroke="{VP}" stroke-width="13" stroke-linecap="round" fill="none"><path d="M106 118 L82 70"/><path d="M130 118 L154 70"/><path d="M110 160 L150 168 L150 204"/></g>
-<circle cx="80" cy="64" r="9" fill="{MOST}"/><circle cx="156" cy="64" r="9" fill="{MOST}"/>
-<g stroke="{PAPEL}" stroke-width="5" stroke-linecap="round" fill="none"><path d="M60 52 C54 60 54 70 58 78"/><path d="M176 52 C182 60 182 70 178 78"/></g>
-{gota(176,170,30,180,TERRA)}
+<g stroke="{INK}" stroke-width="6" stroke-linecap="round" fill="none"><path d="M150 96 L150 210"/><path d="M150 150 L200 150"/><path d="M196 150 L196 210"/><path d="M150 96 L150 96"/></g>
+<rect x="144" y="90" width="12" height="62" rx="4" fill="{INK}"/>
+<circle cx="102" cy="52" r="17" fill="{VP}"/>
+<path d="M88 76 C96 70 112 70 118 80 L122 132 C122 138 116 142 110 142 L94 142 C88 142 84 136 85 130 Z" fill="{VP}"/>
+<g stroke="{VP}" stroke-width="13" stroke-linecap="round" fill="none">
+<path d="M114 86 L140 100 L148 96"/>
+<path d="M90 88 L66 112"/>
+<path d="M104 140 L104 206"/>
+<path d="M98 140 L82 168 L104 176"/>
+</g>
+<rect x="92" y="202" width="26" height="10" rx="5" fill="{INK}"/>
+<g stroke="{PAPEL}" stroke-width="5" stroke-linecap="round" fill="none"><path d="M44 74 C38 84 38 96 44 106"/><path d="M58 64 C50 78 50 98 58 112"/></g>
+{gota(42,170,30,0,TERRA)}
 ''')
 
 # Movimiento: una zapatilla en marcha, con líneas de velocidad.
