@@ -61,7 +61,7 @@ const items: NavItem[] = [
 // Tres pestañas: Hoy, Mi semana y Ayuda.
 // · Celular: barra inferior fija, tres botones grandes (ícono y texto, 64 px),
 //   donde llega el pulgar y como en WhatsApp.
-// · Escritorio: las pestañas van en el encabezado, junto al logo
+// · Computadora (desde 1024 px; las tablets usan la barra inferior): las pestañas van en el encabezado, junto al logo
 //   (PestanasFamilia, en AppHeader); la activa es una pastilla rellena.
 export function FamiliarNav() {
   const { pathname } = useLocation();
@@ -69,7 +69,7 @@ export function FamiliarNav() {
     <nav
       data-menu-inferior
       aria-label="Secciones"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-3"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-3"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {items.map((item) => {
@@ -93,7 +93,7 @@ export function FamiliarNav() {
 export function PestanasFamilia() {
   const { pathname } = useLocation();
   return (
-    <nav aria-label="Secciones" className="hidden md:flex items-center gap-0.5">
+    <nav aria-label="Secciones" className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-white/70 border border-borde">
       {items.map((item) => {
         const active = item.match(pathname);
         return (
@@ -101,8 +101,8 @@ export function PestanasFamilia() {
             key={item.to}
             to={item.to}
             aria-current={active ? "page" : undefined}
-            className={`inline-flex items-center gap-2 min-h-11 px-3.5 rounded-full font-sans text-[15px] font-semibold whitespace-nowrap no-underline transition-colors ${
-              active ? "bg-verde-serenidad/20 text-verde-profundo" : "text-tinta hover:bg-campo"
+            className={`inline-flex items-center gap-2 min-h-10 px-4 lg:px-5 rounded-full font-sans text-[15px] font-semibold whitespace-nowrap no-underline transition-colors ${
+              active ? "bg-verde-profundo text-white shadow-[0_6px_14px_-8px_rgba(31,51,56,0.6)]" : "text-tinta-suave hover:text-tinta hover:bg-campo"
             }`}
           >
             {item.icon(active)}

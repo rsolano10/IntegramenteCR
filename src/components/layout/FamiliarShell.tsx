@@ -165,7 +165,7 @@ export function FamiliarShell() {
 
   return (
     <div
-      className={modoChat ? "im-in flex flex-col overflow-hidden" : "im-in min-h-full pb-24 md:pb-0"}
+      className={modoChat ? "im-in flex flex-col overflow-hidden" : "im-in min-h-full pb-24 lg:pb-0"}
       style={modoChat ? { height: altoChat ?? "calc(100dvh - 72px)" } : undefined}
     >
       {/* La franja con el saludo solo mientras la cuenta está pendiente

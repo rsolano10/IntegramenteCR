@@ -175,12 +175,18 @@ export function AppHeader() {
     const pendiente = !!myPatient && (myPatient.estado_cuenta === "rechazada" || (myPatient.plan_status === "pendiente" && !myPatient.tiene_plan_visible));
     return (
       <header className="sticky top-0 z-20 bg-fondo-papel/95 backdrop-blur-sm border-b border-borde">
-        <div className="max-w-3xl mx-auto h-16 md:h-[72px] px-5 sm:px-8 lg:px-12 flex items-center gap-3 lg:gap-4">
+        {/* A todo el ancho: logo a la izquierda y avatar a la derecha, con
+            aire; las pestañas centradas sobre la columna del contenido. */}
+        <div className="relative h-16 lg:h-[76px] px-5 sm:px-8 lg:px-10 flex items-center justify-between gap-4">
           <span className="shrink-0">
             <LogoEnCasa />
           </span>
-          {!pendiente && <PestanasFamilia />}
-          <div className="ml-auto shrink-0">{menuCuenta(myPatient?.nombre?.split(" ")[0])}</div>
+          {!pendiente && (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <PestanasFamilia />
+            </div>
+          )}
+          <div className="shrink-0">{menuCuenta(myPatient?.nombre?.split(" ")[0])}</div>
         </div>
         {ventanas}
       </header>
