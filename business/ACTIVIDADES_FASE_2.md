@@ -342,14 +342,16 @@ Por cada actividad: recurso en la Biblioteca (COG-047 en adelante), portada en "
   - **Dictado (6.2):** apagado. La clínica puede permitirlo en cada recurso.
   - **Voz (6.4):** sin pregenerar. Cada aviso o lista se genera la primera vez que alguien lo escucha y queda guardado.
   - **Sonidos (6.3):** solo visuales (campanas, radio y timbre).
-- **Tanda C:** hecha, espera aprobación:
+- **Tanda C:** hecha y aprobada por la clínica:
 
   | Código | Juego |
   |---|---|
   | COG-055 | El corral |
   | COG-056 | La pizarra de la cocina |
 
-  El banco de días de la cocina tiene `revisado: false`. El corral no tiene banco: los animales se arman al azar.
+  El banco de días de la cocina está aprobado (`revisado: true`). El corral no tiene banco: los animales se arman al azar.
+
+La Fase 2 está completa: diez juegos nuevos y el modo vuelto, todos aprobados.
 
 ## 6. Decisiones abiertas
 

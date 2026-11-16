@@ -1,7 +1,7 @@
 // Banco de «La pizarra de la cocina»: días completos, escritos a mano, sin
 // medicamentos ni datos de salud. `hora`: si la tarea puede tener hora
 // fija (el juego decide cuáles la muestran). Las reglas dicen qué va antes
-// de qué. `revisado: false` hasta que el equipo lo apruebe.
+// de qué. `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export interface TareaDia {
   id: string;
@@ -27,7 +27,7 @@ export const DIAS: DiaAgenda[] = [
   {
     id: "martes",
     titulo: "Un martes de vueltas",
-    revisado: false,
+    revisado: true,
     tareas: [
       { id: "cafe", texto: "Chorrear el café" },
       { id: "desayunar", texto: "Desayunar" },
@@ -47,7 +47,7 @@ export const DIAS: DiaAgenda[] = [
   {
     id: "feria",
     titulo: "Un sábado de feria",
-    revisado: false,
+    revisado: true,
     tareas: [
       { id: "lista", texto: "Hacer la lista de la feria" },
       { id: "feria", texto: "Ir a la feria", hora: 8 },
@@ -68,7 +68,7 @@ export const DIAS: DiaAgenda[] = [
   {
     id: "lavado",
     titulo: "Un día de lavar ropa",
-    revisado: false,
+    revisado: true,
     tareas: [
       { id: "lavar", texto: "Lavar la ropa" },
       { id: "tender", texto: "Tender la ropa" },
@@ -88,7 +88,7 @@ export const DIAS: DiaAgenda[] = [
   {
     id: "visita",
     titulo: "Viene la familia",
-    revisado: false,
+    revisado: true,
     tareas: [
       { id: "barrer", texto: "Barrer la sala" },
       { id: "flores", texto: "Poner flores en la mesa" },
