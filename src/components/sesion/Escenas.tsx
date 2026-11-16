@@ -891,6 +891,7 @@ export function Mision({ e }: { e: De<"mision"> }) {
   const t = useTam();
   // El dibujo de lo elegido antes (la hoja), si hay.
   const icono = useMemo<NombreIcono>(() => {
+    if (e.icono) return e.icono;
     for (const s of guion.escenas) {
       if (s.tipo !== "elegir") continue;
       const v = valorUno(respuestas, s.clave);
@@ -898,21 +899,21 @@ export function Mision({ e }: { e: De<"mision"> }) {
       if (o && o.icono !== "otra") return o.icono;
     }
     return "estrella";
-  }, [guion, respuestas]);
+  }, [guion, respuestas, e.icono]);
   const hechas = marcas.filter(Boolean).length;
   return (
     <>
       <Ceja>{e.titulo}</Ceja>
       <Titulo>{plantilla(e.texto, guion, respuestas)}</Titulo>
-      <div className="mt-7 flex justify-center gap-3 sm:gap-5">
+      <div className={`mt-7 flex flex-wrap justify-center ${e.veces > 3 ? "gap-2 sm:gap-3" : "gap-3 sm:gap-5"}`}>
         {Array.from({ length: e.veces }, (_, i) => (
           <button
             key={i}
             type="button"
             aria-pressed={!!marcas[i]}
-            aria-label={`Comida ${i + 1}${marcas[i] ? ", servida" : ""}`}
+            aria-label={`Vez ${i + 1}${marcas[i] ? ", hecha" : ""}`}
             onClick={() => marcar(i)}
-            className={`relative w-[92px] h-[92px] sm:w-[108px] sm:h-[108px] rounded-full cursor-pointer transition-[background-color,border-color] border-[3px] ${
+            className={`relative ${e.veces > 3 ? "w-[54px] h-[54px] sm:w-[76px] sm:h-[76px]" : "w-[92px] h-[92px] sm:w-[108px] sm:h-[108px]"} rounded-full cursor-pointer transition-[background-color,border-color] border-[3px] ${
               marcas[i] ? "border-verde-profundo" : "border-dashed border-borde-campo bg-white hover:border-verde-serenidad"
             }`}
             style={marcas[i] ? { background: `radial-gradient(circle, #fff 0 52%, ${tema.claro} 53%)` } : undefined}
@@ -929,7 +930,7 @@ export function Mision({ e }: { e: De<"mision"> }) {
         ))}
       </div>
       <p className={`m-0 mt-4 text-center font-semibold text-tinta ${t.cuerpo}`} aria-live="polite">
-        {hechas === e.veces ? "¡Misión cumplida!" : hechas === 0 ? "Tocá un plato cuando la sirvan." : `${hechas} de ${e.veces}`}
+        {hechas === e.veces ? "¡Misión cumplida!" : hechas === 0 ? "Tocá un círculo cada vez que lo hagan." : `${hechas} de ${e.veces}`}
       </p>
       {!participante && e.nota && <Nota className="mt-4 text-center">{e.nota}</Nota>}
       <Pie etiqueta="Siguiente" />

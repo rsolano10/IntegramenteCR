@@ -77,7 +77,7 @@ export function SesionGuiada({
           marcas: mk,
           texto: plantilla(escenaMision.texto, guion, r),
           detalle,
-          icono: elegidas.find((o) => o.icono !== "otra")?.icono ?? guion.icono,
+          icono: escenaMision.icono ?? elegidas.find((o) => o.icono !== "otra")?.icono ?? guion.icono,
         };
       }
       return p;

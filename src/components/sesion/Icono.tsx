@@ -450,6 +450,134 @@ const D: Record<NombreIcono, ReactNode> = {
       <path d="M18 16l20-4" />
     </>
   ),
+  pescado: (
+    <>
+      <path d="M6 24c6-9 18-11 28-4l8-6v20l-8-6c-10 7-22 5-28-4z" fill={R} />
+      <circle cx="14" cy="22" r="0.6" strokeWidth="3" />
+      <path d="M22 18c2 4 2 8 0 12" opacity=".5" />
+    </>
+  ),
+  lata: (
+    <>
+      <rect x="6" y="15" width="36" height="20" rx="6" fill={R} />
+      <path d="M6 21h36M6 29h36" opacity=".45" />
+      <path d="M16 25c3-3 7-3 10 0-3 3-7 3-10 0zM26 25l4-3v6z" fill={B} />
+    </>
+  ),
+  nuez: (
+    <>
+      <path d="M24 7c-9 0-14 7-14 16 0 10 6 18 14 18s14-8 14-18c0-9-5-16-14-16z" fill={R} />
+      <path d="M24 7v34M17 15c3 2 3 6 0 8M31 15c-3 2-3 6 0 8M17 29c3 2 3 6 0 7M31 29c-3 2-3 6 0 7" opacity=".55" />
+    </>
+  ),
+  etiqueta: (
+    <>
+      <rect x="10" y="6" width="28" height="36" rx="3" fill={B} />
+      <path d="M10 6h28v9H10z" fill={R} />
+      <path d="M15 21h18M15 27h12M15 33h18" />
+      <path d="M33 26h0" strokeWidth="3" />
+    </>
+  ),
+  frijol: (
+    <>
+      <path d="M12 26c-3-7 3-14 10-12 4 1 5 4 9 3 6-1 10 5 7 11-3 7-12 9-18 7-4-1-7-4-8-9z" fill={R} />
+      <path d="M20 22c2-2 6-2 8 0" opacity=".55" />
+    </>
+  ),
+  aceite: (
+    <>
+      <path d="M21 4h6v6c4 2 7 6 7 11v17a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V21c0-5 3-9 7-11z" fill={R} />
+      <path d="M24 24c-3 4-4 6-4 8a4 4 0 0 0 8 0c0-2-1-4-4-8z" fill={B} />
+    </>
+  ),
+  limon: (
+    <>
+      <path d="M8 24c2-9 9-14 16-14s14 5 16 14c-2 9-9 14-16 14S10 33 8 24z" fill={R} />
+      <path d="M8 24l-3 0M40 24h3" />
+      <path d="M17 20c2-2 5-3 8-3" opacity=".55" />
+    </>
+  ),
+  pollo: (
+    <>
+      <path d="M30 8c6 0 10 5 9 11-1 7-9 9-14 13l-6 6-4-4 6-6c4-5 6-13 9-20z" fill={R} />
+      <path d="M15 34l-6 2 2 2-2 2 4 1 2-4" />
+    </>
+  ),
+  jarra: (
+    <>
+      <path d="M12 8h20l2 6v24a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z" fill={B} />
+      <path d="M13 20h20v18a4 4 0 0 1-4 4H17a4 4 0 0 1-4-4z" fill={R} stroke="none" />
+      <path d="M34 16h3a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4h-3M12 8h20l2 6v24a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z" />
+      <circle cx="20" cy="28" r="3" fill={B} opacity=".8" />
+    </>
+  ),
+  frasco: (
+    <>
+      <rect x="14" y="6" width="20" height="6" rx="2" fill={R} />
+      <path d="M12 16a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z" fill={B} />
+      <path d="M12 24h24v14a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z" fill={R} opacity=".7" />
+    </>
+  ),
+  cebolla: (
+    <>
+      <path d="M24 12c-10 4-15 10-15 17a15 12 0 0 0 30 0c0-7-5-13-15-17z" fill={R} />
+      <path d="M24 12V5M21 7l3-2 3 2M24 18c-4 4-5 9-4 14M24 18c4 4 5 9 4 14" opacity=".6" />
+    </>
+  ),
+  aguacate: (
+    <>
+      <path d="M24 5c-6 0-9 9-12 16-3 8 0 21 12 21s15-13 12-21C33 14 30 5 24 5z" fill={R} />
+      <circle cx="24" cy="29" r="6" fill="#a87d4f" stroke="none" />
+      <circle cx="24" cy="29" r="6" />
+    </>
+  ),
+  platano: (
+    <>
+      <path d="M8 16c4 14 16 22 32 18-2-3-6-4-10-5-9-2-14-7-18-15z" fill={R} />
+      <path d="M8 16l-2-4M40 34l3 0" />
+    </>
+  ),
+  queso: (
+    <>
+      <path d="M6 22l30-12 6 12v16H6z" fill={R} />
+      <path d="M6 22h36" />
+      <circle cx="16" cy="30" r="3" fill={B} />
+      <circle cx="30" cy="31" r="2.5" fill={B} />
+    </>
+  ),
+  tuberculo: (
+    <>
+      <path d="M8 30c-2-8 6-16 16-18 10-2 18 2 17 9-1 8-10 14-20 15-6 1-12-1-13-6z" fill={R} />
+      <path d="M18 22l1 1M28 18l1 1M30 28l1 1M20 31l1 1" strokeWidth="3" />
+    </>
+  ),
+  fresa: (
+    <>
+      <path d="M24 16c-9-3-17 2-15 10 2 8 9 14 15 16 6-2 13-8 15-16 2-8-6-13-15-10z" fill="#f0a08c" />
+      <path d="M17 12c3 0 5 2 7 4 2-2 4-4 7-4-1 3-3 5-7 5s-6-2-7-5zM24 16V8" />
+      <path d="M18 25h0M24 30h0M30 25h0M21 35h0M27 35h0" strokeWidth="2.6" />
+    </>
+  ),
+  yogur: (
+    <>
+      <path d="M11 14h26l-3 26H14z" fill={B} />
+      <path d="M12.5 24h23l-1.6 16H14z" fill={R} stroke="none" />
+      <path d="M11 14h26l-3 26H14zM9 10h30v4H9z" />
+    </>
+  ),
+  chile: (
+    <>
+      <path d="M14 14c-4 4-5 14 2 21 6 6 16 7 22 5-8-3-11-8-12-14-1-5-1-9-4-12-2-2-6-2-8 0z" fill="#e2582a" opacity=".85" />
+      <path d="M17 12c0-4 3-6 6-6" />
+    </>
+  ),
+  zanahoria: (
+    <>
+      <path d="M34 14L10 40c-2 1-3 0-2-2l24-26z" fill="#f2a253" />
+      <path d="M34 14c2-5 6-7 9-6M34 14c1-6-1-9-4-10M34 14c5-1 8 1 9 4" />
+      <path d="M22 27l3 3M17 33l2 2" opacity=".55" />
+    </>
+  ),
   casa: (
     <>
       <path d="M8 22L24 9l16 13" />

@@ -4,6 +4,7 @@ import { COGNICION } from "./guiones/cognicion";
 import { ger003 } from "./guiones/ger003";
 import { ger001, ger002, ger004, ger005, ger006, ger007, ger008, ger009, ger010 } from "./guiones/gerontogimnasia";
 import { pre005 } from "./guiones/pre005";
+import { NUTRICION } from "./guiones/nutricion";
 import type { Escena, Guion, Opcion, Respuestas } from "./tipos";
 
 export type { Escena, Guion, Opcion, Progreso, Respuestas } from "./tipos";
@@ -27,6 +28,7 @@ export const LISTA_GUIONES: Guion[] = [
   ...COGNICION,
   // Nutrición
   pre005,
+  ...NUTRICION,
 ];
 
 export const GUIONES: Record<string, Guion> = Object.fromEntries(LISTA_GUIONES.map((g) => [g.codigo, g]));

@@ -63,16 +63,16 @@ export function MisionSemana({
       </p>
       <p className={`m-0 font-serif leading-snug text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{m.texto}</p>
       {m.detalle && <p className={`m-0 mt-0.5 text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{m.detalle}</p>}
-      <div className="mt-3 flex items-center gap-2.5">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {marcas.map((v, i) => (
           <button
             key={i}
             type="button"
             disabled={!onGuardar}
             aria-pressed={v}
-            aria-label={`Comida ${i + 1}${v ? ", servida" : ""}`}
+            aria-label={`Vez ${i + 1}${v ? ", hecha" : ""}`}
             onClick={() => tocar(i)}
-            className={`w-14 h-14 rounded-full inline-flex items-center justify-center border-[2.5px] cursor-pointer disabled:cursor-default transition-colors ${
+            className={`${m.veces > 3 ? "w-11 h-11" : "w-14 h-14"} rounded-full inline-flex items-center justify-center border-[2.5px] cursor-pointer disabled:cursor-default transition-colors ${
               v ? "bg-white border-verde-profundo" : "bg-white/70 border-dashed border-borde-campo"
             }`}
           >

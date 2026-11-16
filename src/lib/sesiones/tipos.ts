@@ -105,7 +105,8 @@ export type Escena = Base &
     | { tipo: "descanso"; titulo: string; segundos: number; texto: string }
     | { tipo: "sentir"; titulo: string }
     | { tipo: "repaso"; titulo: string; nota?: string; partes: { etiqueta: string; clave: string }[] }
-    | { tipo: "mision"; clave: string; titulo: string; texto: string; veces: number; nota?: string }
+    // `icono`: el dibujo de cada marca; sin él, el de lo elegido antes.
+    | { tipo: "mision"; clave: string; titulo: string; texto: string; veces: number; nota?: string; icono?: NombreIcono }
     | { tipo: "cuidados"; titulo: string; nota?: string; items: Item[] }
     | { tipo: "cierre"; texto: string; dato?: boolean }
   );
