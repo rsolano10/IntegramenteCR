@@ -1,5 +1,5 @@
 // Banco de «La olla de carne» (el que no va). Contenido de Costa Rica.
-// `revisado: false` hasta que el equipo clínico lo apruebe. Cada conjunto
+// `revisado: true` hasta que el equipo clínico lo apruebe. Cada conjunto
 // tiene un único intruso defendible: todo lo de `van` cumple el criterio y
 // nada de `intrusos` lo cumple. Si el equipo marca un conjunto como
 // ambiguo, sale del banco.
@@ -37,7 +37,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todo lo demás va en la olla de carne; {x} no se come.",
     van: [c("Yuca", "raiz", CRE), c("Elote", "alargada", AMA), c("Chayote", "redonda", VER), c("Zanahoria", "alargada", NAR), c("Papa", "redonda", TIE), c("Ayote", "redonda", NAR), c("Plátano verde", "alargada", VEO), c("Culantro", "manojo", VEO), c("Carne de res")],
     intrusos: [c("Jabón"), c("Escoba"), c("Zapato"), c("Peine"), c("Vela")],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "cafe-evidente",
@@ -46,7 +46,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todo lo demás sirve para chorrear el café; {x} no.",
     van: [c("Café molido"), c("Agua caliente"), c("Chorreador"), c("Bolsita de tela"), c("Taza"), c("Tapa de dulce"), c("Jarra")],
     intrusos: [c("Martillo"), c("Clavos"), c("Manguera"), c("Machete")],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "patio-evidente",
@@ -55,7 +55,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todo lo demás se usa en el patio; {x} no.",
     van: [c("Machete"), c("Pala"), c("Rastrillo"), c("Manguera"), c("Regadera"), c("Carretillo"), c("Tijeras de podar")],
     intrusos: [c("Almohada"), c("Cuchara"), c("Taza"), c("Cepillo de dientes")],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "domingo-evidente",
@@ -64,7 +64,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todo lo demás es ropa para ir a misa; {x} no se viste.",
     van: [c("Camisa planchada"), c("Pantalón de tela"), c("Sombrero"), c("Zapatos lustrados"), c("Enagua"), c("Rebozo"), c("Faja")],
     intrusos: [c("Sartén"), c("Pala"), c("Olla")],
-    revisado: false,
+    revisado: true,
   },
 
   // ─── Categoría cercana ───
@@ -75,7 +75,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Lo demás son verduras y raíces para la olla; {x} es una fruta.",
     van: [c("Yuca", "raiz", CRE), c("Chayote", "redonda", VER), c("Zanahoria", "alargada", NAR), c("Papa", "redonda", TIE), c("Ayote", "redonda", NAR), c("Elote", "alargada", AMA), c("Tiquizque", "raiz", TIE)],
     intrusos: [c("Mango", "redonda", AMA), c("Piña", "redonda", AMA), c("Papaya", "alargada", NAR), c("Sandía", "redonda", VEO)],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "pinto",
@@ -84,7 +84,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Lo demás va en el gallo pinto; {x} es para algo dulce.",
     van: [c("Arroz"), c("Frijoles negros"), c("Cebolla", "redonda", MOS), c("Chile dulce", "redonda", GRA), c("Culantro", "manojo", VEO), c("Salsa inglesa")],
     intrusos: [c("Leche condensada"), c("Canela"), c("Mermelada")],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "cocina-patio",
@@ -93,7 +93,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Lo demás es de la cocina; {x} es del patio.",
     van: [c("Cuchara de palo"), c("Olla"), c("Sartén"), c("Cucharón"), c("Colador"), c("Comal")],
     intrusos: [c("Rastrillo"), c("Pala"), c("Machete")],
-    revisado: false,
+    revisado: true,
   },
 
   // ─── Por una propiedad ───
@@ -104,7 +104,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todos son verdes menos {x}.",
     van: [c("Chayote", "redonda", VER), c("Limón ácido", "redonda", VEO), c("Pepino", "alargada", VEO), c("Culantro", "manojo", VEO), c("Aguacate", "redonda", VEO), c("Vainica", "alargada", VER)],
     intrusos: [c("Zanahoria", "alargada", NAR), c("Remolacha", "redonda", GRA), c("Elote", "alargada", AMA)],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "crudos",
@@ -113,7 +113,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todos se pueden comer crudos menos {x}, que hay que cocinarla.",
     van: [c("Mango", "redonda", AMA), c("Papaya", "alargada", NAR), c("Pepino", "alargada", VEO), c("Lechuga", "manojo", VER), c("Tomate", "redonda", GRA), c("Banano", "alargada", AMA)],
     intrusos: [c("Yuca", "raiz", CRE), c("Papa", "redonda", TIE)],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "maiz",
@@ -122,7 +122,7 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todos llevan maíz menos {x}.",
     van: [c("Tortilla"), c("Tamal"), c("Chorreada"), c("Elote asado", "alargada", AMA), c("Atol de maíz"), c("Palomitas")],
     intrusos: [c("Arroz con leche"), c("Plátano maduro", "alargada", AMA)],
-    revisado: false,
+    revisado: true,
   },
   {
     id: "dulces",
@@ -131,6 +131,6 @@ export const CONJUNTOS: ConjuntoIntruso[] = [
     criterio: "Todos son dulces menos {x}.",
     van: [c("Cajeta"), c("Tapa de dulce"), c("Melcocha"), c("Arroz con leche"), c("Queque"), c("Miel")],
     intrusos: [c("Chilero"), c("Sal"), c("Limón ácido", "redonda", VEO)],
-    revisado: false,
+    revisado: true,
   },
 ];

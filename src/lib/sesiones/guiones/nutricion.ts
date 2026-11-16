@@ -31,7 +31,7 @@ interface Receta {
 function receta(r: Receta): Guion {
   return {
     codigo: r.codigo,
-    revisado: false,
+    revisado: true,
     frase: r.frase,
     icono: r.icono,
     etiquetas: r.etiquetas,

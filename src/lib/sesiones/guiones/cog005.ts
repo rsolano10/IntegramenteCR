@@ -15,7 +15,7 @@ const general: Opcion[] = [
 
 export const cog005: Guion = {
   codigo: "COG-005",
-  revisado: false,
+  revisado: true,
   frase: "Imaginamos juntos una salida y organizamos los pasos, sin salir de casa.",
   icono: "mapa",
   etiquetas: ["10 a 15 minutos", "Sin materiales", "Para conversar"],

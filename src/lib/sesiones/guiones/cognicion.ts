@@ -10,7 +10,7 @@ const o = (id: string, texto: string, icono: Opcion["icono"], dicho?: string): O
 
 export const cog007: Guion = {
   codigo: "COG-007",
-  revisado: false,
+  revisado: true,
   frase: "Buscar alrededor cosas por su color, su forma o para qué sirven.",
   icono: "lupa",
   etiquetas: ["10 a 15 minutos", "Sin materiales", "Desde donde están"],
@@ -56,7 +56,7 @@ export const cog007: Guion = {
 
 export const cog008: Guion = {
   codigo: "COG-008",
-  revisado: false,
+  revisado: true,
   frase: "Separar objetos de la casa en grupos y descubrir qué tienen en común.",
   icono: "cajas",
   etiquetas: ["5 a 15 minutos", "Objetos de la casa", "En la mesa"],
@@ -97,7 +97,7 @@ export const cog008: Guion = {
 
 export const cog010: Guion = {
   codigo: "COG-010",
-  revisado: false,
+  revisado: true,
   frase: "Ubicar palabras en lugares de la casa con escenas divertidas, para recordarlas.",
   icono: "casa",
   etiquetas: ["10 a 15 minutos", "Sin materiales", "Con imaginación"],
@@ -140,7 +140,7 @@ export const cog010: Guion = {
 
 export const cog012: Guion = {
   codigo: "COG-012",
-  revisado: false,
+  revisado: true,
   frase: "Imaginar una situación y pensar juntos qué nos serviría llevar.",
   icono: "sombrilla",
   etiquetas: ["5 a 10 minutos", "Sin materiales", "Para conversar"],
@@ -179,7 +179,7 @@ export const cog012: Guion = {
 
 export const cog013: Guion = {
   codigo: "COG-013",
-  revisado: false,
+  revisado: true,
   frase: "Escuchar el inicio de un refrán y recordar cómo sigue.",
   icono: "conversar",
   etiquetas: ["5 a 15 minutos", "Tarjetas en la app", "No hace falta hacerlas todas"],
@@ -199,7 +199,7 @@ export const cog013: Guion = {
 
 export const cog014: Guion = {
   codigo: "COG-014",
-  revisado: false,
+  revisado: true,
   frase: "Anotar un pendiente y revisarlo cada día, para no olvidarlo.",
   icono: "libreta",
   etiquetas: ["5 a 10 minutos", "Libreta o agenda", "Un poquito cada día"],
@@ -238,7 +238,7 @@ export const cog014: Guion = {
 
 export const cog015: Guion = {
   codigo: "COG-015",
-  revisado: false,
+  revisado: true,
   frase: "Unir un pendiente con algo que hacemos todos los días.",
   icono: "nota",
   etiquetas: ["5 a 10 minutos", "Sin materiales", "Para la rutina"],
@@ -275,7 +275,7 @@ export const cog015: Guion = {
 
 export const cog016: Guion = {
   codigo: "COG-016",
-  revisado: false,
+  revisado: true,
   frase: "Aprender un dato nuevo y recordarlo después de pequeñas pausas.",
   icono: "reloj",
   etiquetas: ["5 a 10 minutos", "Un dato nuevo", "Sin presión"],
@@ -291,7 +291,7 @@ export const cog016: Guion = {
 
 export const cog017: Guion = {
   codigo: "COG-017",
-  revisado: false,
+  revisado: true,
   frase: "Elegir un lugar fijo para un objeto de todos los días y practicar guardarlo.",
   icono: "bandeja",
   etiquetas: ["5 a 10 minutos", "Un objeto y una bandeja", "Todos los días"],
@@ -323,7 +323,7 @@ export const cog017: Guion = {
 
 export const cog018: Guion = {
   codigo: "COG-018",
-  revisado: false,
+  revisado: true,
   frase: "Leer una noticia corta y conversar sobre lo principal.",
   icono: "periodico",
   etiquetas: ["5 a 10 minutos", "Una noticia positiva", "Para conversar"],
@@ -366,7 +366,7 @@ const objetosMesa: Opcion[] = [
 
 export const cog019: Guion = {
   codigo: "COG-019",
-  revisado: false,
+  revisado: true,
   frase: "Unir dos objetos con una frase sencilla o una historia divertida.",
   icono: "taza",
   etiquetas: ["5 a 10 minutos", "Dos objetos de la casa", "Con imaginación"],
@@ -389,7 +389,7 @@ export const cog019: Guion = {
 
 export const cog020: Guion = {
   codigo: "COG-020",
-  revisado: false,
+  revisado: true,
   frase: "Escuchar un texto corto y hacer una señal cuando aparece una palabra.",
   icono: "oreja",
   etiquetas: ["3 a 8 minutos", "Un texto corto", "Una señal acordada"],
@@ -418,7 +418,7 @@ export const cog020: Guion = {
 
 export const cog021: Guion = {
   codigo: "COG-021",
-  revisado: false,
+  revisado: true,
   frase: "Preparar juntos un lugar en la mesa para la merienda.",
   icono: "plato",
   etiquetas: ["5 a 10 minutos", "Objetos seguros", "Una cosa a la vez"],
@@ -451,7 +451,7 @@ export const cog021: Guion = {
 
 export const cog022: Guion = {
   codigo: "COG-022",
-  revisado: false,
+  revisado: true,
   frase: "Dar pistas de un objeto, sin decir su nombre, para que el otro adivine.",
   icono: "conversar",
   etiquetas: ["5 a 10 minutos", "3 a 5 objetos", "Por turnos"],
@@ -480,7 +480,7 @@ export const cog022: Guion = {
 
 export const cog023: Guion = {
   codigo: "COG-023",
-  revisado: false,
+  revisado: true,
   frase: "Ofrecer dos opciones y respetar lo que prefiere.",
   icono: "senalar",
   etiquetas: ["3 a 10 minutos", "Dos opciones reales", "Puede responder señalando"],
@@ -508,7 +508,7 @@ export const cog023: Guion = {
 
 export const cog024: Guion = {
   codigo: "COG-024",
-  revisado: false,
+  revisado: true,
   frase: "Escuchar una indicación, hacerla y revisar juntos.",
   icono: "cuchara",
   etiquetas: ["5 a 10 minutos", "4 objetos seguros", "En la mesa"],
@@ -540,7 +540,7 @@ export const cog024: Guion = {
 
 export const cog025: Guion = {
   codigo: "COG-025",
-  revisado: false,
+  revisado: true,
   frase: "Unir un nombre con algo conocido, para tener una pista.",
   icono: "foto",
   etiquetas: ["5 a 8 minutos", "Una foto", "Un nombre por vez"],
@@ -556,7 +556,7 @@ export const cog025: Guion = {
 
 export const cog026: Guion = {
   codigo: "COG-026",
-  revisado: false,
+  revisado: true,
   frase: "Escuchar una descripción e imaginar cómo se vería.",
   icono: "parque",
   etiquetas: ["5 a 10 minutos", "Papel y lápiz, si quieren", "Con imaginación"],
@@ -583,7 +583,7 @@ export const cog026: Guion = {
 
 export const cog027: Guion = {
   codigo: "COG-027",
-  revisado: false,
+  revisado: true,
   frase: "Decir lo que vamos a buscar y tenerlo presente hasta hacerlo.",
   icono: "servilleta",
   etiquetas: ["3 a 8 minutos", "Un objeto a la vista", "Recorrido corto"],
@@ -616,7 +616,7 @@ export const cog027: Guion = {
 
 export const cog028: Guion = {
   codigo: "COG-028",
-  revisado: false,
+  revisado: true,
   frase: "Elegir, entre varios objetos, los que sirven para una tarea.",
   icono: "lupa",
   etiquetas: ["5 a 10 minutos", "4 a 8 objetos", "En la mesa"],
@@ -664,7 +664,7 @@ export const cog028: Guion = {
 
 export const cog029: Guion = {
   codigo: "COG-029",
-  revisado: false,
+  revisado: true,
   frase: "Escuchar un mensaje y contarlo con nuestras palabras.",
   icono: "conversar",
   etiquetas: ["5 a 8 minutos", "Papel y lápiz, si quieren", "Para conversar"],
@@ -680,7 +680,7 @@ export const cog029: Guion = {
 
 export const cog030: Guion = {
   codigo: "COG-030",
-  revisado: false,
+  revisado: true,
   frase: "Encadenar palabras: cada una nos hace pensar en la siguiente.",
   icono: "cadena",
   etiquetas: ["5 a 10 minutos", "Papel y lápiz", "Cada cadena es distinta"],
@@ -722,7 +722,7 @@ export const cog030: Guion = {
 
 export const cog031: Guion = {
   codigo: "COG-031",
-  revisado: false,
+  revisado: true,
   frase: "Conocer un objeto nuevo comparándolo con uno conocido.",
   icono: "batidor",
   etiquetas: ["5 a 10 minutos", "Dos objetos", "Para descubrir"],
@@ -746,7 +746,7 @@ export const cog031: Guion = {
 
 export const cog032: Guion = {
   codigo: "COG-032",
-  revisado: false,
+  revisado: true,
   frase: "Practicar distintas maneras de pedir lo que necesitamos.",
   icono: "conversar",
   etiquetas: ["5 a 10 minutos", "Una manta o un vaso", "Palabras o gestos"],
@@ -771,7 +771,7 @@ export const cog032: Guion = {
 
 export const cog033: Guion = {
   codigo: "COG-033",
-  revisado: false,
+  revisado: true,
   frase: "Hacer algo breve juntos y usar pistas para recordarlo.",
   icono: "lupa",
   etiquetas: ["5 a 8 minutos", "Una imagen y dos lápices", "Recordar juntos"],
@@ -800,7 +800,7 @@ export const cog033: Guion = {
 
 export const cog034: Guion = {
   codigo: "COG-034",
-  revisado: false,
+  revisado: true,
   frase: "Hacer una tarea sencilla y marcarla como hecha.",
   icono: "lista",
   etiquetas: ["5 a 8 minutos", "Una hoja y un lápiz", "Hacer y marcar"],
@@ -828,7 +828,7 @@ export const cog034: Guion = {
 
 export const cog035: Guion = {
   codigo: "COG-035",
-  revisado: false,
+  revisado: true,
   frase: "Elegir las palabras clave de un texto y usarlas para contarlo.",
   icono: "lapiz",
   etiquetas: ["5 a 10 minutos", "Papel y lápiz", "Palabras clave"],

@@ -1,5 +1,5 @@
 // Banco de «Cada cosa en su lugar». Contenido de Costa Rica.
-// `revisado: false` hasta que el equipo clínico lo apruebe.
+// `revisado: true` hasta que el equipo clínico lo apruebe.
 // Un elemento puede ir en más de un grupo (por ejemplo, el tomate).
 
 export interface GrupoBanco {
@@ -34,7 +34,7 @@ export const PAQUETES: PaqueteBanco[] = [
   {
     id: "feria",
     nombre: "La feria",
-    revisado: false,
+    revisado: true,
     grupos: [
       { id: "frutas", nombre: "Frutas" },
       { id: "verduras", nombre: "Verduras" },
@@ -73,7 +73,7 @@ export const PAQUETES: PaqueteBanco[] = [
   {
     id: "cocina",
     nombre: "La cocina de la casa",
-    revisado: false,
+    revisado: true,
     grupos: [
       { id: "refri", nombre: "Refrigeradora" },
       { id: "alacena", nombre: "Alacena" },
@@ -91,7 +91,7 @@ export const PAQUETES: PaqueteBanco[] = [
   {
     id: "casa",
     nombre: "La casa",
-    revisado: false,
+    revisado: true,
     grupos: [
       { id: "cocina", nombre: "Cocina" },
       { id: "bano", nombre: "Baño" },
@@ -108,7 +108,7 @@ export const PAQUETES: PaqueteBanco[] = [
   {
     id: "reciclaje",
     nombre: "El patio (reciclaje)",
-    revisado: false,
+    revisado: true,
     grupos: [
       { id: "organico", nombre: "Orgánico" },
       { id: "papel", nombre: "Papel y cartón" },
@@ -125,7 +125,7 @@ export const PAQUETES: PaqueteBanco[] = [
   {
     id: "categorias",
     nombre: "Categorías",
-    revisado: false,
+    revisado: true,
     grupos: [
       { id: "frutas", nombre: "Frutas" },
       { id: "animales", nombre: "Animales" },

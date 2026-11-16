@@ -5,7 +5,7 @@ import type { Guion } from "../tipos";
 // adaptación, Tené en cuenta, Para cerrar) y los bloques generales.
 export const ger003: Guion = {
   codigo: "GER-003",
-  revisado: false,
+  revisado: true,
   frase: "Fuerza en las piernas para levantarse de la silla con seguridad.",
   icono: "figura-de-pie",
   etiquetas: ["3 a 5 veces", "1 minuto de descanso", "Silla firme"],

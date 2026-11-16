@@ -27,7 +27,7 @@ const consejoBase = "Hacé el movimiento vos primero y esperá. No hace falta qu
 function ejercicio(e: Ejercicio): Guion {
   return {
     codigo: e.codigo,
-    revisado: false,
+    revisado: true,
     frase: e.frase,
     icono: e.icono,
     etiquetas: e.etiquetas,
@@ -301,7 +301,7 @@ export const ger009 = ejercicio({
 // La introducción no es un ejercicio: es el video para ver juntos.
 export const ger010: Guion = {
   codigo: "GER-010",
-  revisado: false,
+  revisado: true,
   frase: "Conozcan qué es la gerontogimnasia antes de empezar los ejercicios.",
   icono: "corazon",
   etiquetas: ["Un video", "Sin ejercicios", "Para ver juntos"],

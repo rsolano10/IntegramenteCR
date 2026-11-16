@@ -11,9 +11,25 @@ import { useSesion, useTam } from "./contexto";
 
 type De<T extends Escena["tipo"]> = Extract<Escena, { tipo: T }>;
 
-// Mientras no se apruebe la versión compacta (decisión de la clínica), el
-// texto completo de «Cuándo parar» se lee en cada sesión, con los dibujos.
-const SEGURIDAD_COMPACTA = false;
+// «Cuándo parar» compacto (aprobado por la clínica el 16 de noviembre de 2026):
+// el texto completo se lee la primera vez y cada 30 días en este dispositivo;
+// el resto de las veces, los dibujos y el texto a un toque.
+const SEGURIDAD_COMPACTA = true;
+const CLAVE_SEGURIDAD = "seguridad-completa-vista";
+const TREINTA_DIAS = 30 * 24 * 60 * 60 * 1000;
+
+function toca(): boolean {
+  if (!SEGURIDAD_COMPACTA) return true;
+  try {
+    const visto = Number(localStorage.getItem(CLAVE_SEGURIDAD) ?? 0);
+    if (Date.now() - visto < TREINTA_DIAS) return false;
+    localStorage.setItem(CLAVE_SEGURIDAD, String(Date.now()));
+    return true;
+  } catch {
+    // Sin almacenamiento, siempre completo.
+    return true;
+  }
+}
 
 // Círculo con el dibujo grande de una escena, en el color del módulo.
 function Medallon({ icono, tam = "grande" }: { icono: NombreIcono; tam?: "grande" | "medio" }) {
@@ -98,7 +114,7 @@ const SENALES: { icono: NombreIcono; texto: string }[] = [
 export function Seguridad() {
   const { tema } = useSesion();
   const t = useTam();
-  const [completo, setCompleto] = useState(!SEGURIDAD_COMPACTA);
+  const [completo, setCompleto] = useState(toca);
   return (
     <>
       <Ceja>Antes de empezar</Ceja>

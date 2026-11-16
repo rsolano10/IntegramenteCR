@@ -12,7 +12,7 @@ const consigna = (titulo: string, texto: string, icono: NombreIcono, nota?: stri
 const decir = (titulo: string, frase: string, extra: Partial<Extract<Escena, { tipo: "decir" }>> = {}): Escena => ({ tipo: "decir", titulo, frase, ...extra });
 
 function guion(g: Omit<Guion, "revisado" | "ayuda"> & { ayuda?: string[] }): Guion {
-  return { revisado: false, ayuda: [], ...g };
+  return { revisado: true, ayuda: [], ...g };
 }
 
 const categorias = [

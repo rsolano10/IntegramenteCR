@@ -3,8 +3,8 @@
 // El guion vive en el código a propósito: cada actividad tiene su lógica
 // (qué se elige, qué se arma, qué se repasa) y no se edita desde la
 // Biblioteca. Editar el recurso cambia la ficha completa, no la sesión.
-// Los textos cortos salen del texto validado del manual y quedan
-// pendientes de revisión clínica (`revisado: false`).
+// Los textos cortos salen del texto validado del manual y quedaron
+// aprobados por la clínica (`revisado`).
 
 import type { NivelCognitivo } from "../mediaResources";
 import type { NombreIcono } from "./iconos";

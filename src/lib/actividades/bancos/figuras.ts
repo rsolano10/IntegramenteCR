@@ -1,6 +1,6 @@
 // Figuras dibujadas a mano en SVG (components/actividades/interactivas/Figura.tsx).
 // Acá solo los nombres, para la lógica y los lectores de pantalla.
-// `revisado: false` hasta que el equipo clínico lo apruebe.
+// `revisado: true` hasta que el equipo clínico lo apruebe.
 
 export interface FiguraBanco {
   id: string;
@@ -9,7 +9,7 @@ export interface FiguraBanco {
   revisado: boolean;
 }
 
-const f = (id: string, nombre: string, plural: string): FiguraBanco => ({ id, nombre, plural, revisado: false });
+const f = (id: string, nombre: string, plural: string): FiguraBanco => ({ id, nombre, plural, revisado: true });
 
 // Objetos de la casa para «Encontrá las parejas» (ícono y nombre).
 export const OBJETOS: FiguraBanco[] = [

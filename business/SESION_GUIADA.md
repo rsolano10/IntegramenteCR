@@ -72,7 +72,8 @@ Todas están hechas: 120 guiones, uno por cada recurso que no es un juego.
 - La «adaptación» de los primeros 34 recursos usa «Motor Rojo» y otros términos de la clínica. Por eso no se muestra en la sesión: se tradujo en consejos.
 - Las escenas de video se saltean mientras no haya video cargado. Hoy faltan los de bienvenida y los de los primeros recursos.
 
-## Pendiente de la clínica
+## Aprobación de la clínica
 
-- **Revisar los textos cortos de cada guion.** Todos tienen `revisado: false`. Se prueban desde Biblioteca › Vista previa › Probar la sesión.
-- **Aprobar la seguridad compacta.** Sería el recorrido la primera vez y después los dibujos, con el texto completo a un toque. Mientras no se apruebe, `SEGURIDAD_COMPACTA = false` en `Escenas.tsx` y el texto completo se lee en cada sesión.
+El 16 de noviembre de 2026 la clínica aprobó todo:
+- **Guiones:** los textos de los 120 guiones (`revisado: true`).
+- **Seguridad compacta:** el texto completo de «Cuándo parar» se lee la primera vez y cada 30 días en cada dispositivo. Las demás veces se ven los dibujos, con el texto completo a un toque.

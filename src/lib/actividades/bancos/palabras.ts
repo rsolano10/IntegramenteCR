@@ -1,6 +1,6 @@
 // Banco de palabras de Costa Rica para «Armá la palabra» y «En orden».
 // `pista`: categoría o definición corta que se puede mostrar como ayuda.
-// `revisado: false` hasta que el equipo clínico lo apruebe.
+// `revisado: true` hasta que el equipo clínico lo apruebe.
 
 export interface PalabraBanco {
   palabra: string;
@@ -10,7 +10,7 @@ export interface PalabraBanco {
 }
 
 const p = (categoria: PalabraBanco["categoria"], lista: [string, string][]): PalabraBanco[] =>
-  lista.map(([palabra, pista]) => ({ palabra, categoria, pista, revisado: false }));
+  lista.map(([palabra, pista]) => ({ palabra, categoria, pista, revisado: true }));
 
 export const PALABRAS: PalabraBanco[] = [
   ...p("casa", [

@@ -5,7 +5,7 @@ import type { Guion } from "../tipos";
 // sesión arma la misión de la semana: hojas verdes en tres comidas.
 export const pre005: Guion = {
   codigo: "PRE-005",
-  revisado: false,
+  revisado: true,
   frase: "Sumar hojas verdes a tres comidas de esta semana.",
   icono: "hoja",
   etiquetas: ["Toda la semana", "3 comidas", "En la cocina"],
