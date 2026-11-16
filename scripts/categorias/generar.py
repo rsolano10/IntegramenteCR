@@ -145,13 +145,13 @@ L["nutricion"] = ("Nutrición", "#e1ecd3", mezcla("#cfe0b8","#6f8f4e",0.5), f'''
 ''')
 
 # Bienvenida: el isotipo oficial, tal cual (public/marca/isotipo.png, sin
-# redibujar ni cambiar colores), sobre un fondo claro donde se ven sus tres
-# gotas. Sin grano encima, para no alterar el logo.
+# redibujar ni cambiar colores), sobre un fondo oscuro donde se ven sus tres
+# gotas (verde profundo de la marca). Sin grano encima, para no alterar el logo.
 import base64
 _iso = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "public", "marca", "isotipo.png")
 _b64 = base64.b64encode(open(_iso, "rb").read()).decode()
 BIENVENIDA = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" role="img" aria-label="Bienvenida">
-<defs><linearGradient id="f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3eeee"/></linearGradient></defs>
+<defs><linearGradient id="f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3f6a70"/><stop offset="1" stop-color="#1f3338"/></linearGradient></defs>
 <rect width="240" height="240" fill="url(#f)"/>
 <image x="48" y="51" width="144" height="138" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{_b64}" xlink:href="data:image/png;base64,{_b64}"/>
 </svg>'''
