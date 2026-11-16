@@ -4,6 +4,7 @@ import { useSession } from "./useSession";
 import type { PlanDay, PlanTask, PlanDayStatus } from "./mockData";
 import type { AdaptacionPorEtapa, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
+import type { Progreso } from "./sesiones/tipos";
 
 const DIAS_BY_WEEKDAY = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const DIAS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -32,6 +33,7 @@ interface PlanTaskRow {
   nota_clinica: string | null;
   media_resource_id: string | null;
   indicacion_individual: string | null;
+  progreso: Progreso | null;
   nivel_interactivo?: "suave" | "medio" | "retador" | null;
   // PostgREST embeds a to-one FK as a single object at runtime, but
   // supabase-js's generic (non-codegen'd) types infer embeds as arrays —
@@ -114,6 +116,7 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     actividad: resource?.actividad ?? null,
     dosis: resource?.dosis ?? null,
     indicacionIndividual: row.indicacion_individual ?? null,
+    progreso: row.progreso ?? null,
     requierePlanIndividual: resource?.requiere_plan_individual ?? null,
     adaptacionPorEtapa: resource?.adaptacion_por_etapa ?? null,
     ayuda: resource?.ayuda ?? null,
@@ -156,7 +159,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, nivel_interactivo, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, nivel_interactivo, progreso, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });
@@ -279,6 +282,16 @@ export function useMarkRegistro(patientId: string | undefined) {
         autor_id: userId,
       });
     }
+    await queryClient.invalidateQueries({ queryKey: ["plan", patientId] });
+  };
+}
+
+// Lo que se arma en la sesión guiada y la misión de la semana.
+export function useGuardarProgreso(patientId: string | undefined) {
+  const queryClient = useQueryClient();
+  return async function guardarProgreso(taskId: string, progreso: Progreso) {
+    const { error } = await supabase.from("plan_tasks").update({ progreso }).eq("id", taskId);
+    if (error) throw error;
     await queryClient.invalidateQueries({ queryKey: ["plan", patientId] });
   };
 }

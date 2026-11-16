@@ -2,7 +2,10 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVolver } from "../../lib/useVolver";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { usePlan, useMarkRegistro } from "../../lib/usePlan";
+import { usePlan, useMarkRegistro, useGuardarProgreso } from "../../lib/usePlan";
+import { guionDe } from "../../lib/sesiones";
+import { datosDeTarea } from "../../lib/sesiones/datos";
+import { SesionGuiada } from "../sesion/SesionGuiada";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { guiaDeTarea } from "../../lib/pasoAPaso";
 import { nivelCognitivoLabel, resourceUrl, type NivelCognitivo } from "../../lib/mediaResources";
@@ -42,6 +45,7 @@ export function StepByStepActivity({
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const { data: perfil } = usePerfilRecursos();
   const markRegistro = useMarkRegistro(myPatient?.id);
+  const guardarProgreso = useGuardarProgreso(myPatient?.id);
 
   const task = days?.flatMap((d) => d.tasks).find((t) => t.id === taskId) ?? null;
 
@@ -88,6 +92,30 @@ export function StepByStepActivity({
           Volver
         </Button>
       </div>,
+    );
+  }
+
+  // Con guion propio: la sesión guiada, y al terminar el mismo registro.
+  const guion = guionDe(task.codigo);
+  if (guion && screen === "guia") {
+    const guardar = (p: Parameters<typeof guardarProgreso>[1]) => guardarProgreso(task.id, p).catch(() => {});
+    return (
+      <SesionGuiada
+        guion={guion}
+        datos={datosDeTarea(task)}
+        etapas={perfil?.etapas ?? []}
+        size={size}
+        participante={large}
+        progreso={task.progreso}
+        onProgreso={guardar}
+        onSalir={volver}
+        onTerminar={(p) => {
+          guardar(p);
+          setScreen("registro");
+        }}
+        textoTerminar={large ? "Contar cómo me fue" : "Registrar cómo les fue"}
+        rutaEmergencia={large ? undefined : "/app/emergencia"}
+      />
     );
   }
 

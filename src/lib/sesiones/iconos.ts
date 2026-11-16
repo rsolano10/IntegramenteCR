@@ -1,0 +1,78 @@
+// Nombres de los dibujos de la sesión guiada (los trazos están en
+// components/sesion/Icono.tsx). Una lista cerrada para que un guion no
+// pueda pedir un dibujo que no existe.
+export const NOMBRES_ICONOS = [
+  // Generales
+  "silla",
+  "apoyo",
+  "zapato",
+  "luz",
+  "suelo",
+  "baston",
+  "reloj",
+  "corazon",
+  "estrella",
+  "conversar",
+  "mapa",
+  // Seguridad
+  "dolor",
+  "mareo",
+  "equilibrio",
+  "cansancio",
+  "aire",
+  "confusion",
+  "rechazo",
+  "urgente",
+  // Cómo se siente
+  "bien",
+  "cansado",
+  "molestia",
+  // Figuras (gerontogimnasia)
+  "figura-sentada",
+  "figura-inclinada",
+  "figura-de-pie",
+  // Salidas
+  "casa",
+  "parque",
+  "iglesia",
+  "mercado",
+  "doctor",
+  "otra",
+  // Cosas para llevar
+  "llaves",
+  "sombrilla",
+  "cedula",
+  "plata",
+  "pastillas",
+  "celular",
+  "sueter",
+  "lentes",
+  "regalo",
+  "bolso",
+  "botella",
+  "sombrero",
+  "pan",
+  "biblia",
+  // Pasos
+  "ropa",
+  "peine",
+  "telefono",
+  "puerta",
+  "bus",
+  "lluvia",
+  // Cocina
+  "hoja",
+  "acelga",
+  "mostaza",
+  "lechuga",
+  "lavar",
+  "taza",
+  "huevo",
+  "sarten",
+  "sopa",
+  "calendario",
+  "rinon",
+  "cuchara",
+] as const;
+
+export type NombreIcono = (typeof NOMBRES_ICONOS)[number];

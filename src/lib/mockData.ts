@@ -3,6 +3,7 @@
 // in the Handoff (data model minimo).
 import type { AdaptacionPorEtapa, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
+import type { Progreso } from "./sesiones/tipos";
 
 export type Semaforo = "verde" | "amarillo" | "rojo";
 
@@ -137,6 +138,8 @@ export interface PlanTask {
   ayuda?: string | null;
   tenEnCuenta?: string | null;
   paraCerrar?: string | null;
+  // Sesión guiada: respuestas y misión de la semana (plan_tasks.progreso).
+  progreso?: Progreso | null;
 }
 
 export interface PlanDay {

@@ -43,7 +43,9 @@ export function contenidoDeTarea(t: PlanTask, fallbackLabel: string, etapas?: Ni
     externalUrl: t.externalUrl,
     posterPath: t.posterPath,
     intro: t.intro,
-    perfil: t.perfil,
+    // «¿Para quién?» es un criterio de asignación de la clínica: la familia
+    // no lo ve (la clínica ya decidió que la actividad es para su familiar).
+    perfil: null,
     sabiasQue: t.sabiasQue,
     materiales: t.materiales,
     actividad: t.actividad,

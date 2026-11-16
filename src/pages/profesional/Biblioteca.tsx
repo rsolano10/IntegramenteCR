@@ -21,6 +21,9 @@ import {
 } from "../../lib/mediaResources";
 import { ResourceEditor } from "../../components/profesional/ResourceEditor";
 import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
+import { guionDe } from "../../lib/sesiones";
+import { datosDeRecurso } from "../../lib/sesiones/datos";
+import { SesionGuiada } from "../../components/sesion/SesionGuiada";
 import { NotasDelEquipo } from "../../components/profesional/NotasDelEquipo";
 
 const modulos = Object.keys(moduloLabel) as ResourceModulo[];
@@ -61,6 +64,8 @@ export function Biblioteca() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [pestana, setPestana] = useState<"recursos" | "juegos">("recursos");
   const [juegoAbierto, setJuegoAbierto] = useState<MediaResource | null>(null);
+  // Probar la sesión guiada tal como la recorre la familia (sin guardar nada).
+  const [probando, setProbando] = useState<MediaResource | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -77,6 +82,7 @@ export function Biblioteca() {
   const nJuegos = (resources ?? []).filter((r) => esInteractivo(r.extras)).length;
   const menuDe = (r: MediaResource) => [
     { label: "Vista previa", onClick: () => (esInteractivo(r.extras) ? setJuegoAbierto(r) : setPreviewing(r)) },
+    ...(guionDe(r.codigo) ? [{ label: "Probar la sesión guiada", onClick: () => setProbando(r) }] : []),
     { label: esInteractivo(r.extras) ? "Ajustes avanzados" : "Editar", onClick: () => setEditing(r) },
     { label: r.activo ? "Desactivar" : "Activar", onClick: () => toggleActivo(r) },
     { label: deleting === r.id ? "Eliminando…" : "Eliminar", danger: true, onClick: () => deleteResource(r) },
@@ -213,10 +219,40 @@ export function Biblioteca() {
         />
       )}
 
+      {probando && guionDe(probando.codigo) && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto bg-fondo-papel">
+          <SesionGuiada
+            guion={guionDe(probando.codigo)!}
+            datos={datosDeRecurso(probando)}
+            etapas={[]}
+            onSalir={() => setProbando(null)}
+            onTerminar={() => setProbando(null)}
+            textoTerminar="Terminar la prueba"
+          />
+        </div>
+      )}
+
       {previewing && (
         <Modal onClose={() => setPreviewing(null)}>
           <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Así lo ve la familia</p>
           <h3 className="font-serif font-normal text-2xl m-0 mb-4">{previewing.titulo}</h3>
+          {guionDe(previewing.codigo) && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-verde-tenue border border-verde-serenidad/40 px-4 py-3">
+              <p className="m-0 text-[14.5px] leading-snug text-tinta">
+                <strong>Tiene sesión guiada.</strong> La familia la recorre paso a paso; esta ficha queda plegada como «Ver la ficha completa».
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setProbando(previewing);
+                  setPreviewing(null);
+                }}
+                className="shrink-0 min-h-10 px-4 rounded-full border-0 bg-tinta text-white font-semibold text-[14px] cursor-pointer hover:bg-verde-profundo"
+              >
+                Probar la sesión
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4">
             <ResourceDetailView
               content={contenidoDeRecurso(previewing, `${tipoLabel[previewing.tipo]}${previewing.duracion ? ` · ${previewing.duracion}` : ""}`, null)}

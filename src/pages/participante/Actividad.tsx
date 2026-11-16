@@ -7,7 +7,9 @@ import { OptionGroup } from "../../components/ui/OptionGroup";
 import { PlayIcon } from "../../components/ui/Icons";
 import { speak } from "../../lib/speech";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { usePlan, useMarkRegistro } from "../../lib/usePlan";
+import { usePlan, useMarkRegistro, useGuardarProgreso } from "../../lib/usePlan";
+import { guionDe } from "../../lib/sesiones";
+import { MisionSemana, ResumenSesion } from "../../components/sesion/ResumenSesion";
 import { contenidoDeTarea } from "../../lib/contenidoRecurso";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
@@ -30,6 +32,7 @@ export function ParticipanteActividad() {
   const { data: myPatient } = useMyPatient();
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const markRegistro = useMarkRegistro(myPatient?.id);
+  const guardarProgreso = useGuardarProgreso(myPatient?.id);
 
   const today = days?.find((d) => d.isToday);
   const task = today?.tasks.find((t) => t.id === taskId) ?? null;
@@ -69,6 +72,7 @@ export function ParticipanteActividad() {
         textoListo: "Volver a Hoy",
       };
   const pasos = task.pasos && task.pasos.length > 0 ? task.pasos : task.detalle ? [task.detalle] : [];
+  const guion = guionDe(task.codigo);
 
   function pick(v: "done" | "partial" | "no") {
     if (v === showReg) return; // ya está así — no hay nada que cambiar
@@ -202,22 +206,45 @@ export function ParticipanteActividad() {
       </Link>
       <h3 className="font-serif font-normal text-[28px] leading-snug m-0">{task.titulo}</h3>
 
-      <Link
-        to={`/app/participante/actividad/${task.id}/pasos`}
-        className="inline-flex items-center gap-1.5 self-start px-4 py-2.5 rounded-full border-2 border-verde-serenidad bg-verde-tenue text-verde-profundo font-sans text-[16px] font-bold no-underline"
-      >
-        Modo paso a paso
-      </Link>
+      {guion ? (
+        <>
+          <Link
+            to={`/app/participante/actividad/${task.id}/pasos`}
+            className="flex items-center justify-center gap-2.5 min-h-16 rounded-2xl bg-verde-serenidad text-white font-sans text-[21px] font-bold no-underline hover:bg-verde-profundo"
+          >
+            <PlayIcon /> Empezar
+          </Link>
+          <ResumenSesion guion={guion} modulo={task.modulo ?? null} large />
+          {task.progreso?.mision && (
+            <MisionSemana
+              key={task.progreso.mision.marcas.join()}
+              progreso={task.progreso}
+              modulo={task.modulo ?? null}
+              onGuardar={(p) => guardarProgreso(task.id, p)}
+              large
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <Link
+            to={`/app/participante/actividad/${task.id}/pasos`}
+            className="inline-flex items-center gap-1.5 self-start px-4 py-2.5 rounded-full border-2 border-verde-serenidad bg-verde-tenue text-verde-profundo font-sans text-[16px] font-bold no-underline"
+          >
+            Modo paso a paso
+          </Link>
 
-      <div className="grid gap-4">
-        {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia large />}
-        <RegistroJuegoContexto.Provider value={registroJuego}>
-          <ResourceDetailView
-            size="large"
-            content={contenidoDeTarea(task, `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas, pasos)}
-          />
-        </RegistroJuegoContexto.Provider>
-      </div>
+          <div className="grid gap-4">
+            {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia large />}
+            <RegistroJuegoContexto.Provider value={registroJuego}>
+              <ResourceDetailView
+                size="large"
+                content={contenidoDeTarea(task, `${task.tipo}${task.duracion ? ` · ${task.duracion}` : ""}`, etapas, pasos)}
+              />
+            </RegistroJuegoContexto.Provider>
+          </div>
+        </>
+      )}
 
       {task.notaClinica && (
         <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl px-4 py-3.5">

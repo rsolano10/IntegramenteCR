@@ -5,7 +5,9 @@ import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
 import { ModuloIcon } from "../../components/ui/ModuloIcon";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { usePlan, useMarkRegistro } from "../../lib/usePlan";
+import { usePlan, useMarkRegistro, useGuardarProgreso } from "../../lib/usePlan";
+import { guionDe } from "../../lib/sesiones";
+import { MisionSemana, ResumenSesion } from "../../components/sesion/ResumenSesion";
 import { contenidoDeTarea } from "../../lib/contenidoRecurso";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { moduloLabel, moduloTheme } from "../../lib/modulos";
@@ -43,6 +45,7 @@ export function Actividad() {
   const { data: myPatient } = useMyPatient();
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const markRegistro = useMarkRegistro(myPatient?.id);
+  const guardarProgreso = useGuardarProgreso(myPatient?.id);
 
   const dia = days?.find((d) => d.tasks.some((t) => t.id === taskId)) ?? null;
   const task = dia?.tasks.find((t) => t.id === taskId) ?? null;
@@ -70,6 +73,7 @@ export function Actividad() {
   const realizable = !!dia.isToday && (task.estado === "pendiente" || task.estado === "futuro") && !saved;
   const pasos = task.pasos && task.pasos.length > 0 ? task.pasos : task.detalle ? [task.detalle] : [];
   const tema = task.modulo ? moduloTheme[task.modulo] : null;
+  const guion = guionDe(task.codigo);
 
   function pick(v: "done" | "partial" | "no") {
     if (v === "partial") {
@@ -188,7 +192,7 @@ export function Actividad() {
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M5 3.2v9.6a.6.6 0 0 0 .92.5l7.4-4.8a.6.6 0 0 0 0-1L5.92 2.7A.6.6 0 0 0 5 3.2Z" />
           </svg>
-          Empezar paso a paso
+          {guion ? "Empezar" : "Empezar paso a paso"}
         </Link>
       ) : saved ? (
         <p className="m-0 mb-6 rounded-2xl bg-fila-fria px-4 py-3 text-[15px] leading-relaxed text-semaforo-verde-texto" role="status">
@@ -214,12 +218,37 @@ export function Actividad() {
         </p>
       )}
 
-      <div className="grid gap-4.5 mb-4.5">
-        {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia />}
-        <RegistroJuegoContexto.Provider value={registroJuego}>
-          <ResourceDetailView content={contenidoDeTarea(task, "", etapas, pasos)} />
-        </RegistroJuegoContexto.Provider>
-      </div>
+      {guion && <ResumenSesion guion={guion} modulo={task.modulo ?? null} />}
+      {task.progreso?.mision && (
+        <MisionSemana
+          key={task.progreso.mision.marcas.join()}
+          progreso={task.progreso}
+          modulo={task.modulo ?? null}
+          onGuardar={(p) => guardarProgreso(task.id, p)}
+        />
+      )}
+
+      {guion ? (
+        // Con sesión guiada, la ficha completa queda a mano, plegada.
+        <details className="group mb-4.5 rounded-[22px] border border-borde bg-white">
+          <summary className="flex items-center justify-between gap-3 cursor-pointer list-none px-4 py-3.5 text-[15.5px] font-semibold text-tinta">
+            Ver la ficha completa
+            <svg className="shrink-0 transition-transform group-open:rotate-180" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </summary>
+          <div className="grid gap-4.5 px-4 pb-4">
+            <ResourceDetailView content={contenidoDeTarea(task, "", etapas, pasos)} />
+          </div>
+        </details>
+      ) : (
+        <div className="grid gap-4.5 mb-4.5">
+          {task.modulo === "gerontogimnasia" && task.codigo !== "GER-010" && <IntroGerontogimnasia />}
+          <RegistroJuegoContexto.Provider value={registroJuego}>
+            <ResourceDetailView content={contenidoDeTarea(task, "", etapas, pasos)} />
+          </RegistroJuegoContexto.Provider>
+        </div>
+      )}
 
       {task.notaClinica && (
         <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-2xl p-4 mb-4.5">
