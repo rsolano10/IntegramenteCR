@@ -8,6 +8,10 @@ Review del 16 de noviembre de 2026, hecho sobre el commit `b109d8a`. Este docume
 
 No se revisó en pantalla con datos reales: Revisión (`/app/revision`), Resumen (`/app/resumen`), una conversación con Clara, las páginas de `/app/alerta/*` y los modales de bienvenida. Están revisados solo por código.
 
+## Estado
+
+Implementado el 16 de noviembre de 2026, una tanda por commit: `15ebece` (tanda 1, más 4.1 y 4.6), `a79ecd7` (tanda 2 y 5.2), `84b97bf` (tanda 3), `0c30275` (tanda 4) y `def5b3e` (5.1 y 5.3). Migración aplicada: `20261117000000_pedidos_ayuda.sql`. Las decisiones D1 a D4 se tomaron con la opción por defecto. Queda pendiente: el teléfono de CONAPAM y volver a subir la base de conocimiento de Clara a ElevenLabs (cambió «Calendario en tu teléfono» por «Avisos en tu teléfono»).
+
 ## Reglas que no se rompen
 
 - Todo el texto en voseo, nunca usted ni tú. Sin rayas largas (—) en textos que ve la familia.
