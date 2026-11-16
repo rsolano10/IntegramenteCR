@@ -29,7 +29,7 @@ export function desglose({ enteras, enParte, no }: { enteras: number; enParte: n
 export function mensajeDelDia(
   { hechas, pendientes, total, enteras = hechas, enParte = 0, no = 0 }: { hechas: number; pendientes: number; total: number; enteras?: number; enParte?: number; no?: number },
   quien: Quien,
-  nombre: string | null,
+  _nombre: string | null,
 ): { titulo: string; detalle: string } {
   const participante = quien === "participante";
   if (total === 0) return { titulo: "Hoy es un día libre", detalle: "No hay actividades programadas." };
@@ -38,9 +38,9 @@ export function mensajeDelDia(
     return { titulo: `${participante ? "Registraste" : "Registraron"} ${cuales} de hoy`, detalle: desglose({ enteras, enParte, no }) };
   }
   if (pendientes === total) {
-    const con = nombre && !participante ? ` con ${nombre}` : "";
+    // Sin «con …»: arriba, «El plan de …» ya dice para quién es.
     return {
-      titulo: participante ? `Hoy ${total === 1 ? "toca 1 actividad" : `tocan ${actividades(total)}`}` : `${actividades(total)} para hoy${con}`,
+      titulo: participante ? `Hoy ${total === 1 ? "toca 1 actividad" : `tocan ${actividades(total)}`}` : `${actividades(total)} para hoy`,
       detalle: "Un paso a la vez, sin apuro.",
     };
   }

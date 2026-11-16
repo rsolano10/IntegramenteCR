@@ -104,16 +104,39 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
 
 // Hoy: la fecha (confirma que son las actividades de hoy) y el saludo, sin
 // fondo y en chico, como parte del contenido.
-// «El plan de …» ancla para quién es todo lo que sigue (sin «don/doña»: no
-// sabemos el género de la persona).
+// El saludo de Hoy: la fecha como la ficha de calendario de Mi semana, un
+// saludo según la hora y «El plan de …» como etiqueta, que ancla para quién
+// es todo lo que sigue (sin «don/doña»: no sabemos el género de la persona).
 function SaludoDelDia({ nombre, paciente }: { nombre: string; paciente: string | null }) {
+  const ahora = new Date();
+  const tz = "America/Costa_Rica";
+  const hora = Number(ahora.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false })) % 24;
+  const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
+  const parte = (o: Intl.DateTimeFormatOptions) => ahora.toLocaleDateString("es-CR", { timeZone: tz, ...o }).replace(".", "");
+  const fecha = parte({ weekday: "long", day: "numeric", month: "long" });
   return (
-    <div className="mb-4">
-      <p className="m-0 text-[14px] text-tinta-suave first-letter:uppercase">
-        {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
-      </p>
-      <p className="m-0 font-serif text-[24px] leading-tight text-tinta">Hola, {nombre}</p>
-      {paciente && <p className="m-0 mt-0.5 text-[15px] text-tinta-suave">El plan de {paciente}</p>}
+    <div className="mb-5 flex items-center gap-4">
+      <div
+        className="shrink-0 w-[60px] rounded-2xl bg-verde-profundo text-white text-center py-2 shadow-[0_10px_22px_-14px_rgba(31,51,56,0.7)]"
+        role="img"
+        aria-label={fecha}
+        title={fecha.charAt(0).toUpperCase() + fecha.slice(1)}
+      >
+        <span className="block text-[12px] font-bold uppercase tracking-[0.12em] text-[#c4dbdb]">{parte({ weekday: "short" }).slice(0, 3)}</span>
+        <span className="block font-serif text-[26px] leading-none my-0.5">{ahora.toLocaleDateString("es-CR", { timeZone: tz, day: "numeric" })}</span>
+        <span className="block text-[12px] font-bold uppercase tracking-[0.12em] text-mostaza-vital">{parte({ month: "short" }).slice(0, 3)}</span>
+      </div>
+      <div className="min-w-0">
+        <p className="m-0 font-serif text-[26px] leading-tight text-tinta">
+          {saludo}, {nombre}
+        </p>
+        {paciente && (
+          <p className="m-0 mt-1.5 inline-flex items-center gap-2 rounded-full bg-white border border-borde pl-2 pr-3.5 py-1 text-[15px] text-tinta-suave">
+            <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="w-[18px] h-auto" />
+            El plan de <strong className="font-semibold text-tinta">{paciente}</strong>
+          </p>
+        )}
+      </div>
     </div>
   );
 }
