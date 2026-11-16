@@ -132,11 +132,3 @@ export function contextoParaClara(c: ContextoActividad): string {
   );
   return l.join("\n");
 }
-
-// Preguntas sugeridas según dónde está la persona.
-export function preguntasSugeridas(quien: "familia" | "participante", enSesion: boolean): string[] {
-  if (quien === "participante") return enSesion ? ["No entiendo qué hacer", "¿Me lo explicás más fácil?", "Me cansé, ¿qué hago?"] : ["¿De qué se trata?", "¿Qué necesito?", "¿Para qué sirve?"];
-  return enSesion
-    ? ["No entendemos este paso", "¿Cómo lo hago más fácil?", "No quiere seguir, ¿qué hago?"]
-    : ["¿Qué necesitamos preparar?", "¿Cómo la adapto si le cuesta?", "¿Para qué sirve esta actividad?"];
-}

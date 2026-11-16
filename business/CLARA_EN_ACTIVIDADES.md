@@ -10,12 +10,7 @@ Ahora Clara está **dentro de cada actividad** y sabe **en qué actividad y en q
 
 ## Dónde aparece
 
-| Lugar | Cómo se ve | Para qué |
-|---|---|---|
-| **Tablero de la actividad** (antes de empezar), debajo de «Empezar» | Tarjeta «Preguntale a Clara»: tres preguntas sugeridas y un campo para escribir | Dudas antes de arrancar: qué preparar, cómo adaptarla, para qué sirve |
-| **Sesión guiada**, botón **Ayuda** de cada paso | Arriba de la hoja de ayuda, la misma tarjeta; debajo, la pista y los consejos de siempre | Dudas en el momento: «no entendemos este paso», «¿cómo lo hago más fácil?», «no quiere seguir» |
-
-Se eligió el botón **Ayuda** que ya existe en lugar de un botón flotante: para un adulto mayor, un botón más que tapa contenido confunde, y «Ayuda» es donde ya buscan cuando se traban. El botón **Ayuda** ahora está siempre (antes solo aparecía si la actividad tenía consejos).
+Solo en el botón **Ayuda** de cada paso de la sesión guiada (no en el detalle de la actividad antes de empezar). La hoja de ayuda muestra primero **Consejos de la actividad** (la pista, los consejos y cómo adaptarla) y debajo un chat mínimo de Clara: el título «Preguntale a Clara», un campo para escribir, sin preguntas de ejemplo, y el aviso «Clara es una IA y puede equivocarse» en letra chica. El botón **Ayuda** ahora está siempre (antes solo aparecía si la actividad tenía consejos).
 
 Funciona para la familia y para el participante. Al participante, Clara le habla con frases cortas y, ante una urgencia, le muestra «Necesito ayuda» en lugar de la guía de emergencia de la familia.
 
@@ -68,14 +63,13 @@ La base se genera con un script a partir de los guiones (código) y de los campo
 | Pieza | Archivo |
 |---|---|
 | Contexto y descripción de cada pantalla | `src/lib/claraActividad.ts` (pruebas en `claraActividad.test.ts`) |
-| Tarjeta liviana «Preguntale a Clara» | `src/components/clara/ClaraActividad.tsx` |
+| Chat mínimo «Preguntale a Clara» (parte liviana) | `src/components/clara/ClaraActividad.tsx` |
 | Chat (se carga a pedido) | `src/components/clara/ChatClaraActividad.tsx` |
-| En el tablero | `src/components/actividad/PanelActividad.tsx` |
 | En la sesión guiada | `src/components/sesion/SesionGuiada.tsx` (hoja «Ayuda») |
 | Generador de la base | `scripts/clara/generar-base.ts` |
 
 ## Pendiente y próximos pasos
 
 - **Voz:** por ahora, dentro de la actividad Clara es solo texto. Hablarle con la voz (como en Ayuda) sería el siguiente paso natural para el participante.
-- **Actividades sin guion:** los juegos y las actividades sin sesión guiada tienen a Clara en el tablero, pero no en cada pantalla del juego.
+- **Actividades sin guion:** los juegos y las actividades sin sesión guiada todavía no tienen a Clara.
 - **Medición:** contar cuántas veces se abre Clara por actividad y por paso (hoy se cuentan las aperturas de «Ayuda») para encontrar los pasos que más confunden y mejorar sus guiones.

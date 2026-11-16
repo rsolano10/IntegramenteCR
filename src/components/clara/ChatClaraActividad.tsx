@@ -43,7 +43,6 @@ export interface PropsChat {
   inicial: string;
   quien: "familia" | "participante";
   large?: boolean;
-  sugerencias: string[];
 }
 
 export default function ChatClaraActividad(props: PropsChat) {
@@ -64,7 +63,7 @@ export default function ChatClaraActividad(props: PropsChat) {
 let seq = 0;
 const clave = () => `c-${Date.now()}-${++seq}`;
 
-function Chat({ contexto, inicial, quien, large = false, sugerencias, manejadores }: PropsChat & { manejadores: React.MutableRefObject<Manejadores | null> }) {
+function Chat({ contexto, inicial, quien, large = false, manejadores }: PropsChat & { manejadores: React.MutableRefObject<Manejadores | null> }) {
   const session = useSession();
   const { data: myPatient } = useMyPatient();
   const queryClient = useQueryClient();
@@ -294,7 +293,7 @@ function Chat({ contexto, inicial, quien, large = false, sugerencias, manejadore
   useConversationClientTool("ir_a", () => "Dentro de una actividad no se cambia de pantalla: respondé acá mismo.");
 
   const ocupado = burbujas.some((b) => b.escribiendo);
-  const t = large ? { texto: "text-[19px]", chico: "text-[16px]" } : { texto: "text-[16px]", chico: "text-[14px]" };
+  const t = large ? { texto: "text-[19px]" } : { texto: "text-[16px]" };
 
   return (
     <div className="grid gap-3">
@@ -341,23 +340,6 @@ function Chat({ contexto, inicial, quien, large = false, sugerencias, manejadore
       </ul>
       <div ref={fin} />
 
-      {!ocupado && burbujas.length > 0 && burbujas.length < 4 && (
-        <div className="flex flex-wrap gap-2">
-          {sugerencias
-            .filter((s) => !burbujas.some((b) => b.texto === s))
-            .map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => preguntar(s)}
-                className={`min-h-11 px-3.5 rounded-full border-[1.5px] border-borde bg-white text-tinta font-semibold cursor-pointer hover:border-verde-serenidad ${t.chico}`}
-              >
-                {s}
-              </button>
-            ))}
-        </div>
-      )}
-
       <form
         className="flex items-end gap-2"
         onSubmit={(e) => {
@@ -379,7 +361,7 @@ function Chat({ contexto, inicial, quien, large = false, sugerencias, manejadore
             }
           }}
           rows={1}
-          placeholder="Otra pregunta…"
+          placeholder="Escribí tu duda…"
           className={`flex-1 min-h-12 max-h-32 resize-none rounded-2xl border-[1.5px] border-borde-campo bg-campo px-4 py-3 font-sans leading-snug text-tinta ${t.texto}`}
         />
         <button

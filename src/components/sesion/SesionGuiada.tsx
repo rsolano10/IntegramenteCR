@@ -239,29 +239,8 @@ export function SesionGuiada({
       {panel === "ayuda" && (
         <Hoja titulo="Ayuda" onClose={() => setPanel(null)}>
           <div className="grid gap-3 text-[16px] leading-relaxed text-tinta">
-            {/* Clara, con el contexto de este paso. */}
-            <ClaraActividad
-              quien={participante ? "participante" : "familia"}
-              enSesion
-              large={large}
-              contexto={{
-                titulo: datos.titulo,
-                codigo: guion.codigo,
-                modulo: datos.modulo,
-                frase: guion.frase,
-                guion,
-                escena,
-                paso: escena ? { n: Math.min(idx, escenas.length - 1) + 1, de: escenas.length } : null,
-                respuestas,
-                aMano: aTenerAMano(guion).map((i) => i.texto),
-                ayuda: consejos,
-                ayudaEtapa: porEtapa.map((a) => a.texto),
-                indicacion: datos.indicacionIndividual,
-                porQue: datos.sabiasQue,
-              }}
-            />
             {(pista || consejos.length > 0 || porEtapa.length > 0) && (
-              <p className="m-0 mt-2 text-[13px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Consejos de la actividad</p>
+              <p className="m-0 text-[13px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Consejos de la actividad</p>
             )}
             {pista && (
               <div className="rounded-2xl bg-beige-serenidad px-4 py-3">
@@ -288,6 +267,26 @@ export function SesionGuiada({
                 ))}
               </div>
             )}
+            {/* Después de los consejos: Clara, con el contexto de este paso. */}
+            <ClaraActividad
+              quien={participante ? "participante" : "familia"}
+              large={large}
+              contexto={{
+                titulo: datos.titulo,
+                codigo: guion.codigo,
+                modulo: datos.modulo,
+                frase: guion.frase,
+                guion,
+                escena,
+                paso: escena ? { n: Math.min(idx, escenas.length - 1) + 1, de: escenas.length } : null,
+                respuestas,
+                aMano: aTenerAMano(guion).map((i) => i.texto),
+                ayuda: consejos,
+                ayudaEtapa: porEtapa.map((a) => a.texto),
+                indicacion: datos.indicacionIndividual,
+                porQue: datos.sabiasQue,
+              }}
+            />
           </div>
         </Hoja>
       )}
