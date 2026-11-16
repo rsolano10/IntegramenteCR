@@ -171,6 +171,9 @@ export function tareaDeRecurso(r: MediaResource): PlanTask {
   });
 }
 
+// Dónde viven las actividades extra (las sugeridas): bajo Hoy.
+export const RUTA_EXTRAS = "/app/hoy/extras";
+
 // Las actividades sugeridas según el perfil (fuera del plan). La misma
 // consulta que la lista de Mi semana, así no se pide dos veces.
 export function useActividadesSugeridas() {

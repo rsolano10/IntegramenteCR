@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Bienvenida">
+<defs>
+<linearGradient id="f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fbfc3"/><stop offset="1" stop-color="#548086"/></linearGradient>
+<radialGradient id="luz" cx="0.22" cy="0.18" r="0.75"><stop offset="0" stop-color="#fff" stop-opacity="0.75"/><stop offset="0.6" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<filter id="grano" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.12  0 0 0 0 0.2  0 0 0 0 0.22  0 0 0 0.09 0"/></filter>
+</defs>
+<rect width="240" height="240" fill="url(#f)"/>
+<rect width="240" height="240" fill="url(#luz)"/>
+
+<g transform="rotate(-8 120 120)">
+<path d="M95.0,52 A43.0,43.0 0 0 1 138,95.0 L138,138 L95.0,138 A43.0,43.0 0 0 1 52,95.0 A43.0,43.0 0 0 1 95.0,52 Z" fill="#4f8a91" opacity="1" transform="rotate(0 95.0 95.0)" />
+<path d="M169.0,58 A37.0,37.0 0 0 1 206,95.0 L206,132 L169.0,132 A37.0,37.0 0 0 1 132,95.0 A37.0,37.0 0 0 1 169.0,58 Z" fill="#ebe6ce" opacity="1" transform="rotate(-80 169.0 95.0)" />
+<path d="M89.0,140 A33.0,33.0 0 0 1 122,173.0 L122,206 L89.0,206 A33.0,33.0 0 0 1 56,173.0 A33.0,33.0 0 0 1 89.0,140 Z" fill="#f4d096" opacity="1" transform="rotate(100 89.0 173.0)" />
+</g>
+<circle cx="190" cy="186" r="8" fill="#f7f4e9" opacity="0.8"/>
+
+<rect width="240" height="240" filter="url(#grano)"/>
+</svg>

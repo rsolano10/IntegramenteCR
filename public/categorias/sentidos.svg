@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Sentidos">
+<defs>
+<linearGradient id="f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b6d9dc"/><stop offset="1" stop-color="#609197"/></linearGradient>
+<radialGradient id="luz" cx="0.22" cy="0.18" r="0.75"><stop offset="0" stop-color="#fff" stop-opacity="0.75"/><stop offset="0.6" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<filter id="grano" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0.12  0 0 0 0 0.2  0 0 0 0 0.22  0 0 0 0.09 0"/></filter>
+</defs>
+<rect width="240" height="240" fill="url(#f)"/>
+<rect width="240" height="240" fill="url(#luz)"/>
+
+<path d="M120.0,30 A72.0,72.0 0 0 1 192,102.0 L192,174 L120.0,174 A72.0,72.0 0 0 1 48,102.0 A72.0,72.0 0 0 1 120.0,30 Z" fill="#fff" opacity="0.36" transform="rotate(45 120.0 102.0)" />
+<path d="M120 132 C118 162 114 186 104 214" stroke="#3f6a70" stroke-width="8" fill="none" stroke-linecap="round"/>
+<path d="M88.0,160 A22.0,22.0 0 0 1 110,182.0 L110,204 L88.0,204 A22.0,22.0 0 0 1 66,182.0 A22.0,22.0 0 0 1 88.0,160 Z" fill="#a9c49f" opacity="1" transform="rotate(90 88.0 182.0)" />
+<g transform="translate(0 -18)">
+<g transform="rotate(-315 120 116)"><path d="M100.0,76 A20.0,20.0 0 0 1 120,96.0 L120,116 L100.0,116 A20.0,20.0 0 0 1 80,96.0 A20.0,20.0 0 0 1 100.0,76 Z" fill="#f7f4e9" opacity="1" transform="rotate(0 100.0 96.0)" /></g><g transform="rotate(-243 120 116)"><path d="M100.0,76 A20.0,20.0 0 0 1 120,96.0 L120,116 L100.0,116 A20.0,20.0 0 0 1 80,96.0 A20.0,20.0 0 0 1 100.0,76 Z" fill="#f4d096" opacity="1" transform="rotate(0 100.0 96.0)" /></g><g transform="rotate(-171 120 116)"><path d="M100.0,76 A20.0,20.0 0 0 1 120,96.0 L120,116 L100.0,116 A20.0,20.0 0 0 1 80,96.0 A20.0,20.0 0 0 1 100.0,76 Z" fill="#e8b5a1" opacity="1" transform="rotate(0 100.0 96.0)" /></g><g transform="rotate(-99 120 116)"><path d="M100.0,76 A20.0,20.0 0 0 1 120,96.0 L120,116 L100.0,116 A20.0,20.0 0 0 1 80,96.0 A20.0,20.0 0 0 1 100.0,76 Z" fill="#f7f4e9" opacity="1" transform="rotate(0 100.0 96.0)" /></g><g transform="rotate(-27 120 116)"><path d="M100.0,76 A20.0,20.0 0 0 1 120,96.0 L120,116 L100.0,116 A20.0,20.0 0 0 1 80,96.0 A20.0,20.0 0 0 1 100.0,76 Z" fill="#f4d096" opacity="1" transform="rotate(0 100.0 96.0)" /></g>
+<circle cx="120" cy="116" r="13" fill="#3f6a70"/><circle cx="116" cy="112" r="4" fill="#f4d096"/>
+</g>
+<g stroke="#f7f4e9" stroke-width="5" stroke-linecap="round" fill="none"><path d="M178 132 C170 120 186 112 178 100 C170 88 186 80 178 68"/><path d="M200 146 C194 136 206 130 200 120"/></g>
+
+<rect width="240" height="240" filter="url(#grano)"/>
+</svg>

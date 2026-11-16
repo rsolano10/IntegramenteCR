@@ -1,26 +1,23 @@
-import { Suspense, lazy, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../ui/Modal";
 import { Icono } from "../sesion/Icono";
 import { MisionSemana } from "../sesion/ResumenSesion";
 import { CienciaActividad } from "./CienciaActividad";
-import { GlifoActividad } from "./IconoActividad";
+import { IconoActividad } from "./IconoActividad";
 import { CHIP_ESTADO, ETIQUETA_ESTADO } from "../../lib/estadoActividad";
-import { esInteractivo } from "../../lib/clasificarNumeros";
 import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, guionDe, resumenPasos, type PasoResumen, type Progreso } from "../../lib/sesiones";
 import type { PlanDay, PlanTask } from "../../lib/mockData";
 import { cuandoEsElDia, diaConFecha } from "../../lib/planWeek";
 
 // La pantalla de una actividad antes de empezar, como un tablero: arriba,
-// qué es (con su dibujo o la portada del juego); después, lo que mandó el
+// qué es (con la imagen de su categoría); después, lo que mandó el
 // equipo, la ciencia de la actividad, qué tener a mano y cómo va a ser
 // (una línea de tiempo con cómo se hace cada paso); al final «Empezar».
 // Registrar se hace solo dentro de la actividad.
 // Una actividad ya registrada se puede repetir: se elige si el nuevo
 // registro reemplaza al anterior o si se hace sin registrar.
-
-const PortadaJuego = lazy(() => import("../actividades/interactivas/Marco").then((m) => ({ default: m.PortadaDeJuego })));
 
 export type ModoInicio = "normal" | "sobrescribir" | "sin-registro";
 
@@ -47,7 +44,6 @@ export function PanelActividad({
   const navigate = useNavigate();
   const [preguntando, setPreguntando] = useState(false);
   const guion = guionDe(task.codigo);
-  const juego = esInteractivo(task.extras) && task.extras?.modo === "interactiva" ? task.extras.tipo : null;
   const tema = task.modulo ? moduloTheme[task.modulo] : moduloTheme.bienvenida;
   const hecha = ETIQUETA_ESTADO[task.estado] ?? null;
   const hoyPendiente = !!dia.isToday && (task.estado === "pendiente" || task.estado === "futuro");
@@ -109,18 +105,10 @@ export function PanelActividad({
             {hecha}
           </span>
         )}
-        {juego ? (
-          <div className="mb-4 flex justify-center">
-            <Suspense fallback={<div className="h-[160px]" />}>
-              <PortadaJuego tipo={juego} />
-            </Suspense>
-          </div>
-        ) : (
-          <span className={`mb-4 sm:mb-0 sm:float-left sm:mr-5 flex items-center justify-center rounded-full bg-white/80 ${large ? "w-24 h-24" : "w-20 h-20 sm:w-24 sm:h-24"}`} aria-hidden="true">
-            {/* El mismo dibujo que en Hoy y Mi semana. */}
-            <GlifoActividad task={task} className="w-[62%] h-[62%]" />
-          </span>
-        )}
+        {/* La imagen de la categoría: la misma que en Hoy y Mi semana. */}
+        <span className="mb-4 sm:mb-0 sm:float-left sm:mr-5 block w-fit">
+          <IconoActividad modulo={task.modulo} lado={large ? 112 : 96} />
+        </span>
         <h1 className={`m-0 font-serif font-normal leading-tight text-tinta ${t.titulo}`}>{task.titulo}</h1>
         {frase && <p className={`m-0 mt-2 max-w-xl leading-relaxed text-tinta/80 ${t.cuerpo}`}>{frase}</p>}
         <span className="block clear-both" aria-hidden="true" />

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { PlanTask } from "../../lib/mockData";
 import { minutosDe, ordenarDelDia } from "../../lib/hoyDelDia";
 import { contarHechas, estaRegistrada } from "../../lib/estadoActividad";
@@ -90,7 +91,17 @@ export function LineaDelDia({ tasks, size = "compact", rutaActividad }: { tasks:
 
 // Cierre de la línea del día: un final tranquilo después de la última
 // actividad, que dice qué sigue (mañana o el cierre de la semana).
-export function CierreDelDia({ pendientes, siguiente, size = "compact" }: { pendientes: number; siguiente: SiguienteDia | null; size?: HoySize }) {
+// «¿Con ganas de más?»: un enlace discreto a las actividades extra.
+export function EnlaceExtras({ to }: { to: string }) {
+  return (
+    <Link to={to} className="inline-flex items-center gap-1.5 min-h-11 text-[15px] font-semibold text-verde-profundo underline decoration-verde-serenidad/50 underline-offset-4 hover:decoration-verde-profundo">
+      ¿Con ganas de más? Ver actividades extra
+      <span aria-hidden="true">›</span>
+    </Link>
+  );
+}
+
+export function CierreDelDia({ pendientes, siguiente, size = "compact", extras }: { pendientes: number; siguiente: SiguienteDia | null; size?: HoySize; extras?: string }) {
   const large = size === "large";
   const { titulo, detalle, icono } = cierreDelDia(pendientes, siguiente, large ? "participante" : "familia");
 
@@ -115,13 +126,18 @@ export function CierreDelDia({ pendientes, siguiente, size = "compact" }: { pend
       </span>
       <p className={`m-0 mt-2.5 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{titulo}</p>
       <p className={`m-0 mt-1 max-w-[26em] text-tinta-suave ${large ? "text-[18px]" : "text-[15px]"}`}>{detalle}</p>
+      {extras && (
+        <div className="mt-2">
+          <EnlaceExtras to={extras} />
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Estado vacío ───
 
-export function DiaLibre({ size = "compact", mensaje }: { size?: HoySize; mensaje: string }) {
+export function DiaLibre({ size = "compact", mensaje, extras }: { size?: HoySize; mensaje: string; extras?: string }) {
   const large = size === "large";
   return (
     <div className="rounded-[26px] bg-white border border-borde px-6 py-8 text-center grid justify-items-center gap-3">
@@ -132,6 +148,7 @@ export function DiaLibre({ size = "compact", mensaje }: { size?: HoySize; mensaj
       </svg>
       <p className={`m-0 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>Hoy es un día libre</p>
       <p className={`m-0 text-tinta-suave max-w-[28em] ${large ? "text-[18px]" : "text-[15px]"}`}>{mensaje}</p>
+      {extras && <EnlaceExtras to={extras} />}
     </div>
   );
 }

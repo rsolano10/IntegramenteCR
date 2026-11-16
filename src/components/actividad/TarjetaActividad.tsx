@@ -34,7 +34,7 @@ export function TarjetaActividad({
         large ? "p-4" : "p-3.5"
       } ${proxima ? "border-verde-serenidad ring-2 ring-verde-serenidad/15 shadow-[0_18px_40px_-30px_rgba(31,51,56,0.55)]" : "border-borde hover:border-verde-serenidad/60"}`}
     >
-      <IconoActividad task={task} lado={large ? 68 : 58} apagado={registrada} />
+      <IconoActividad modulo={task.modulo} lado={large ? 68 : 58} apagado={registrada} />
       <span className="min-w-0 flex-1">
         {proxima && (
           <span className={`block font-bold uppercase tracking-[0.12em] text-verde-profundo ${large ? "text-[15px]" : "text-[13px]"}`}>Próxima</span>

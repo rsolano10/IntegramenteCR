@@ -1,41 +1,34 @@
-import type { PlanTask } from "../../lib/mockData";
-import { guionDe } from "../../lib/sesiones";
-import { temaDeTarea } from "../../lib/modulos";
-import { Icono } from "../sesion/Icono";
-import { ModuloIcon } from "../ui/ModuloIcon";
+import { imagenDeCategoria, type ResourceModulo } from "../../lib/modulos";
 
-// El dibujo de una actividad, el mismo afuera (Hoy, Mi semana) y adentro
-// (el tablero de la actividad): el del guion si lo tiene (la sombrilla de
-// «¿Qué necesitamos llevar?»), si no el del módulo. Va sobre el mismo fondo
-// que el encabezado del tablero, para que se reconozca de un vistazo.
-
-export function GlifoActividad({ task, className }: { task: Pick<PlanTask, "codigo" | "modulo">; className: string }) {
-  const guion = guionDe(task.codigo);
-  const tema = temaDeTarea(task);
-  if (guion) return <Icono nombre={guion.icono} className={`${className} text-tinta`} relleno={`${tema.to}80`} />;
-  if (task.modulo) return <ModuloIcon modulo={task.modulo} className={`${className} text-tinta`} />;
-  return null;
-}
+// La imagen de una actividad es la de su categoría (Atención y memoria,
+// Gerontogimnasia, Movimiento…): la misma en Hoy, en Mi semana, en el
+// tablero y en la portada de la sesión. Son ilustraciones propias con la
+// línea gráfica de IntegraMente (las gotas del isotipo y su paleta), en
+// public/categorias, generadas con scripts/categorias/generar.py.
 
 export function IconoActividad({
-  task,
+  modulo,
   lado,
   apagado = false,
+  redondez,
 }: {
-  task: Pick<PlanTask, "codigo" | "modulo">;
-  // Tamaño del cuadro en px.
+  modulo: ResourceModulo | null | undefined;
+  // Tamaño en px.
   lado: number;
-  // Ya registrada: un poco más tenue, sin perder el dibujo.
+  // Ya registrada: un poco más tenue, sin perder la imagen.
   apagado?: boolean;
+  redondez?: number;
 }) {
-  const tema = temaDeTarea(task);
   return (
-    <span
+    <img
+      src={imagenDeCategoria(modulo)}
+      alt=""
       aria-hidden="true"
-      className={`relative shrink-0 rounded-2xl flex items-center justify-center overflow-hidden ${apagado ? "saturate-[0.6] opacity-80" : ""}`}
-      style={{ width: lado, height: lado, background: `radial-gradient(130% 120% at 0% 0%, #fff 0%, ${tema.from} 60%, ${tema.to} 150%)` }}
-    >
-      <GlifoActividad task={task} className="w-[64%] h-[64%]" />
-    </span>
+      width={lado}
+      height={lado}
+      draggable={false}
+      className={`shrink-0 select-none shadow-[0_8px_18px_-12px_rgba(31,51,56,0.55)] ${apagado ? "saturate-[0.6] opacity-80" : ""}`}
+      style={{ width: lado, height: lado, borderRadius: redondez ?? Math.round(lado * 0.28) }}
+    />
   );
 }

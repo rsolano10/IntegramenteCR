@@ -1,11 +1,6 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ResourceCard } from "../../components/ui/ResourceCard";
-import { ChipToggle } from "../../components/ui/ChipToggle";
-import { moduloLabel, moduloTheme, type ResourceModulo } from "../../lib/mediaResources";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { ModuloIcon } from "../../components/ui/ModuloIcon";
-import { useActividadesSugeridas, useCurrentPlanMeta, usePendingReviews, usePlan } from "../../lib/usePlan";
+import { useCurrentPlanMeta, usePendingReviews, usePlan } from "../../lib/usePlan";
 import { weekDays } from "../../lib/planWeek";
 import type { PlanDay } from "../../lib/mockData";
 import { useSemanasAnteriores } from "../../lib/semanasAnteriores";
@@ -45,7 +40,6 @@ export function Plan() {
 
       {myPatient?.id && <SemanasAnteriores patientId={myPatient.id} />}
 
-      <MasActividades />
 
     </div>
   );
@@ -136,121 +130,6 @@ function SemanasAnteriores({ patientId }: { patientId: string }) {
           className="mt-3 inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full border-[1.5px] border-borde bg-white text-[14.5px] font-semibold text-verde-profundo cursor-pointer hover:border-verde-serenidad focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
         >
           Ver historial completo ({data.totalAnteriores} semanas) <span aria-hidden="true">→</span>
-        </button>
-      )}
-    </section>
-  );
-}
-
-// La biblioteca, pero solo lo compatible con el perfil (actividades_sugeridas
-// filtra por nivel cognitivo informado y seguridad motora) — reemplaza a la
-// antigua pestaña Actividades, que mostraba el catálogo completo.
-function MasActividades() {
-  // Plegado por defecto: el plan de la semana es lo principal; esto es un
-  // extra para quien lo busca. La consulta corre igual (para mostrar
-  // cuántas hay en el botón), pero el catálogo solo se despliega a pedido.
-  const [abierto, setAbierto] = useState(false);
-  const { data: resources, isLoading } = useActividadesSugeridas();
-  const [modulo, setModulo] = useState<ResourceModulo | null>(null);
-  const [verTodas, setVerTodas] = useState(false);
-  const navigate = useNavigate();
-
-  const list = (resources ?? []).filter((r) => !modulo || r.modulo === modulo);
-  const visibles = verTodas ? list : list.slice(0, 6);
-  const modulosPresentes = (Object.keys(moduloLabel) as ResourceModulo[]).filter((m) => (resources ?? []).some((r) => r.modulo === m));
-
-  if (!abierto) {
-    if (!isLoading && (resources ?? []).length === 0) return null;
-    return (
-      <section>
-        {/* Texto e íconos en el mismo flujo (antes los íconos flotaban encima
-            del título): solo las áreas que traen las sugerencias, hasta 3. */}
-        <button
-          type="button"
-          onClick={() => setAbierto(true)}
-          className="group w-full text-left flex items-center gap-4 rounded-3xl border border-borde bg-white p-5 sm:p-6 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-elevada font-sans focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
-        >
-          {/* Desde tablet, los íconos a la izquierda; en el celular, arriba del título. */}
-          <span aria-hidden="true" className="hidden sm:flex shrink-0 -space-x-2.5">
-            {modulosPresentes.slice(0, 3).map((m) => (
-              <span
-                key={m}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border-2 border-white flex items-center justify-center text-white shadow-sm"
-                style={{ backgroundImage: `linear-gradient(150deg, ${moduloTheme[m].from}, ${moduloTheme[m].to})` }}
-              >
-                <ModuloIcon modulo={m} className="w-5 h-5" />
-              </span>
-            ))}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span aria-hidden="true" className="sm:hidden flex -space-x-2 mb-3">
-              {modulosPresentes.slice(0, 3).map((m) => (
-              <span
-                key={m}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border-2 border-white flex items-center justify-center text-white shadow-sm"
-                style={{ backgroundImage: `linear-gradient(150deg, ${moduloTheme[m].from}, ${moduloTheme[m].to})` }}
-              >
-                <ModuloIcon modulo={m} className="w-5 h-5" />
-              </span>
-            ))}
-            </span>
-            <span className="block text-[13px] tracking-[0.14em] uppercase text-tinta-suave font-semibold">¿Con ganas de más?</span>
-            <span className="block mt-1 font-serif text-[20px] sm:text-[21px] leading-snug text-tinta">Actividades sugeridas para hacer juntos</span>
-            <span className="block mt-1 text-[14px] text-tinta-suave">
-              {isLoading ? "Buscando…" : `${(resources ?? []).length} ideas según el perfil, además del plan.`}
-            </span>
-          </span>
-          <span aria-hidden="true" className="shrink-0 w-10 h-10 rounded-full bg-verde-tenue text-verde-profundo flex items-center justify-center text-[20px] transition-transform group-hover:translate-x-0.5">
-            ›
-          </span>
-        </button>
-      </section>
-    );
-  }
-
-  return (
-    <section>
-      <div className="flex items-start justify-between gap-3 mb-3.5">
-        <div>
-          <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Más actividades para hacer juntos</p>
-          <p className="m-0 text-[14.5px] leading-relaxed text-tinta-suave">
-            Elegidas según el perfil, para los días con ganas de más, además de lo que ya está en el plan.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setAbierto(false)}
-          className="shrink-0 text-[14px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none"
-        >
-          Ocultar
-        </button>
-      </div>
-      {modulosPresentes.length > 1 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          <ChipToggle active={modulo === null} onToggle={() => setModulo(null)}>
-            Todas
-          </ChipToggle>
-          {modulosPresentes.map((m) => (
-            <ChipToggle key={m} active={modulo === m} onToggle={() => setModulo(modulo === m ? null : m)}>
-              {moduloLabel[m]}
-            </ChipToggle>
-          ))}
-        </div>
-      )}
-      {isLoading && <p className="m-0 text-[15px] text-tinta-tenue">Cargando…</p>}
-      {!isLoading && list.length === 0 && <p className="m-0 text-[15px] text-tinta-tenue">Por ahora no hay actividades extra para sugerir.</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {visibles.map((r) => (
-          <ResourceCard key={r.id} resource={r} onClick={() => navigate(`/app/plan/sugerida/${r.id}`)} />
-        ))}
-      </div>
-      {list.length > 6 && (
-        <button
-          type="button"
-          onClick={() => setVerTodas((v) => !v)}
-          className="mt-3.5 text-[14px] font-semibold text-verde-profundo underline decoration-dotted cursor-pointer bg-transparent border-none"
-        >
-          {verTodas ? "Ver menos" : `Ver las ${list.length} actividades`}
         </button>
       )}
     </section>

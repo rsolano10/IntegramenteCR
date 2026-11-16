@@ -7,6 +7,7 @@ import { Icono } from "./Icono";
 import { lecturaDisponible } from "../../lib/voz";
 import { MaterialDeApoyo } from "../ui/ResourceDetailView";
 import { Ceja, Marca, Nota, Pie, Titulo } from "./comun";
+import { IconoActividad } from "../actividad/IconoActividad";
 import { useSesion, useTam } from "./contexto";
 
 type De<T extends Escena["tipo"]> = Extract<Escena, { tipo: T }>;
@@ -62,13 +63,14 @@ function Grilla({ n, children, className = "mt-5" }: { n: number; children: Reac
 
 // ─── Portada ───
 export function Portada() {
-  const { guion, datos, tema, leerSiempre, alternarLeer } = useSesion();
+  const { guion, datos, tema, leerSiempre, alternarLeer, large } = useSesion();
   const t = useTam();
   return (
     <>
       <div className="flex flex-col items-center text-center pt-4 sm:pt-8">
+        {/* La imagen de la categoría, la misma que en Hoy y en el tablero. */}
         <div className="ses-sube">
-          <Medallon icono={guion.icono} />
+          <IconoActividad modulo={datos.modulo} lado={large ? 184 : 156} />
         </div>
         {datos.modulo && (
           <p className={`m-0 mt-6 mb-2 tracking-[0.16em] uppercase font-semibold ${t.ceja}`} style={{ color: tema.tinta }}>

@@ -37,3 +37,6 @@ export const modulosFicha: ResourceModulo[] = ["gerontogimnasia", "nutricion"];
 
 // El tema de una actividad: el de su módulo, o el de la marca si no tiene.
 export const temaDeTarea = (t: { modulo?: ResourceModulo | null }) => (t.modulo ? moduloTheme[t.modulo] : moduloTheme.bienvenida);
+
+// La ilustración de cada categoría (public/categorias, scripts/categorias/generar.py).
+export const imagenDeCategoria = (modulo: ResourceModulo | null | undefined) => `/categorias/${modulo ?? "bienvenida"}.svg`;

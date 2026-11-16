@@ -1,6 +1,6 @@
 import { useMyPatient } from "../../lib/useMyPatient";
-import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
-import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
+import { usePlan, useCurrentPlanMeta, useActividadesSugeridas, RUTA_EXTRAS } from "../../lib/usePlan";
+import { CierreDelDia, DiaLibre, EnlaceExtras, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
 import { siguienteDia } from "../../lib/siguienteDia";
 import { AvisoPedidoAyuda } from "../../components/familiar/AvisoPedidoAyuda";
 import { AvisoEvaluarSemana, AvisoSemanaEnRevision } from "../../components/familiar/AvisoEvaluarSemana";
@@ -18,6 +18,9 @@ export function Hoy() {
   const allTasks = days?.flatMap((d) => d.tasks) ?? [];
   const weekComplete = allTasks.length > 0 && allTasks.every((t) => t.estado !== "pendiente" && t.estado !== "futuro");
   const quien = myPatient?.nombre?.split(" ")[0] ?? null;
+  // Actividades extra (fuera del plan): el enlace aparece solo si hay alguna.
+  const { data: sugeridas } = useActividadesSugeridas();
+  const extras = sugeridas && sugeridas.length > 0 ? RUTA_EXTRAS : undefined;
 
   if (loadingPlan) return <Cargando />;
 
@@ -25,17 +28,22 @@ export function Hoy() {
     <div className="grid gap-6">
       <AvisoPedidoAyuda patientId={myPatient?.id} nombre={quien ?? "Tu familiar"} />
       {tasks.length === 0 ? (
-        <DiaLibre mensaje="No hay actividades programadas para hoy. Podés mirar lo que viene en la pestaña de la semana." />
+        <DiaLibre mensaje="No hay actividades programadas para hoy. Podés mirar lo que viene en la pestaña de la semana." extras={extras} />
       ) : (
         <>
           <ResumenDelDia tasks={tasks} quien={quien} />
           <LineaDelDia tasks={tasks} rutaActividad={rutaActividad} />
-          {!weekComplete && <CierreDelDia pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} />}
+          {!weekComplete && <CierreDelDia pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} extras={extras} />}
         </>
       )}
 
       {weekComplete && planMeta && !planMeta.family_reviewed_at && <AvisoEvaluarSemana to={`/app/revision?plan=${planMeta.id}`} />}
       {weekComplete && planMeta?.family_reviewed_at && <AvisoSemanaEnRevision />}
+      {weekComplete && tasks.length > 0 && extras && (
+        <div className="text-center">
+          <EnlaceExtras to={extras} />
+        </div>
+      )}
     </div>
   );
 }
