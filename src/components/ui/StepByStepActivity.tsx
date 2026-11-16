@@ -17,6 +17,7 @@ import { BigActionButton } from "./BigActionButton";
 import { WarningIcon } from "./Icons";
 import { MaterialDeApoyo } from "./ResourceDetailView";
 import { RegistroJuegoContexto } from "../../lib/actividades/registroJuego";
+import type { PlanTask } from "../../lib/mockData";
 
 // Modo paso a paso: una cosa por pantalla, a pantalla completa (se llega
 // desde "Empezar" en Hoy, desde la actividad o desde el recordatorio de
@@ -32,10 +33,13 @@ export function StepByStepActivity({
   taskId,
   backTo,
   size = "compact",
+  tarea,
 }: {
   taskId: string | undefined;
   backTo: string;
   size?: "compact" | "large";
+  // Una actividad suelta (sugerida, fuera del plan): se hace sin registrar.
+  tarea?: PlanTask | null;
 }) {
   const navigate = useNavigate();
   // Cerrar (×) vuelve a la pantalla de la que se vino: la actividad, Hoy o
@@ -47,7 +51,7 @@ export function StepByStepActivity({
   const markRegistro = useMarkRegistro(myPatient?.id);
   const guardarProgreso = useGuardarProgreso(myPatient?.id);
 
-  const task = days?.flatMap((d) => d.tasks).find((t) => t.id === taskId) ?? null;
+  const task = tarea !== undefined ? tarea : (days?.flatMap((d) => d.tasks).find((t) => t.id === taskId) ?? null);
 
   const large = size === "large";
   const [faseIdx, setFaseIdx] = useState(0);
@@ -86,7 +90,7 @@ export function StepByStepActivity({
     </div>
   );
 
-  if (loadingPlan) return shell(<div />);
+  if (loadingPlan && tarea === undefined) return shell(<div />);
 
   if (!task) {
     return shell(
@@ -102,12 +106,13 @@ export function StepByStepActivity({
   // Se registra si se empezó la actividad del día o si se eligió cambiar el
   // registro anterior; si no, se hace para practicar.
   const diaDeTarea = days?.find((d) => d.tasks.some((x) => x.id === task.id));
-  const registra = modo === "sobrescribir" || (modo !== "sin-registro" && !!diaDeTarea?.isToday && (task.estado === "pendiente" || task.estado === "futuro"));
+  const registra = !tarea && (modo === "sobrescribir" || (modo !== "sin-registro" && !!diaDeTarea?.isToday && (task.estado === "pendiente" || task.estado === "futuro")));
 
   // Con guion propio: la sesión guiada; la última pantalla registra.
   const guion = guionDe(task.codigo);
   if (guion && screen === "guia" && !saved) {
-    const guardar = (p: Parameters<typeof guardarProgreso>[1]) => guardarProgreso(task.id, p).catch(() => {});
+    // Una actividad suelta no tiene fila en el plan donde guardar lo armado.
+    const guardar = (p: Parameters<typeof guardarProgreso>[1]) => (tarea ? Promise.resolve() : guardarProgreso(task.id, p).catch(() => {}));
     return (
       <SesionGuiada
         guion={guion}

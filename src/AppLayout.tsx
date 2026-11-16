@@ -23,6 +23,7 @@ import { ElegirPrograma } from "./pages/onboarding/ElegirPrograma";
 
 import { Hoy } from "./pages/familiar/Hoy";
 import { Actividad } from "./pages/familiar/Actividad";
+import { Sugerida, SugeridaPasos } from "./pages/familiar/Sugerida";
 import { ActividadPasos } from "./pages/familiar/ActividadPasos";
 import { Plan } from "./pages/familiar/Plan";
 import { HistorialSemanas } from "./pages/familiar/HistorialSemanas";
@@ -228,6 +229,7 @@ export default function AppLayout() {
           {/* La misma pantalla de actividad, abierta desde Mi semana: así
               «Volver» y el menú inferior saben que se vino de ahí. */}
           <Route path="plan/actividad/:taskId" element={<Actividad />} />
+          <Route path="plan/sugerida/:resourceId" element={<Sugerida />} />
           <Route path="historial" element={<HistorialSemanas />} />
           {/* Reorganización del menú familiar: Plan+Semana → Mi semana,
               Dudas+Mensajes → Ayuda, Actividades → dentro de Mi semana
@@ -269,6 +271,7 @@ export default function AppLayout() {
             oculta para estas rutas (ver AppHeader.tsx). */}
         <Route path="hoy/actividad/:taskId/pasos" element={<ActividadPasos />} />
         <Route path="plan/actividad/:taskId/pasos" element={<ActividadPasos />} />
+        <Route path="plan/sugerida/:resourceId/pasos" element={<SugeridaPasos />} />
         <Route path="participante/actividad/:taskId/pasos" element={<ParticipanteActividadPasos />} />
 
         <Route path="alerta/ideacion" element={<Ideacion />} />

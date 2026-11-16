@@ -32,6 +32,7 @@ export function PanelActividad({
   publishAt,
   large = false,
   onGuardarProgreso,
+  practica = false,
 }: {
   task: PlanTask;
   dia: PlanDay;
@@ -40,6 +41,8 @@ export function PanelActividad({
   publishAt: string | null;
   large?: boolean;
   onGuardarProgreso?: (p: Progreso) => Promise<void>;
+  // Una actividad sugerida, fuera del plan: se hace para practicar, sin registro.
+  practica?: boolean;
 }) {
   const navigate = useNavigate();
   const [preguntando, setPreguntando] = useState(false);
@@ -73,7 +76,9 @@ export function PanelActividad({
   const ir = (modo: ModoInicio) => navigate(modo === "normal" ? rutaPasos : `${rutaPasos}?modo=${modo}`);
 
   // Qué dice el botón y qué hace, según el estado de la actividad.
-  const accion = hoyPendiente
+  const accion = practica
+    ? { texto: "Empezar", nota: "Es una actividad extra, fuera del plan: la hacen para practicar y no se registra.", onClick: () => ir("sin-registro") }
+    : hoyPendiente
     ? { texto: "Empezar", nota: null, onClick: () => ir("normal") }
     : hecha
       ? { texto: "Volver a hacerla", nota: null, onClick: () => setPreguntando(true) }
@@ -169,8 +174,10 @@ export function PanelActividad({
                       {ultimo && guion ? "Al final" : `Paso ${i + 1}`}
                     </p>
                     <p className={`m-0 font-semibold leading-snug text-tinta ${large ? "text-[20px]" : "text-[16.5px]"}`}>{p.texto}</p>
-                    {p.detalle && <p className={`m-0 mt-1 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{p.detalle}</p>}
-                    {p.lista && (
+                    {/* Al participante, solo el título del paso: la descripción
+                        está escrita para quien acompaña («Preguntale», «Dale tiempo»). */}
+                    {p.detalle && !large && <p className={`m-0 mt-1 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{p.detalle}</p>}
+                    {p.lista && !large && (
                       <ol className={`m-0 mt-1.5 pl-5 list-decimal grid gap-1 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>
                         {p.lista.map((x) => (
                           <li key={x}>{x}</li>

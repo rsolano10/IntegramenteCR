@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { useSession } from "./useSession";
 import type { PlanDay, PlanTask, PlanDayStatus } from "./mockData";
-import type { AdaptacionPorEtapa, ResourceExtras } from "./mediaResources";
+import type { AdaptacionPorEtapa, MediaResource, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
 import type { Progreso } from "./sesiones/tipos";
 
@@ -124,6 +124,64 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     paraCerrar: resource?.para_cerrar ?? null,
     modulo: resource?.modulo ?? null,
   };
+}
+
+// Una actividad sugerida (fuera del plan) como tarea, para abrirla con el
+// mismo tablero y la misma sesión guiada. Nunca se registra: es práctica.
+export function tareaDeRecurso(r: MediaResource): PlanTask {
+  return toPlanTask({
+    id: `sugerida-${r.id}`,
+    dia: currentDia(),
+    hora: null,
+    titulo: r.titulo,
+    tipo: r.tipo as PlanTask["tipo"],
+    estado: "futuro",
+    duracion: r.duracion,
+    detalle: r.detalle,
+    precaucion: r.precaucion,
+    pasos: r.pasos,
+    por_que: r.por_que,
+    comentario: null,
+    nota_clinica: null,
+    media_resource_id: r.id,
+    indicacion_individual: null,
+    progreso: null,
+    media_resources: {
+      modulo: r.modulo,
+      media_kind: r.media_kind as MediaResourceJoin["media_kind"],
+      storage_path: r.storage_path,
+      external_url: r.external_url,
+      materiales: r.materiales,
+      adaptacion: r.adaptacion,
+      ciencia: r.ciencia as MediaResourceJoin["ciencia"],
+      extras: r.extras,
+      codigo: r.codigo,
+      poster_path: r.poster_path,
+      detalle: r.detalle,
+      perfil: r.perfil,
+      sabias_que: r.sabias_que,
+      actividad: r.actividad,
+      dosis: r.dosis,
+      requiere_plan_individual: r.requiere_plan_individual,
+      adaptacion_por_etapa: r.adaptacion_por_etapa,
+      ayuda: r.ayuda,
+      ten_en_cuenta: r.ten_en_cuenta,
+      para_cerrar: r.para_cerrar,
+    },
+  });
+}
+
+// Las actividades sugeridas según el perfil (fuera del plan). La misma
+// consulta que la lista de Mi semana, así no se pide dos veces.
+export function useActividadesSugeridas() {
+  return useQuery({
+    queryKey: ["actividades-sugeridas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("actividades_sugeridas");
+      if (error) throw error;
+      return data as MediaResource[];
+    },
+  });
 }
 
 function groupIntoDays(rows: PlanTaskRow[]): PlanDay[] {

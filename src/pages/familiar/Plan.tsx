@@ -1,20 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
-import { Modal } from "../../components/ui/Modal";
 import { ResourceCard } from "../../components/ui/ResourceCard";
 import { ChipToggle } from "../../components/ui/ChipToggle";
-import { moduloLabel, moduloTheme, tipoLabel as resourceTipoLabel, type MediaResource, type ResourceModulo } from "../../lib/mediaResources";
-import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
+import { moduloLabel, moduloTheme, type ResourceModulo } from "../../lib/mediaResources";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { ModuloIcon } from "../../components/ui/ModuloIcon";
-import { useCurrentPlanMeta, usePendingReviews, usePlan } from "../../lib/usePlan";
+import { useActividadesSugeridas, useCurrentPlanMeta, usePendingReviews, usePlan } from "../../lib/usePlan";
 import { weekDays } from "../../lib/planWeek";
 import type { PlanDay } from "../../lib/mockData";
-import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
-import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
-import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 import { useSemanasAnteriores } from "../../lib/semanasAnteriores";
 import { FilaSemana } from "../../components/familiar/FilaSemana";
 import { Cargando } from "../../components/ui/Cargando";
@@ -153,23 +146,14 @@ function SemanasAnteriores({ patientId }: { patientId: string }) {
 // filtra por nivel cognitivo informado y seguridad motora) — reemplaza a la
 // antigua pestaña Actividades, que mostraba el catálogo completo.
 function MasActividades() {
-  const { data: perfilRecursos } = usePerfilRecursos();
-  const etapas = perfilRecursos?.etapas ?? null;
   // Plegado por defecto: el plan de la semana es lo principal; esto es un
   // extra para quien lo busca. La consulta corre igual (para mostrar
   // cuántas hay en el botón), pero el catálogo solo se despliega a pedido.
   const [abierto, setAbierto] = useState(false);
-  const { data: resources, isLoading } = useQuery({
-    queryKey: ["actividades-sugeridas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("actividades_sugeridas");
-      if (error) throw error;
-      return data as MediaResource[];
-    },
-  });
+  const { data: resources, isLoading } = useActividadesSugeridas();
   const [modulo, setModulo] = useState<ResourceModulo | null>(null);
   const [verTodas, setVerTodas] = useState(false);
-  const [opened, setOpened] = useState<MediaResource | null>(null);
+  const navigate = useNavigate();
 
   const list = (resources ?? []).filter((r) => !modulo || r.modulo === modulo);
   const visibles = verTodas ? list : list.slice(0, 6);
@@ -257,7 +241,7 @@ function MasActividades() {
       {!isLoading && list.length === 0 && <p className="m-0 text-[15px] text-tinta-tenue">Por ahora no hay actividades extra para sugerir.</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {visibles.map((r) => (
-          <ResourceCard key={r.id} resource={r} onClick={() => setOpened(r)} />
+          <ResourceCard key={r.id} resource={r} onClick={() => navigate(`/app/plan/sugerida/${r.id}`)} />
         ))}
       </div>
       {list.length > 6 && (
@@ -268,24 +252,6 @@ function MasActividades() {
         >
           {verTodas ? "Ver menos" : `Ver las ${list.length} actividades`}
         </button>
-      )}
-      {opened && (
-        <Modal onClose={() => setOpened(null)}>
-          <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">
-            {moduloLabel[opened.modulo]} · {resourceTipoLabel[opened.tipo]}
-            {opened.duracion ? ` · ${opened.duracion}` : ""}
-          </p>
-          <h3 className="font-serif font-normal text-2xl m-0 mb-4">{opened.titulo}</h3>
-          <div className="grid grid-cols-1 gap-4">
-            {opened.modulo === "gerontogimnasia" && opened.codigo !== "GER-010" && <IntroGerontogimnasia />}
-            <ResourceDetailView
-              content={contenidoDeRecurso(opened, `${resourceTipoLabel[opened.tipo]}${opened.duracion ? ` · ${opened.duracion}` : ""}`, etapas)}
-            />
-            {opened.precaucion && (
-              <p className="m-0 text-[15px] leading-relaxed text-semaforo-amarillo-texto bg-aviso rounded-xl px-4 py-3">{opened.precaucion}</p>
-            )}
-          </div>
-        </Modal>
       )}
     </section>
   );
