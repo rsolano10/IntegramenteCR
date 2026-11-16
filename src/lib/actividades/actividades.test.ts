@@ -21,6 +21,8 @@ import { DICHOS } from "./bancos/dichos.ts";
 import { generarDicho, dichos } from "./dichos.ts";
 import { PRODUCTOS } from "./bancos/mandado.ts";
 import { mandado, revisarBolsa } from "./mandado.ts";
+import { TEXTOS } from "./bancos/comprension.ts";
+import { comprension } from "./comprension.ts";
 import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
@@ -45,7 +47,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 16);
+  assert.equal(ACTIVIDADES.length, 17);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -618,4 +620,38 @@ test("mandado: revisar la bolsa", () => {
   assert.deepEqual(revisarBolsa(ej, ["cafe", "papa"]), { sobran: [], faltan: [], completa: true });
   assert.deepEqual(revisarBolsa(ej, ["cafe", "pan"]), { sobran: ["pan"], faltan: ["papa"], completa: false });
   assert.equal(mandado.validar({ ...mandado.porNivel.retador, distractores: 30 }).length, 1);
+});
+
+test("comprensión: preguntas con una correcta, la inferencia al final, alterna radio y correo", () => {
+  const azar = crearAzar(5);
+  for (const nivel of NIVELES) {
+    const c = comprension.porNivel[nivel];
+    assert.deepEqual(comprension.validar(c), []);
+    const ejs = comprension.generar(c, 6, { azar, ahora: new Date() });
+    for (let i = 1; i < ejs.length; i++) assert.notEqual(ejs[i].escena, ejs[i - 1].escena, "alterna");
+    for (const e of ejs) {
+      const x = TEXTOS.find((t) => t.id === e.id)!;
+      assert.equal(x.longitud, c.longitud);
+      assert.equal(e.preguntas.length, c.preguntas);
+      e.preguntas.forEach((p, k) => {
+        assert.equal(p.opciones.length, 3);
+        const original = x.preguntas.find((o) => o.texto === p.texto)!;
+        assert.equal(p.opciones[p.correcta], original.opciones[0]);
+        if (p.inferencia) assert.equal(k, e.preguntas.length - 1, "la inferencia va al final");
+      });
+      if (!c.inferencia) assert.ok(e.preguntas.every((p) => !p.inferencia));
+    }
+  }
+});
+
+test("comprensión: el banco alcanza y las pistas están en el texto", () => {
+  for (const x of TEXTOS) {
+    assert.ok(x.preguntas.filter((p) => !p.inferencia).length >= 3, `${x.id}: tres preguntas literales`);
+    for (const p of x.preguntas) {
+      if (p.frase) assert.ok(x.texto.includes(p.frase), `${x.id}: «${p.frase}» no está en el texto`);
+      if (!p.inferencia) assert.ok(p.frase, `${x.id}: la pregunta literal necesita su frase`);
+      assert.equal(new Set(p.opciones).size, 3, `${x.id}: opciones distintas`);
+    }
+  }
+  for (const escena of ["radio", "correo"] as const) for (const l of ["corta", "media"] as const) assert.ok(TEXTOS.filter((x) => x.escena === escena && x.longitud === l).length >= 2, `${escena} ${l}`);
 });

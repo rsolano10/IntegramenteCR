@@ -52,6 +52,7 @@ const ESCENAS: Record<string, ReturnType<typeof escena>> = {
   senas: escena(() => import("../pueblo/Senas") as unknown as Promise<ModuloEscena>),
   dichos: escena(() => import("../pueblo/Banca") as unknown as Promise<ModuloEscena>),
   mandado: escena(() => import("../pueblo/Mercado") as unknown as Promise<ModuloEscena>),
+  comprension: escena(() => import("../pueblo/RadioCorreo") as unknown as Promise<ModuloEscena>),
 };
 
 // Portada de un juego (la escena de su lugar), para las tarjetas de la

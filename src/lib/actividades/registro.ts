@@ -10,6 +10,7 @@ import { pintarRueda } from "./pintarRueda";
 import { senas } from "./senas";
 import { dichos } from "./dichos";
 import { mandado } from "./mandado";
+import { comprension } from "./comprension";
 import { ordenarPasos, ordenarSecuencia } from "./ordenar";
 import { orientacionHoy } from "./orientacionHoy";
 import { pagoExacto } from "./pagoExacto";
@@ -40,6 +41,7 @@ export const ACTIVIDADES: Def[] = [
   senas,
   dichos,
   mandado,
+  comprension,
 ];
 
 export const actividadPorTipo = (tipo: string | undefined): Def | undefined => ACTIVIDADES.find((a) => a.tipo === tipo);

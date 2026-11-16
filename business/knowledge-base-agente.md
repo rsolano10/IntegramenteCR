@@ -256,6 +256,7 @@ Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa e
 - **Las señas**: seguir una dirección al estilo tico («de la iglesia, 200 metros al sur…») en el mapa del pueblo y tocar la casa a la que se llega.
 - **La banca del parque**: completar dichos y refranes de siempre («Camarón que se duerme…») o elegir lo que quieren decir.
 - **El mandado**: aprender la lista del mandado (escrita o para escuchar) y, de memoria, tocar en los puestos del Mercado Central lo que hay que traer.
+- **La radio y El correo**: escuchar un aviso de la radio del pueblo (también se puede leer) o leer una carta de la familia, y responder unas preguntas tocando la respuesta.
 
 ### 6.11 "Mi semana"
 - Los días de la semana con sus actividades; el día de hoy aparece resaltado.
