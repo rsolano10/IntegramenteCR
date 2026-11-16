@@ -401,7 +401,7 @@ test("olla: el banco no tiene cosas que estén a la vez en van y en intrusos de 
   for (const k of CONJUNTOS) {
     const van = new Set(k.van.map((x) => x.texto));
     for (const x of k.intrusos) assert.ok(!van.has(x.texto), `${k.id}: ${x.texto}`);
-    assert.equal(k.revisado, false);
+    assert.equal(k.revisado, true, "aprobado por la clínica");
   }
 });
 
