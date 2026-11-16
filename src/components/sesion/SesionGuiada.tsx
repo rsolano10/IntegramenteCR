@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { NivelCognitivo } from "../../lib/mediaResources";
 import { nivelCognitivoLabel } from "../../lib/mediaResources";
 import { moduloTheme } from "../../lib/modulos";
-import { ayudaDeEtapa, escenasVisibles, opcionDe, plantilla, textoPrincipal, valorUno, type Guion, type Progreso, type Respuestas } from "../../lib/sesiones";
-import { cuandoParar } from "../../lib/bloquesGerontogimnasia";
+import { ayudaDeEtapa, escenasVisibles, opcionDe, plantilla, textoDeVoz, valorUno, type Guion, type Progreso, type Respuestas, type UsoSesion } from "../../lib/sesiones";
+import { detenerVoz, leerEnVoz } from "../../lib/voz";
 import { BotonVoz, Hoja } from "./comun";
 import { SesionContexto, type CtxSesion, type DatosSesion } from "./contexto";
 import { Portada, VistaEscena } from "./Escenas";
@@ -49,7 +49,21 @@ export function SesionGuiada({
   const escenaMision = guion.escenas.find((e) => e.tipo === "mision");
   const veces = escenaMision?.tipo === "mision" ? escenaMision.veces : 0;
   const [marcas, setMarcas] = useState<boolean[]>(() => Array.from({ length: veces }, (_, i) => !!progreso?.mision?.marcas[i]));
-  const [panel, setPanel] = useState<null | "ayuda" | "parar">(null);
+  const [panel, setPanelEstado] = useState<null | "ayuda" | "parar">(null);
+  // Medición: hasta dónde llegó, cuántas veces pidió ayuda o paró, y el tiempo.
+  const medida = useRef({ desde: Date.now(), maxIdx: inicio, ayuda: 0, parar: 0 });
+  const setPanel = (p: null | "ayuda" | "parar") => {
+    if (p) medida.current[p]++;
+    setPanelEstado(p);
+  };
+  // Leer cada pantalla en voz alta (preferencia de este dispositivo).
+  const [leerSiempre, setLeerSiempre] = useState(() => {
+    try {
+      return localStorage.getItem("sesion-leer") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   // Sin video cargado, la escena del video no se muestra.
   const escenas = useMemo(() => escenasVisibles(guion, respuestas).filter((e) => e.tipo !== "video" || !!datos.videoUrl), [guion, respuestas, datos.videoUrl]);
@@ -59,6 +73,7 @@ export function SesionGuiada({
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    medida.current.maxIdx = Math.max(medida.current.maxIdx, idx);
   }, [idx]);
 
   const armarProgreso = useCallback(
@@ -86,6 +101,25 @@ export function SesionGuiada({
     [escenaMision, guion, veces],
   );
 
+  const usoActual = (terminada: boolean): UsoSesion => {
+    const clara = valorUno(respuestas, "_clara");
+    return {
+      vistas: Math.max(0, medida.current.maxIdx + 1),
+      total: escenas.length,
+      ayuda: medida.current.ayuda,
+      parar: medida.current.parar,
+      segundos: Math.round((Date.now() - medida.current.desde) / 1000),
+      terminada,
+      ...(clara === "si" || clara === "masomenos" || clara === "no" ? { clara } : {}),
+    };
+  };
+
+  // Al salir a mitad de camino, queda guardado hasta dónde llegaron.
+  const salir = () => {
+    if (idx >= 0) onProgreso?.(armarProgreso(respuestas, marcas, { uso: usoActual(false) }));
+    onSalir();
+  };
+
   // «Ayuda»: los consejos cortos del guion y la ayuda validada de la ficha.
   const consejos = [...guion.ayuda, ...(datos.ayuda ? [datos.ayuda] : [])];
   const porEtapa = ayudaDeEtapa(guion.ayudaPorEtapa ?? datos.adaptacionPorEtapa, etapas);
@@ -109,18 +143,33 @@ export function SesionGuiada({
     anterior: idx >= 0 ? () => setIdx((i) => i - 1) : null,
     abrirAyuda: consejos.length || porEtapa.length ? () => setPanel("ayuda") : null,
     abrirParar: () => setPanel("parar"),
-    terminar: (extra) => onTerminar(armarProgreso(respuestas, marcas, { terminada: new Date().toISOString(), ...extra })),
+    terminar: (extra) => onTerminar(armarProgreso(respuestas, marcas, { terminada: new Date().toISOString(), uso: usoActual(!extra?.terminada), ...extra })),
     textoTerminar,
+    leerSiempre,
+    alternarLeer: () => {
+      const v = !leerSiempre;
+      setLeerSiempre(v);
+      try {
+        localStorage.setItem("sesion-leer", v ? "1" : "0");
+      } catch {
+        // Sin almacenamiento: vale solo para esta vez.
+      }
+      if (!v) detenerVoz();
+    },
   };
 
-  // Lo que se lee con «Escuchar».
-  const voz = !escena
-    ? `${datos.titulo}. ${guion.frase}`
-    : escena.tipo === "seguridad"
-      ? cuandoParar
-      : escena.tipo === "elegir"
-        ? `${escena.titulo} ${escena.opciones.map((o) => o.texto).join(", ")}.`
-        : plantilla(textoPrincipal(escena), guion, respuestas);
+  // Lo que se lee con «Escuchar» (y solo, al llegar, si eligieron leer siempre).
+  const voz = textoDeVoz(escena, guion, respuestas, datos.titulo);
+  const vozRef = useRef(voz);
+  vozRef.current = voz;
+  useEffect(() => {
+    if (!leerSiempre) return;
+    const id = setTimeout(() => leerEnVoz(vozRef.current, () => {}), 450);
+    return () => {
+      clearTimeout(id);
+      detenerVoz();
+    };
+  }, [idx, leerSiempre]);
 
   const pista = escena && "pista" in escena && escena.pista ? plantilla(escena.pista, guion, respuestas) : null;
 
@@ -134,7 +183,7 @@ export function SesionGuiada({
           <div className="max-w-xl mx-auto flex items-center gap-3">
             <button
               type="button"
-              onClick={onSalir}
+              onClick={salir}
               aria-label="Salir de la actividad"
               className="shrink-0 w-11 h-11 inline-flex items-center justify-center rounded-full border-0 bg-transparent text-tinta-suave cursor-pointer hover:bg-campo"
             >

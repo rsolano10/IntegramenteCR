@@ -46,6 +46,8 @@ export interface CtxSesion {
   abrirParar: () => void;
   terminar: (extra?: Partial<Progreso>) => void;
   textoTerminar: string;
+  leerSiempre: boolean;
+  alternarLeer: () => void;
 }
 
 export const SesionContexto = createContext<CtxSesion | null>(null);

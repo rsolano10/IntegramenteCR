@@ -49,14 +49,28 @@ Siempre están a mano:
 
 ## Tandas
 
-| Tanda | Contenido | Estado |
-|---|---|---|
-| 0 | Marco, escenas y tres pilotos: GER-003, COG-005 y PRE-005 | Hecha, espera aprobación |
-| 1 | Gerontogimnasia (10) | |
-| 2 | Cognitivas de conversación (27) | |
-| 3 | Nutrición como misión semanal (40) | |
-| 4 | Reminiscencia, música, sentidos y movimiento (40) | |
-| 5 | Voz pregenerada y medición de uso | |
+Todas están hechas: 120 guiones, uno por cada recurso que no es un juego.
+
+| Tanda | Contenido |
+|---|---|
+| 0 | Marco, escenas y tres pilotos: GER-003, COG-005 y PRE-005 |
+| 1 | Gerontogimnasia (10): sostener, recorrido y repeticiones por lado |
+| 2 | Cognitivas (27): leer con la palabra resaltada y material de apoyo (tablas, refranes, temporizador) |
+| 3 | Nutrición (40): recetas guiadas con misión de la semana |
+| 4 | Reminiscencia, música, sentidos, movimiento y bienvenida (42): escena de ritmo con sonido y ordenar lo armado |
+| 5 | Voz y medición (detalle abajo) |
+
+**Detalle de la tanda 5**
+- **Leer cada pantalla en voz alta:** se activa en la portada y queda guardado en el dispositivo.
+- **Medición** en `plan_tasks.progreso.uso`: pantallas vistas, si terminaron, si abrieron «Ayuda» o «Parar», el tiempo y «¿Les resultó fácil de seguir?».
+- **Resumen para la clínica:** sale de `metricas_sesiones()` y se ve en Biblioteca › Vista previa.
+- **Script `scripts/sesiones/voces.ts`:** cuenta 869 textos y unos 37 000 caracteres. Con `--generar` los genera por adelantado. **No se corrió**, porque el costo de ElevenLabs sigue siendo una decisión abierta. Sin correrlo, cada audio se genera y se guarda la primera vez que alguien toca «Escuchar».
+
+## Reglas
+
+- Ningún guion muestra semáforos ni rutas de la clínica.
+- La «adaptación» de los primeros 34 recursos usa «Motor Rojo» y otros términos de la clínica. Por eso no se muestra en la sesión: se tradujo en consejos.
+- Las escenas de video se saltean mientras no haya video cargado. Hoy faltan los de bienvenida y los de los primeros recursos.
 
 ## Pendiente de la clínica
 

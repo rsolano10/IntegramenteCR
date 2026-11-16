@@ -4,6 +4,7 @@ import { moduloLabel } from "../../lib/modulos";
 import { LIBRE, opcionDe, opcionesSegun, plantilla, puedeSeguir, valorLista, valorUno, type Escena, type Opcion } from "../../lib/sesiones";
 import type { NombreIcono } from "../../lib/sesiones/iconos";
 import { Icono } from "./Icono";
+import { lecturaDisponible } from "../../lib/voz";
 import { MaterialDeApoyo } from "../ui/ResourceDetailView";
 import { Ceja, Marca, Nota, Pie, Titulo } from "./comun";
 import { useSesion, useTam } from "./contexto";
@@ -30,7 +31,7 @@ function Medallon({ icono, tam = "grande" }: { icono: NombreIcono; tam?: "grande
 
 // ─── Portada ───
 export function Portada() {
-  const { guion, datos, tema } = useSesion();
+  const { guion, datos, tema, leerSiempre, alternarLeer } = useSesion();
   const t = useTam();
   return (
     <>
@@ -52,6 +53,22 @@ export function Portada() {
             </span>
           ))}
         </div>
+        {lecturaDisponible && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={leerSiempre}
+            onClick={alternarLeer}
+            className={`mt-5 inline-flex items-center gap-2.5 min-h-11 pl-3 pr-4 rounded-full border-[1.5px] font-semibold cursor-pointer transition-colors ${t.chico} ${
+              leerSiempre ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta-suave"
+            }`}
+          >
+            <span className={`relative w-9 h-5 rounded-full transition-colors ${leerSiempre ? "bg-verde-profundo" : "bg-borde-campo"}`} aria-hidden="true">
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-[left] ${leerSiempre ? "left-[18px]" : "left-0.5"}`} />
+            </span>
+            Leer cada pantalla en voz alta
+          </button>
+        )}
         {guion.cuidado && (
           <p className={`m-0 mt-6 max-w-md flex items-start gap-2.5 text-left rounded-2xl bg-aviso px-4 py-3 leading-snug text-semaforo-amarillo-texto ${t.chico}`}>
             <svg className="shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -1154,6 +1171,39 @@ function Dato({ texto }: { texto: string }) {
   );
 }
 
+function FacilDeSeguir() {
+  const { respuestas, responder, participante } = useSesion();
+  const t = useTam();
+  const v = valorUno(respuestas, "_clara");
+  const opciones = [
+    { id: "si", texto: "Sí" },
+    { id: "masomenos", texto: "Más o menos" },
+    { id: "no", texto: "No" },
+  ];
+  return (
+    <div className="mt-7 w-full max-w-md rounded-[22px] border border-borde-suave bg-white/70 px-4 py-3.5">
+      <p className={`m-0 mb-2.5 font-semibold text-tinta ${t.chico}`}>{participante ? "¿Te resultó fácil de seguir?" : "¿Les resultó fácil de seguir?"}</p>
+      <div className="flex justify-center gap-2" role="radiogroup">
+        {opciones.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={v === o.id}
+            onClick={() => responder("_clara", o.id)}
+            className={`min-h-11 px-4 rounded-full border-[1.5px] font-semibold cursor-pointer transition-colors ${t.chico} ${
+              v === o.id ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta-suave"
+            }`}
+          >
+            {o.texto}
+          </button>
+        ))}
+      </div>
+      {v && <p className={`ses-sube m-0 mt-2 text-tinta-tenue ${t.chico}`}>¡Gracias! Nos ayuda a mejorar.</p>}
+    </div>
+  );
+}
+
 export function Cierre({ e }: { e: De<"cierre"> }) {
   const { datos, terminar, textoTerminar } = useSesion();
   const t = useTam();
@@ -1169,6 +1219,7 @@ export function Cierre({ e }: { e: De<"cierre"> }) {
         </Ceja>
         <p className={`m-0 max-w-md font-serif italic leading-snug text-verde-profundo ${t.grande}`}>{e.texto}</p>
         {e.dato && datos.sabiasQue && <Dato texto={datos.sabiasQue} />}
+        <FacilDeSeguir />
       </div>
       <Pie etiqueta={textoTerminar} onClick={() => terminar()} solo />
     </>

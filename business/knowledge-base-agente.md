@@ -209,17 +209,32 @@ Arriba: la fecha y «Hola, [nombre]». Menú de pestañas: **Hoy · Mi semana ·
 - Cuando se registró toda la semana: **«¡Semana completa!»** con el botón **"Evaluar la semana"**.
 - Al final de la lista, un cierre dice qué sigue: «Eso es todo por hoy» (con cuántas actividades hay mañana), «¡Listo por hoy!» o, el último día, «Último día de la semana».
 
-### 6.10 Hacer una actividad (modo paso a paso)
-1. Tocá **"Empezar"** en la actividad.
-2. Pantalla **"Antes de empezar"**: precauciones y, en gerontogimnasia, **cuándo parar** y la **dosis** («Dosis indicada por el equipo» o «Dosis propuesta del terapeuta»). Tocá **"Entendido, empezar"**.
-3. Si hay video: **"Mirá cómo se hace"**.
-4. Una consigna por pantalla: **"Siguiente"** / **"Anterior"**. En la última: **"Terminamos, registrar"**.
-5. Pregunta final: **«¿Cómo le fue con "[actividad]"?»** → **"Sí"**, **"En parte"** o **"No"**.
+### 6.10 Hacer una actividad (sesión guiada)
+Cada actividad se hace como una **sesión guiada**: una idea por pantalla, con dibujos y botones grandes.
+1. Tocá **"Empezar"** en la actividad. La primera pantalla dice en una frase de qué se trata, cuánto dura y, si hace falta, un cuidado importante. Ahí se puede activar **"Leer cada pantalla en voz alta"**.
+2. Tocá **"Empezar"** otra vez. Cada pantalla tiene abajo **"Siguiente"** (o "Hecho", "Entendido", "Todo listo"), una flecha para volver atrás y, si la actividad la trae, **"Ayuda"**: consejos para acompañar y la ayuda según la etapa de la persona.
+3. Arriba están la **X** para salir, la barra de avance y el parlante para **escuchar** la pantalla. En los ejercicios aparece también **"Parar"**: explica qué hacer, ofrece **"Pedir ayuda ahora"**, **"Llamar al 911"** y **"Terminar por hoy"**.
+4. Según la actividad, la sesión pide:
+   - **elegir** (a dónde vamos, qué fruta usamos);
+   - **tocar** lo que la persona va diciendo;
+   - **ordenar** pasos;
+   - leer en grande la frase para decirle (**"Decile"**);
+   - contar repeticiones tocando un **círculo**;
+   - **sostener** una posición unos segundos;
+   - **respirar** en el descanso;
+   - **imitar un ritmo**;
+   - responder **«¿Cómo se siente?»**.
+5. Los ejercicios empiezan con **"Cuándo parar"** y **"Preparemos el lugar"**.
+6. Las actividades de nutrición tienen una **"Misión de la semana"**, por ejemplo «Hojas verdes en 3 comidas». Se marca tocando un círculo cada vez que lo hacen, durante la sesión o cualquier día de esa semana desde la pantalla de la actividad.
+7. Al final hay un festejo y, a veces, un dato para dar vuelta, **«¿Sabías que…?»**. También aparece la pregunta opcional **«¿Les resultó fácil de seguir?»**. Después se toca **"Registrar cómo les fue"**.
+8. Pregunta final: **«¿Cómo le fue con "[actividad]"?»** → **"Sí"**, **"En parte"** o **"No"**.
    - Con "En parte", la app pregunta **«¿Qué ayuda necesitó?»** (por ejemplo: «hubo que recordarle el siguiente paso»). Eso le sirve al equipo.
    - Con "No": «Registrado sin penalizar». Nadie tiene que justificar un día difícil.
+
+Otros detalles:
+- La ficha con todo el texto sigue disponible en la pantalla de la actividad, en **"Ver la ficha completa"**.
 - También se puede registrar desde **"Ver detalle"** → **"¿Se realizó?"** → Sí / En parte / No.
 - En el detalle puede aparecer un **"Mensaje de tu equipo clínico"** o una **"Nota del equipo"**.
-- La primera vez que se abre una actividad de gerontogimnasia, aparece arriba una **introducción en video** a la gerontogimnasia; después queda plegada para consultarla.
 
 ### 6.10.1 Los juegos en pantalla («Un día en el pueblo»)
 Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa en un lugar de un pueblo costarricense. No hay puntajes, ni tiempo, ni castigo por equivocarse: si algo no corresponde, vuelve con suavidad para intentar de nuevo. Después de dos intentos aparece **"Pista"**. Se puede tocar **"Terminar por hoy"** cuando quieran, y **"Pantalla completa"** para verlo más grande.

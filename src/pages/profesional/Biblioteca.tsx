@@ -23,6 +23,7 @@ import { ResourceEditor } from "../../components/profesional/ResourceEditor";
 import { contenidoDeRecurso } from "../../lib/contenidoRecurso";
 import { guionDe } from "../../lib/sesiones";
 import { datosDeRecurso } from "../../lib/sesiones/datos";
+import { resumenMetrica, useMetricasSesiones } from "../../lib/sesiones/useMetricasSesiones";
 import { SesionGuiada } from "../../components/sesion/SesionGuiada";
 import { NotasDelEquipo } from "../../components/profesional/NotasDelEquipo";
 
@@ -66,6 +67,7 @@ export function Biblioteca() {
   const [juegoAbierto, setJuegoAbierto] = useState<MediaResource | null>(null);
   // Probar la sesión guiada tal como la recorre la familia (sin guardar nada).
   const [probando, setProbando] = useState<MediaResource | null>(null);
+  const { data: metricas } = useMetricasSesiones();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -238,9 +240,17 @@ export function Biblioteca() {
           <h3 className="font-serif font-normal text-2xl m-0 mb-4">{previewing.titulo}</h3>
           {guionDe(previewing.codigo) && (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-verde-tenue border border-verde-serenidad/40 px-4 py-3">
-              <p className="m-0 text-[14.5px] leading-snug text-tinta">
-                <strong>Tiene sesión guiada.</strong> La familia la recorre paso a paso; esta ficha queda plegada como «Ver la ficha completa».
-              </p>
+              <div className="min-w-0 flex-1">
+                <p className="m-0 text-[14.5px] leading-snug text-tinta">
+                  <strong>Tiene sesión guiada.</strong> La familia la recorre paso a paso; esta ficha queda plegada como «Ver la ficha completa».
+                </p>
+                {previewing.codigo && metricas?.get(previewing.codigo) && (
+                  <p className="m-0 mt-1.5 text-[13px] leading-snug text-tinta-suave">
+                    <span className="font-semibold text-verde-profundo">Cómo les va: </span>
+                    {resumenMetrica(metricas.get(previewing.codigo)!).join(" · ")}
+                  </p>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => {

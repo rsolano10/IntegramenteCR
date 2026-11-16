@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GUIONES, LISTA_GUIONES, ayudaDeEtapa, escenasVisibles, guionDe, opcionDe, opcionesSegun, palabras, plantilla, puedeSeguir, textoPrincipal, LIBRE } from "./index.ts";
+import { GUIONES, LISTA_GUIONES, textosDeVoz, ayudaDeEtapa, escenasVisibles, guionDe, opcionDe, opcionesSegun, palabras, plantilla, puedeSeguir, textoPrincipal, LIBRE } from "./index.ts";
 import { NOMBRES_ICONOS } from "./iconos.ts";
 import type { Escena, Guion } from "./tipos.ts";
 
@@ -171,4 +171,12 @@ test("sesiones: ayuda por etapa", () => {
     ["preventivo", "dcl", "leve", "moderada"],
   );
   assert.deepEqual(ayudaDeEtapa(GUIONES["GER-003"], ["leve"]), []);
+});
+
+test("sesiones: lo que se lee en voz alta está completo", () => {
+  for (const g of LISTA_GUIONES)
+    for (const t of textosDeVoz(g)) {
+      assert.doesNotMatch(t, /[{}]/, `${g.codigo}: «${t}»`);
+      assert.ok(t.length <= 900, `${g.codigo}: texto demasiado largo para la voz`);
+    }
 });

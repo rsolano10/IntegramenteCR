@@ -141,8 +141,20 @@ export interface Guion {
 export type Respuestas = Record<string, string | string[]>;
 
 // Lo que queda guardado en plan_tasks.progreso.
+// Cómo se usó la sesión (para la clínica: qué conviene ajustar).
+export interface UsoSesion {
+  vistas: number; // pantallas vistas (sin la portada)
+  total: number;
+  ayuda: number; // veces que abrió «Ayuda»
+  parar: number; // veces que abrió «Parar»
+  segundos: number;
+  terminada: boolean;
+  clara?: "si" | "masomenos" | "no";
+}
+
 export interface Progreso {
   respuestas?: Respuestas;
+  uso?: UsoSesion;
   mision?: { clave: string; veces: number; marcas: boolean[]; texto: string; detalle?: string; icono?: NombreIcono };
   terminada?: string;
 }

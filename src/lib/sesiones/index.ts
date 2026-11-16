@@ -1,4 +1,5 @@
 import type { NivelCognitivo } from "../mediaResources";
+import { cuandoParar } from "../bloquesGerontogimnasia";
 import { cog005 } from "./guiones/cog005";
 import { COGNICION } from "./guiones/cognicion";
 import { ger003 } from "./guiones/ger003";
@@ -8,7 +9,7 @@ import { NUTRICION } from "./guiones/nutricion";
 import { VIVENCIAS } from "./guiones/vivencias";
 import type { Escena, Guion, Opcion, Respuestas } from "./tipos";
 
-export type { Escena, Guion, Opcion, Progreso, Respuestas } from "./tipos";
+export type { Escena, Guion, Opcion, Progreso, Respuestas, UsoSesion } from "./tipos";
 
 // Recursos con sesión guiada propia. Los demás usan el paso a paso
 // automático (lib/pasoAPaso.ts).
@@ -144,4 +145,29 @@ export function textoPrincipal(e: Escena): string {
     default:
       return e.titulo;
   }
+}
+
+// Lo que se lee con «Escuchar» en cada pantalla (también lo usa el script
+// que prepara las voces).
+export function textoDeVoz(e: Escena | null, g: Guion, r: Respuestas, titulo?: string): string {
+  if (!e) return titulo ? `${titulo}. ${g.frase}` : g.frase;
+  if (e.tipo === "seguridad") return cuandoParar;
+  if (e.tipo === "elegir") return `${e.titulo} ${e.opciones.map((o) => o.texto).join(", ")}.`;
+  return plantilla(textoPrincipal(e), g, r);
+}
+
+// Todas las lecturas posibles de un guion: cada pantalla y, si la frase
+// depende de algo elegido, una por cada opción.
+export function textosDeVoz(g: Guion): string[] {
+  const out = new Set<string>([textoDeVoz(null, g, {})]);
+  for (const e of g.escenas) {
+    if (e.tipo === "video") continue;
+    const base = e.tipo === "seguridad" || e.tipo === "elegir" ? null : textoPrincipal(e);
+    const clave = base ? /\{(\w+)\}/.exec(base)?.[1] : null;
+    const elegir = clave ? g.escenas.find((x) => x.tipo === "elegir" && x.clave === clave) : null;
+    if (elegir?.tipo === "elegir") for (const o of elegir.opciones) out.add(textoDeVoz(e, g, { [clave!]: o.id }));
+    else out.add(textoDeVoz(e, g, {}));
+    if (e.tipo === "decir") for (const f of e.otras ?? []) out.add(f);
+  }
+  return [...out].filter(Boolean);
 }
