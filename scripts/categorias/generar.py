@@ -40,15 +40,20 @@ def mezcla(a, b, t):
 
 L = {}
 
-# Atención y memoria: perfil con una gota-idea adentro y chispas.
+# Atención y memoria: un foco (la idea, la atención encendida) con las tres
+# gotas del isotipo adentro.
 L["cognicion"] = ("Atención y memoria", "#d5e0e7", mezcla("#c3d2dc","#5b7489",0.45), f'''
 {escenario()}
-<path d="M70 214 C56 176 52 128 80 96 C106 66 156 64 178 100 C186 113 184 124 190 132 L199 146 C202 151 197 154 191 154 L190 164 C190 171 183 173 177 171 L172 182 C167 191 156 191 148 188 L146 214 Z" fill="#3e5566"/>
-{gota(96,96,58,0,MOST)}
-<circle cx="167" cy="105" r="6" fill="{BEIGE}"/>
-<path d="M190 38 C192 52 196 56 210 58 C196 60 192 64 190 78 C188 64 184 60 170 58 C184 56 188 52 190 38 Z" fill="{MOST}"/>
-<g stroke="{PAPEL}" stroke-width="5" stroke-linecap="round"><path d="M208 92 L218 86"/><path d="M211 112 L223 112"/></g>
-<circle cx="52" cy="58" r="7" fill="{MOST}"/>
+<g stroke="{MOST}" stroke-width="7" stroke-linecap="round"><path d="M120 22 V40"/><path d="M58 50 L70 62"/><path d="M182 50 L170 62"/><path d="M36 112 H54"/><path d="M186 112 H204"/></g>
+<path d="M120 52 C84 52 60 78 60 110 C60 132 72 146 84 158 C92 166 94 174 94 182 H146 C146 174 148 166 156 158 C168 146 180 132 180 110 C180 78 156 52 120 52 Z" fill="{PAPEL}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>
+<g transform="rotate(-8 120 112)">
+{gota(88,80,36,0,"#4f8a91")}
+{gota(128,84,30,-80,MOST)}
+{gota(92,120,30,100,TERRA)}
+</g>
+<rect x="94" y="184" width="52" height="12" rx="4" fill="#5b7489" stroke="{INK}" stroke-width="5"/>
+<rect x="98" y="198" width="44" height="12" rx="4" fill="#5b7489" stroke="{INK}" stroke-width="5"/>
+<path d="M108 212 H132 L126 222 H114 Z" fill="{INK}"/>
 ''')
 
 # Gerontogimnasia: persona sentada estirando los brazos.
