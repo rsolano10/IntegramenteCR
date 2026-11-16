@@ -25,6 +25,8 @@ import { TEXTOS } from "./bancos/comprension.ts";
 import { comprension } from "./comprension.ts";
 import { CONSIGNAS, agregarPalabras, normalizar, pizarra } from "./pizarra.ts";
 import { corral, porton } from "./corral.ts";
+import { DIAS } from "./bancos/agenda.ts";
+import { HORAS, agenda, franjaFija, resolverAgenda, revisarAgenda, type EjercicioAgenda } from "./agenda.ts";
 import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
@@ -49,7 +51,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 19);
+  assert.equal(ACTIVIDADES.length, 20);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -699,4 +701,54 @@ test("corral: los cambios de regla son reales y cada tramo usa los dos portones"
     }
   }
   assert.ok(corral.validar({ ...corral.porNivel.suave, criterios: ["color"] }).length > 0);
+});
+
+test("agenda: cada día armado tiene solución y cumple lo pedido", () => {
+  const azar = crearAzar(13);
+  for (const nivel of NIVELES) {
+    const c = agenda.porNivel[nivel];
+    assert.deepEqual(agenda.validar(c), []);
+    for (const e of agenda.generar(c, 10, { azar, ahora: new Date() })) {
+      assert.equal(e.tareas.length, c.tareas);
+      assert.equal(e.tareas.filter((t) => t.hora !== null).length, c.conHoraFija);
+      assert.equal(e.reglas.length, c.restricciones);
+      for (const r of e.reglas) assert.ok(e.tareas.some((t) => t.id === r.antes) && e.tareas.some((t) => t.id === r.despues));
+      const sol = resolverAgenda(e);
+      assert.ok(sol, `${nivel}: ${e.dia} tiene solución`);
+      assert.deepEqual(revisarAgenda(e, sol!), []);
+    }
+  }
+});
+
+test("agenda: las reglas se revisan y vale cualquier orden que las cumpla", () => {
+  const e: EjercicioAgenda = {
+    dia: "x",
+    titulo: "x",
+    franjas: "horas",
+    tareas: [
+      { id: "cafe", texto: "Chorrear el café", hora: null },
+      { id: "desayunar", texto: "Desayunar", hora: null },
+      { id: "bus", texto: "Bus", hora: 9 },
+    ],
+    reglas: [{ antes: "cafe", despues: "desayunar", texto: "El café antes." }],
+  };
+  const h = (x: number) => HORAS.indexOf(x);
+  assert.deepEqual(revisarAgenda(e, { cafe: h(7), desayunar: h(8), bus: h(9) }), []);
+  assert.deepEqual(revisarAgenda(e, { cafe: h(7), desayunar: h(14), bus: h(9) }), [], "otra organización también vale");
+  assert.equal(revisarAgenda(e, { cafe: h(8), desayunar: h(7), bus: h(9) })[0].tipo, "orden");
+  assert.equal(revisarAgenda(e, { cafe: h(7), desayunar: h(8), bus: h(10) })[0].tipo, "hora");
+  assert.equal(revisarAgenda(e, { cafe: h(7), desayunar: h(7), bus: h(9) }).some((p) => p.tipo === "cruce"), true);
+  assert.equal(revisarAgenda(e, { cafe: h(7) })[0].tipo, "falta");
+  // Por momentos, dos cosas en la misma franja pueden cumplir el orden.
+  assert.deepEqual(revisarAgenda({ ...e, franjas: "momentos" }, { cafe: 0, desayunar: 0, bus: franjaFija(9, "momentos") }), []);
+});
+
+test("agenda: el banco no tiene datos de salud y las horas existen en la pizarra", () => {
+  for (const d of DIAS) {
+    for (const t of d.tareas) {
+      assert.doesNotMatch(t.texto, /pastilla|medicina|medicamento|ebais|doctor|cita/i, `${d.id}: ${t.texto}`);
+      if (t.hora !== undefined) assert.ok(HORAS.includes(t.hora), `${d.id}: ${t.texto}`);
+    }
+    for (const r of d.reglas) assert.ok(d.tareas.some((t) => t.id === r.antes) && d.tareas.some((t) => t.id === r.despues), `${d.id}: ${r.texto}`);
+  }
 });
