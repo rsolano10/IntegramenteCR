@@ -90,3 +90,30 @@ export function enFila(hora: string | null | undefined, fila: number | null): bo
   const visible = h !== null && HORAS.includes(h);
   return fila === null ? !visible : h === fila;
 }
+
+// Hoy, como fecha (a medianoche), en la hora de Costa Rica.
+export function hoyEnCostaRica(ahora: Date = new Date()): Date {
+  const cr = new Date(ahora.toLocaleString("en-US", { timeZone: "America/Costa_Rica" }));
+  return atMidnight(cr);
+}
+
+// Si el día de una tarea ya pasó, es hoy o todavía no llega, con su fecha
+// real cuando se conoce el inicio del plan. Sin fecha de inicio, por el
+// orden de la semana (de domingo a sábado).
+export function cuandoEsElDia(dia: string, publishAt: string | null, ahora: Date = new Date()): { tiempo: "pasado" | "hoy" | "futuro"; fecha: Date | null } {
+  const hoy = hoyEnCostaRica(ahora);
+  const fecha = publishAt ? (weekDays(new Date(publishAt)).find((d) => d.dia === dia)?.date ?? null) : null;
+  if (fecha) {
+    const f = atMidnight(fecha).getTime();
+    return { tiempo: f < hoy.getTime() ? "pasado" : f > hoy.getTime() ? "futuro" : "hoy", fecha };
+  }
+  const i = DIAS.indexOf(dia);
+  const h = hoy.getDay();
+  return { tiempo: i < h ? "pasado" : i > h ? "futuro" : "hoy", fecha: null };
+}
+
+// «el jueves 20 de noviembre» (o «el jueves», sin fecha).
+export function diaConFecha(dia: string, fecha: Date | null): string {
+  const d = dia.toLowerCase();
+  return fecha ? `el ${d} ${fecha.getDate()} de ${fecha.toLocaleDateString("es-CR", { month: "long" })}` : `el ${d}`;
+}

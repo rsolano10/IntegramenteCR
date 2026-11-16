@@ -1,6 +1,6 @@
 import { useLocation, useParams } from "react-router-dom";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { usePlan, useGuardarProgreso } from "../../lib/usePlan";
+import { usePlan, useGuardarProgreso, useCurrentPlanMeta } from "../../lib/usePlan";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { origenDeActividad } from "../../lib/useVolver";
 import { BotonVolver } from "../../components/ui/BotonVolver";
@@ -18,6 +18,7 @@ export function Actividad() {
   const { data: myPatient } = useMyPatient();
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const guardarProgreso = useGuardarProgreso(myPatient?.id);
+  const { data: planMeta } = useCurrentPlanMeta(myPatient?.id);
 
   const dia = days?.find((d) => d.tasks.some((t) => t.id === taskId)) ?? null;
   const task = dia?.tasks.find((t) => t.id === taskId) ?? null;
@@ -43,6 +44,7 @@ export function Actividad() {
           dia={dia}
           rutaPasos={`${pathname}/pasos`}
           etapas={perfilRecursos?.etapas ?? null}
+          publishAt={planMeta?.publish_at ?? null}
           onGuardarProgreso={(p) => guardarProgreso(task.id, p)}
         />
       </div>

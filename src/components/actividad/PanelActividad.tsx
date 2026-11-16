@@ -11,6 +11,7 @@ import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, guionDe, resumenPasos, type Progreso } from "../../lib/sesiones";
 import type { NivelCognitivo } from "../../lib/mediaResources";
 import type { PlanDay, PlanTask } from "../../lib/mockData";
+import { cuandoEsElDia, diaConFecha } from "../../lib/planWeek";
 
 // La pantalla de una actividad antes de empezar, como un tablero: arriba,
 // qué es (con su dibujo o la portada del juego); después, cómo va a ser,
@@ -34,6 +35,7 @@ export function PanelActividad({
   dia,
   rutaPasos,
   etapas,
+  publishAt,
   large = false,
   onGuardarProgreso,
 }: {
@@ -41,6 +43,8 @@ export function PanelActividad({
   dia: PlanDay;
   rutaPasos: string;
   etapas: NivelCognitivo[] | null;
+  // Inicio del plan, para saber la fecha real de cada día.
+  publishAt: string | null;
   large?: boolean;
   onGuardarProgreso?: (p: Progreso) => Promise<void>;
 }) {
@@ -51,6 +55,7 @@ export function PanelActividad({
   const tema = task.modulo ? moduloTheme[task.modulo] : moduloTheme.bienvenida;
   const hecha = ESTADO[task.estado] ?? null;
   const hoyPendiente = !!dia.isToday && (task.estado === "pendiente" || task.estado === "futuro");
+  const cuando = cuandoEsElDia(dia.dia, publishAt);
   const pasos = guion
     ? resumenPasos(guion, task.mediaKind === "video" && !!(task.storagePath || task.externalUrl))
     : (task.pasos ?? []).map((texto) => ({ icono: "estrella" as const, texto }));
@@ -71,10 +76,11 @@ export function PanelActividad({
       ? { texto: "Volver a hacerla", nota: null, onClick: () => setPreguntando(true) }
       : {
           texto: "Hacerla sin registrar",
+          // El tiempo verbal según la fecha real: si el día ya pasó o todavía no llega.
           nota:
-            task.estado === "futuro"
-              ? `Esta actividad es para el ${dia.dia.toLowerCase()}. Podés hacerla ahora para practicar; se registra ese día.`
-              : `Esta actividad era para el ${dia.dia.toLowerCase()}. Podés hacerla, pero ya no se registra.`,
+            cuando.tiempo === "pasado"
+              ? `Esta actividad era para ${diaConFecha(dia.dia, cuando.fecha)}. Podés hacerla, pero ya no se registra.`
+              : `Esta actividad es para ${diaConFecha(dia.dia, cuando.fecha)}. Podés hacerla ahora para practicar; se registra ese día.`,
           onClick: () => ir("sin-registro"),
         };
 

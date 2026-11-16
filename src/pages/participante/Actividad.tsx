@@ -3,7 +3,7 @@ import { BigActionButton } from "../../components/ui/BigActionButton";
 import { PlayIcon } from "../../components/ui/Icons";
 import { speak } from "../../lib/speech";
 import { useMyPatient } from "../../lib/useMyPatient";
-import { usePlan, useGuardarProgreso } from "../../lib/usePlan";
+import { usePlan, useGuardarProgreso, useCurrentPlanMeta } from "../../lib/usePlan";
 import { guionDe } from "../../lib/sesiones";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { PanelActividad } from "../../components/actividad/PanelActividad";
@@ -18,6 +18,7 @@ export function ParticipanteActividad() {
   const { data: myPatient } = useMyPatient();
   const { data: days, isLoading: loadingPlan } = usePlan(myPatient?.id);
   const guardarProgreso = useGuardarProgreso(myPatient?.id);
+  const { data: planMeta } = useCurrentPlanMeta(myPatient?.id);
 
   const today = days?.find((d) => d.isToday);
   const task = today?.tasks.find((t) => t.id === taskId) ?? null;
@@ -49,6 +50,7 @@ export function ParticipanteActividad() {
         dia={today}
         rutaPasos={`/app/participante/actividad/${task.id}/pasos`}
         etapas={perfilRecursos?.etapas ?? null}
+        publishAt={planMeta?.publish_at ?? null}
         onGuardarProgreso={(p) => guardarProgreso(task.id, p)}
         large
       />
