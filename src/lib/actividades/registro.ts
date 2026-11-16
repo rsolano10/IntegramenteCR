@@ -7,6 +7,7 @@ import { formarPalabra } from "./formarPalabra";
 import { intruso } from "./intruso";
 import { queCambio } from "./queCambio";
 import { pintarRueda } from "./pintarRueda";
+import { senas } from "./senas";
 import { ordenarPasos, ordenarSecuencia } from "./ordenar";
 import { orientacionHoy } from "./orientacionHoy";
 import { pagoExacto } from "./pagoExacto";
@@ -34,6 +35,7 @@ export const ACTIVIDADES: Def[] = [
   intruso,
   queCambio,
   pintarRueda,
+  senas,
 ];
 
 export const actividadPorTipo = (tipo: string | undefined): Def | undefined => ACTIVIDADES.find((a) => a.tipo === tipo);

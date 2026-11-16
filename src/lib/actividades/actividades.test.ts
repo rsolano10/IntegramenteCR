@@ -17,6 +17,7 @@ import { generarIntruso } from "./intruso.ts";
 import { CONJUNTOS } from "./bancos/intrusos.ts";
 import { LUGARES, OBJETOS, generarCorredor, lugarEsPiso, revisarCorredor } from "./queCambio.ts";
 import { PINTURAS, celda, contraste, generarRueda, objetivo, revisarRueda } from "./pintarRueda.ts";
+import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
 // Martes 10 de noviembre de 2026, 9 a. m. en Costa Rica (15:00 UTC).
@@ -40,7 +41,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 13);
+  assert.equal(ACTIVIDADES.length, 14);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -486,4 +487,38 @@ test("rueda: igual al modelo está completa; sin girar, un giro no vale; girada,
 test("rueda: los botes se distinguen (contraste y marca distinta)", () => {
   assert.equal(new Set(PINTURAS.map((p) => p.marca)).size, PINTURAS.length);
   for (const a of PINTURAS) for (const b of PINTURAS) if (a !== b) assert.ok(contraste(a.color, b.color) >= 1.4, `${a.id}/${b.id}`);
+});
+
+test("señas: el pueblo tiene una casa por cuadra libre, cada una con descripción distinta", () => {
+  assert.equal(CASAS.length, COLUMNAS * FILAS - REFERENCIAS.length);
+  assert.equal(new Set(CASAS.map(descripcionCasa)).size, CASAS.length);
+  assert.equal(new Set(CASAS.map((c) => `${c.col},${c.fila}`)).size, CASAS.length);
+});
+
+test("señas: el recorrido no sale del mapa y llega a una casa; tramos perpendiculares", () => {
+  const azar = crearAzar(8);
+  for (const tramos of [1, 2, 3]) {
+    for (let r = 0; r < 60; r++) {
+      const variadas = r % 2 === 0;
+      const ej = generarSena({ tramos, marcarPartida: true, casaDescrita: true, partidasVariadas: variadas, mostrarFlecha: false, leerEnVoz: false }, azar);
+      assert.equal(ej.tramos.length, tramos);
+      if (!variadas) assert.equal(ej.partida, "iglesia");
+      const partida = REFERENCIAS.find((x) => x.id === ej.partida)!;
+      const camino = recorrer(partida, ej.tramos)!;
+      assert.ok(camino, "no sale del mapa");
+      const fin = camino[camino.length - 1];
+      assert.deepEqual([CASAS[ej.destino].col, CASAS[ej.destino].fila], [fin.col, fin.fila]);
+      for (let k = 1; k < ej.tramos.length; k++) {
+        const vertical = (x: string) => x === "norte" || x === "sur";
+        assert.notEqual(vertical(ej.tramos[k].rumbo), vertical(ej.tramos[k - 1].rumbo));
+      }
+      assert.ok(ej.sena.includes("metros al"));
+      assert.ok(ej.sena.endsWith(`${descripcionCasa(CASAS[ej.destino])}.`));
+    }
+  }
+});
+
+test("señas: sin descripción de la casa en retador", () => {
+  const ej = generarSena({ tramos: 3, marcarPartida: false, casaDescrita: false, partidasVariadas: true, mostrarFlecha: false, leerEnVoz: true }, crearAzar(1));
+  assert.ok(!ej.sena.includes("Casa "));
 });
