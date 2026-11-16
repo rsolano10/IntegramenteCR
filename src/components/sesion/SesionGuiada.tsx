@@ -6,7 +6,7 @@ import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, ayudaDeEtapa, escenasVisibles, opcionDe, plantilla, textoDeVoz, valorUno, type Guion, type Progreso, type Respuestas, type UsoSesion } from "../../lib/sesiones";
 import { detenerVoz, leerEnVoz } from "../../lib/voz";
 import { BotonVoz, Hoja } from "./comun";
-import { SesionContexto, type CtxSesion, type DatosSesion, type RegistroSesion } from "./contexto";
+import { LEER_CADA_PANTALLA, SesionContexto, type CtxSesion, type DatosSesion, type RegistroSesion } from "./contexto";
 import { Portada, VistaEscena } from "./Escenas";
 import { ClaraActividad } from "../clara/ClaraActividad";
 
@@ -61,6 +61,7 @@ export function SesionGuiada({
   };
   // Leer cada pantalla en voz alta (preferencia de este dispositivo).
   const [leerSiempre, setLeerSiempre] = useState(() => {
+    if (!LEER_CADA_PANTALLA) return false;
     try {
       return localStorage.getItem("sesion-leer") === "1";
     } catch {

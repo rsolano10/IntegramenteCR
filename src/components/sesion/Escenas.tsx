@@ -8,7 +8,7 @@ import { lecturaDisponible } from "../../lib/voz";
 import { MaterialDeApoyo } from "../ui/ResourceDetailView";
 import { Ceja, Marca, Nota, Pie, Titulo } from "./comun";
 import { IconoActividad } from "../actividad/IconoActividad";
-import { useSesion, useTam } from "./contexto";
+import { LEER_CADA_PANTALLA, useSesion, useTam } from "./contexto";
 
 type De<T extends Escena["tipo"]> = Extract<Escena, { tipo: T }>;
 
@@ -79,7 +79,7 @@ export function Portada() {
         )}
         <Titulo>{datos.titulo}</Titulo>
         <p className={`m-0 mt-3 max-w-md leading-relaxed text-tinta-suave ${t.cuerpo}`}>{guion.frase}</p>
-        {lecturaDisponible && (
+        {LEER_CADA_PANTALLA && lecturaDisponible && (
           <button
             type="button"
             role="switch"

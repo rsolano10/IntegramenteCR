@@ -60,6 +60,11 @@ export interface CtxSesion {
   alternarLeer: () => void;
 }
 
+// «Leer cada pantalla en voz alta» (lectura automática al llegar a cada
+// pantalla): apagado por ahora, se retoma más adelante. «Escuchar» en cada
+// pantalla sigue disponible.
+export const LEER_CADA_PANTALLA = false;
+
 export const SesionContexto = createContext<CtxSesion | null>(null);
 
 export function useSesion(): CtxSesion {
