@@ -3,7 +3,7 @@
 // son finales falsos pero creíbles (para el nivel medio y el retador).
 // `muyConocido`: los que casi todo el mundo completa (nivel suave).
 // `aceptados`: otros finales que también valen; nunca salen como opción
-// junto con el principal. `revisado: false` hasta que el equipo lo apruebe.
+// junto con el principal. `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export interface Dicho {
   id: string;
@@ -24,7 +24,7 @@ const d = (id: string, inicio: string, final: string, significado: string, parec
   parecidos,
   muyConocido,
   aceptados,
-  revisado: false,
+  revisado: true,
 });
 
 export const DICHOS: Dicho[] = [

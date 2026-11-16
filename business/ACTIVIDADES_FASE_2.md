@@ -327,7 +327,7 @@ Por cada actividad: recurso en la Biblioteca (COG-047 en adelante), portada en "
 ### Estado (16 de noviembre de 2026)
 
 - **Tanda A:** hecha y aprobada por la clínica. Son COG-047 a COG-050 y el modo vuelto.
-- **Tanda B:** hecha, espera aprobación:
+- **Tanda B:** hecha y aprobada por la clínica:
 
   | Código | Juego |
   |---|---|
@@ -336,7 +336,7 @@ Por cada actividad: recurso en la Biblioteca (COG-047 en adelante), portada en "
   | COG-053 | La radio y El correo |
   | COG-054 | La pizarra de la escuela |
 
-  Sus bancos quedaron con `revisado: false`.
+  Sus bancos están aprobados (`revisado: true`).
 
 - **Valores por defecto mientras las decisiones siguen abiertas:**
   - **Dictado (6.2):** apagado. La clínica puede permitirlo en cada recurso.

@@ -24,8 +24,8 @@ export interface Consigna {
 
 const c = (grupo: Consigna["grupo"], id: string, texto: string, frase: string, ejemplo: string, pistas: string[]): Consigna => ({ id, texto, frase, ejemplo, pistas, grupo });
 
-// `revisado: false` hasta que el equipo lo apruebe.
-export const REVISADO_PIZARRA = false;
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
+export const REVISADO_PIZARRA = true;
 
 export const CONSIGNAS: Consigna[] = [
   c("amplia", "frutas", "Frutas", "Decí todos los nombres de frutas que se te ocurran.", "mango", ["Pensá en frutas que se dan en el patio.", "Pensá en las frutas de la feria.", "Pensá en frutas para hacer fresco."]),

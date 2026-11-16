@@ -2,7 +2,7 @@
 // la familia, con sus preguntas escritas a mano. La primera opción de cada
 // pregunta es la correcta (el juego las baraja). `frase`: el pedazo del
 // texto donde está la respuesta (para la pista). Sin datos de salud.
-// `revisado: false` hasta que el equipo lo apruebe.
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export interface Pregunta {
   texto: string;
@@ -29,7 +29,7 @@ const t = (id: string, escena: TextoComprension["escena"], longitud: TextoCompre
   titulo,
   texto,
   preguntas,
-  revisado: false,
+  revisado: true,
 });
 
 export const TEXTOS: TextoComprension[] = [

@@ -2,7 +2,7 @@ import type { NombreIcono } from "../../sesiones/iconos";
 
 // Banco de «El mandado»: lo que se compra en el mercado, por tramo.
 // Nombres de Costa Rica. Los dibujos son los de la sesión guiada.
-// `revisado: false` hasta que el equipo lo apruebe.
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export type Tramo = "verduras" | "lacteos" | "abarrotes" | "flores";
 
@@ -51,6 +51,6 @@ export const PRODUCTOS: Producto[] = [
   p("flores", "claveles", "Claveles", "flor", "#F2B8A0"),
 ];
 
-export const REVISADO = false;
+export const REVISADO = true;
 
 export const productoDe = (id: string) => PRODUCTOS.find((x) => x.id === id)!;
