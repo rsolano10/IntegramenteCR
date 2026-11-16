@@ -18,6 +18,7 @@ import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import { IntroGerontogimnasia } from "../../components/ui/IntroGerontogimnasia";
 import { useSemanasAnteriores } from "../../lib/semanasAnteriores";
 import { FilaSemana } from "../../components/familiar/FilaSemana";
+import { Cargando } from "../../components/ui/Cargando";
 
 const tipoLabel: Record<PlanTask["tipo"], string> = {
   video: "Video",
@@ -107,7 +108,7 @@ export function Plan() {
   const { data: pendientes } = usePendingReviews(myPatient?.id);
   const { data: planMeta } = useCurrentPlanMeta(myPatient?.id);
 
-  if (loadingPlan) return <div className="flex-1" />;
+  if (loadingPlan) return <Cargando />;
 
   return (
     <div className="grid gap-8">

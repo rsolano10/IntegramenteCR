@@ -5,7 +5,6 @@ import { BotonVolver } from "../../components/ui/BotonVolver";
 
 export function Maltrato() {
   const emergencia = emergencyContacts.find((c) => c.id === "emergencia")!;
-  const conapam = emergencyContacts.find((c) => c.id === "conapam")!;
 
   return (
     <div className="min-h-[84vh] bg-alerta flex items-center justify-center px-4 py-10 sm:px-8 sm:py-12">
@@ -20,16 +19,13 @@ export function Maltrato() {
           falta estar seguro para consultar.
         </p>
         <div className="grid gap-3 mb-6.5">
-          <div className="bg-alerta rounded-2xl p-5.5">
+          <a href={`tel:${emergencia.tel}`} className="block bg-alerta rounded-2xl p-5.5 no-underline text-tinta">
             <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">Riesgo inmediato</p>
             <p className="m-0 font-serif text-[30px]">{emergencia.value}</p>
-          </div>
-          <div className="bg-alerta rounded-2xl p-5.5">
-            <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">{conapam.label}</p>
-            <p className="m-0 text-[17px] leading-relaxed text-alerta-texto-suave">{conapam.value} — {conapam.note}</p>
-          </div>
+            <p className="m-0 mt-1 text-[15px] font-semibold text-alerta-texto">Tocá para llamar</p>
+          </a>
           <div className="bg-campo border border-borde-suave rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
-            Guardá lo que observaste con fechas. No confrontes a solas a la persona que te preocupa.
+            Guardá lo que observaste con fechas. No confrontés a solas a la persona que te preocupa.
           </div>
         </div>
         <div className="border-t border-borde-suave pt-5.5 grid gap-3.5">

@@ -80,19 +80,16 @@ export const professional = {
 // that situation genuinely differs), but both read the actual phone
 // numbers/lines from here via `id` — so a number never has to be updated
 // in two places to stay correct everywhere it's shown.
-export const emergencyContacts = [
-  { id: "emergencia", label: "Emergencia inmediata", value: "9-1-1" },
+// `tel`: lo que se marca al tocar la tarjeta. CONAPAM se quitó hasta tener
+// su número verificado: una tarjeta de ayuda sin número no ayuda.
+export const emergencyContacts: { id: string; label: string; value: string; tel: string; note?: string }[] = [
+  { id: "emergencia", label: "Emergencia inmediata", value: "9-1-1", tel: "911" },
   {
     id: "apoyo",
     label: "Línea de apoyo emocional · Costa Rica",
     value: "1322 · Aquí Estoy",
+    tel: "1322",
     note: "Atención gratuita en crisis, 24 horas.",
-  },
-  {
-    id: "conapam",
-    label: "CONAPAM · Consejo Nacional de la Persona Adulta Mayor",
-    value: "Línea de denuncia y orientación",
-    note: "Para personas adultas mayores en Costa Rica.",
   },
 ];
 

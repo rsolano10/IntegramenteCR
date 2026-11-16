@@ -20,17 +20,19 @@ export function Ideacion() {
           generación del plan.
         </p>
         <div className="grid gap-3 mb-6.5">
-          <div className="bg-alerta rounded-2xl p-5.5">
+          <a href={`tel:${emergencia.tel}`} className="block bg-alerta rounded-2xl p-5.5 no-underline text-tinta">
             <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">Emergencia inmediata</p>
             <p className="m-0 font-serif text-[30px]">{emergencia.value}</p>
-          </div>
-          <div className="bg-alerta rounded-2xl p-5.5">
+            <p className="m-0 mt-1 text-[15px] font-semibold text-alerta-texto">Tocá para llamar</p>
+          </a>
+          <a href={`tel:${apoyo.tel}`} className="block bg-alerta rounded-2xl p-5.5 no-underline text-tinta">
             <p className="m-0 mb-1 text-[15px] text-alerta-texto font-bold">{apoyo.label}</p>
             <p className="m-0 font-serif text-[30px]">{apoyo.value}</p>
             <p className="m-0 mt-1.5 text-[15px] text-alerta-texto-suave">{apoyo.note}</p>
-          </div>
+            <p className="m-0 mt-1 text-[15px] font-semibold text-alerta-texto">Tocá para llamar</p>
+          </a>
           <div className="bg-campo border border-borde-suave rounded-2xl p-5.5 text-[17px] leading-relaxed text-tinta-suave">
-            No la dejes sola. Retirá medicamentos y objetos de riesgo del alcance. Escuchá sin discutir ni minimizar.
+            No dejés a la persona sin compañía. Retirá medicamentos y objetos de riesgo del alcance. Escuchá sin discutir ni minimizar.
           </div>
         </div>
         <div className="border-t border-borde-suave pt-5.5 grid gap-3.5">

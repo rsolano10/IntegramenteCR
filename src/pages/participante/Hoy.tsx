@@ -3,6 +3,7 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
 import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
 import { siguienteDia } from "../../lib/siguienteDia";
+import { Cargando } from "../../components/ui/Cargando";
 
 const rutaActividad = (id: string) => `/app/participante/actividad/${id}`;
 
@@ -16,7 +17,7 @@ export function ParticipanteHoy() {
   const allTasks = days?.flatMap((d) => d.tasks) ?? [];
   const weekComplete = allTasks.length > 0 && allTasks.every((t) => t.estado !== "pendiente" && t.estado !== "futuro");
 
-  if (loadingPlan) return <div className="flex-1" />;
+  if (loadingPlan) return <Cargando />;
 
   return (
     <>

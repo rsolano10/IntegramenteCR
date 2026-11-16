@@ -6,6 +6,7 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useGuardarProgreso, useCurrentPlanMeta } from "../../lib/usePlan";
 import { guionDe } from "../../lib/sesiones";
 import { PanelActividad } from "../../components/actividad/PanelActividad";
+import { Cargando } from "../../components/ui/Cargando";
 
 // La actividad, vista por la persona: el mismo tablero que la familia, en
 // letra grande, con «Escuchar» y «Necesito ayuda». Se registra al terminar
@@ -27,7 +28,7 @@ export function ParticipanteActividad() {
     </Link>
   );
 
-  if (loadingPlan) return <div className="flex-1" />;
+  if (loadingPlan) return <Cargando />;
 
   if (!task || !today) {
     return (

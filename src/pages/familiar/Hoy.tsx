@@ -3,6 +3,8 @@ import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
 import { Button } from "../../components/ui/Button";
 import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
 import { siguienteDia } from "../../lib/siguienteDia";
+import { AvisoPedidoAyuda } from "../../components/familiar/AvisoPedidoAyuda";
+import { Cargando } from "../../components/ui/Cargando";
 
 const rutaActividad = (id: string) => `/app/hoy/actividad/${id}`;
 
@@ -17,10 +19,11 @@ export function Hoy() {
   const weekComplete = allTasks.length > 0 && allTasks.every((t) => t.estado !== "pendiente" && t.estado !== "futuro");
   const quien = myPatient?.nombre?.split(" ")[0] ?? null;
 
-  if (loadingPlan) return <div className="flex-1" />;
+  if (loadingPlan) return <Cargando />;
 
   return (
     <div className="grid gap-6">
+      <AvisoPedidoAyuda patientId={myPatient?.id} nombre={quien ?? "Tu familiar"} />
       {tasks.length === 0 ? (
         <DiaLibre mensaje="No hay actividades programadas para hoy. Podés mirar lo que viene en la pestaña de la semana." />
       ) : (

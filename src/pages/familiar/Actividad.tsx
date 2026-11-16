@@ -4,6 +4,7 @@ import { usePlan, useGuardarProgreso, useCurrentPlanMeta } from "../../lib/usePl
 import { origenDeActividad } from "../../lib/useVolver";
 import { BotonVolver } from "../../components/ui/BotonVolver";
 import { PanelActividad } from "../../components/actividad/PanelActividad";
+import { Cargando } from "../../components/ui/Cargando";
 
 // La pantalla de una actividad, igual desde Hoy (/app/hoy/actividad/:id) y
 // desde Mi semana (/app/plan/actividad/:id). Es un tablero de la actividad
@@ -22,7 +23,7 @@ export function Actividad() {
   const task = dia?.tasks.find((t) => t.id === taskId) ?? null;
   const botonVolver = <BotonVolver respaldo={origen.ruta} texto={`Volver a ${origen.nombre}`} className="mb-1" />;
 
-  if (loadingPlan) return <div className="flex-1" />;
+  if (loadingPlan) return <Cargando />;
 
   if (!task || !dia) {
     return (

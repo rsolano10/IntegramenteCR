@@ -7,6 +7,7 @@ import { usePendingReviews, useSubmitWeekReview } from "../../lib/usePlan";
 import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
 import { BotonVolver } from "../../components/ui/BotonVolver";
+import { Cargando } from "../../components/ui/Cargando";
 
 function formatWeekOf(publishAt: string) {
   return new Date(publishAt).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
@@ -33,7 +34,7 @@ export function Revision() {
   const [error, setError] = useState("");
 
   if (!planId) {
-    if (loadingPending) return <div className="flex-1" />;
+    if (loadingPending) return <Cargando />;
     return (
       <div>
         <BotonVolver respaldo={isParticipante ? "/app/participante/hoy" : "/app/plan"} className="mb-1" />

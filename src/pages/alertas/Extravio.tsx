@@ -36,7 +36,7 @@ export function Extravio() {
               <span>Identificación con nombre y teléfono en la ropa, el bolso y la billetera.</span>
               <span>Avisá a un vecino de confianza y al pulpero del barrio.</span>
               <span>Ofrecé una caminata acompañada a la hora en que suele querer salir.</span>
-              <span>No discutas para retenerla: acompañá y redirigí.</span>
+              <span>No discutás para que se quede: acompañá y redirigí.</span>
             </div>
           </div>
           <div className="border-t border-borde-suave pt-5 flex gap-3 flex-wrap items-center">

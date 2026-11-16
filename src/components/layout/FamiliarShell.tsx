@@ -137,6 +137,12 @@ export function FamiliarShell() {
   }, [onboardingRow, hydrateOnboarding]);
 
   const nombreFamiliar = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
+  // Saludo solo en las tres pestañas. En una actividad, la emergencia, la
+  // evaluación o el historial, lo importante queda arriba.
+  const esPestana = pathname === "/app/hoy" || pathname === "/app/plan" || pathname === "/app/ayuda";
+  // El aviso de la semana gratis, solo donde se mira el plan: nunca en una
+  // emergencia ni en medio de una actividad.
+  const conAvisoCuenta = pathname === "/app/hoy" || pathname === "/app/plan";
   // Ayuda es una pantalla de chat (como WhatsApp): encabezado y barra para
   // escribir fijos, solo la conversación se desplaza.
   const modoChat = pathname === "/app/ayuda" && !pendiente && !isLoading;
@@ -149,7 +155,7 @@ export function FamiliarShell() {
       className={modoChat ? "im-in flex flex-col overflow-hidden" : "im-in min-h-full pb-24 md:pb-0"}
       style={modoChat ? { height: altoChat ?? "calc(100dvh - 72px)" } : undefined}
     >
-      {/* Mismo saludo en todas las secciones, también en Ayuda. */}
+      {(esPestana || pendiente) && (
       <div className="shrink-0 bg-verde-profundo text-white px-5 pt-6 pb-6 sm:px-8 lg:px-12">
         <div className="max-w-3xl mx-auto">
           <p className="m-0 mb-1 text-sm text-[#c4dbdb] first-letter:uppercase">
@@ -158,6 +164,7 @@ export function FamiliarShell() {
           <h1 className="font-serif font-normal text-2xl sm:text-[28px] m-0 text-white">Hola, {nombreFamiliar}</h1>
         </div>
       </div>
+      )}
 
       {!pendiente && (
         <div className="shrink-0 bg-white md:px-8 lg:px-12">
@@ -180,7 +187,7 @@ export function FamiliarShell() {
           <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeAyuda={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} />
         ) : (
           <>
-            {myPatient && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
+            {myPatient && conAvisoCuenta && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
             <Outlet />
           </>
         )}

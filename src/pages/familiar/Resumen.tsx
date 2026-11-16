@@ -11,6 +11,7 @@ import { waEquipo } from "../../lib/whatsapp";
 import { moduloLabel, moduloTheme, type ResourceModulo } from "../../lib/modulos";
 import { calcularResumen, titularSemana, DIAS_SEMANA, type TareaResumen } from "../../lib/resumenSemana";
 import { BotonVolver } from "../../components/ui/BotonVolver";
+import { Cargando } from "../../components/ui/Cargando";
 
 const animo: Record<string, { texto: string; frase: string; fondo: string; tinta: string }> = {
   better: { texto: "Mejor", frase: "El ánimo estuvo mejor esta semana. ¡Qué lindo!", fondo: "#e3efe3", tinta: "#4c7a4c" },
@@ -53,7 +54,7 @@ export function Resumen() {
     enabled: !!planId,
   });
 
-  if (isLoading) return <div className="flex-1" />;
+  if (isLoading) return <Cargando />;
 
   const r = calcularResumen(tareas ?? []);
   const { titulo, frase } = titularSemana(r.pct);

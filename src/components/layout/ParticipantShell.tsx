@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../lib/store";
 import { useSession } from "../../lib/useSession";
-import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
+import { CuentaRechazada } from "./EstadoCuentaAviso";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { supabase } from "../../lib/supabase";
 import { uploadAvatar } from "../../lib/avatar";
@@ -235,6 +235,10 @@ export function ParticipantShell() {
   const nombre = session.status === "authed" ? session.profile.nombre.split(" ")[0] : "";
   // The tour describes the activities screen — wait until there is one.
   const tour = useProductTour(!!myPatient && !pendiente);
+  // El saludo solo en Hoy: en una actividad o en la ayuda, lo importante
+  // tiene que quedar arriba.
+  const { pathname } = useLocation();
+  const conSaludo = pathname === "/app/participante/hoy" || pendiente;
 
   return (
     <div className="im-in min-h-full flex flex-col">
@@ -244,6 +248,7 @@ export function ParticipantShell() {
           <Logo size="sm" />
         </div>
       </div>
+      {conSaludo && (
       <div className="bg-beige-serenidad px-5 py-6 sm:px-8">
         <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
           <div>
@@ -255,6 +260,7 @@ export function ParticipantShell() {
           <AvatarMenu />
         </div>
       </div>
+      )}
       <div className="flex-1 px-5 py-6 sm:px-8 flex justify-center">
         <div className="w-full max-w-xl flex flex-col gap-5.5">
           {rechazada && myPatient ? (
@@ -263,7 +269,8 @@ export function ParticipantShell() {
             <PendienteRevision programaElegido={myPatient?.programa_elegido ?? true} />
           ) : (
             <>
-              {myPatient && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
+              {/* Sin el aviso de la semana gratis: el participante no compra
+                  nada, y menos en la pantalla de pedir ayuda. */}
               <Outlet />
             </>
           )}

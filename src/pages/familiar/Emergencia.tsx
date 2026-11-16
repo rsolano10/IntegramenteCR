@@ -9,13 +9,13 @@ const situations: { title: string; detail: string; to: string }[] = [
     detail: "Confusión repentina, fiebre, ya no reconoce el lugar.",
     to: "/app/alerta/cambio",
   },
-  { title: "No la encuentro / salió sola", detail: "Se fue de la casa y no sé dónde está.", to: "/app/alerta/extravio" },
+  { title: "No aparece / salió sin avisar", detail: "Se fue de la casa y no sé dónde está.", to: "/app/alerta/extravio" },
   {
     title: "Me preocupa que se lastime a propósito",
     detail: "Dijo que no quiere seguir viviendo, o algo parecido.",
     to: "/app/alerta/ideacion",
   },
-  { title: "Sospecho maltrato o abandono", detail: "De parte de otra persona que la cuida.", to: "/app/alerta/maltrato" },
+  { title: "Sospecho maltrato o abandono", detail: "De parte de alguien que le cuida.", to: "/app/alerta/maltrato" },
 ];
 
 // The one visible, always-there door into the crisis screens — before this,
@@ -26,7 +26,7 @@ export function Emergencia() {
   const navigate = useNavigate();
 
   return (
-    <div className="im-in max-w-[680px] mx-auto px-5 py-10 pb-16 sm:px-8 lg:py-14 lg:pb-20">
+    <div className="im-in">
       <BotonVolver respaldo="/app/hoy" className="mb-2" />
       <p className="m-0 mb-2.5 text-xs sm:text-sm tracking-[0.16em] uppercase text-tinta-tenue">¿Qué está pasando?</p>
       <h1 className="font-serif font-normal text-[26px] sm:text-[34px] leading-[1.16] m-0 mb-3">Contame para orientarte mejor</h1>
@@ -60,14 +60,15 @@ export function Emergencia() {
       </div>
       {/* Antes vivían en "Contactos de emergencia" del menú de la cuenta —
           ahora están donde se buscan en una urgencia. */}
-      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Teléfonos de ayuda</p>
-      <div className="grid gap-2.5 sm:grid-cols-3">
+      <p className="m-0 mb-3 text-[13px] tracking-[0.14em] uppercase text-tinta-suave">Teléfonos de ayuda</p>
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {emergencyContacts.map((c) => (
-          <div key={c.id} className="bg-white border border-borde rounded-2xl p-4">
-            <p className="m-0 mb-1 text-[12.5px] font-bold text-alerta-texto leading-snug">{c.label}</p>
-            <p className="m-0 font-serif text-[20px] leading-tight text-tinta">{c.value}</p>
-            {c.note && <p className="m-0 mt-1 text-[12.5px] text-tinta-tenue">{c.note}</p>}
-          </div>
+          <a key={c.id} href={`tel:${c.tel}`} className="block bg-white border border-borde rounded-2xl p-4 no-underline hover:border-verde-serenidad">
+            <p className="m-0 mb-1 text-[14px] font-bold text-alerta-texto leading-snug">{c.label}</p>
+            <p className="m-0 font-serif text-[24px] leading-tight text-tinta">{c.value}</p>
+            {c.note && <p className="m-0 mt-1 text-[14px] text-tinta-suave">{c.note}</p>}
+            <p className="m-0 mt-2 text-[15px] font-semibold text-verde-profundo">Tocá para llamar</p>
+          </a>
         ))}
       </div>
     </div>

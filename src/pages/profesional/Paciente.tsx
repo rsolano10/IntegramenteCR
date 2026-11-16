@@ -20,6 +20,7 @@ import { VinculosTab } from "../../components/profesional/paciente/VinculosTab";
 import { Caja, CajaAviso, CajaPestanas, Pagina } from "../../components/profesional/Caja";
 import { Avatar } from "../../components/profesional/usuarios/piezas";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
+import { PedidosAyudaPaciente } from "../../components/profesional/PedidosAyudaPaciente";
 import { PerfilRecursosCard } from "../../components/profesional/paciente/PerfilRecursosCard";
 
 type Tab = "evaluacion" | "semana" | "planificar" | "asistente" | "cuentas";
@@ -151,6 +152,7 @@ export function Paciente() {
       )}
 
       <AlertasRiesgoBanner patientId={patient.id} />
+      <PedidosAyudaPaciente patientId={patient.id} />
 
       <Caja
         eyebrow="Paciente"

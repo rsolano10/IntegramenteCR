@@ -6,6 +6,11 @@ import { waEquipo } from "../../lib/whatsapp";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { BigActionButton } from "../../components/ui/BigActionButton";
+import { Cargando } from "../../components/ui/Cargando";
+import { PhoneIcon } from "../../components/ui/Icons";
+import { normalizeCrPhone } from "../../lib/phone";
+
+const botonGrande = "flex items-center justify-center gap-3 min-h-17 rounded-2xl font-sans font-bold text-xl no-underline";
 
 export function Ayuda() {
   const navigate = useNavigate();
@@ -27,25 +32,74 @@ export function Ayuda() {
     enabled: !!myPatient,
   });
 
-  const [confirmed, setConfirmed] = useState(false);
+  // Nombre y teléfono del familiar a cargo, para el botón «Llamar a …».
+  const { data: familiar } = useQuery({
+    queryKey: ["familiar-de-contacto", myPatient?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("familiar_de_contacto", { p_patient_id: myPatient!.id });
+      if (error) throw error;
+      return ((data as { nombre: string | null; telefono: string | null }[] | null) ?? [])[0] ?? null;
+    },
+    enabled: !!myPatient && hasFamiliar === true,
+  });
 
-  if (loadingHasFamiliar) return <div className="flex-1" />;
+  const [confirmed, setConfirmed] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [fallo, setFallo] = useState(false);
+
+  // El pedido se guarda de verdad: el familiar lo ve al abrir Hoy y la
+  // clínica, en la ficha. Solo si se guardó se dice que se dejó el aviso.
+  async function pedirAyuda() {
+    if (!hasFamiliar) {
+      setConfirmed(true);
+      return;
+    }
+    setEnviando(true);
+    setFallo(false);
+    const { error } = await supabase.rpc("pedir_ayuda", { p_nota: draft.trim() || null });
+    setEnviando(false);
+    if (error) setFallo(true);
+    else setConfirmed(true);
+  }
+
+  if (loadingHasFamiliar) return <Cargando />;
+
+  const nombreFamiliar = familiar?.nombre?.split(" ")[0] ?? null;
+  const tel = familiar?.telefono ? normalizeCrPhone(familiar.telefono) : null;
+  const llamar = (
+    <div className="grid gap-3">
+      {tel && (
+        <a href={`tel:${tel}`} className={`${botonGrande} bg-verde-profundo text-white`}>
+          <PhoneIcon className="w-7 h-7" /> Llamar a {nombreFamiliar ?? "tu familiar"}
+        </a>
+      )}
+      <a href="tel:911" className={`${botonGrande} border-2 border-semaforo-rojo bg-white text-semaforo-rojo`}>
+        Es una emergencia: 9-1-1
+      </a>
+    </div>
+  );
 
   if (!confirmed) {
     return (
       <div className="flex flex-col gap-6 flex-1 justify-center text-center">
         <p className="m-0 text-[30px] leading-snug font-serif">
-          {hasFamiliar ? "Vamos a avisarle a tu familiar" : "Vamos a escribirle a tu equipo por WhatsApp"}
+          {hasFamiliar ? `Vamos a avisarle a ${nombreFamiliar ?? "tu familiar"}` : "Vamos a escribirle a tu equipo por WhatsApp"}
         </p>
         <p className="m-0 text-[20px] leading-relaxed text-tinta-suave">¿Querés continuar?</p>
         <div className="grid gap-3">
-          <BigActionButton variant="primary" size="md" onClick={() => setConfirmed(true)}>
-            Sí, continuar
+          <BigActionButton variant="ink" size="md" onClick={pedirAyuda} disabled={enviando}>
+            {enviando ? "Avisando…" : "Sí, continuar"}
           </BigActionButton>
           <BigActionButton variant="secondary" size="md" onClick={() => navigate("/app/participante/hoy")}>
             Cancelar
           </BigActionButton>
         </div>
+        {fallo && (
+          <div role="alert" className="grid gap-4">
+            <p className="m-0 text-[19px] leading-relaxed text-alerta-texto">No pudimos dejar el aviso. Revisá la conexión, o llamá directamente.</p>
+            {llamar}
+          </div>
+        )}
       </div>
     );
   }
@@ -53,11 +107,12 @@ export function Ayuda() {
   if (hasFamiliar) {
     return (
       <div className="flex flex-col gap-6 flex-1 justify-center text-center">
-        <p className="m-0 text-[32px] leading-snug font-serif">
-          Ya le avisamos a tu familiar
+        <p className="m-0 text-[32px] leading-snug font-serif">Le dejamos el aviso a {nombreFamiliar ?? "tu familiar"}</p>
+        <p className="m-0 text-[21px] leading-relaxed text-tinta-suave">
+          Lo va a ver cuando abra la app. Si necesitás ayuda ya, llamá.
         </p>
-        <p className="m-0 text-[22px] leading-relaxed text-tinta-suave">Esperá tranquilo. No hace falta hacer nada más.</p>
-        <BigActionButton variant="primary" size="md" onClick={() => navigate("/app/participante/hoy")}>
+        {llamar}
+        <BigActionButton variant="secondary" size="md" onClick={() => navigate("/app/participante/hoy")}>
           Volver
         </BigActionButton>
       </div>
