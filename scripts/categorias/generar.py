@@ -144,17 +144,20 @@ L["nutricion"] = ("Nutrición", "#e1ecd3", mezcla("#cfe0b8","#6f8f4e",0.5), f'''
 <rect x="96" y="198" width="48" height="10" rx="5" fill="{INK}"/>
 ''')
 
-# Bienvenida: el isotipo grande.
-L["bienvenida"] = ("Bienvenida", "#9fbfc3", mezcla("#6a969c","#3f6a70",0.5), f'''
-<g transform="rotate(-8 120 120)">
-{gota(52,52,86,0,"#4f8a91")}
-{gota(132,58,74,-80,BEIGE)}
-{gota(56,140,66,100,MOST)}
-</g>
-<circle cx="190" cy="186" r="8" fill="{PAPEL}" opacity="0.8"/>
-''')
+# Bienvenida: el isotipo oficial, tal cual (public/marca/isotipo.png, sin
+# redibujar ni cambiar colores), sobre un fondo claro donde se ven sus tres
+# gotas. Sin grano encima, para no alterar el logo.
+import base64
+_iso = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "public", "marca", "isotipo.png")
+_b64 = base64.b64encode(open(_iso, "rb").read()).decode()
+BIENVENIDA = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" role="img" aria-label="Bienvenida">
+<defs><linearGradient id="f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3eeee"/></linearGradient></defs>
+<rect width="240" height="240" fill="url(#f)"/>
+<image x="48" y="51" width="144" height="138" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{_b64}" xlink:href="data:image/png;base64,{_b64}"/>
+</svg>'''
 
 os.makedirs(OUT, exist_ok=True)
 for k, (nombre, claro, fuerte, cuerpo) in L.items():
     open(f"{OUT}/{k}.svg", "w").write(svg(nombre, claro, fuerte, cuerpo))
+open(f"{OUT}/bienvenida.svg", "w").write(BIENVENIDA)
 print("ok", len(L))
