@@ -1,5 +1,5 @@
 // Banco de «Cada cosa en su lugar». Contenido de Costa Rica.
-// `revisado: true` hasta que el equipo clínico lo apruebe.
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 // Un elemento puede ir en más de un grupo (por ejemplo, el tomate).
 
 export interface GrupoBanco {

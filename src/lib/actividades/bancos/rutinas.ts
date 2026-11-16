@@ -1,7 +1,7 @@
 // Banco de «Ordenar los pasos»: rutinas cotidianas de Costa Rica, en orden.
 // `intercambiables`: pares de pasos (índices) que se aceptan en cualquier
 // orden, para no rechazar órdenes razonables.
-// `revisado: true` hasta que el equipo clínico lo apruebe.
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export interface Rutina {
   id: string;

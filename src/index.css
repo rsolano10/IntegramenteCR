@@ -394,6 +394,12 @@
   from { transform: translateX(-18%); }
   to { transform: none; }
 }
+/* La campana de la iglesia se mece. */
+@keyframes pueblo-campana {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-16deg); }
+  75% { transform: rotate(16deg); }
+}
 /* Se arranca la hoja del almanaque. */
 @keyframes pueblo-arranque {
   0% { transform: none; opacity: 1; }

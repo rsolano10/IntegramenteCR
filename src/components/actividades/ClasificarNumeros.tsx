@@ -91,7 +91,7 @@ const etiquetaCaja = (c: ConfigClasificar["cajas"][number]) => {
   return s ? `${c.etiqueta} (${s})` : c.etiqueta;
 };
 
-export function BotonEscuchar({ texto }: { texto: string }) {
+export function BotonEscuchar({ texto, etiqueta = "Escuchar la consigna" }: { texto: string; etiqueta?: string }) {
   const [leyendo, setLeyendo] = useState(false);
   if (!lecturaDisponible) return null;
   return (
@@ -112,7 +112,7 @@ export function BotonEscuchar({ texto }: { texto: string }) {
         <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" />
         <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
       </svg>
-      {leyendo ? "Detener" : "Escuchar la consigna"}
+      {leyendo ? "Detener" : etiqueta}
     </button>
   );
 }

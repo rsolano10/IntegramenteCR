@@ -1,6 +1,6 @@
 // Figuras dibujadas a mano en SVG (components/actividades/interactivas/Figura.tsx).
 // Acá solo los nombres, para la lógica y los lectores de pantalla.
-// `revisado: true` hasta que el equipo clínico lo apruebe.
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export interface FiguraBanco {
   id: string;

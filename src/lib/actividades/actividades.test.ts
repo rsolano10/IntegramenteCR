@@ -17,6 +17,8 @@ import { generarIntruso } from "./intruso.ts";
 import { CONJUNTOS } from "./bancos/intrusos.ts";
 import { LUGARES, OBJETOS, generarCorredor, lugarEsPiso, revisarCorredor } from "./queCambio.ts";
 import { PINTURAS, celda, contraste, generarRueda, objetivo, revisarRueda } from "./pintarRueda.ts";
+import { DICHOS } from "./bancos/dichos.ts";
+import { generarDicho, dichos } from "./dichos.ts";
 import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
@@ -41,7 +43,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 14);
+  assert.equal(ACTIVIDADES.length, 15);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -553,4 +555,37 @@ test("pulpería: por defecto sigue pagando (los recursos actuales no cambian); m
   const v = prepararSesion(ex("pago-exacto", { nivel: "suave", config: { modo: "vuelto" } }), 3);
   assert.ok(v.ok);
   if (v.ok) assert.ok((v.ejercicios as { modo?: string; monto: number }[]).every((e) => e.modo === "vuelto" && e.monto < 500));
+});
+
+test("dichos: una sola opción correcta, sin finales aceptados como distractores, sin repetir", () => {
+  const azar = crearAzar(7);
+  for (const nivel of NIVELES) {
+    const c = dichos.porNivel[nivel];
+    assert.deepEqual(dichos.validar(c), []);
+    const ejs = dichos.generar(c, 8, { azar, ahora: new Date() });
+    assert.equal(new Set(ejs.map((e) => e.dicho)).size, ejs.length, `${nivel}: no repite dichos`);
+    for (const e of ejs) {
+      const x = DICHOS.find((d) => d.id === e.dicho)!;
+      assert.equal(e.opciones.length, c.opciones);
+      assert.equal(new Set(e.opciones).size, e.opciones.length, "opciones distintas");
+      assert.equal(e.opciones[e.correcta], e.tipo === "completar" ? x.final : x.significado);
+      if (e.tipo === "completar") for (const a of x.aceptados ?? []) assert.ok(!e.opciones.includes(a), `${x.id}: «${a}» también vale`);
+      if (c.soloMuyConocidos) assert.ok(x.muyConocido);
+    }
+  }
+  // El mixto alterna.
+  const mix = dichos.generar(dichos.porNivel.retador, 6, { azar: crearAzar(3), ahora: new Date() });
+  for (let i = 1; i < mix.length; i++) assert.notEqual(mix[i].tipo, mix[i - 1].tipo);
+});
+
+test("dichos: el banco es coherente", () => {
+  assert.ok(DICHOS.filter((d) => d.muyConocido).length >= 8, "suficientes dichos para el nivel suave");
+  assert.equal(new Set(DICHOS.map((d) => d.id)).size, DICHOS.length);
+  assert.equal(new Set(DICHOS.map((d) => d.final)).size, DICHOS.length, "finales distintos");
+  for (const d of DICHOS) {
+    assert.ok(d.inicio.endsWith("…"), d.id);
+    assert.ok(d.parecidos.length >= 2, d.id);
+    for (const p of d.parecidos) assert.ok(!DICHOS.some((o) => o.final === p), `${d.id}: «${p}» es el final de otro dicho`);
+  }
+  assert.ok(generarDicho(dichos.porNivel.suave, crearAzar(1), "significado").opciones.length === 3);
 });

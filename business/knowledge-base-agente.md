@@ -254,6 +254,7 @@ Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa e
 - **El corredor**: mirar el corredor de una casa y, después, tocar lo que cambió.
 - **La carreta por pintar**: elegir botes de pintura y pintar una rueda igual a la del modelo.
 - **Las señas**: seguir una dirección al estilo tico («de la iglesia, 200 metros al sur…») en el mapa del pueblo y tocar la casa a la que se llega.
+- **La banca del parque**: completar dichos y refranes de siempre («Camarón que se duerme…») o elegir lo que quieren decir.
 
 ### 6.11 "Mi semana"
 - Los días de la semana con sus actividades; el día de hoy aparece resaltado.

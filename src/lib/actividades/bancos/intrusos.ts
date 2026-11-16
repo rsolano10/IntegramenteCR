@@ -1,5 +1,5 @@
 // Banco de «La olla de carne» (el que no va). Contenido de Costa Rica.
-// `revisado: true` hasta que el equipo clínico lo apruebe. Cada conjunto
+// `revisado: true`: aprobado por el equipo clínico. Cada conjunto
 // tiene un único intruso defendible: todo lo de `van` cumple el criterio y
 // nada de `intrusos` lo cumple. Si el equipo marca un conjunto como
 // ambiguo, sale del banco.

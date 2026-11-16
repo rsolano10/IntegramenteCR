@@ -1,6 +1,6 @@
 // Banco de palabras de Costa Rica para «Armá la palabra» y «En orden».
 // `pista`: categoría o definición corta que se puede mostrar como ayuda.
-// `revisado: true` hasta que el equipo clínico lo apruebe.
+// `revisado: true`: aprobado por el equipo clínico (16 de noviembre de 2026).
 
 export interface PalabraBanco {
   palabra: string;
