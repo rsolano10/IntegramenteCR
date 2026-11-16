@@ -195,14 +195,6 @@ export function PanelActividad({
         </section>
       )}
 
-      {/* Cómo le fue la vez pasada (si contaron qué ayuda necesitó) */}
-      {task.comentario && (
-        <section className="rounded-[22px] bg-fila-calida px-4 py-3.5">
-          <p className={`m-0 mb-1 tracking-[0.12em] uppercase font-semibold text-semaforo-amarillo-texto ${t.seccion}`}>La ayuda que necesitó</p>
-          <p className={`m-0 leading-relaxed text-tinta-suave ${t.cuerpo}`}>{task.comentario}</p>
-        </section>
-      )}
-
       {/* Al final, la acción */}
       <div className="grid gap-2 pt-1">
         {accion.nota && <p className={`m-0 rounded-2xl bg-campo border border-borde-suave px-4 py-3 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{accion.nota}</p>}
