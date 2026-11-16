@@ -8,14 +8,12 @@
 <rect width="240" height="240" fill="url(#luz)"/>
 
 <path d="M120.0,30 A72.0,72.0 0 0 1 192,102.0 L192,174 L120.0,174 A72.0,72.0 0 0 1 48,102.0 A72.0,72.0 0 0 1 120.0,30 Z" fill="#fff" opacity="0.36" transform="rotate(45 120.0 102.0)" />
-<g stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.85"><path d="M30 168 C60 150 84 146 104 150" stroke-dasharray="2 16"/><path d="M40 196 C70 180 96 178 116 182" stroke-dasharray="2 16"/></g>
-<circle cx="150" cy="118" r="58" fill="#f7f4e9"/>
-<path d="M150 60 A58 58 0 0 1 208 118 L150 118 Z" fill="#6a969c"/>
-<path d="M150 118 L150 176 A58 58 0 0 1 92 118 Z" fill="#c0664f"/>
-<path d="M92 118 A58 58 0 0 1 150 60 L150 118 Z" fill="#f4d096"/>
-<circle cx="150" cy="118" r="58" fill="none" stroke="#1f3338" stroke-width="6"/>
-<circle cx="150" cy="118" r="9" fill="#1f3338"/>
-<path d="M68.0,58 A14.0,14.0 0 0 1 82,72.0 L82,86 L68.0,86 A14.0,14.0 0 0 1 54,72.0 A14.0,14.0 0 0 1 68.0,58 Z" fill="#3f6a70" opacity="1" transform="rotate(0 68.0 72.0)" />
+<g stroke="#f7f4e9" stroke-width="7" stroke-linecap="round"><path d="M26 104 H66"/><path d="M18 128 H58"/><path d="M30 152 H64"/></g>
+<path d="M80 92 C88 84 104 86 108 98 L116 116 C132 124 156 126 184 132 C204 136 214 148 212 162 L210 170 H76 C70 170 66 164 68 158 Z" fill="#c0664f" stroke="#1f3338" stroke-width="6" stroke-linejoin="round"/>
+<path d="M70 160 H212 L210 178 C210 184 204 188 198 188 H80 C72 188 68 182 70 176 Z" fill="#f7f4e9" stroke="#1f3338" stroke-width="6" stroke-linejoin="round"/>
+<g stroke="#f7f4e9" stroke-width="5" stroke-linecap="round"><path d="M112 112 L122 104"/><path d="M124 118 L134 110"/><path d="M136 122 L146 114"/></g>
+<path d="M84 104 C92 100 100 102 102 110" stroke="#f4d096" stroke-width="6" fill="none" stroke-linecap="round"/>
+<path d="M180.0,52 A20.0,20.0 0 0 1 200,72.0 L200,92 L180.0,92 A20.0,20.0 0 0 1 160,72.0 A20.0,20.0 0 0 1 180.0,52 Z" fill="#3f6a70" opacity="1" transform="rotate(0 180.0 72.0)" />
 
 <rect width="240" height="240" filter="url(#grano)"/>
 </svg>

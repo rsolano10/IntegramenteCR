@@ -68,17 +68,15 @@ L["gerontogimnasia"] = ("Gerontogimnasia", "#fbe6bb", mezcla("#f4d096","#c99a45"
 {gota(176,170,30,180,TERRA)}
 ''')
 
-# Movimiento: pelota en vuelo con estela.
+# Movimiento: una zapatilla en marcha, con líneas de velocidad.
 L["movimiento"] = ("Movimiento", "#fdeccd", mezcla("#fadfa9","#e8b857",0.6), f'''
 {escenario()}
-<g stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.85"><path d="M30 168 C60 150 84 146 104 150" stroke-dasharray="2 16"/><path d="M40 196 C70 180 96 178 116 182" stroke-dasharray="2 16"/></g>
-<circle cx="150" cy="118" r="58" fill="{PAPEL}"/>
-<path d="M150 60 A58 58 0 0 1 208 118 L150 118 Z" fill="{VS}"/>
-<path d="M150 118 L150 176 A58 58 0 0 1 92 118 Z" fill="{TERRAF}"/>
-<path d="M92 118 A58 58 0 0 1 150 60 L150 118 Z" fill="{MOST}"/>
-<circle cx="150" cy="118" r="58" fill="none" stroke="{INK}" stroke-width="6"/>
-<circle cx="150" cy="118" r="9" fill="{INK}"/>
-{gota(54,58,28,0,VP)}
+<g stroke="{PAPEL}" stroke-width="7" stroke-linecap="round"><path d="M26 104 H66"/><path d="M18 128 H58"/><path d="M30 152 H64"/></g>
+<path d="M80 92 C88 84 104 86 108 98 L116 116 C132 124 156 126 184 132 C204 136 214 148 212 162 L210 170 H76 C70 170 66 164 68 158 Z" fill="{TERRAF}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>
+<path d="M70 160 H212 L210 178 C210 184 204 188 198 188 H80 C72 188 68 182 70 176 Z" fill="{PAPEL}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>
+<g stroke="{PAPEL}" stroke-width="5" stroke-linecap="round"><path d="M112 112 L122 104"/><path d="M124 118 L134 110"/><path d="M136 122 L146 114"/></g>
+<path d="M84 104 C92 100 100 102 102 110" stroke="{MOST}" stroke-width="6" fill="none" stroke-linecap="round"/>
+{gota(160,52,40,0,VP)}
 ''')
 
 # Música: maraca y notas.
