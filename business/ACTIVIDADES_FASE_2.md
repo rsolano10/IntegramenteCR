@@ -324,6 +324,26 @@ Después de cada tanda: capturas a 360 x 740 y 1280 x 800 de cada escena nueva, 
 
 Por cada actividad: recurso en la Biblioteca (COG-047 en adelante), portada en "Juegos del pueblo", y una línea en la base de conocimiento del asistente (`business/knowledge-base-agente.md`) con el nombre del juego y qué hace la persona.
 
+### Estado (16 de noviembre de 2026)
+
+- **Tanda A:** hecha y aprobada por la clínica. Son COG-047 a COG-050 y el modo vuelto.
+- **Tanda B:** hecha, espera aprobación:
+
+  | Código | Juego |
+  |---|---|
+  | COG-051 | La banca del parque |
+  | COG-052 | El mandado |
+  | COG-053 | La radio y El correo |
+  | COG-054 | La pizarra de la escuela |
+
+  Sus bancos quedaron con `revisado: false`.
+
+- **Valores por defecto mientras las decisiones siguen abiertas:**
+  - **Dictado (6.2):** apagado. La clínica puede permitirlo en cada recurso.
+  - **Voz (6.4):** sin pregenerar. Cada aviso o lista se genera la primera vez que alguien lo escucha y queda guardado.
+  - **Sonidos (6.3):** solo visuales (campanas, radio y timbre).
+- **Tanda C:** El corral y La pizarra de la cocina. Pendiente.
+
 ## 6. Decisiones abiertas
 
 1. **Contenido cultural.** Quién del equipo revisa los bancos de dichos, señas, avisos de radio, cartas y escenarios de agenda.
