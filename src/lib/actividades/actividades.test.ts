@@ -19,6 +19,8 @@ import { LUGARES, OBJETOS, generarCorredor, lugarEsPiso, revisarCorredor } from 
 import { PINTURAS, celda, contraste, generarRueda, objetivo, revisarRueda } from "./pintarRueda.ts";
 import { DICHOS } from "./bancos/dichos.ts";
 import { generarDicho, dichos } from "./dichos.ts";
+import { PRODUCTOS } from "./bancos/mandado.ts";
+import { mandado, revisarBolsa } from "./mandado.ts";
 import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
@@ -43,7 +45,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 15);
+  assert.equal(ACTIVIDADES.length, 16);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -588,4 +590,32 @@ test("dichos: el banco es coherente", () => {
     for (const p of d.parecidos) assert.ok(!DICHOS.some((o) => o.final === p), `${d.id}: «${p}» es el final de otro dicho`);
   }
   assert.ok(generarDicho(dichos.porNivel.suave, crearAzar(1), "significado").opciones.length === 3);
+});
+
+test("mandado: la lista y las otras cosas están en los puestos, sin repetir", () => {
+  const azar = crearAzar(11);
+  for (const nivel of NIVELES) {
+    const c = mandado.porNivel[nivel];
+    assert.deepEqual(mandado.validar(c), []);
+    for (const e of mandado.generar(c, 6, { azar, ahora: new Date() })) {
+      const enPuestos = e.puestos.flatMap((p) => p.items);
+      assert.equal(e.lista.length, c.productos);
+      assert.equal(enPuestos.length, c.productos + c.distractores, `${nivel}: cantidad en los puestos`);
+      assert.equal(new Set(enPuestos).size, enPuestos.length, "sin repetidos");
+      for (const id of e.lista) assert.ok(enPuestos.includes(id), `${id} está en un puesto`);
+      for (const p of e.puestos) for (const id of p.items) assert.equal(PRODUCTOS.find((x) => x.id === id)!.tramo, p.tramo);
+      if (c.agruparPorTramo) {
+        const orden = ["verduras", "lacteos", "abarrotes", "flores"];
+        const t = e.lista.map((id) => orden.indexOf(PRODUCTOS.find((x) => x.id === id)!.tramo));
+        assert.deepEqual(t, [...t].sort((a, b) => a - b), "lista agrupada por tramo");
+      }
+    }
+  }
+});
+
+test("mandado: revisar la bolsa", () => {
+  const ej = { lista: ["papa", "cafe"] };
+  assert.deepEqual(revisarBolsa(ej, ["cafe", "papa"]), { sobran: [], faltan: [], completa: true });
+  assert.deepEqual(revisarBolsa(ej, ["cafe", "pan"]), { sobran: ["pan"], faltan: ["papa"], completa: false });
+  assert.equal(mandado.validar({ ...mandado.porNivel.retador, distractores: 30 }).length, 1);
 });
