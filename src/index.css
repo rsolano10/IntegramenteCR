@@ -389,6 +389,11 @@
   20% { opacity: 1; }
   100% { transform: translateY(14px); opacity: 0; }
 }
+/* La carreta avanza un poco (una vez). */
+@keyframes pueblo-avanza {
+  from { transform: translateX(-18%); }
+  to { transform: none; }
+}
 /* Se arranca la hoja del almanaque. */
 @keyframes pueblo-arranque {
   0% { transform: none; opacity: 1; }

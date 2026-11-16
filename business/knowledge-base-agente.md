@@ -237,6 +237,7 @@ Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa e
 - **El almanaque**: conversar sobre qué día, mes y parte del día es hoy.
 - **La olla de carne**: entre las cosas de la mesa, tocar la que no va con las demás.
 - **El corredor**: mirar el corredor de una casa y, después, tocar lo que cambió.
+- **La carreta por pintar**: elegir botes de pintura y pintar una rueda igual a la del modelo.
 
 ### 6.11 "Mi semana"
 - Los días de la semana con sus actividades; el día de hoy aparece resaltado.

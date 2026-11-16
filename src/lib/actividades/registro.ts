@@ -6,6 +6,7 @@ import { encontrarIguales } from "./encontrarIguales";
 import { formarPalabra } from "./formarPalabra";
 import { intruso } from "./intruso";
 import { queCambio } from "./queCambio";
+import { pintarRueda } from "./pintarRueda";
 import { ordenarPasos, ordenarSecuencia } from "./ordenar";
 import { orientacionHoy } from "./orientacionHoy";
 import { pagoExacto } from "./pagoExacto";
@@ -32,6 +33,7 @@ export const ACTIVIDADES: Def[] = [
   // Fase 2
   intruso,
   queCambio,
+  pintarRueda,
 ];
 
 export const actividadPorTipo = (tipo: string | undefined): Def | undefined => ACTIVIDADES.find((a) => a.tipo === tipo);

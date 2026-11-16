@@ -16,6 +16,7 @@ import { esInteractivo } from "../clasificarNumeros.ts";
 import { generarIntruso } from "./intruso.ts";
 import { CONJUNTOS } from "./bancos/intrusos.ts";
 import { LUGARES, OBJETOS, generarCorredor, lugarEsPiso, revisarCorredor } from "./queCambio.ts";
+import { PINTURAS, celda, contraste, generarRueda, objetivo, revisarRueda } from "./pintarRueda.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
 // Martes 10 de noviembre de 2026, 9 a. m. en Costa Rica (15:00 UTC).
@@ -39,7 +40,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 12);
+  assert.equal(ACTIVIDADES.length, 13);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -453,4 +454,36 @@ test("corredor: el lugar vacío cuenta; lo que no cambió sobra; mover vale de l
   const r = revisarCorredor(ej, [otros[0], sinCambio]);
   assert.deepEqual(r.sobran, [sinCambio]);
   assert.equal(r.faltan, 2);
+});
+
+test("rueda: usa todos los colores pedidos y el tamaño pedido", () => {
+  const azar = crearAzar(5);
+  for (const [sectores, anillos, colores] of [[4, 1, 2], [8, 1, 3], [8, 2, 4], [12, 2, 4]] as const) {
+    const ej = generarRueda({ sectores, anillos, colores, rotada: false }, azar);
+    assert.equal(ej.modelo.length, sectores * anillos);
+    assert.equal(ej.pinturas.length, colores);
+    assert.deepEqual(new Set(ej.modelo), new Set(ej.pinturas));
+    assert.equal(ej.giro, 0);
+  }
+});
+
+test("rueda: igual al modelo está completa; sin girar, un giro no vale; girada, cualquier giro vale", () => {
+  const ej = generarRueda({ sectores: 8, anillos: 2, colores: 4, rotada: false }, crearAzar(2));
+  assert.ok(revisarRueda(ej, ej.modelo, false).completa);
+  const girada = objetivo(ej, 3);
+  const r = revisarRueda(ej, girada, false);
+  if (girada.some((v, i) => v !== ej.modelo[i])) assert.ok(!r.completa);
+  const ejR = generarRueda({ sectores: 8, anillos: 2, colores: 4, rotada: true }, crearAzar(2));
+  assert.ok(ejR.giro >= 1 && ejR.giro < 8);
+  for (let k = 0; k < 8; k++) assert.ok(revisarRueda(ejR, objetivo(ejR, k), true).completa, `giro ${k}`);
+  // Lo que no coincide se marca; lo correcto no.
+  const casi = [...ej.modelo];
+  casi[celda(2, 1, 8)] = ej.modelo[celda(2, 1, 8)] === ej.pinturas[0] ? ej.pinturas[1] : ej.pinturas[0];
+  assert.deepEqual(revisarRueda(ej, casi, false).malas, [celda(2, 1, 8)]);
+  assert.deepEqual(revisarRueda(ej, Array(16).fill(null), false).malas.length, 16);
+});
+
+test("rueda: los botes se distinguen (contraste y marca distinta)", () => {
+  assert.equal(new Set(PINTURAS.map((p) => p.marca)).size, PINTURAS.length);
+  for (const a of PINTURAS) for (const b of PINTURAS) if (a !== b) assert.ok(contraste(a.color, b.color) >= 1.4, `${a.id}/${b.id}`);
 });
