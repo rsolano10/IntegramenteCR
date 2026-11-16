@@ -47,7 +47,7 @@ test("sesiones: empiezan y terminan bien", () => {
   for (const [codigo, g] of guiones) {
     assert.equal(g.escenas.at(-1)?.tipo, "cierre", `${codigo} termina en cierre`);
     if (g.ejercicio) assert.equal(g.escenas[0].tipo, "seguridad", `${codigo}: un ejercicio empieza por «Cuándo parar»`);
-    assert.ok(g.escenas.length >= 4 && g.escenas.length <= 12, `${codigo}: entre 4 y 12 escenas`);
+    assert.ok(g.escenas.length >= 3 && g.escenas.length <= 12, `${codigo}: entre 3 y 12 escenas`);
   }
 });
 

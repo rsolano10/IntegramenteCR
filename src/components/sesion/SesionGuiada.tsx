@@ -85,8 +85,8 @@ export function SesionGuiada({
     [escenaMision, guion, veces],
   );
 
-  // «Ayuda»: lo del guion y, si no trae, la ayuda validada de la ficha.
-  const consejos = guion.ayuda.length ? guion.ayuda : datos.ayuda ? [datos.ayuda] : [];
+  // «Ayuda»: los consejos cortos del guion y la ayuda validada de la ficha.
+  const consejos = [...guion.ayuda, ...(datos.ayuda ? [datos.ayuda] : [])];
   const porEtapa = ayudaDeEtapa(guion.ayudaPorEtapa ?? datos.adaptacionPorEtapa, etapas);
 
   const ctx: CtxSesion = {

@@ -1,5 +1,6 @@
 import type { NivelCognitivo } from "../mediaResources";
 import { cog005 } from "./guiones/cog005";
+import { COGNICION } from "./guiones/cognicion";
 import { ger003 } from "./guiones/ger003";
 import { ger001, ger002, ger004, ger005, ger006, ger007, ger008, ger009, ger010 } from "./guiones/gerontogimnasia";
 import { pre005 } from "./guiones/pre005";
@@ -23,6 +24,7 @@ export const LISTA_GUIONES: Guion[] = [
   ger010,
   // Reminiscencia y cognición
   cog005,
+  ...COGNICION,
   // Nutrición
   pre005,
 ];

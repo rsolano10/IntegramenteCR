@@ -270,6 +270,186 @@ const D: Record<NombreIcono, ReactNode> = {
       <path d="M30 18a8 8 0 0 1 0 12M35 13a15 15 0 0 1 0 22" />
     </>
   ),
+  lupa: (
+    <>
+      <circle cx="20" cy="20" r="12" fill={R} />
+      <circle cx="20" cy="20" r="7" fill={B} opacity=".7" stroke="none" />
+      <path d="M29 29l11 11" strokeWidth="4" />
+    </>
+  ),
+  cajas: (
+    <>
+      <rect x="6" y="22" width="16" height="16" rx="2" fill={R} />
+      <rect x="26" y="22" width="16" height="16" rx="2" fill={B} />
+      <rect x="16" y="6" width="16" height="14" rx="2" fill={R} opacity=".6" />
+      <path d="M11 28h6M31 28h6" />
+    </>
+  ),
+  sol: (
+    <>
+      <circle cx="24" cy="24" r="9" fill={R} />
+      <path d="M24 6v5M24 37v5M6 24h5M37 24h5M11 11l3.5 3.5M33.5 33.5L37 37M37 11l-3.5 3.5M14.5 33.5L11 37" />
+    </>
+  ),
+  luna: <path d="M30 8a16 16 0 1 0 10 26A13 13 0 0 1 30 8z" fill={R} />,
+  libreta: (
+    <>
+      <rect x="11" y="6" width="26" height="36" rx="3" fill={R} />
+      <path d="M17 6v36M22 15h10M22 21h10M22 27h7" />
+      <path d="M8 12h6M8 20h6M8 28h6M8 36h6" />
+    </>
+  ),
+  nota: (
+    <>
+      <path d="M9 9h30v20l-10 10H9z" fill={R} />
+      <path d="M29 39V29h10M15 17h18M15 23h12" />
+    </>
+  ),
+  bandeja: (
+    <>
+      <path d="M5 28h38l-4 9H9z" fill={R} />
+      <circle cx="18" cy="22" r="5" fill={B} />
+      <circle cx="30" cy="22" r="5" fill={B} />
+      <path d="M23 22h2M13 22l-3-1M35 22l3-1" />
+    </>
+  ),
+  control: (
+    <>
+      <rect x="16" y="5" width="16" height="38" rx="5" fill={R} />
+      <circle cx="24" cy="13" r="3" fill={B} />
+      <path d="M20 22h2M26 22h2M20 28h2M26 28h2M20 34h2M26 34h2" strokeWidth="3" />
+    </>
+  ),
+  periodico: (
+    <>
+      <path d="M8 9h28v30H12a4 4 0 0 1-4-4z" fill={R} />
+      <path d="M36 15h4v20a4 4 0 0 1-4 4" />
+      <rect x="13" y="14" width="10" height="9" fill={B} />
+      <path d="M27 15h5M27 21h5M13 28h19M13 33h19" />
+    </>
+  ),
+  libro: (
+    <>
+      <path d="M24 12c-5-3-11-4-17-3v28c6-1 12 0 17 3 5-3 11-4 17-3V9c-6-1-12 0-17 3z" fill={R} />
+      <path d="M24 12v28" />
+    </>
+  ),
+  oreja: (
+    <>
+      <path d="M16 20a10 10 0 0 1 20 0c0 7-6 8-6 14a6 6 0 0 1-11 3" fill={R} />
+      <path d="M22 20a4 4 0 0 1 8 0c0 3-3 4-3 6" />
+      <path d="M40 16a4 4 0 0 1 0 8M43 12a10 10 0 0 1 0 16" opacity=".6" />
+    </>
+  ),
+  plato: (
+    <>
+      <ellipse cx="24" cy="26" rx="16" ry="12" fill={R} />
+      <ellipse cx="24" cy="26" rx="9" ry="6" fill={B} />
+      <path d="M4 14v10M7 14v10M4 19h3M5.5 24v14M44 14c-3 2-3 8 0 10v14" />
+    </>
+  ),
+  servilleta: (
+    <>
+      <path d="M10 10h28v28H10z" fill={R} />
+      <path d="M10 10l28 28M24 10v14" opacity=".55" />
+    </>
+  ),
+  vaso: (
+    <>
+      <path d="M13 8h22l-3 32H16z" fill={B} />
+      <path d="M14.5 20h19l-1.5 20H16z" fill={R} stroke="none" />
+    </>
+  ),
+  foto: (
+    <>
+      <rect x="7" y="9" width="34" height="30" rx="3" fill={B} />
+      <circle cx="24" cy="21" r="6" fill={R} />
+      <path d="M13 39c1-6 5-9 11-9s10 3 11 9" fill={R} />
+    </>
+  ),
+  flor: (
+    <>
+      <path d="M24 26v16M24 35c-5-4-10-3-11 0 4 3 8 3 11 0z" fill={R} />
+      <circle cx="24" cy="9" r="5" fill={R} />
+      <circle cx="31" cy="14.5" r="5" fill={R} />
+      <circle cx="28" cy="23" r="5" fill={R} />
+      <circle cx="20" cy="23" r="5" fill={R} />
+      <circle cx="17" cy="14.5" r="5" fill={R} />
+      <circle cx="24" cy="17" r="4.5" fill="#f4c372" />
+    </>
+  ),
+  cadena: (
+    <>
+      <rect x="5" y="17" width="18" height="14" rx="7" fill={R} />
+      <rect x="25" y="17" width="18" height="14" rx="7" fill="none" />
+      <path d="M18 24h12" strokeWidth="3" />
+    </>
+  ),
+  tenedor: (
+    <>
+      <path d="M17 6v10a5 5 0 0 0 10 0V6M22 6v10M22 21v21" />
+      <path d="M17 16a5 5 0 0 0 10 0" fill={R} />
+      <path d="M33 6c4 3 5 10 2 14v22" opacity=".5" />
+    </>
+  ),
+  batidor: (
+    <>
+      <path d="M24 30v13" strokeWidth="3.4" />
+      <path d="M24 30c-8-4-10-16-5-22 3-3 7-3 10 0 5 6 3 18-5 22z" fill={R} />
+      <path d="M24 30c-3-6-3-16 0-23M24 30c3-6 3-16 0-23" />
+    </>
+  ),
+  manta: (
+    <>
+      <path d="M7 12h34v22c-4 3-8 3-12 0-4 3-8 3-12 0-4 3-7 3-10 0z" fill={R} />
+      <path d="M7 20h34M7 26h34" opacity=".45" />
+    </>
+  ),
+  senalar: (
+    <>
+      <path d="M8 19h9l3-3h18a3 3 0 0 1 0 6H26v3h1a3 3 0 0 1 0 6h-1a3 3 0 0 1 0 6H16c-5 0-8-3-8-7z" fill={R} />
+      <path d="M26 28h-5M26 34h-5" />
+    </>
+  ),
+  lapiz: (
+    <>
+      <path d="M32 7l9 9-23 23-11 2 2-11z" fill={R} />
+      <path d="M28 11l9 9M9 30l9 9" />
+    </>
+  ),
+  lista: (
+    <>
+      <rect x="9" y="6" width="30" height="36" rx="3" fill={B} />
+      <rect x="14" y="13" width="7" height="7" rx="1.5" fill={R} />
+      <path d="M15.5 16.5l1.5 1.5 3-3.5M26 17h8M14 26h7M26 29h8M14 33h7" />
+      <rect x="14" y="26" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  perro: (
+    <>
+      <path d="M10 24c-3-1-4-4-3-7" />
+      <rect x="9" y="21" width="24" height="11" rx="5.5" fill={R} />
+      <circle cx="35" cy="18" r="6.5" fill={R} />
+      <path d="M31 12c-4 0-5 5-2 8" fill={R} />
+      <path d="M14 32v8M28 32v8" />
+      <circle cx="37" cy="17" r="0.6" strokeWidth="2.6" />
+      <circle cx="41.5" cy="19.5" r="0.6" strokeWidth="2.6" />
+    </>
+  ),
+  fruta: (
+    <>
+      <path d="M24 14c-8-4-16 1-16 10 0 9 7 17 16 15 9 2 16-6 16-15 0-9-8-14-16-10z" fill={R} />
+      <path d="M24 14c0-4 1-6 4-8M26 9c4-2 8-1 9 2-4 2-7 1-9-2z" />
+    </>
+  ),
+  musica: (
+    <>
+      <path d="M18 34V10l20-4v24" />
+      <ellipse cx="13" cy="34" rx="6" ry="5" fill={R} />
+      <ellipse cx="33" cy="30" rx="6" ry="5" fill={R} />
+      <path d="M18 16l20-4" />
+    </>
+  ),
   casa: (
     <>
       <path d="M8 22L24 9l16 13" />
