@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import type { NivelCognitivo } from "../../lib/mediaResources";
 import { nivelCognitivoLabel } from "../../lib/mediaResources";
 import { moduloTheme } from "../../lib/modulos";
-import { ayudaDeEtapa, escenasVisibles, opcionDe, plantilla, textoDeVoz, valorUno, type Guion, type Progreso, type Respuestas, type UsoSesion } from "../../lib/sesiones";
+import { aTenerAMano, ayudaDeEtapa, escenasVisibles, opcionDe, plantilla, textoDeVoz, valorUno, type Guion, type Progreso, type Respuestas, type UsoSesion } from "../../lib/sesiones";
 import { detenerVoz, leerEnVoz } from "../../lib/voz";
 import { BotonVoz, Hoja } from "./comun";
 import { SesionContexto, type CtxSesion, type DatosSesion, type RegistroSesion } from "./contexto";
 import { Portada, VistaEscena } from "./Escenas";
+import { ClaraActividad } from "../clara/ClaraActividad";
 
 export type { DatosSesion } from "./contexto";
 
@@ -143,7 +144,8 @@ export function SesionGuiada({
     },
     siguiente: () => setIdx((i) => Math.min(i + 1, escenas.length - 1)),
     anterior: idx >= 0 ? () => setIdx((i) => i - 1) : null,
-    abrirAyuda: consejos.length || porEtapa.length ? () => setPanel("ayuda") : null,
+    // Siempre hay ayuda: como mínimo, Clara.
+    abrirAyuda: () => setPanel("ayuda"),
     abrirParar: () => setPanel("parar"),
     terminar: async (reg) =>
       onTerminar(
@@ -235,8 +237,32 @@ export function SesionGuiada({
       </div>
 
       {panel === "ayuda" && (
-        <Hoja titulo="Si necesita ayuda" onClose={() => setPanel(null)}>
+        <Hoja titulo="Ayuda" onClose={() => setPanel(null)}>
           <div className="grid gap-3 text-[16px] leading-relaxed text-tinta">
+            {/* Clara, con el contexto de este paso. */}
+            <ClaraActividad
+              quien={participante ? "participante" : "familia"}
+              enSesion
+              large={large}
+              contexto={{
+                titulo: datos.titulo,
+                codigo: guion.codigo,
+                modulo: datos.modulo,
+                frase: guion.frase,
+                guion,
+                escena,
+                paso: escena ? { n: Math.min(idx, escenas.length - 1) + 1, de: escenas.length } : null,
+                respuestas,
+                aMano: aTenerAMano(guion).map((i) => i.texto),
+                ayuda: consejos,
+                ayudaEtapa: porEtapa.map((a) => a.texto),
+                indicacion: datos.indicacionIndividual,
+                porQue: datos.sabiasQue,
+              }}
+            />
+            {(pista || consejos.length > 0 || porEtapa.length > 0) && (
+              <p className="m-0 mt-2 text-[13px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">Consejos de la actividad</p>
+            )}
             {pista && (
               <div className="rounded-2xl bg-beige-serenidad px-4 py-3">
                 <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">Una pista</p>

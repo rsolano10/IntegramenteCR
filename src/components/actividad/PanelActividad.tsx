@@ -5,6 +5,7 @@ import { Icono } from "../sesion/Icono";
 import { MisionSemana } from "../sesion/ResumenSesion";
 import { CienciaActividad } from "./CienciaActividad";
 import { IconoActividad } from "./IconoActividad";
+import { ClaraActividad } from "../clara/ClaraActividad";
 import { CHIP_ESTADO, ETIQUETA_ESTADO } from "../../lib/estadoActividad";
 import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, guionDe, resumenPasos, type PasoResumen, type Progreso } from "../../lib/sesiones";
@@ -194,6 +195,28 @@ export function PanelActividad({
           {accion.texto}
         </button>
       </div>
+
+      {/* Dudas antes de empezar: Clara conoce esta actividad. */}
+      <ClaraActividad
+        quien={large ? "participante" : "familia"}
+        enSesion={false}
+        large={large}
+        contexto={{
+          titulo: task.titulo,
+          codigo: task.codigo,
+          modulo: task.modulo,
+          frase,
+          guion,
+          pasos,
+          aMano: aMano.map((i) => i.texto),
+          ayuda: [...(guion?.ayuda ?? []), ...(task.ayuda ? [task.ayuda] : [])],
+          notaEquipo: task.notaClinica,
+          indicacion: task.indicacionIndividual,
+          precaucion: task.precaucion,
+          porQue: task.sabiasQue ?? task.porQue,
+          practica,
+        }}
+      />
 
       {preguntando && (
         <Modal onClose={() => setPreguntando(false)}>
