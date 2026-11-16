@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cuandoParar } from "../../lib/bloquesGerontogimnasia";
 import { moduloLabel } from "../../lib/modulos";
 import { LIBRE, opcionDe, opcionesSegun, plantilla, puedeSeguir, valorLista, valorUno, type Escena, type Opcion } from "../../lib/sesiones";
@@ -45,6 +45,21 @@ function Medallon({ icono, tam = "grande" }: { icono: NombreIcono; tam?: "grande
   );
 }
 
+// Grilla de tarjetas sin filas cojas: con 2 o 4 opciones, de a dos; si no,
+// de a tres en pantallas anchas. La última fila queda centrada.
+function Grilla({ n, children, className = "mt-5" }: { n: number; children: ReactNode[]; className?: string }) {
+  const ancho = n === 2 || n === 4 ? "w-[calc(50%-5px)]" : "w-[calc(50%-5px)] sm:w-[calc(33.333%-7px)]";
+  return (
+    <div className={`${className} flex flex-wrap justify-center gap-2.5`}>
+      {children.map((c, i) => (
+        <div key={i} className={`${ancho} flex`}>
+          {c}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Portada ───
 export function Portada() {
   const { guion, datos, tema, leerSiempre, alternarLeer } = useSesion();
@@ -62,13 +77,6 @@ export function Portada() {
         )}
         <Titulo>{datos.titulo}</Titulo>
         <p className={`m-0 mt-3 max-w-md leading-relaxed text-tinta-suave ${t.cuerpo}`}>{guion.frase}</p>
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
-          {guion.etiquetas.map((e) => (
-            <span key={e} className={`rounded-full bg-white border border-borde px-3.5 py-1.5 font-semibold text-tinta-suave ${t.chico}`}>
-              {e}
-            </span>
-          ))}
-        </div>
         {lecturaDisponible && (
           <button
             type="button"
@@ -156,28 +164,41 @@ export function Preparar({ e }: { e: De<"preparar"> }) {
   const t = useTam();
   const [listos, setListos] = useState<boolean[]>(() => e.items.map(() => false));
   const todos = listos.every(Boolean);
+  const faltan = listos.filter((x) => !x).length;
   return (
     <>
       <Titulo>{e.titulo}</Titulo>
-      {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
-      <div className="mt-5 grid grid-cols-2 gap-2.5">
+      <Nota className="mt-2">{e.nota ?? "Marcá cada cosa cuando esté lista."}</Nota>
+      <ul className="m-0 mt-5 p-0 list-none rounded-[22px] bg-white border border-borde divide-y divide-borde-suave overflow-hidden">
         {e.items.map((it, i) => (
-          <button
-            key={it.texto}
-            type="button"
-            aria-pressed={listos[i]}
-            onClick={() => setListos((l) => l.map((v, k) => (k === i ? !v : v)))}
-            className={`relative flex flex-col items-center gap-2 rounded-[22px] border-2 px-3 py-4 text-center cursor-pointer transition-colors ${
-              listos[i] ? "bg-verde-tenue border-verde-serenidad" : "bg-white border-borde hover:border-verde-serenidad/60"
-            }`}
-          >
-            <Icono nombre={it.icono} className={`w-12 h-12 text-tinta transition-opacity ${listos[i] ? "opacity-60" : ""}`} relleno={tema.relleno} />
-            <span className={`font-semibold leading-tight text-tinta ${t.chico}`}>{it.texto}</span>
-            {listos[i] && <Marca className="absolute top-2 right-2" />}
-          </button>
+          <li key={it.texto}>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={listos[i]}
+              onClick={() => setListos((l) => l.map((v, k) => (k === i ? !v : v)))}
+              className={`w-full flex items-center gap-3.5 px-4 py-3.5 min-h-[64px] border-0 text-left cursor-pointer transition-colors ${listos[i] ? "bg-verde-tenue" : "bg-white hover:bg-campo"}`}
+            >
+              <span
+                className={`shrink-0 w-8 h-8 rounded-[10px] border-2 flex items-center justify-center transition-colors ${listos[i] ? "bg-verde-profundo border-verde-profundo text-white" : "bg-white border-borde-campo"}`}
+                aria-hidden="true"
+              >
+                {listos[i] && (
+                  <svg width="16" height="16" viewBox="0 0 12 12" fill="none" className="ses-marca">
+                    <path d="M2.5 6.2l2.2 2.2 4.8-4.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+              <Icono nombre={it.icono} className="w-10 h-10 shrink-0 text-tinta" relleno={tema.relleno} />
+              <span className={`flex-1 font-semibold leading-snug ${listos[i] ? "text-tinta-suave line-through decoration-tinta-tenue/60" : "text-tinta"} ${t.cuerpo}`}>{it.texto}</span>
+            </button>
+          </li>
         ))}
-      </div>
-      <Pie etiqueta={todos ? "Todo listo" : "Seguir"} tono={todos ? "principal" : "suave"} />
+      </ul>
+      {e.items.length > 1 && <p className={`m-0 mt-3 text-tinta-tenue ${t.chico}`} aria-live="polite">
+        {todos ? "¡Todo listo!" : faltan === e.items.length ? "Si algo no hace falta, igual pueden seguir." : `Faltan ${faltan}. Si algo no hace falta, igual pueden seguir.`}
+      </p>}
+      <Pie etiqueta={todos ? "Todo listo, seguir" : "Seguir"} tono={todos ? "principal" : "suave"} />
     </>
   );
 }
@@ -268,25 +289,31 @@ export function Decir({ e }: { e: De<"decir"> }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4" />
           </svg>
-          Otra pregunta
+          Otra forma de preguntarle
         </button>
       )}
       {e.contar && (
-        <div className="mt-5 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setCuenta((n) => n + 1)}
-            className={`min-h-12 px-5 inline-flex items-center gap-2 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer hover:bg-tinta ${t.chico}`}
-          >
-            <Icono nombre="estrella" className="w-6 h-6" relleno="#f4c372" />
-            {e.contar}
-          </button>
-          {cuenta > 0 && (
-            <span key={cuenta} className={`ses-marca font-serif text-tinta ${t.grande}`} aria-live="polite">
-              {cuenta}
+        <section className="mt-5 rounded-[22px] bg-white border border-borde px-4 py-4">
+          <p className={`m-0 font-semibold text-tinta ${t.cuerpo}`}>Para llevar la cuenta (opcional)</p>
+          <p className={`m-0 mt-1 text-tinta-suave ${t.chico}`}>Cada vez que lo logre, tocá el botón. Es solo para festejar: no se guarda.</p>
+          <div className="mt-3 flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setCuenta((n) => n + 1)}
+              className={`min-h-14 px-5 inline-flex items-center gap-2 rounded-2xl border-0 bg-verde-profundo text-white font-semibold cursor-pointer hover:bg-tinta ${t.chico}`}
+            >
+              <Icono nombre="estrella" className="w-6 h-6" relleno="#f4c372" />
+              {e.contar}
+            </button>
+            <span className={`text-tinta ${t.chico}`} aria-live="polite">
+              {cuenta === 0 ? "Todavía ninguna" : (
+                <>
+                  Van <strong key={cuenta} className={`ses-marca inline-block font-serif font-normal ${t.grande}`}>{cuenta}</strong>
+                </>
+              )}
             </span>
-          )}
-        </div>
+          </div>
+        </section>
       )}
       {!participante && e.nota && <Nota className="mt-4">{e.nota}</Nota>}
       <Pie etiqueta="Siguiente" />
@@ -303,7 +330,7 @@ function TarjetaOpcion({ o, elegida, onClick, numero, chica = false }: { o: Opci
       type="button"
       aria-pressed={elegida}
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center gap-2 rounded-[22px] border-2 px-3 text-center cursor-pointer transition-[background-color,border-color,transform] active:scale-[0.97] ${
+      className={`relative w-full flex flex-col items-center justify-center gap-2 rounded-[22px] border-2 px-3 text-center cursor-pointer transition-[background-color,border-color,transform] active:scale-[0.97] ${
         chica ? "py-3 min-h-[112px]" : "py-4 min-h-[132px]"
       } ${elegida ? "bg-verde-tenue border-verde-profundo shadow-[0_8px_20px_-14px_rgba(31,51,56,0.6)]" : "bg-white border-borde hover:border-verde-serenidad/60"}`}
     >
@@ -354,12 +381,12 @@ export function Elegir({ e }: { e: De<"elegir"> }) {
     <>
       <Titulo>{e.titulo}</Titulo>
       {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
-      <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        {e.opciones.map((o) => (
-          <TarjetaOpcion key={o.id} o={o} elegida={elegido === o.id} onClick={() => responder(e.clave, o.id)} />
-        ))}
-        {e.libre && <TarjetaOpcion o={{ id: "otra", texto: e.libre, icono: "otra" }} elegida={elegido === "otra"} onClick={() => responder(e.clave, "otra")} />}
-      </div>
+      <Grilla n={e.opciones.length + (e.libre ? 1 : 0)}>
+        {[
+          ...e.opciones.map((o) => <TarjetaOpcion key={o.id} o={o} elegida={elegido === o.id} onClick={() => responder(e.clave, o.id)} />),
+          ...(e.libre ? [<TarjetaOpcion key="otra" o={{ id: "otra", texto: e.libre, icono: "otra" }} elegida={elegido === "otra"} onClick={() => responder(e.clave, "otra")} />] : []),
+        ]}
+      </Grilla>
       {elegido === "otra" && (
         <div className="ses-sube mt-3">
           <CampoLibre etiqueta={e.libre ?? "Escribila acá"} valor={valorUno(respuestas, claveTexto) ?? ""} onCambio={(v) => responder(claveTexto, v)} />
@@ -413,11 +440,13 @@ export function Lista({ e }: { e: De<"lista"> }) {
           </div>
         )}
       </div>
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        {opciones.map((o) => (
-          <TarjetaOpcion key={o.id} o={o} chica elegida={elegidos.includes(o.id)} onClick={() => alternar(o.id)} />
-        ))}
-      </div>
+      {opciones.length > 0 && (
+        <Grilla n={opciones.length} className="mt-4">
+          {opciones.map((o) => (
+            <TarjetaOpcion key={o.id} o={o} chica elegida={elegidos.includes(o.id)} onClick={() => alternar(o.id)} />
+          ))}
+        </Grilla>
+      )}
       {e.libre && (
         <div className="mt-3">
           <CampoLibre etiqueta={e.libre} valor={libre} onCambio={setLibre} onAgregar={agregar} />
@@ -459,12 +488,12 @@ export function Ordenar({ e }: { e: De<"ordenar"> }) {
           })}
         </ol>
       )}
-      <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+      <Grilla n={items.length}>
         {items.map((o) => {
           const n = orden.indexOf(o.id);
           return <TarjetaOpcion key={o.id} o={o} chica elegida={n >= 0} numero={n >= 0 ? n + 1 : undefined} onClick={() => tocar(o.id)} />;
         })}
-      </div>
+      </Grilla>
       {orden.length > 0 && (
         <button
           type="button"
@@ -1187,57 +1216,148 @@ function Dato({ texto }: { texto: string }) {
   );
 }
 
-function FacilDeSeguir() {
-  const { respuestas, responder, participante } = useSesion();
+// Una pregunta de la última pantalla, con opciones grandes.
+function Pregunta<T extends string>({
+  titulo,
+  ayuda,
+  opciones,
+  valor,
+  onElegir,
+}: {
+  titulo: string;
+  ayuda?: string;
+  opciones: { id: T; texto: string }[];
+  valor: T | null;
+  onElegir: (v: T) => void;
+}) {
   const t = useTam();
-  const v = valorUno(respuestas, "_clara");
-  const opciones = [
-    { id: "si", texto: "Sí" },
-    { id: "masomenos", texto: "Más o menos" },
-    { id: "no", texto: "No" },
-  ];
   return (
-    <div className="mt-7 w-full max-w-md rounded-[22px] border border-borde-suave bg-white/70 px-4 py-3.5">
-      <p className={`m-0 mb-2.5 font-semibold text-tinta ${t.chico}`}>{participante ? "¿Te resultó fácil de seguir?" : "¿Les resultó fácil de seguir?"}</p>
-      <div className="flex justify-center gap-2" role="radiogroup">
+    <fieldset className="m-0 p-0 border-0 grid gap-2">
+      <legend className={`p-0 mb-1 font-semibold text-tinta ${t.cuerpo}`}>{titulo}</legend>
+      {ayuda && <p className={`m-0 -mt-1 mb-1 text-tinta-tenue ${t.chico}`}>{ayuda}</p>}
+      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={titulo}>
         {opciones.map((o) => (
           <button
             key={o.id}
             type="button"
             role="radio"
-            aria-checked={v === o.id}
-            onClick={() => responder("_clara", o.id)}
-            className={`min-h-11 px-4 rounded-full border-[1.5px] font-semibold cursor-pointer transition-colors ${t.chico} ${
-              v === o.id ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta-suave"
+            aria-checked={valor === o.id}
+            onClick={() => onElegir(o.id)}
+            className={`min-h-14 px-2 rounded-2xl border-2 font-semibold leading-tight cursor-pointer transition-colors ${t.chico} ${
+              valor === o.id ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta"
             }`}
           >
             {o.texto}
           </button>
         ))}
       </div>
-      {v && <p className={`ses-sube m-0 mt-2 text-tinta-tenue ${t.chico}`}>¡Gracias! Nos ayuda a mejorar.</p>}
-    </div>
+    </fieldset>
   );
 }
 
+const RAZONES = ["Me cansé", "No entendí", "No tenía ganas", "Me sentí mal"];
+
 export function Cierre({ e }: { e: De<"cierre"> }) {
-  const { datos, terminar, textoTerminar } = useSesion();
+  const { datos, terminar, registro, participante, paradaAntes, respuestas, responder } = useSesion();
   const t = useTam();
+  const [v, setV] = useState<"done" | "partial" | "no" | null>(null);
+  const [ayuda, setAyuda] = useState("");
+  const [razon, setRazon] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState(false);
+  const clara = valorUno(respuestas, "_clara") as "si" | "masomenos" | "no" | null;
+  const listo = !registro || (v !== null && (v !== "partial" || ayuda.trim().length > 0));
+
+  async function terminarAhora() {
+    setGuardando(true);
+    setError(false);
+    try {
+      await terminar(registro && v ? { v, comentario: v === "partial" ? ayuda.trim() : v === "no" ? (razon ?? undefined) : undefined } : undefined);
+    } catch {
+      setGuardando(false);
+      setError(true);
+    }
+  }
+
   return (
     <>
-      <div className="relative flex flex-col items-center text-center pt-6">
-        <Petalos />
-        <div className="ses-sube w-[150px] h-[150px] rounded-full bg-white border border-borde flex items-center justify-center shadow-elevada">
-          <Icono nombre="estrella" className="w-20 h-20 text-tinta" relleno="#f4c372" />
+      <div className="relative flex flex-col items-center text-center pt-4">
+        {!paradaAntes && <Petalos />}
+        <div className="ses-sube w-[120px] h-[120px] rounded-full bg-white border border-borde flex items-center justify-center shadow-elevada">
+          <Icono nombre={paradaAntes ? "corazon" : "estrella"} className="w-16 h-16 text-tinta" relleno="#f4c372" />
         </div>
         <Ceja>
-          <span className="block mt-6">¡Lo lograron!</span>
+          <span className="block mt-5">{paradaAntes ? "Por hoy, hasta acá" : "¡Lo lograron!"}</span>
         </Ceja>
-        <p className={`m-0 max-w-md font-serif italic leading-snug text-verde-profundo ${t.grande}`}>{e.texto}</p>
-        {e.dato && datos.sabiasQue && <Dato texto={datos.sabiasQue} />}
-        <FacilDeSeguir />
+        <p className={`m-0 max-w-md font-serif italic leading-snug text-verde-profundo ${t.grande}`}>{paradaAntes ? "Parar a tiempo también es cuidarse." : e.texto}</p>
+        {!paradaAntes && e.dato && datos.sabiasQue && <Dato texto={datos.sabiasQue} />}
       </div>
-      <Pie etiqueta={textoTerminar} onClick={() => terminar()} solo />
+
+      {/* Antes de terminar: lo que el equipo necesita saber, en la misma pantalla */}
+      <section className="mt-7 w-full rounded-[24px] bg-white border border-borde px-4 py-5 grid gap-5 text-left">
+        <p className={`m-0 font-serif text-tinta ${t.grande}`}>Antes de terminar</p>
+        {registro ? (
+          <>
+            <Pregunta
+              titulo={participante ? "¿Pudiste hacer la actividad?" : "¿Pudieron hacer la actividad?"}
+              ayuda="Contale a tu equipo cómo salió. No hay respuestas malas."
+              opciones={[
+                { id: "done", texto: "Sí" },
+                { id: "partial", texto: "En parte" },
+                { id: "no", texto: "No" },
+              ]}
+              valor={v}
+              onElegir={setV}
+            />
+            {v === "partial" && (
+              <label className="grid gap-1.5">
+                <span className={`font-semibold text-tinta ${t.chico}`}>{participante ? "¿Qué ayuda necesitaste?" : "¿Qué ayuda necesitó?"}</span>
+                <textarea
+                  value={ayuda}
+                  onChange={(ev) => setAyuda(ev.target.value)}
+                  rows={3}
+                  placeholder="Por ejemplo: hubo que recordarle el siguiente paso."
+                  className={`w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-4 py-3 font-sans leading-relaxed text-tinta resize-y ${t.chico}`}
+                />
+              </label>
+            )}
+            {v === "no" && (
+              <div className="grid gap-2">
+                <span className={`font-semibold text-tinta ${t.chico}`}>¿Por qué? (si querés contarlo)</span>
+                <div className="flex flex-wrap gap-2">
+                  {RAZONES.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      aria-pressed={razon === r}
+                      onClick={() => setRazon((x) => (x === r ? null : r))}
+                      className={`min-h-11 px-4 rounded-full border-[1.5px] font-semibold cursor-pointer ${t.chico} ${razon === r ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta-suave"}`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                <p className={`m-0 text-tinta-tenue ${t.chico}`}>No pasa nada: queda registrado sin penalizar.</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className={`m-0 leading-relaxed text-tinta-suave ${t.chico}`}>Esta vez la actividad no se registra.</p>
+        )}
+        <Pregunta
+          titulo={participante ? "¿Te resultó fácil seguir los pasos?" : "¿Les resultó fácil seguir los pasos?"}
+          ayuda="Opcional. Nos ayuda a mejorar la actividad."
+          opciones={[
+            { id: "si", texto: "Sí" },
+            { id: "masomenos", texto: "Más o menos" },
+            { id: "no", texto: "No" },
+          ]}
+          valor={clara}
+          onElegir={(x) => responder("_clara", x)}
+        />
+        {error && <p className="m-0 text-[15px] text-alerta-texto">No pudimos guardar. Revisá la conexión y probá de nuevo.</p>}
+      </section>
+      <Pie etiqueta={guardando ? "Guardando…" : registro ? "Guardar y terminar" : "Terminar"} onClick={terminarAhora} habilitado={listo && !guardando} solo />
     </>
   );
 }

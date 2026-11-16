@@ -29,7 +29,7 @@ export const cog007: Guion = {
       titulo: "¿Lo ves?",
       frase: "¿Ves algo de color rojo?",
       otras: ["¿Y algo de color blanco?", "¿Algo verde?", "¿Algo azul?", "¿Algo amarillo?"],
-      contar: "¡Lo encontró!",
+      contar: "Encontró uno",
       nota: "Puede señalarlo, nombrarlo o describirlo. No hace falta levantarse.",
     },
     {
@@ -38,7 +38,7 @@ export const cog007: Guion = {
       titulo: "¿Lo ves?",
       frase: "¿Qué cosa tiene forma redonda?",
       otras: ["¿Y algo cuadrado?", "¿Algo largo?", "¿Algo que brille?"],
-      contar: "¡Lo encontró!",
+      contar: "Encontró uno",
       nota: "Puede señalarlo, nombrarlo o describirlo. No hace falta levantarse.",
     },
     {
@@ -47,7 +47,7 @@ export const cog007: Guion = {
       titulo: "¿Lo ves?",
       frase: "¿Qué sirve para sentarse?",
       otras: ["¿Qué sirve para tomar agua?", "¿Qué sirve para ver la hora?", "¿Qué sirve para guardar cosas?"],
-      contar: "¡Lo encontró!",
+      contar: "Encontró uno",
       nota: "Puede señalarlo, nombrarlo o describirlo. No hace falta levantarse.",
     },
     { tipo: "cierre", texto: "Mirar con atención lo de siempre también es descubrir." },
@@ -471,9 +471,9 @@ export const cog022: Guion = {
       titulo: "Empezá vos",
       frase: "Sirve para peinarse y puede tener un mango. ¿Qué es?",
       nota: "Es un ejemplo. Describí uno de sus objetos.",
-      contar: "¡Adivinó!",
+      contar: "Adivinó el objeto",
     },
-    { tipo: "decir", titulo: "Su turno", frase: "¿Para qué lo usamos? ¿Cómo es?", nota: "Pueden turnarse para dar pistas. Aceptá gestos y decí el nombre con naturalidad.", contar: "¡Adiviné!" },
+    { tipo: "decir", titulo: "Su turno", frase: "¿Para qué lo usamos? ¿Cómo es?", nota: "Pueden turnarse para dar pistas. Aceptá gestos y decí el nombre con naturalidad.", contar: "Adiviné yo" },
     { tipo: "cierre", texto: "Hay muchas maneras de decir lo mismo." },
   ],
 };

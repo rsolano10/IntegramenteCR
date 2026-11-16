@@ -171,3 +171,89 @@ export function textosDeVoz(g: Guion): string[] {
   }
   return [...out].filter(Boolean);
 }
+
+// ─── Para la pantalla de la actividad (antes de empezar) ───
+
+export interface PasoResumen {
+  icono: import("./iconos").NombreIcono;
+  texto: string;
+}
+
+// Cómo va a ser la sesión, en pocos pasos con dibujo. Las consignas
+// seguidas se juntan en uno («3 consignas, de a una»).
+export function resumenPasos(g: Guion, conVideo: boolean): PasoResumen[] {
+  const out: PasoResumen[] = [];
+  const r: Respuestas = {};
+  for (let k = 0; k < g.escenas.length; k++) {
+    const e = g.escenas[k];
+    if (e.si) continue;
+    switch (e.tipo) {
+      case "seguridad":
+        out.push({ icono: "rechazo", texto: "Repasar cuándo parar" });
+        break;
+      case "preparar":
+        out.push({ icono: e.items[0]?.icono ?? "lista", texto: e.titulo });
+        break;
+      case "video":
+        if (conVideo) out.push({ icono: "volumen", texto: "Ver el video" });
+        break;
+      case "consigna": {
+        let n = 1;
+        while (g.escenas[k + n]?.tipo === "consigna" && !g.escenas[k + n].si) n++;
+        out.push({ icono: e.icono ?? "estrella", texto: n > 1 ? `${n} consignas, de a una` : e.titulo });
+        k += n - 1;
+        break;
+      }
+      case "decir":
+        out.push({ icono: e.icono ?? "conversar", texto: e.titulo });
+        break;
+      case "elegir":
+        out.push({ icono: e.opciones[0]?.icono ?? "estrella", texto: plantilla(e.titulo, g, r) });
+        break;
+      case "lista":
+      case "ordenar":
+        out.push({ icono: "lista", texto: plantilla(e.titulo, g, r) });
+        break;
+      case "repeticiones":
+        out.push({ icono: "corazon", texto: e.titulo });
+        break;
+      case "tiempo":
+        out.push({ icono: "reloj", texto: e.titulo });
+        break;
+      case "descanso":
+        out.push({ icono: "luna", texto: e.titulo });
+        break;
+      case "sentir":
+        out.push({ icono: "bien", texto: "Contar cómo se siente" });
+        break;
+      case "repaso":
+        out.push({ icono: "libreta", texto: e.titulo });
+        break;
+      case "mision":
+        out.push({ icono: "calendario", texto: e.titulo });
+        break;
+      case "cuidados":
+        out.push({ icono: "corazon", texto: e.titulo });
+        break;
+      case "leer":
+        out.push({ icono: e.icono ?? "libro", texto: e.titulo });
+        break;
+      case "material":
+        out.push({ icono: "libreta", texto: e.titulo });
+        break;
+      case "ritmo":
+        out.push({ icono: "palmas", texto: e.titulo });
+        break;
+      case "cierre":
+        out.push({ icono: "estrella", texto: "Terminar y contar cómo les fue" });
+        break;
+    }
+  }
+  return out;
+}
+
+// Lo que conviene tener a mano: lo de la primera escena «preparar».
+export function aTenerAMano(g: Guion) {
+  const e = g.escenas.find((x) => x.tipo === "preparar");
+  return e?.tipo === "preparar" ? e.items : [];
+}

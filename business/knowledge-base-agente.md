@@ -210,31 +210,51 @@ Arriba: la fecha y «Hola, [nombre]». Menú de pestañas: **Hoy · Mi semana ·
 - Al final de la lista, un cierre dice qué sigue: «Eso es todo por hoy» (con cuántas actividades hay mañana), «¡Listo por hoy!» o, el último día, «Último día de la semana».
 
 ### 6.10 Hacer una actividad (sesión guiada)
-Cada actividad se hace como una **sesión guiada**: una idea por pantalla, con dibujos y botones grandes.
-1. Tocá **"Empezar"** en la actividad. La primera pantalla dice en una frase de qué se trata, cuánto dura y, si hace falta, un cuidado importante. Ahí se puede activar **"Leer cada pantalla en voz alta"**.
-2. Tocá **"Empezar"** otra vez. Cada pantalla tiene abajo **"Siguiente"** (o "Hecho", "Entendido", "Todo listo"), una flecha para volver atrás y, si la actividad la trae, **"Ayuda"**: consejos para acompañar y la ayuda según la etapa de la persona.
-3. Arriba están la **X** para salir, la barra de avance y el parlante para **escuchar** la pantalla. En los ejercicios aparece también **"Parar"**: explica qué hacer, ofrece **"Pedir ayuda ahora"**, **"Llamar al 911"** y **"Terminar por hoy"**.
-4. Según la actividad, la sesión pide:
-   - **elegir** (a dónde vamos, qué fruta usamos);
-   - **tocar** lo que la persona va diciendo;
-   - **ordenar** pasos;
-   - leer en grande la frase para decirle (**"Decile"**);
-   - contar repeticiones tocando un **círculo**;
-   - **sostener** una posición unos segundos;
-   - **respirar** en el descanso;
-   - **imitar un ritmo**;
-   - responder **«¿Cómo se siente?»**.
-5. Los ejercicios empiezan con **"Cuándo parar"** y **"Preparemos el lugar"**.
-6. Las actividades de nutrición tienen una **"Misión de la semana"**, por ejemplo «Hojas verdes en 3 comidas». Se marca tocando un círculo cada vez que lo hacen, durante la sesión o cualquier día de esa semana desde la pantalla de la actividad.
-7. Al final hay un festejo y, a veces, un dato para dar vuelta, **«¿Sabías que…?»**. También aparece la pregunta opcional **«¿Les resultó fácil de seguir?»**. Después se toca **"Registrar cómo les fue"**.
-8. Pregunta final: **«¿Cómo le fue con "[actividad]"?»** → **"Sí"**, **"En parte"** o **"No"**.
-   - Con "En parte", la app pregunta **«¿Qué ayuda necesitó?»** (por ejemplo: «hubo que recordarle el siguiente paso»). Eso le sirve al equipo.
-   - Con "No": «Registrado sin penalizar». Nadie tiene que justificar un día difícil.
 
-Otros detalles:
-- La ficha con todo el texto sigue disponible en la pantalla de la actividad, en **"Ver la ficha completa"**.
-- También se puede registrar desde **"Ver detalle"** → **"¿Se realizó?"** → Sí / En parte / No.
-- En el detalle puede aparecer un **"Mensaje de tu equipo clínico"** o una **"Nota del equipo"**.
+**La pantalla de la actividad** (al tocarla en Hoy o en Mi semana) es un tablero:
+- Arriba, qué es: el dibujo (o la portada del juego), el nombre y una frase.
+- Después:
+  - el **"Mensaje de tu equipo"**, si lo hay;
+  - **"Así va a ser"**, con los pasos numerados;
+  - **"Para tener a mano"**;
+  - la **"Misión de la semana"**, si la tiene;
+  - **"Ver la ficha completa"**, plegada, con todo el texto y las precauciones.
+- Al final, el botón:
+  - **"Empezar"**: la actividad de hoy, todavía sin registrar.
+  - **"Volver a hacerla"**: si ya está registrada. Pregunta si **"Hacerla y cambiar el registro"** (lo nuevo reemplaza lo anterior) o **"Hacerla sin registrar"** (para practicar).
+  - **"Hacerla sin registrar"**: si es de otro día. Un aviso explica que se registra ese día o que ya no se registra.
+- **Registrar se hace solo dentro de la actividad, al final.** Desde esta pantalla no se registra.
+
+**Dentro de la actividad** hay una idea por pantalla, con dibujos y botones grandes.
+1. La primera pantalla dice en una frase de qué se trata. Ahí se puede activar **"Leer cada pantalla en voz alta"**.
+2. Cada pantalla tiene abajo:
+   - **"Siguiente"** (o "Seguir", "Entendido");
+   - una flecha para volver atrás;
+   - **"Ayuda"**, si la actividad la trae: consejos para acompañar y la ayuda según la etapa.
+3. Arriba hay:
+   - la **X** para salir;
+   - la barra de avance;
+   - el parlante para **escuchar** la pantalla;
+   - en los ejercicios, **"Parar"**: explica qué hacer, ofrece **"Pedir ayuda ahora"**, **"Llamar al 911"** y **"Terminar por hoy"**, que lleva directo al final.
+4. Lo que se puede encontrar:
+   - **"Preparemos"**: una lista para marcar lo que tienen listo. Si algo no hace falta, igual pueden seguir.
+   - Elegir entre tarjetas con dibujo.
+   - Tocar lo que la persona va diciendo.
+   - Ordenar pasos.
+   - La frase en grande para decirle (**"Decile"**) y **"Otra forma de preguntarle"**.
+   - Un contador opcional **"Para llevar la cuenta"**, solo para festejar; no se guarda.
+   - Contar repeticiones tocando un círculo.
+   - Sostener una posición unos segundos.
+   - Respirar en el descanso.
+   - Imitar un ritmo.
+5. Las actividades de nutrición tienen una **"Misión de la semana"**. Se marca durante la actividad o cualquier día de esa semana desde su pantalla.
+6. **La última pantalla, "Antes de terminar"**, tiene el festejo y, a veces, un dato para dar vuelta (**«¿Sabías que…?»**). Ahí mismo se responde:
+   - **«¿Pudieron hacer la actividad?»**: **Sí**, **En parte** o **No**.
+     - Con "En parte", la app pregunta **«¿Qué ayuda necesitó?»**. Eso le sirve al equipo.
+     - Con "No", se puede elegir por qué (opcional). Queda registrado sin penalizar.
+   - **«¿Les resultó fácil seguir los pasos?»** (opcional).
+   - Después se toca **"Guardar y terminar"**.
+7. Si la hicieron **sin registrar**, la última pantalla lo dice y el botón es **"Terminar"**.
 
 ### 6.10.1 Los juegos en pantalla («Un día en el pueblo»)
 Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa en un lugar de un pueblo costarricense. No hay puntajes, ni tiempo, ni castigo por equivocarse: si algo no corresponde, vuelve con suavidad para intentar de nuevo. Después de dos intentos aparece **"Pista"**. Se puede tocar **"Terminar por hoy"** cuando quieran, y **"Pantalla completa"** para verlo más grande.

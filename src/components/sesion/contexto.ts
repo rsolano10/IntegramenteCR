@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 import type { AdaptacionPorEtapa, NivelCognitivo, ResourceExtras } from "../../lib/mediaResources";
 import type { ResourceModulo } from "../../lib/modulos";
-import type { Guion, Progreso, Respuestas } from "../../lib/sesiones";
+import type { Guion, Respuestas } from "../../lib/sesiones";
 
 // Lo que la sesión necesita del recurso o de la tarea del plan.
 export interface DatosSesion {
@@ -29,6 +29,11 @@ export interface Tema {
   relleno: string;
 }
 
+export interface RegistroSesion {
+  v: "done" | "partial" | "no";
+  comentario?: string;
+}
+
 export interface CtxSesion {
   guion: Guion;
   datos: DatosSesion;
@@ -44,8 +49,13 @@ export interface CtxSesion {
   anterior: (() => void) | null;
   abrirAyuda: (() => void) | null;
   abrirParar: () => void;
-  terminar: (extra?: Partial<Progreso>) => void;
-  textoTerminar: string;
+  // Termina la sesión: guarda el avance y, si corresponde, el registro.
+  terminar: (reg?: RegistroSesion) => Promise<void>;
+  // Si al terminar se pregunta «¿Pudieron hacer la actividad?» (no, cuando
+  // se hace para practicar o en la prueba de la clínica).
+  registro: boolean;
+  // Se paró antes de terminar (desde «Parar»).
+  paradaAntes: boolean;
   leerSiempre: boolean;
   alternarLeer: () => void;
 }

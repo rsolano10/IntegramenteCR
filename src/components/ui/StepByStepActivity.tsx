@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useVolver } from "../../lib/useVolver";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useMarkRegistro, useGuardarProgreso } from "../../lib/usePlan";
@@ -55,7 +55,11 @@ export function StepByStepActivity({
   const [helpText, setHelpText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState<"done" | "partial" | "no" | null>(null);
+  // «practica»: se hizo sin registrar (desde la pantalla de la actividad).
+  const [saved, setSaved] = useState<"done" | "partial" | "no" | "practica" | null>(null);
+  // Cómo se empezó: normal, cambiando un registro anterior o sin registrar.
+  const [params] = useSearchParams();
+  const modo = params.get("modo");
 
   const shell = (children: ReactNode, progreso?: number) => (
     <div className="min-h-screen flex flex-col bg-fondo-papel px-5 py-6 sm:px-8">
@@ -95,9 +99,14 @@ export function StepByStepActivity({
     );
   }
 
-  // Con guion propio: la sesión guiada, y al terminar el mismo registro.
+  // Se registra si se empezó la actividad del día o si se eligió cambiar el
+  // registro anterior; si no, se hace para practicar.
+  const diaDeTarea = days?.find((d) => d.tasks.some((x) => x.id === task.id));
+  const registra = modo === "sobrescribir" || (modo !== "sin-registro" && !!diaDeTarea?.isToday && (task.estado === "pendiente" || task.estado === "futuro"));
+
+  // Con guion propio: la sesión guiada; la última pantalla registra.
   const guion = guionDe(task.codigo);
-  if (guion && screen === "guia") {
+  if (guion && screen === "guia" && !saved) {
     const guardar = (p: Parameters<typeof guardarProgreso>[1]) => guardarProgreso(task.id, p).catch(() => {});
     return (
       <SesionGuiada
@@ -109,11 +118,13 @@ export function StepByStepActivity({
         progreso={task.progreso}
         onProgreso={guardar}
         onSalir={volver}
-        onTerminar={(p) => {
+        registro={registra}
+        onTerminar={async (p, reg) => {
           guardar(p);
+          if (reg) await markRegistro(task.id, reg.v, reg.comentario);
+          setSaved(reg ? reg.v : "practica");
           setScreen("registro");
         }}
-        textoTerminar={large ? "Contar cómo me fue" : "Registrar cómo les fue"}
         rutaEmergencia={large ? undefined : "/app/emergencia"}
       />
     );
@@ -170,7 +181,11 @@ export function StepByStepActivity({
   const eyebrow = `m-0 mb-2 tracking-[0.14em] uppercase text-tinta-tenue ${large ? "text-sm" : "text-[13px]"}`;
   const bigSize = large ? "lg" : "md";
 
-  const siguiente = () => (faseIdx < fases.length - 1 ? setFaseIdx((i) => i + 1) : setScreen("registro"));
+  const siguiente = () => {
+    if (faseIdx < fases.length - 1) return setFaseIdx((i) => i + 1);
+    if (!registra) setSaved("practica");
+    setScreen("registro");
+  };
   const navegacion = (etiqueta: string) => (
     <div className="flex gap-3 mt-8">
       {faseIdx > 0 && (
@@ -299,7 +314,7 @@ export function StepByStepActivity({
           {/* El cierre del juego pregunta cómo le resultó y lo registra. */}
           <RegistroJuegoContexto.Provider
             value={
-              task.estado === "pendiente" || task.estado === "futuro"
+              registra
                 ? {
                     guardar: async (v, dificultad, comentario) => {
                       await markRegistro(task.id, v, comentario, dificultad);
@@ -312,7 +327,7 @@ export function StepByStepActivity({
           >
             <MaterialDeApoyo extras={task.extras} large={large} />
           </RegistroJuegoContexto.Provider>
-          {navegacion(fases[faseIdx + 1] ? "Siguiente" : "Registrar cómo les fue")}
+          {navegacion(fases[faseIdx + 1] ? "Siguiente" : registra ? "Registrar cómo les fue" : "Terminar")}
         </div>,
         progreso,
       );
@@ -359,16 +374,24 @@ export function StepByStepActivity({
 
   if (saved) {
     const messages: Record<string, string> = {
-      done: "Registrado. Mañana hay otra.",
-      partial: "Registrado. No pasa nada, cada actividad es distinta.",
-      no: "Registrado sin penalizar. No pasa nada, mañana hay otra.",
+      done: "¡Listo! Quedó registrado. Mañana hay otra.",
+      partial: "Quedó registrado. No pasa nada: cada actividad es distinta.",
+      no: "Quedó registrado, sin penalizar. Mañana hay otra.",
+      practica: "¡Listo! Esta vez no se registró: fue para practicar.",
     };
     return shell(
       <div>
         <p className={`m-0 mb-6 ${large ? "text-[24px]" : "text-[20px]"} leading-relaxed text-verde-profundo`}>{messages[saved]}</p>
-        <Button variant="ink" fullWidth onClick={() => navigate(backTo, { replace: true })}>
-          Volver
-        </Button>
+        <div className="grid gap-3">
+          <Button variant="ink" fullWidth onClick={() => navigate(backTo, { replace: true })}>
+            Volver
+          </Button>
+          {large && saved === "no" && (
+            <BigActionButton variant="caution" size="md" onClick={() => navigate("/app/participante/ayuda", { state: { draft: `No pude hacer "${task.titulo}".` } })}>
+              Necesito ayuda
+            </BigActionButton>
+          )}
+        </div>
       </div>,
       1,
     );

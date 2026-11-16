@@ -6,7 +6,7 @@ import { moduloTheme } from "../../lib/modulos";
 import { ayudaDeEtapa, escenasVisibles, opcionDe, plantilla, textoDeVoz, valorUno, type Guion, type Progreso, type Respuestas, type UsoSesion } from "../../lib/sesiones";
 import { detenerVoz, leerEnVoz } from "../../lib/voz";
 import { BotonVoz, Hoja } from "./comun";
-import { SesionContexto, type CtxSesion, type DatosSesion } from "./contexto";
+import { SesionContexto, type CtxSesion, type DatosSesion, type RegistroSesion } from "./contexto";
 import { Portada, VistaEscena } from "./Escenas";
 
 export type { DatosSesion } from "./contexto";
@@ -24,7 +24,7 @@ export function SesionGuiada({
   onProgreso,
   onSalir,
   onTerminar,
-  textoTerminar = "Registrar cómo les fue",
+  registro = true,
   rutaEmergencia,
   inicio = -1,
 }: {
@@ -37,8 +37,9 @@ export function SesionGuiada({
   // Guarda el avance (la misión de la semana) mientras se hace.
   onProgreso?: (p: Progreso) => void;
   onSalir: () => void;
-  onTerminar: (p: Progreso) => void;
-  textoTerminar?: string;
+  // Al terminar: el avance y, si se preguntó, cómo les fue.
+  onTerminar: (p: Progreso, reg?: RegistroSesion) => Promise<void> | void;
+  registro?: boolean;
   rutaEmergencia?: string;
   // Escena con que abre (-1: la portada). Para revisar una escena suelta.
   inicio?: number;
@@ -50,6 +51,7 @@ export function SesionGuiada({
   const veces = escenaMision?.tipo === "mision" ? escenaMision.veces : 0;
   const [marcas, setMarcas] = useState<boolean[]>(() => Array.from({ length: veces }, (_, i) => !!progreso?.mision?.marcas[i]));
   const [panel, setPanelEstado] = useState<null | "ayuda" | "parar">(null);
+  const [paradaAntes, setParadaAntes] = useState(false);
   // Medición: hasta dónde llegó, cuántas veces pidió ayuda o paró, y el tiempo.
   const medida = useRef({ desde: Date.now(), maxIdx: inicio, ayuda: 0, parar: 0 });
   const setPanel = (p: null | "ayuda" | "parar") => {
@@ -143,8 +145,16 @@ export function SesionGuiada({
     anterior: idx >= 0 ? () => setIdx((i) => i - 1) : null,
     abrirAyuda: consejos.length || porEtapa.length ? () => setPanel("ayuda") : null,
     abrirParar: () => setPanel("parar"),
-    terminar: (extra) => onTerminar(armarProgreso(respuestas, marcas, { terminada: new Date().toISOString(), uso: usoActual(!extra?.terminada), ...extra })),
-    textoTerminar,
+    terminar: async (reg) =>
+      onTerminar(
+        armarProgreso(respuestas, marcas, {
+          terminada: paradaAntes ? `parada:${new Date().toISOString()}` : new Date().toISOString(),
+          uso: usoActual(!paradaAntes),
+        }),
+        reg,
+      ),
+    registro,
+    paradaAntes,
     leerSiempre,
     alternarLeer: () => {
       const v = !leerSiempre;
@@ -276,8 +286,10 @@ export function SesionGuiada({
             <button
               type="button"
               onClick={() => {
+                // Paran: van directo al final, a contar cómo les fue.
                 setPanel(null);
-                ctx.terminar({ terminada: `parada:${new Date().toISOString()}` });
+                setParadaAntes(true);
+                setIdx(escenas.length - 1);
               }}
               className="min-h-[54px] rounded-full border-0 bg-tinta text-white font-semibold text-[17px] cursor-pointer hover:bg-verde-profundo"
             >

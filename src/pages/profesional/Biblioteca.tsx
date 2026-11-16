@@ -229,7 +229,7 @@ export function Biblioteca() {
             etapas={[]}
             onSalir={() => setProbando(null)}
             onTerminar={() => setProbando(null)}
-            textoTerminar="Terminar la prueba"
+            registro={false}
           />
         </div>
       )}

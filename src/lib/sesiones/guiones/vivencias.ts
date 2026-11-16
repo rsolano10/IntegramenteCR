@@ -274,7 +274,7 @@ export const mov001 = guion({
     },
     { tipo: "elegir", clave: "categoria", titulo: "¿Qué nombramos?", opciones: categorias },
     consigna("Caminar", "Caminen a un ritmo cómodo.", "figura-camina"),
-    decir("Mientras caminan", "Nombremos {categoria} mientras caminamos.", { contar: "Una más", nota: "Si la marcha se vuelve insegura, paren de nombrar y sigan caminando." }),
+    decir("Mientras caminan", "Nombremos {categoria} mientras caminamos.", { contar: "Dijo una palabra", nota: "Si la marcha se vuelve insegura, paren de nombrar y sigan caminando." }),
     ...salidaEjercicio,
     { tipo: "cierre", texto: "Caminar y pensar juntos, sin apuro." },
   ],
@@ -290,7 +290,7 @@ export const mov002 = guion({
     { tipo: "consigna", paso: { n: 1, de: 3 }, titulo: "Una palmada", texto: "Una palmada.", icono: "palmas" },
     { tipo: "consigna", paso: { n: 2, de: 3 }, titulo: "El cruce", texto: "Mano derecha a la rodilla izquierda; después, al revés.", icono: "figura-sentada" },
     { tipo: "consigna", paso: { n: 3, de: 3 }, titulo: "La señal", texto: "Cuando escuche «cambio», inviertan el orden.", icono: "conversar" },
-    decir("¡A practicar!", "¡Cambio!", { nota: "Decilo cuando quieras. Despacio antes que rápido.", contar: "Le salió" }),
+    decir("¡A practicar!", "¡Cambio!", { nota: "Decilo cuando quieras. Despacio antes que rápido.", contar: "Le salió bien" }),
     { tipo: "cierre", texto: "La coordinación se gana con calma, no con velocidad." },
   ],
 });
@@ -321,7 +321,7 @@ export const mov003 = guion({
         o("nombres", "Nombres de la familia", "foto", "un nombre de la familia"),
       ],
     },
-    decir("¡A jugar!", "Cuando recibas la pelota, decí {categoria}.", { icono: "pelota", contar: "Una más", nota: "Si repite una, dale una pista y sigan." }),
+    decir("¡A jugar!", "Cuando recibas la pelota, decí {categoria}.", { icono: "pelota", contar: "Dijo una palabra", nota: "Si repite una, dale una pista y sigan." }),
     { tipo: "cierre", texto: "Jugar también es pensar." },
   ],
 });
@@ -522,7 +522,7 @@ export const mus002 = guion({
   escenas: [
     consigna("Cantar", "Canten juntos una canción muy conocida.", "musica"),
     consigna("Una pausa", "Paren justo antes de una palabra conocida.", "rechazo", "Sin mostrar la letra."),
-    decir("¿Cómo sigue?", "¿Cómo sigue?", { nota: "Dale tiempo. Si no aparece, completala vos y sigan cantando.", contar: "¡La completó!" }),
+    decir("¿Cómo sigue?", "¿Cómo sigue?", { nota: "Dale tiempo. Si no aparece, completala vos y sigan cantando.", contar: "Completó la canción" }),
     { tipo: "cierre", texto: "Cantar juntos vale más que acertar la letra." },
   ],
 });

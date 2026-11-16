@@ -1,31 +1,8 @@
 import { useState } from "react";
 import { moduloTheme } from "../../lib/modulos";
-import type { Guion, Progreso } from "../../lib/sesiones";
+import type { Progreso } from "../../lib/sesiones";
 import type { ResourceModulo } from "../../lib/modulos";
 import { Icono } from "./Icono";
-
-// En la pantalla de la actividad, cuando tiene sesión guiada: qué es en una
-// frase y sus etiquetas, en lugar de la ficha larga (que queda plegada).
-export function ResumenSesion({ guion, modulo, large = false }: { guion: Guion; modulo: ResourceModulo | null; large?: boolean }) {
-  const tema = modulo ? moduloTheme[modulo] : moduloTheme.bienvenida;
-  return (
-    <div className="flex items-center gap-4 rounded-[24px] bg-white border border-borde px-4 py-4 mb-5">
-      <span className="shrink-0 w-[72px] h-[72px] rounded-full flex items-center justify-center" style={{ background: `radial-gradient(circle at 35% 30%, #fff, ${tema.from})` }}>
-        <Icono nombre={guion.icono} className="w-11 h-11 text-tinta" relleno="#fff" />
-      </span>
-      <div className="min-w-0">
-        <p className={`m-0 leading-snug text-tinta ${large ? "text-[20px]" : "text-[16.5px]"}`}>{guion.frase}</p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {guion.etiquetas.map((e) => (
-            <span key={e} className={`rounded-full bg-campo border border-borde-suave px-2.5 py-0.5 font-semibold text-tinta-suave ${large ? "text-[15px]" : "text-[13px]"}`}>
-              {e}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // La misión de la semana, para seguir marcando cualquier día.
 export function MisionSemana({
