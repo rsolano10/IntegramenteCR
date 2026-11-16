@@ -14,8 +14,8 @@ export interface DatosSesion {
   indicacionIndividual: string | null;
   // Material de apoyo del recurso (tabla, tarjetas, temporizador).
   extras?: ResourceExtras | null;
-  // La ayuda validada de la ficha: se ofrece en «Ayuda» cuando el guion no
-  // trae la suya.
+  // La ayuda validada de la ficha: se suma en «Ayuda». (La «adaptación»
+  // de los primeros recursos usa los semáforos de la clínica: no se muestra.)
   ayuda?: string | null;
   adaptacion?: string | null;
   adaptacionPorEtapa?: AdaptacionPorEtapa | null;

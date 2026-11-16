@@ -51,7 +51,8 @@ export function SesionGuiada({
   const [marcas, setMarcas] = useState<boolean[]>(() => Array.from({ length: veces }, (_, i) => !!progreso?.mision?.marcas[i]));
   const [panel, setPanel] = useState<null | "ayuda" | "parar">(null);
 
-  const escenas = useMemo(() => escenasVisibles(guion, respuestas), [guion, respuestas]);
+  // Sin video cargado, la escena del video no se muestra.
+  const escenas = useMemo(() => escenasVisibles(guion, respuestas).filter((e) => e.tipo !== "video" || !!datos.videoUrl), [guion, respuestas, datos.videoUrl]);
   const escena = idx >= 0 ? escenas[Math.min(idx, escenas.length - 1)] : null;
   const m = datos.modulo ? moduloTheme[datos.modulo] : moduloTheme.bienvenida;
   const tema = { claro: m.from, fuerte: m.to, tinta: m.ink, relleno: `${m.to}80` };
@@ -106,7 +107,7 @@ export function SesionGuiada({
     },
     siguiente: () => setIdx((i) => Math.min(i + 1, escenas.length - 1)),
     anterior: idx >= 0 ? () => setIdx((i) => i - 1) : null,
-    abrirAyuda: consejos.length || porEtapa.length || datos.adaptacion ? () => setPanel("ayuda") : null,
+    abrirAyuda: consejos.length || porEtapa.length ? () => setPanel("ayuda") : null,
     abrirParar: () => setPanel("parar"),
     terminar: (extra) => onTerminar(armarProgreso(respuestas, marcas, { terminada: new Date().toISOString(), ...extra })),
     textoTerminar,
@@ -191,7 +192,6 @@ export function SesionGuiada({
                 </li>
               ))}
             </ul>
-            {!porEtapa.length && datos.adaptacion && <p className="m-0 rounded-2xl bg-fila-fria px-4 py-3 whitespace-pre-line">{datos.adaptacion}</p>}
             {porEtapa.length > 0 && (
               <div className="rounded-2xl bg-fila-fria px-4 py-3 grid gap-1.5">
                 <p className="m-0 text-[12.5px] tracking-[0.14em] uppercase font-semibold text-tinta-tenue">{etapas.length ? "Para su etapa" : "Según la etapa"}</p>

@@ -100,6 +100,14 @@ export const NOMBRES_ICONOS = [
   "perro",
   "fruta",
   "musica",
+  // Música, sentidos y recuerdos
+  "palmas",
+  "tambor",
+  "maracas",
+  "nariz",
+  "torta",
+  "martillo",
+  "hilo",
   // Cocina
   "hoja",
   "acelga",

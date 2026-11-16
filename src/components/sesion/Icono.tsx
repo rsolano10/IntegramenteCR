@@ -578,6 +578,59 @@ const D: Record<NombreIcono, ReactNode> = {
       <path d="M22 27l3 3M17 33l2 2" opacity=".55" />
     </>
   ),
+  palmas: (
+    <>
+      <path d="M14 34l-4-14a2.5 2.5 0 0 1 5-1l3 8-2-12a2.5 2.5 0 0 1 5-1l2 10 1-12a2.5 2.5 0 0 1 5 0l-1 14 3-6a2.5 2.5 0 0 1 4 2l-5 12c-2 5-6 7-11 6-3-1-5-4-5-6z" fill={R} />
+      <path d="M8 10l3 3M24 4v4M38 9l-3 3" />
+    </>
+  ),
+  tambor: (
+    <>
+      <ellipse cx="24" cy="18" rx="15" ry="6" fill={B} />
+      <path d="M9 18v14c0 4 7 7 15 7s15-3 15-7V18" fill={R} />
+      <ellipse cx="24" cy="18" rx="15" ry="6" />
+      <path d="M9 22l8 13M17 23l7 14M39 22l-8 13M31 23l-7 14" opacity=".5" />
+      <path d="M14 6l8 9M36 5l-7 10" />
+    </>
+  ),
+  maracas: (
+    <>
+      <ellipse cx="17" cy="15" rx="7" ry="9" fill={R} />
+      <path d="M17 24v18" strokeWidth="3.4" />
+      <ellipse cx="33" cy="17" rx="6" ry="8" fill={R} opacity=".7" transform="rotate(20 33 17)" />
+      <path d="M30 25l-4 15" strokeWidth="3.4" />
+      <path d="M14 13h0M19 17h0M15 19h0" strokeWidth="2.6" />
+    </>
+  ),
+  nariz: (
+    <>
+      <path d="M24 6c-2 8-8 16-8 22a6 6 0 0 0 5 6c1 2 5 2 6 0a6 6 0 0 0 5-6" fill={R} />
+      <path d="M21 30c1 1 2 1 3 0M27 30c1 1 2 1 3 0" />
+      <path d="M36 12c3 1 5 3 5 6M38 6c5 2 7 6 7 10" opacity=".55" />
+    </>
+  ),
+  torta: (
+    <>
+      <path d="M8 26h32v14H8z" fill={R} />
+      <path d="M8 31c4 3 8 3 11 0 3 3 7 3 10 0 3 3 8 3 11 0" />
+      <path d="M17 26v-6M24 26v-6M31 26v-6" />
+      <path d="M17 14c-1 1-1 3 0 3s1-2 0-3zM24 14c-1 1-1 3 0 3s1-2 0-3zM31 14c-1 1-1 3 0 3s1-2 0-3z" fill="#f4c372" />
+    </>
+  ),
+  martillo: (
+    <>
+      <path d="M10 10l10-4 8 8-4 4z" fill={R} />
+      <path d="M22 16l18 18a3 3 0 0 1-4 4L18 20" strokeWidth="3" />
+    </>
+  ),
+  hilo: (
+    <>
+      <path d="M14 8h20v6H14zM14 34h20v6H14z" fill={R} />
+      <path d="M16 14h16v20H16z" fill={B} />
+      <path d="M16 18h16M16 22h16M16 26h16M16 30h16" opacity=".55" />
+      <path d="M34 22c4 0 6 3 8 8" />
+    </>
+  ),
   casa: (
     <>
       <path d="M8 22L24 9l16 13" />

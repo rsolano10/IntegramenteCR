@@ -5,6 +5,7 @@ import { ger003 } from "./guiones/ger003";
 import { ger001, ger002, ger004, ger005, ger006, ger007, ger008, ger009, ger010 } from "./guiones/gerontogimnasia";
 import { pre005 } from "./guiones/pre005";
 import { NUTRICION } from "./guiones/nutricion";
+import { VIVENCIAS } from "./guiones/vivencias";
 import type { Escena, Guion, Opcion, Respuestas } from "./tipos";
 
 export type { Escena, Guion, Opcion, Progreso, Respuestas } from "./tipos";
@@ -29,6 +30,8 @@ export const LISTA_GUIONES: Guion[] = [
   // Nutrición
   pre005,
   ...NUTRICION,
+  // Reminiscencia, movimiento, música, sentidos y bienvenida
+  ...VIVENCIAS,
 ];
 
 export const GUIONES: Record<string, Guion> = Object.fromEntries(LISTA_GUIONES.map((g) => [g.codigo, g]));
@@ -77,6 +80,9 @@ function todasLasOpciones(g: Guion, clave: string): Opcion[] {
 
 // Lo elegido para una clave, como opción (lo escrito a mano, sin dibujo).
 export function opcionDe(g: Guion, clave: string, valor: string, r: Respuestas): Opcion | null {
+  // Ordenar lo armado en otra lista: las opciones son las de esa lista.
+  const ordenar = g.escenas.find((e) => e.tipo === "ordenar" && e.clave === clave);
+  if (ordenar?.tipo === "ordenar" && ordenar.desde) return opcionDe(g, ordenar.desde, valor, r);
   if (valor === "otra") {
     const texto = valorUno(r, `${clave}_texto`)?.trim();
     return texto ? { id: "otra", texto, icono: "otra", dicho: texto } : null;

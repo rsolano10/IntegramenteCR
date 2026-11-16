@@ -85,9 +85,15 @@ export type Escena = Base &
         nota?: string;
         items: Opcion[] | Record<string, Opcion[]>;
         segun?: string;
+        // Ordenar lo que se armó antes en una lista (en vez de `items`).
+        desde?: string;
         minimo: number;
         pista?: string;
       }
+    // Ritmos para escuchar e imitar. Cada patrón son golpes separados por
+    // espacios: «x» golpe, «-» pausa, «A» y «B» dos sonidos distintos.
+    // Con `pulso`, un pulso parejo y lento para acompañar.
+    | { tipo: "ritmo"; titulo: string; nota?: string; patrones: string[]; pulso?: boolean }
     | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[]; lados?: boolean }
     // Sostener una posición unos segundos (cuenta regresiva) o hacer un
     // recorrido (cuenta hacia arriba, con un mínimo).

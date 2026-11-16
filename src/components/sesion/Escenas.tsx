@@ -353,7 +353,7 @@ export function Lista({ e }: { e: De<"lista"> }) {
   };
   return (
     <>
-      <Titulo>{e.titulo}</Titulo>
+      <Titulo>{plantilla(e.titulo, guion, respuestas)}</Titulo>
       {!participante && e.nota && <Nota className="mt-2">{e.nota}</Nota>}
       {/* Lo que ya va: la «bolsa» que se llena. */}
       <div className="mt-5 rounded-[22px] border-2 border-dashed border-borde-campo bg-campo px-4 py-3 min-h-[64px]" aria-live="polite">
@@ -402,7 +402,11 @@ export function Ordenar({ e }: { e: De<"ordenar"> }) {
   const { guion, respuestas, responder, participante } = useSesion();
   const t = useTam();
   const orden = valorLista(respuestas, e.clave);
-  const items = opcionesSegun(e.items, e.segun, respuestas);
+  const items = e.desde
+    ? valorLista(respuestas, e.desde)
+        .map((v) => opcionDe(guion, e.desde!, v, respuestas))
+        .filter((x): x is Opcion => !!x)
+    : opcionesSegun(e.items, e.segun, respuestas);
   const tocar = (id: string) => responder(e.clave, orden.includes(id) ? orden.filter((x) => x !== id) : [...orden, id]);
   return (
     <>
@@ -485,6 +489,142 @@ export function Material({ e }: { e: De<"material"> }) {
       <Titulo>{e.titulo}</Titulo>
       {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
       <div className="mt-5">{datos.extras ? <MaterialDeApoyo extras={datos.extras} large={large} /> : <Nota>El material no está disponible ahora.</Nota>}</div>
+      <Pie etiqueta="Siguiente" />
+    </>
+  );
+}
+
+// ─── Ritmo: escuchar e imitar ───
+const TONO: Record<string, number> = { x: 660, A: 784, B: 392 };
+
+function sonar(ctx: AudioContext, frecuencia: number, cuando: number) {
+  const osc = ctx.createOscillator();
+  const vol = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = frecuencia;
+  // Volumen bajo y golpe corto.
+  vol.gain.setValueAtTime(0.0001, cuando);
+  vol.gain.exponentialRampToValueAtTime(0.18, cuando + 0.01);
+  vol.gain.exponentialRampToValueAtTime(0.0001, cuando + 0.18);
+  osc.connect(vol).connect(ctx.destination);
+  osc.start(cuando);
+  osc.stop(cuando + 0.2);
+}
+
+export function Ritmo({ e }: { e: De<"ritmo"> }) {
+  const { tema, large } = useSesion();
+  const t = useTam();
+  const [i, setI] = useState(0);
+  const [activo, setActivo] = useState<number | null>(null);
+  const [toques, setToques] = useState(0);
+  const [pulsando, setPulsando] = useState(false);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const golpes = e.patrones[i].split(" ");
+  const audio = () => {
+    if (!ctxRef.current) {
+      const C = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctxRef.current = new C();
+    }
+    return ctxRef.current;
+  };
+  useEffect(() => () => void ctxRef.current?.close(), []);
+
+  // Escuchar el patrón: cada golpe medio segundo, y se ilumina al sonar.
+  function escuchar() {
+    const ctx = audio();
+    const t0 = ctx.currentTime + 0.1;
+    golpes.forEach((g, k) => {
+      if (TONO[g]) sonar(ctx, TONO[g], t0 + k * 0.5);
+      setTimeout(() => setActivo(k), 100 + k * 500);
+    });
+    setTimeout(() => setActivo(null), 100 + golpes.length * 500);
+  }
+
+  // Pulso parejo y lento (para decir una palabra cada tantos golpes).
+  useEffect(() => {
+    if (!pulsando) return;
+    const ctx = audio();
+    let k = 0;
+    const id = setInterval(() => {
+      sonar(ctx, TONO.x, ctx.currentTime + 0.01);
+      setActivo(k % 4);
+      k++;
+    }, 900);
+    return () => {
+      clearInterval(id);
+      setActivo(null);
+    };
+  }, [pulsando]);
+
+  const color = (g: string) => (g === "B" ? "#3f6a70" : g === "A" ? "#c0664f" : tema.fuerte);
+  const fichas = e.pulso ? ["x", "x", "x", "x"] : golpes;
+  return (
+    <>
+      <Titulo>{e.titulo}</Titulo>
+      {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
+      <div className="mt-6 rounded-[26px] bg-white border border-borde px-5 py-6 flex flex-col items-center gap-5">
+        <div className="flex items-center justify-center gap-3 min-h-[64px]" aria-label={e.pulso ? "Pulso" : `Ritmo: ${e.patrones[i]}`}>
+          {fichas.map((g, k) =>
+            g === "-" ? (
+              <span key={k} className="w-6 h-1.5 rounded-full bg-borde" aria-hidden="true" />
+            ) : (
+              <span
+                key={`${i}-${k}`}
+                className={`inline-flex items-center justify-center rounded-full font-bold text-white transition-transform duration-150 ${large ? "w-16 h-16 text-[22px]" : "w-14 h-14 text-[19px]"} ${activo === k ? "scale-125" : ""}`}
+                style={{ background: color(g), opacity: activo === null || activo === k ? 1 : 0.45 }}
+              >
+                {g === "x" ? "" : g}
+              </span>
+            ),
+          )}
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          {e.pulso ? (
+            <button
+              type="button"
+              onClick={() => setPulsando((p) => !p)}
+              className={`min-h-12 px-5 rounded-full border-0 font-semibold cursor-pointer ${pulsando ? "bg-tinta text-white" : "bg-verde-profundo text-white"} ${t.chico}`}
+            >
+              {pulsando ? "Detener el pulso" : "Empezar el pulso"}
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={escuchar} className={`min-h-12 px-5 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer ${t.chico}`}>
+                Escuchar el ritmo
+              </button>
+              {e.patrones.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setI((k) => (k + 1) % e.patrones.length);
+                    setToques(0);
+                  }}
+                  className={`min-h-12 px-5 rounded-full border-[1.5px] border-borde bg-white text-tinta font-semibold cursor-pointer ${t.chico}`}
+                >
+                  Otro ritmo
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      {!e.pulso && (
+        <button
+          type="button"
+          onClick={() => {
+            setToques((n) => n + 1);
+            sonar(audio(), TONO.x, audio().currentTime + 0.01);
+          }}
+          className="mt-4 w-full min-h-[96px] rounded-[26px] border-2 border-dashed border-borde-campo bg-campo font-semibold text-tinta-suave cursor-pointer active:scale-[0.98] transition-transform"
+        >
+          <span className={t.cuerpo}>Tocá acá para imitarlo</span>
+          {toques > 0 && (
+            <span key={toques} className={`ses-marca block font-serif text-tinta ${t.grande}`} aria-live="polite">
+              {toques}
+            </span>
+          )}
+        </button>
+      )}
       <Pie etiqueta="Siguiente" />
     </>
   );
@@ -1057,6 +1197,8 @@ export function VistaEscena({ e }: { e: Escena }) {
       return <Repeticiones e={e} />;
     case "tiempo":
       return <Tiempo e={e} />;
+    case "ritmo":
+      return <Ritmo e={e} />;
     case "leer":
       return <Leer e={e} />;
     case "material":

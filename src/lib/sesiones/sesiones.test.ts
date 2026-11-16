@@ -86,6 +86,7 @@ test("sesiones: cada referencia apunta a una respuesta anterior", () => {
       const refs: string[] = [];
       if (e.si) refs.push(e.si.clave);
       if ((e.tipo === "lista" || e.tipo === "ordenar") && e.segun) refs.push(e.segun);
+      if (e.tipo === "ordenar" && e.desde) refs.push(e.desde);
       if (e.tipo === "repaso") refs.push(...e.partes.map((p) => p.clave));
       for (const t of Object.values(e)) if (typeof t === "string") for (const m of t.matchAll(/\{(\w+)\}/g)) refs.push(m[1]);
       for (const r of refs) assert.ok(vistas.has(r), `${codigo} ${e.tipo}: «${r}» no se respondió antes`);
