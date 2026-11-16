@@ -233,7 +233,7 @@ Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa e
 - **El piso de mosaico**: dar vuelta las baldosas de a dos para encontrar las iguales.
 - **Las ventanas del pueblo**: recordar qué ventanas tenían luz y señalarlas.
 - **El rotulista**: ordenar letras de madera para pintar una palabra.
-- **La pulpería**: pagar la cuenta justa con monedas y billetes.
+- **La pulpería**: pagar la cuenta justa con monedas y billetes o, si el equipo lo eligió, armar el vuelto con la plata de la gaveta.
 - **El almanaque**: conversar sobre qué día, mes y parte del día es hoy.
 - **La olla de carne**: entre las cosas de la mesa, tocar la que no va con las demás.
 - **El corredor**: mirar el corredor de una casa y, después, tocar lo que cambió.

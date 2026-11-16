@@ -6,7 +6,8 @@ import { roseton } from "../../../lib/actividades/roseton";
 import { Roseton } from "./Ornamento";
 import { BILLETES, MONEDA, P, sombraPapel } from "./paleta";
 
-// «La pulpería» (pago-exacto). Estantes con frascos, la pizarra y la romana
+// «La pulpería» (pago-exacto). En el modo vuelto, la cuenta ya está pagada
+// con un billete (sobre la libreta) y se arma el vuelto en la bandeja. Estantes con frascos, la pizarra y la romana
 // al fondo; al frente, el mostrador de madera: la libreta con la cuenta, la
 // bandeja de peltre donde se pone el pago, y la plata sobre el mostrador.
 // Escena y mesa son un solo dibujo. La recompensa es la escena: el sello de
@@ -21,9 +22,10 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
   const L = ctl.large;
   const suma = pago.reduce((s, x) => s + x.valor, 0);
 
+  const vuelto = ej.modo === "vuelto";
   usePista(ctl.pista, () => {
     setSugerida(combinacion(ej.monto, ej.denominaciones));
-    ctl.aviso("En la bandeja quedó marcada una forma de pagarlo. Podés armarla igual o de otra forma.");
+    ctl.aviso(vuelto ? "En la bandeja quedó marcada una forma de dar el vuelto. Podés armarla igual o de otra forma." : "En la bandeja quedó marcada una forma de pagarlo. Podés armarla igual o de otra forma.");
   });
 
   function listo() {
@@ -36,6 +38,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
       setSugerida(null);
       return ctl.listo();
     }
+    if (vuelto) return ctl.reintento(r === "falta" ? "Falta un poco de vuelto." : "Es más vuelto de la cuenta.");
     ctl.reintento(r === "falta" ? "Falta un poco." : "Te pasaste un poco.");
   }
 
@@ -48,16 +51,20 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
         <Fondo />
         <Mostrador>
           {/* Libreta con la cuenta */}
-          <Libreta monto={ej.monto} suma={config.mostrarSuma ? suma : null} pagado={hecho} large={L} />
+          {vuelto ? (
+            <LibretaVuelto cuenta={ej.cuenta!} pagaCon={ej.pagaCon!} suma={config.mostrarSuma ? suma : null} listo={hecho} large={L} />
+          ) : (
+            <Libreta monto={ej.monto} suma={config.mostrarSuma ? suma : null} pagado={hecho} large={L} />
+          )}
 
           {/* Bandeja de peltre: lo que vas a pagar */}
           <section
-            aria-label="Lo que vas a pagar"
-            className="relative mt-3 rounded-[22px] p-3 min-h-[96px]"
+            aria-label={vuelto ? "El vuelto" : "Lo que vas a pagar"}
+            className={`relative ${vuelto && config.mostrarSuma ? "mt-10" : "mt-3"} rounded-[22px] p-3 min-h-[96px]`}
             style={{ background: P.cal, border: `4px solid ${P.profundo}`, boxShadow: `inset 0 3px 0 rgba(51,36,28,0.12), ${sombraPapel(3)}` }}
           >
             {pago.length === 0 && !sugerida && (
-              <p className={`m-0 py-5 text-center text-tinta-suave ${L ? "text-[20px]" : "text-[18px]"}`}>Poné aquí lo que vas a pagar</p>
+              <p className={`m-0 py-5 text-center text-tinta-suave ${L ? "text-[20px]" : "text-[18px]"}`}>{vuelto ? "Poné aquí el vuelto" : "Poné aquí lo que vas a pagar"}</p>
             )}
             {sugerida && !hecho && (
               <ul aria-label={`Una forma de pagarlo: ${sugerida.map(colones).join(", ")}`} className="list-none m-0 p-0 flex flex-wrap gap-2 mb-2">
@@ -81,7 +88,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
 
           {/* La plata, sobre el mostrador */}
           {!hecho && (
-            <section aria-label="Tu plata" className="mt-4">
+            <section aria-label={vuelto ? "La gaveta" : "Tu plata"} className="mt-4">
               {billetes.length > 0 && (
                 <ul className="list-none m-0 p-0 flex flex-wrap justify-center gap-3 mb-3">
                   {billetes.map((d) => (
@@ -105,7 +112,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
 
       {!hecho && (
         <>
-          <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>Tocá la plata para pagar justo.</p>
+          <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{vuelto ? "Armá el vuelto justo con la plata de la gaveta." : "Tocá la plata para pagar justo."}</p>
           <Acciones ctl={ctl}>
             <Boton onClick={listo} disabled={!pago.length} large={L}>
               Listo
@@ -316,6 +323,26 @@ function Libreta({ monto, suma, pagado, large }: { monto: number; suma: number |
         >
           Pagado
         </span>
+      )}
+    </div>
+  );
+}
+
+// Modo vuelto: la cuenta y, encima de la libreta, el billete con que pagaron.
+function LibretaVuelto({ cuenta, pagaCon, suma, listo, large }: { cuenta: number; pagaCon: number; suma: number | null; listo: boolean; large: boolean }) {
+  return (
+    <div className="relative mx-auto max-w-[380px] flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <Libreta monto={cuenta} suma={null} pagado={listo} large={large} />
+      </div>
+      <div className="shrink-0 grid justify-items-center gap-1 rotate-3">
+        <span className={`font-semibold text-tinta-suave ${large ? "text-[18px]" : "text-[16px]"}`}>Pagaron con</span>
+        <Dinero valor={pagaCon} chico />
+      </div>
+      {suma !== null && (
+        <p className={`absolute -bottom-7 left-0 right-0 m-0 text-center font-semibold text-tinta-suave ${large ? "text-[19px]" : "text-[17px]"}`} aria-live="polite">
+          Cuenta y vuelto: {colones(cuenta + suma)} de {colones(pagaCon)}
+        </p>
       )}
     </div>
   );

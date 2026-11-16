@@ -4,7 +4,7 @@ import { crearAzar } from "./azar.ts";
 import { NIVELES, resolverConfig, type ExtrasInteractiva } from "./contrato.ts";
 import { ACTIVIDADES, prepararSesion } from "./registro.ts";
 import { esGrupoValido, generarClasificar, clasificarObjetos } from "./clasificarObjetos.ts";
-import { alcanzable, colones, combinacion, generarPago, pagoExacto, revisarPago } from "./pagoExacto.ts";
+import { alcanzable, colones, combinacion, generarPago, generarVuelto, pagoExacto, revisarPago } from "./pagoExacto.ts";
 import { esSiguienteValida, generarPasos, generarSecuencia, ordenarSecuencia, siguienteCorrecta } from "./ordenar.ts";
 import { formarPalabra, generarPalabra, palabraFormada, prefijoCorrecto } from "./formarPalabra.ts";
 import { continuar, estadoParejas, generarParejas, parejas, parejasCompletas, voltear } from "./parejas.ts";
@@ -521,4 +521,36 @@ test("señas: el recorrido no sale del mapa y llega a una casa; tramos perpendic
 test("señas: sin descripción de la casa en retador", () => {
   const ej = generarSena({ tramos: 3, marcarPartida: false, casaDescrita: false, partidasVariadas: true, mostrarFlecha: false, leerEnVoz: true }, crearAzar(1));
   assert.ok(!ej.sena.includes("Casa "));
+});
+
+test("pulpería, vuelto: el vuelto está en rango, es múltiplo, se puede armar y cuenta + vuelto = billete", () => {
+  const azar = crearAzar(21);
+  for (const [vueltoMax, vueltoMultiplo] of [[450, 50], [5000, 50], [10000, 5]] as const)
+    for (let r = 0; r < 60; r++) {
+      const ej = generarVuelto({ vueltoMax, vueltoMultiplo }, azar);
+      assert.equal(ej.modo, "vuelto");
+      assert.ok(ej.monto >= vueltoMultiplo && ej.monto <= vueltoMax, `${ej.monto}`);
+      assert.equal(ej.monto % vueltoMultiplo, 0);
+      assert.equal(ej.cuenta! + ej.monto, ej.pagaCon);
+      assert.ok(ej.cuenta! > 0);
+      assert.ok(alcanzable(ej.monto, ej.denominaciones));
+      assert.ok(ej.denominaciones.every((d) => d < ej.pagaCon!));
+    }
+});
+
+test("pulpería: por defecto sigue pagando (los recursos actuales no cambian); mixto alterna", () => {
+  for (const nivel of ["suave", "medio", "retador"] as const) {
+    const s = prepararSesion(ex("pago-exacto", { nivel }), 3);
+    assert.ok(s.ok);
+    if (s.ok) assert.ok((s.ejercicios as { modo?: string }[]).every((e) => e.modo === "pagar"));
+  }
+  const m = prepararSesion(ex("pago-exacto", { nivel: "medio", ejercicios: 6, config: { modo: "mixto" } }), 3);
+  assert.ok(m.ok);
+  if (m.ok) {
+    const modos = (m.ejercicios as { modo?: string }[]).map((e) => e.modo);
+    for (let i = 1; i < modos.length; i++) assert.notEqual(modos[i], modos[i - 1]);
+  }
+  const v = prepararSesion(ex("pago-exacto", { nivel: "suave", config: { modo: "vuelto" } }), 3);
+  assert.ok(v.ok);
+  if (v.ok) assert.ok((v.ejercicios as { modo?: string; monto: number }[]).every((e) => e.modo === "vuelto" && e.monto < 500));
 });
