@@ -68,7 +68,7 @@ Estas reglas son de producto. Ninguna actividad puede romperlas.
 
 ### 2.6 Texto y contenido
 
-- Español de Costa Rica. Tratamiento de "usted" (ver decisión abierta 9.1).
+- Español de Costa Rica, con voseo costarricense en todo el texto ("tocá", "elegí", "podés"), igual que el resto de la app. Nunca "usted" ni "tú".
 - Contenido local: colones, comidas, lugares y rutinas de Costa Rica.
 - Sin afirmaciones de salud en la interfaz. No escribir "mejora su memoria", "previene", "entrena su cerebro" ni similares. Las instrucciones solo dicen qué hacer.
 - La función cognitiva de cada actividad es un metadato interno para la clínica. No se le muestra a la familia.
@@ -333,7 +333,7 @@ Al terminar cada punto: correr pruebas, verificar los criterios de la sección 5
 
 No las resuelvas sin Rodolfo.
 
-1. **Tratamiento**: este documento asume "usted". Confirmar si la app ya usa otro tratamiento y seguir el existente.
+1. **Tratamiento**: resuelta. Voseo costarricense, como el resto de la app.
 2. **Datos para la clínica**: hoy la regla es no guardar nada de desempeño. Si en el futuro se quiere dar a la clínica una señal de uso (por ejemplo, que la actividad se abrió), es una decisión de producto aparte.
 3. **Migración de `ClasificarNumeros`** al motor `clasificar`: proponer con pros y contras tras el Paso 0.
 4. **Recursos gráficos**: si la librería de íconos no alcanza, definir quién produce las ilustraciones.

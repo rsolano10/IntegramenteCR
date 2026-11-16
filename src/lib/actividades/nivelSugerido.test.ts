@@ -32,3 +32,9 @@ test("sugerencia: dos veces fácil sube, dos veces difícil baja", () => {
   assert.equal(sugerenciaNivel("feria", [s(1, "suave", "dificil"), s(2, "suave", "facil"), s(3, "suave", null), s(4, "suave", "facil")])?.direccion, "subir");
   assert.equal(sugerenciaNivel("feria", [s(1, "suave", "facil")]), null);
 });
+
+test("nivel sugerido: sirve igual para los juegos nuevos (no depende del tipo)", () => {
+  const h = [s(1, "medio", "facil", "olla"), s(2, "medio", "facil", "olla")];
+  assert.equal(sugerenciaNivel("olla", h)?.nivel, "retador");
+  assert.deepEqual(nivelPorDefecto({ resourceId: "corredor", historial: h, etapas: ["leve"], delRecurso: "medio" }), { nivel: "suave", origen: "etapa" });
+});

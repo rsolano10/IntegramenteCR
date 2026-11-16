@@ -181,7 +181,7 @@ function Producto({ texto, dibujo, chico = false, large = false }: { texto: stri
   );
 }
 
-function DibujoP({ d, size }: { d: DibujoProducto; size: number }) {
+export function DibujoP({ d, size }: { d: DibujoProducto; size: number }) {
   const sombra = "rgba(51,36,28,0.3)";
   return (
     <svg viewBox="0 0 40 40" width={size} height={size} aria-hidden="true" className="shrink-0">

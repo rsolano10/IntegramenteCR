@@ -221,6 +221,22 @@ Arriba: la fecha y «Hola, [nombre]». Menú de pestañas: **Hoy · Mi semana ·
 - En el detalle puede aparecer un **"Mensaje de tu equipo clínico"** o una **"Nota del equipo"**.
 - La primera vez que se abre una actividad de gerontogimnasia, aparece arriba una **introducción en video** a la gerontogimnasia; después queda plegada para consultarla.
 
+### 6.10.1 Los juegos en pantalla («Un día en el pueblo»)
+Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa en un lugar de un pueblo costarricense. No hay puntajes, ni tiempo, ni castigo por equivocarse: si algo no corresponde, vuelve con suavidad para intentar de nuevo. Después de dos intentos aparece **"Pista"**. Se puede tocar **"Terminar por hoy"** cuando quieran, y **"Pantalla completa"** para verlo más grande.
+- Al terminar, la misma pantalla pregunta **«¿Cómo le resultó?»** (Fácil, Justo o Difícil; es opcional) y **«¿Lo pudieron hacer?»** (Sí, En parte o No). Con eso queda registrada la actividad.
+- El nivel (suave, medio o retador) lo elige el equipo clínico; la familia no tiene que cambiar nada.
+- **La feria**: acomodar los productos en sus canastos.
+- **La estación**: enganchar los vagones del tren en orden.
+- **El café de la tarde**: poner en orden los pasos de una tarea de la casa.
+- **El taller de carretas**: encontrar las ruedas pintadas iguales a la del clavo.
+- **El canasto**: contar cuántas frutas hay de cada una.
+- **El piso de mosaico**: dar vuelta las baldosas de a dos para encontrar las iguales.
+- **Las ventanas del pueblo**: recordar qué ventanas tenían luz y señalarlas.
+- **El rotulista**: ordenar letras de madera para pintar una palabra.
+- **La pulpería**: pagar la cuenta justa con monedas y billetes.
+- **El almanaque**: conversar sobre qué día, mes y parte del día es hoy.
+- **La olla de carne**: entre las cosas de la mesa, tocar la que no va con las demás.
+
 ### 6.11 "Mi semana"
 - Los días de la semana con sus actividades; el día de hoy aparece resaltado.
 - Al tocar una actividad se abre su pantalla (la misma que desde Hoy). Solo las actividades de hoy que faltan se pueden hacer y registrar; las ya registradas y las de otros días se pueden repasar, pero no volver a hacer. «Volver» regresa a Mi semana.

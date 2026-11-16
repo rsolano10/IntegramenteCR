@@ -13,6 +13,8 @@ import { generarIguales, indicesObjetivo, revisarIguales } from "./encontrarIgua
 import { contarPorTipo, generarContar, revisarConteo } from "./contarPorTipo.ts";
 import { generarPregunta, momentoCR, orientacionHoy, parteDelDia } from "./orientacionHoy.ts";
 import { esInteractivo } from "../clasificarNumeros.ts";
+import { generarIntruso } from "./intruso.ts";
+import { CONJUNTOS } from "./bancos/intrusos.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
 // Martes 10 de noviembre de 2026, 9 a. m. en Costa Rica (15:00 UTC).
@@ -36,7 +38,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 10);
+  assert.equal(ACTIVIDADES.length, 11);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -373,4 +375,38 @@ test("cada actividad resume sus tres niveles (para elegir la dificultad al asign
       assert.ok(r && r.length > 8 && !r.includes("undefined") && !r.includes("NaN"), `${def.tipo} ${nivel}: ${r}`);
     }
   assert.notEqual(resumenNivel(ex("parejas"), "suave"), resumenNivel(ex("parejas"), "retador"));
+});
+
+// ─── Fase 2 ───
+
+test("olla: un solo intruso, la cantidad pedida y de la dificultad pedida", () => {
+  const azar = crearAzar(3);
+  for (const sutileza of ["evidente", "categoria", "propiedad"] as const)
+    for (const elementos of [4, 5, 6]) {
+      const ej = generarIntruso({ elementos, sutileza, mostrarCriterio: true }, azar);
+      const k = CONJUNTOS.find((x) => x.id === ej.conjunto)!;
+      assert.equal(k.sutileza, sutileza);
+      assert.equal(ej.cosas.length, elementos);
+      const intrusos = ej.cosas.filter((x) => k.intrusos.includes(x));
+      assert.equal(intrusos.length, 1);
+      assert.equal(ej.cosas[ej.intruso], intrusos[0]);
+      assert.ok(ej.criterio.includes(intrusos[0].texto.toLowerCase()));
+    }
+});
+
+test("olla: el banco no tiene cosas que estén a la vez en van y en intrusos de un conjunto", () => {
+  for (const k of CONJUNTOS) {
+    const van = new Set(k.van.map((x) => x.texto));
+    for (const x of k.intrusos) assert.ok(!van.has(x.texto), `${k.id}: ${x.texto}`);
+    assert.equal(k.revisado, false);
+  }
+});
+
+test("olla: no repite el mismo conjunto dos veces seguidas", () => {
+  const s = prepararSesion(ex("intruso", { nivel: "suave", ejercicios: 8 }), 9);
+  assert.ok(s.ok);
+  if (s.ok) {
+    const ids = (s.ejercicios as { conjunto: string }[]).map((e) => e.conjunto);
+    for (let i = 1; i < ids.length; i++) assert.notEqual(ids[i], ids[i - 1]);
+  }
 });

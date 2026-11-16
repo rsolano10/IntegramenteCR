@@ -4,6 +4,7 @@ import { contarPorTipo } from "./contarPorTipo";
 import { cantidadEjercicios, resolverConfig, type DefActividad, type ExtrasInteractiva, type Nivel } from "./contrato";
 import { encontrarIguales } from "./encontrarIguales";
 import { formarPalabra } from "./formarPalabra";
+import { intruso } from "./intruso";
 import { ordenarPasos, ordenarSecuencia } from "./ordenar";
 import { orientacionHoy } from "./orientacionHoy";
 import { pagoExacto } from "./pagoExacto";
@@ -27,6 +28,8 @@ export const ACTIVIDADES: Def[] = [
   formarPalabra,
   pagoExacto,
   orientacionHoy,
+  // Fase 2
+  intruso,
 ];
 
 export const actividadPorTipo = (tipo: string | undefined): Def | undefined => ACTIVIDADES.find((a) => a.tipo === tipo);
