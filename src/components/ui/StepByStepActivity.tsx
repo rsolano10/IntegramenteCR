@@ -4,6 +4,7 @@ import { useVolver } from "../../lib/useVolver";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useMarkRegistro, useGuardarProgreso } from "../../lib/usePlan";
 import { guionDe } from "../../lib/sesiones";
+import { guionDeJuego } from "../../lib/sesiones/juego";
 import { datosDeTarea } from "../../lib/sesiones/datos";
 import { SesionGuiada } from "../sesion/SesionGuiada";
 import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
@@ -108,8 +109,10 @@ export function StepByStepActivity({
   const diaDeTarea = days?.find((d) => d.tasks.some((x) => x.id === task.id));
   const registra = !tarea && (modo === "sobrescribir" || (modo !== "sin-registro" && !!diaDeTarea?.isToday && (task.estado === "pendiente" || task.estado === "futuro")));
 
-  // Con guion propio: la sesión guiada; la última pantalla registra.
-  const guion = guionDe(task.codigo);
+  // Con guion propio: la sesión guiada; la última pantalla registra. Los
+  // juegos en pantalla, también: con un guion de juego (portada, juego, cierre).
+  const esJuegoEnPantalla = esInteractivo(task.extras) && task.extras?.modo === "interactiva";
+  const guion = guionDe(task.codigo) ?? (esJuegoEnPantalla ? guionDeJuego(task) : null);
   if (guion && screen === "guia" && !saved) {
     // Una actividad suelta no tiene fila en el plan donde guardar lo armado.
     const guardar = (p: Parameters<typeof guardarProgreso>[1]) => (tarea ? Promise.resolve() : guardarProgreso(task.id, p).catch(() => {}));
@@ -126,7 +129,10 @@ export function StepByStepActivity({
         registro={registra}
         onTerminar={async (p, reg) => {
           guardar(p);
-          if (reg) await markRegistro(task.id, reg.v, reg.comentario);
+          // «¿Cómo le resultó?» del juego (sirve para sugerir el nivel).
+          const d = p.respuestas?._dificultad;
+          const dificultad = d === "facil" || d === "justo" || d === "dificil" ? d : null;
+          if (reg) await markRegistro(task.id, reg.v, reg.comentario, dificultad);
           setSaved(reg ? reg.v : "practica");
           setScreen("registro");
         }}

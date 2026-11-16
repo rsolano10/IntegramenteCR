@@ -141,6 +141,7 @@ export function textoPrincipal(e: Escena): string {
     case "cierre":
       return e.texto;
     case "seguridad":
+    case "juego":
       return "";
     default:
       return e.titulo;
@@ -248,6 +249,9 @@ export function resumenPasos(g: Guion, conVideo: boolean): PasoResumen[] {
         break;
       case "ritmo":
         out.push({ icono: "palmas", texto: e.titulo, detalle: e.nota });
+        break;
+      case "juego":
+        out.push({ icono: "estrella", texto: "Jugar en pantalla", detalle: "Ejercicio por ejercicio, a su ritmo." });
         break;
       case "cierre":
         out.push({ icono: "estrella", texto: "Terminar y contar cómo les fue", detalle: "Cuentan si pudieron hacerla y si fue fácil de seguir." });

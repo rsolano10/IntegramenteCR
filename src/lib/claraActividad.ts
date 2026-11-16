@@ -72,6 +72,8 @@ export function describirEscena(e: Escena, g: Guion, r: Respuestas = {}): string
       return `${e.titulo}: ${lista(e.items.map((i) => i.texto))}.${nota}`;
     case "cierre":
       return "Pantalla final: cuentan si pudieron hacerla y si fue fácil de seguir.";
+    case "juego":
+      return "Un juego en pantalla de «Un día en el pueblo»: siguen la consigna del juego, ejercicio por ejercicio, con una pista después de dos intentos. Al terminar se puede jugar otra vez o seguir.";
   }
 }
 

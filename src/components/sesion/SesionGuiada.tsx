@@ -148,6 +148,10 @@ export function SesionGuiada({
     // Siempre hay ayuda: como mínimo, Clara.
     abrirAyuda: () => setPanel("ayuda"),
     abrirParar: () => setPanel("parar"),
+    irAlCierre: () => {
+      setParadaAntes(true);
+      setIdx(escenas.length - 1);
+    },
     terminar: async (reg) =>
       onTerminar(
         armarProgreso(respuestas, marcas, {

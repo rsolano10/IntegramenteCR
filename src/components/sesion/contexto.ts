@@ -49,6 +49,8 @@ export interface CtxSesion {
   anterior: (() => void) | null;
   abrirAyuda: (() => void) | null;
   abrirParar: () => void;
+  // Terminar por hoy: directo al cierre (como «Parar»).
+  irAlCierre: () => void;
   // Termina la sesión: guarda el avance y, si corresponde, el registro.
   terminar: (reg?: RegistroSesion) => Promise<void>;
   // Si al terminar se pregunta «¿Pudieron hacer la actividad?» (no, cuando

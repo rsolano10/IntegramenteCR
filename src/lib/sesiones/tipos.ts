@@ -115,6 +115,8 @@ export type Escena = Base &
     | { tipo: "mision"; clave: string; titulo: string; texto: string; veces: number; nota?: string; icono?: NombreIcono }
     | { tipo: "cuidados"; titulo: string; nota?: string; items: Item[] }
     | { tipo: "cierre"; texto: string; dato?: boolean }
+    // Un juego en pantalla («Un día en el pueblo»), con su propio cuadro.
+    | { tipo: "juego" }
   );
 
 export type TipoEscena = Escena["tipo"];

@@ -5,7 +5,6 @@ import { nuevaSemilla } from "../../../lib/actividades/azar";
 import type { ExtrasInteractiva } from "../../../lib/actividades/contrato";
 import { prepararSesion } from "../../../lib/actividades/registro";
 import { detenerVoz } from "../../../lib/voz";
-import { BotonEscuchar } from "../ClasificarNumeros";
 import { Boton, IconoAmpliar, IconoPista, IconoReducir, IconoSalir, IconoSiguiente } from "./ui";
 import type { Control } from "./comun";
 import { Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
@@ -75,11 +74,22 @@ type Mensaje = { tipo: "ok" | "reintento" | "info"; texto: string } | null;
 
 const Cargando = () => <div className="min-h-[280px] rounded-[20px] bg-beige-serenidad/60" aria-busy="true" />;
 
-export default function ActividadInteractiva({ extras, size = "compact" }: { extras: ExtrasInteractiva; size?: "compact" | "large" }) {
+// Dentro de la sesión guiada: el juego arranca directo (la portada y
+// «Empezar» son los de la sesión), avisa cuando terminó para habilitar
+// «Siguiente», y «Terminar por hoy» lleva al cierre de la sesión.
+export interface EnSesion {
+  onTerminado: () => void;
+  onReiniciar: () => void;
+  onDificultad: (d: Dificultad | null) => void;
+  onTerminarPorHoy: () => void;
+}
+
+export default function ActividadInteractiva({ extras, size = "compact", enSesion }: { extras: ExtrasInteractiva; size?: "compact" | "large"; enSesion?: EnSesion }) {
   const large = size === "large";
   const [semilla, setSemilla] = useState(nuevaSemilla);
   const sesion = useMemo(() => prepararSesion(extras, semilla), [extras, semilla]);
-  const [fase, setFase] = useState<"inicio" | "juego" | "cierre">("inicio");
+  const [fase, setFase] = useState<"inicio" | "juego" | "cierre">(enSesion ? "juego" : "inicio");
+  const [dificultad, setDificultad] = useState<Dificultad | null>(null);
   const [indice, setIndice] = useState(0);
   const [intentos, setIntentos] = useState(0);
   const [pista, setPista] = useState(0);
@@ -144,10 +154,21 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
     setIntentos(0);
     setResuelto(false);
     setMensaje(null);
+    setDificultad(null);
     setFase("juego");
+    enSesion?.onReiniciar();
+    enSesion?.onDificultad(null);
+  }
+  function terminarJuego() {
+    setFase("cierre");
+    enSesion?.onTerminado();
+  }
+  function terminarPorHoy() {
+    if (enSesion) enSesion.onTerminarPorHoy();
+    else setFase("cierre");
   }
   function siguiente() {
-    if (ultimo) return setFase("cierre");
+    if (ultimo) return terminarJuego();
     setIndice((i) => i + 1);
     setIntentos(0);
     setResuelto(false);
@@ -155,10 +176,17 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
   }
 
   const botonCine = (
-    <Boton variante="texto" large={large} onClick={cine.alternar} icono={cine.activo ? <IconoReducir /> : <IconoAmpliar />}>
-      {cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
-    </Boton>
+    <button
+      type="button"
+      onClick={cine.alternar}
+      aria-label={cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
+      title={cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
+      className="-mr-2 inline-flex items-center justify-center w-12 h-12 rounded-2xl border-0 bg-transparent text-tinta-suave cursor-pointer hover:bg-black/[0.04] hover:text-tinta focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+    >
+      {cine.activo ? <IconoReducir /> : <IconoAmpliar />}
+    </button>
   );
+  const texto = large ? "text-[20px]" : "text-[18px]";
 
   return (
     <section
@@ -166,61 +194,54 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
       aria-label={def.nombre}
       className={cine.activo ? `${cine.nativo ? "" : "fixed inset-0 z-[70]"} overflow-y-auto overscroll-contain bg-fondo-papel` : "min-w-0"}
     >
-      <div className={cine.activo ? "mx-auto w-full max-w-[880px] min-h-full px-4 py-5 sm:px-8 sm:py-8 flex flex-col" : ""}>
-        {fase === "inicio" && (
-          <div className="flex flex-col items-center text-center gap-4 py-1">
-            <h3 className="m-0 -mb-1">
-              <Rotulo texto={def.nombre} size="lg" />
-            </h3>
-            <Suspense fallback={<Cargando />}>
-              <Portada config={config} />
-            </Suspense>
-            <p className={`m-0 leading-snug text-tinta ${large ? "text-[26px]" : "text-[24px]"}`}>{consigna}</p>
-            <BotonEscuchar texto={consigna} />
-            <p className={`m-0 text-tinta-suave ${large ? "text-[20px]" : "text-[18px]"}`}>
-              Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
-            </p>
-            <div className="w-full max-w-sm grid gap-1">
-              <Boton onClick={empezar} large={large} className="w-full">
+      <div className={cine.activo ? "mx-auto w-full max-w-[880px] min-h-full px-4 py-5 sm:px-8 sm:py-8 flex flex-col gap-2" : "grid gap-2"}>
+        {/* El cuadro del juego: todo lo del juego va adentro (rótulo, avance,
+            consigna, mensajes, pista y el pase al siguiente ejercicio). */}
+        <div className="rounded-[28px] border border-borde bg-white/85 shadow-[0_18px_40px_-30px_rgba(31,51,56,0.55)] p-4 sm:p-5">
+          {fase === "inicio" && (
+            <div className="flex flex-col items-center text-center gap-4 py-1">
+              <h3 className="m-0 -mb-1">
+                <Rotulo texto={def.nombre} size="lg" />
+              </h3>
+              <Suspense fallback={<Cargando />}>
+                <Portada config={config} />
+              </Suspense>
+              <p className={`m-0 leading-snug text-tinta ${large ? "text-[24px]" : "text-[21px]"}`}>{consigna}</p>
+              <p className={`m-0 text-tinta-suave ${texto}`}>
+                Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
+              </p>
+              <Boton onClick={empezar} large={large} className="w-full max-w-sm">
                 Empezar
               </Boton>
-              {!cine.activo && (
-                <Boton variante="texto" large={large} onClick={cine.alternar} icono={<IconoAmpliar />} className="w-full">
-                  Jugar en pantalla completa
-                </Boton>
-              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {fase === "juego" && (
-          <div className="grid gap-4">
-            <div ref={zona} tabIndex={-1} className="outline-none flex items-center justify-between gap-3">
-              <h3 className="m-0 min-w-0">
-                <Rotulo texto={def.nombre} />
-              </h3>
-              <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
-            </div>
+          {fase === "juego" && (
+            <div className="grid gap-4">
+              <div ref={zona} tabIndex={-1} className="outline-none flex items-center justify-between gap-3">
+                <h3 className="m-0 min-w-0">
+                  <Rotulo texto={def.nombre} />
+                </h3>
+                <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
+              </div>
 
-            <Suspense fallback={<Cargando />}>
-              <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
-            </Suspense>
+              <Suspense fallback={<Cargando />}>
+                <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+              </Suspense>
 
-            {/* Barra de acciones: lo que pasó, la acción principal y las salidas. */}
-            <div className={`grid gap-3 ${cine.activo ? "sticky bottom-0 -mx-4 px-4 pt-3 pb-4 sm:-mx-8 sm:px-8 bg-fondo-papel/95 backdrop-blur border-t border-borde" : ""}`}>
               <p
                 aria-live="polite"
-                className={`m-0 flex items-center gap-2.5 rounded-2xl leading-snug ${mensaje ? "min-h-12 px-4 py-2.5" : "min-h-0 p-0"} ${large ? "text-[20px]" : "text-[18px]"} ${
+                className={`m-0 flex items-center gap-2.5 rounded-2xl leading-snug ${mensaje ? "min-h-12 px-4 py-2.5" : "min-h-0 p-0"} ${texto} ${
                   mensaje?.tipo === "ok" ? "bg-mostaza-vital/45 text-tinta font-semibold" : mensaje?.tipo === "reintento" ? "bg-aviso text-aviso-texto font-semibold" : "text-tinta-suave"
                 }`}
               >
                 {mensaje?.texto ?? ""}
               </p>
 
-              {/* Acciones del juego (Listo, Vaciar…) y la pista; o «Siguiente» cuando se resolvió. */}
+              {/* Acciones del juego (Listo, Vaciar…) y la pista; o el pase cuando se resolvió. */}
               {resuelto ? (
                 <Boton onClick={siguiente} autoFocus large={large} icono={ultimo ? undefined : <IconoSiguiente />} className="w-full flex-row-reverse">
-                  {ultimo ? "Terminar" : "Siguiente ejercicio"}
+                  {ultimo ? "Ver cómo terminó" : "Siguiente ejercicio"}
                 </Boton>
               ) : (
                 <div className="flex gap-3 empty:hidden">
@@ -241,57 +262,76 @@ export default function ActividadInteractiva({ extras, size = "compact" }: { ext
                   )}
                 </div>
               )}
+            </div>
+          )}
 
-              <div className="flex items-center justify-between gap-2 border-t border-borde-suave pt-1">
-                {!(resuelto && ultimo) ? (
-                  <Boton variante="texto" large={large} onClick={() => setFase("cierre")} icono={<IconoSalir />} className="-ml-3">
-                    Terminar por hoy
-                  </Boton>
-                ) : (
-                  <span />
-                )}
-                <button
-                  type="button"
-                  onClick={cine.alternar}
-                  aria-label={cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
-                  title={cine.activo ? "Salir de pantalla completa" : "Pantalla completa"}
-                  className="-mr-2 inline-flex items-center justify-center w-14 h-14 rounded-2xl border-0 bg-transparent text-tinta-suave cursor-pointer hover:bg-black/[0.04] hover:text-tinta focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
-                >
-                  {cine.activo ? <IconoReducir /> : <IconoAmpliar />}
-                </button>
+          {fase === "cierre" && (
+            <div className="flex flex-col items-center text-center gap-3 py-1" role="status">
+              <div className="self-stretch flex items-center justify-between gap-3">
+                <Rotulo texto={def.nombre} />
+                {hechos >= total && <RuedaProgreso total={total} completados={total} actual={total} />}
               </div>
-            </div>
-          </div>
-        )}
+              <Suspense fallback={<Cargando />}>
+                <Portada final config={config} />
+              </Suspense>
+              <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>{hechos >= total ? "¡Listo!" : "Listo por hoy."}</p>
+              <p className={`m-0 text-tinta-suave ${texto}`}>{hechos >= total ? `Terminaron los ${total} ejercicios.` : "Gracias por tu tiempo."}</p>
 
-        {fase === "cierre" && (
-          <div className="flex flex-col items-center text-center gap-3 py-1" role="status">
-            <div className="self-stretch flex items-center justify-between gap-3">
-              <Rotulo texto={def.nombre} />
-              {hechos >= total && <RuedaProgreso total={total} completados={total} actual={total} />}
-            </div>
-            <Suspense fallback={<Cargando />}>
-              <Portada final config={config} />
-            </Suspense>
-            <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>Listo por hoy.</p>
-            <p className={`m-0 text-tinta-suave ${large ? "text-[22px]" : "text-[20px]"}`}>Gracias por tu tiempo.</p>
-            {registro && <CierreConRegistro registro={registro} large={large} />}
-            <div className="w-full max-w-sm grid gap-1 mt-2">
+              {/* En la sesión: cómo le resultó (opcional; sirve para sugerir el nivel). */}
+              {enSesion && (
+                <fieldset className="m-0 p-0 border-0 w-full max-w-md grid gap-2.5 mt-1">
+                  <legend className={`mx-auto mb-2 font-semibold text-tinta ${large ? "text-[21px]" : "text-[18px]"}`}>¿Cómo le resultó? (opcional)</legend>
+                  <div className="flex gap-2" role="radiogroup">
+                    {DIFICULTADES.map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        role="radio"
+                        aria-checked={dificultad === d}
+                        onClick={() => {
+                          const v = dificultad === d ? null : d;
+                          setDificultad(v);
+                          enSesion.onDificultad(v);
+                        }}
+                        className={`flex-1 min-h-14 px-3 rounded-2xl border-2 font-sans font-semibold whitespace-nowrap cursor-pointer focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${texto} ${
+                          dificultad === d ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta hover:border-verde-serenidad"
+                        }`}
+                      >
+                        {dificultadLabel[d]}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+
+              {!enSesion && registro && <CierreConRegistro registro={registro} large={large} />}
               <Boton
-                variante={registro ? "texto" : "secundario"}
+                variante={enSesion || registro ? "texto" : "secundario"}
                 large={large}
-                className="w-full"
+                className="w-full max-w-sm mt-1"
                 onClick={() => {
                   setSemilla(nuevaSemilla());
-                  setFase("inicio");
+                  if (enSesion) empezar();
+                  else setFase("inicio");
                 }}
               >
-                {registro ? "Jugar otra vez" : "Volver al inicio"}
+                Jugar otra vez
               </Boton>
-              {cine.activo && botonCine}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Fuera del cuadro, solo «Terminar por hoy» y la pantalla completa. */}
+        <div className="flex items-center justify-between gap-2 px-1">
+          {fase === "juego" ? (
+            <Boton variante="texto" large={large} onClick={terminarPorHoy} icono={<IconoSalir />} className="-ml-3">
+              Terminar por hoy
+            </Boton>
+          ) : (
+            <span />
+          )}
+          {botonCine}
+        </div>
       </div>
     </section>
   );

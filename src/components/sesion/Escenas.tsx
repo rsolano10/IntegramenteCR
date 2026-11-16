@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { ExtrasInteractiva } from "../../lib/actividades/contrato";
 import { cuandoParar } from "../../lib/bloquesGerontogimnasia";
 import { moduloLabel } from "../../lib/modulos";
 import { LIBRE, opcionDe, opcionesSegun, plantilla, puedeSeguir, valorLista, valorUno, type Escena, type Opcion } from "../../lib/sesiones";
@@ -1423,5 +1424,41 @@ export function VistaEscena({ e }: { e: Escena }) {
       return <Cuidados e={e} />;
     case "cierre":
       return <Cierre e={e} />;
+    case "juego":
+      return <EscenaJuego />;
   }
+}
+
+// El juego dentro de la sesión: arranca directo, con todo dentro de su
+// cuadro; «Siguiente» se habilita recién al terminar los ejercicios. Lo que
+// responden en «¿Cómo le resultó?» queda en _dificultad (sugiere el nivel).
+const JuegoInteractivo = lazy(() => import("../actividades/interactivas/Marco"));
+
+function EscenaJuego() {
+  const { datos, large, responder, irAlCierre } = useSesion();
+  const [terminado, setTerminado] = useState(false);
+  const extras = datos.extras?.modo === "interactiva" ? (datos.extras as unknown as ExtrasInteractiva) : null;
+  return (
+    <>
+      <div className="pt-1">
+        {extras ? (
+          <Suspense fallback={<div className="min-h-[320px] rounded-[28px] bg-beige-serenidad/60" aria-busy="true" />}>
+            <JuegoInteractivo
+              extras={extras}
+              size={large ? "large" : "compact"}
+              enSesion={{
+                onTerminado: () => setTerminado(true),
+                onReiniciar: () => setTerminado(false),
+                onDificultad: (d) => responder("_dificultad", d ?? ""),
+                onTerminarPorHoy: irAlCierre,
+              }}
+            />
+          </Suspense>
+        ) : (
+          <p className="m-0 text-[17px] text-tinta-suave">Este juego no está disponible por ahora.</p>
+        )}
+      </div>
+      <Pie etiqueta="Siguiente" habilitado={terminado} />
+    </>
+  );
 }
