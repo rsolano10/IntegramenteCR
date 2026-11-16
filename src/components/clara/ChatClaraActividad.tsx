@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConversationProvider, useConversationClientTool, useConversationControls, useConversationStatus, type MessagePayload } from "@elevenlabs/react";
@@ -43,6 +43,12 @@ export interface PropsChat {
   inicial: string;
   quien: "familia" | "participante";
   large?: boolean;
+  // Para usos como «Actividades extra»: cómo se muestra el texto de Clara
+  // y qué va debajo de cada respuesta (por ejemplo, las actividades que
+  // recomendó, como tarjetas).
+  mostrar?: (texto: string) => string;
+  adjuntos?: (texto: string) => ReactNode;
+  placeholder?: string;
 }
 
 export default function ChatClaraActividad(props: PropsChat) {
@@ -63,7 +69,7 @@ export default function ChatClaraActividad(props: PropsChat) {
 let seq = 0;
 const clave = () => `c-${Date.now()}-${++seq}`;
 
-function Chat({ contexto, inicial, quien, large = false, manejadores }: PropsChat & { manejadores: React.MutableRefObject<Manejadores | null> }) {
+function Chat({ contexto, inicial, quien, large = false, mostrar, adjuntos, placeholder = "Escribí tu duda…", manejadores }: PropsChat & { manejadores: React.MutableRefObject<Manejadores | null> }) {
   const session = useSession();
   const { data: myPatient } = useMyPatient();
   const queryClient = useQueryClient();
@@ -110,7 +116,7 @@ function Chat({ contexto, inicial, quien, large = false, manejadores }: PropsCha
     const datos: Partial<Burbuja> = {
       texto: participante
         ? "No pude responder ahora. Probá de nuevo en un momento, o tocá «Necesito ayuda»."
-        : "No pude responder ahora. Probá de nuevo en un momento; mientras, mirá los consejos de abajo o escribile al equipo.",
+        : "No pude responder ahora. Probá de nuevo en un momento, o escribile al equipo.",
       escribiendo: false,
       ...(participante ? { enlace: { label: "Necesito ayuda", to: "/app/participante/ayuda" } } : { whatsapp: mensajeEquipo(pregunta) }),
     };
@@ -304,13 +310,14 @@ function Chat({ contexto, inicial, quien, large = false, manejadores }: PropsCha
               {b.texto}
             </li>
           ) : (
-            <li key={b.key} className="flex items-start gap-2.5 max-w-[95%]">
+            <Fragment key={b.key}>
+            <li className="flex items-start gap-2.5 max-w-[95%]">
               <span className="mt-1">
                 <ClaraAvatar tam={26} animado={!!b.escribiendo} />
               </span>
               <div className={`min-w-0 rounded-[18px] rounded-tl-md border border-borde bg-white px-4 py-2.5 leading-relaxed text-tinta ${t.texto}`}>
                 {b.texto ? (
-                  b.texto.split(/\n+/).map((p, i) => (
+                  (mostrar ? mostrar(b.texto) : b.texto).split(/\n+/).map((p, i) => (
                     <p key={i} className="m-0 [&+p]:mt-2">
                       {p}
                     </p>
@@ -335,6 +342,9 @@ function Chat({ contexto, inicial, quien, large = false, manejadores }: PropsCha
                 )}
               </div>
             </li>
+            {/* Lo que va debajo de la respuesta (las actividades recomendadas), a todo el ancho. */}
+            {adjuntos && b.texto && !b.escribiendo && <li className="pl-9">{adjuntos(b.texto)}</li>}
+            </Fragment>
           ),
         )}
       </ul>
@@ -361,7 +371,7 @@ function Chat({ contexto, inicial, quien, large = false, manejadores }: PropsCha
             }
           }}
           rows={1}
-          placeholder="Escribí tu duda…"
+          placeholder={placeholder}
           className={`flex-1 min-h-12 max-h-32 resize-none rounded-2xl border-[1.5px] border-borde-campo bg-campo px-4 py-3 font-sans leading-snug text-tinta ${t.texto}`}
         />
         <button

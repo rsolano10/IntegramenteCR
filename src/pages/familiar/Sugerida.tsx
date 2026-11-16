@@ -9,6 +9,7 @@ import { PanelActividad } from "../../components/actividad/PanelActividad";
 import { IconoActividad } from "../../components/actividad/IconoActividad";
 import { Cargando } from "../../components/ui/Cargando";
 import { StepByStepActivity } from "../../components/ui/StepByStepActivity";
+import { ClaraElige } from "../../components/clara/ClaraElige";
 
 // Actividades extra: las sugeridas según el perfil, fuera del plan. Se
 // llega desde el final de Hoy («¿Con ganas de más?»); «Volver» regresa a
@@ -127,6 +128,9 @@ export function Extras() {
           </Link>
         </section>
       )}
+
+      {/* Clara ayuda a elegir según lo que buscan. */}
+      <ClaraElige recursos={recursos} />
 
       {temas.length > 0 && (
         <section aria-label="Elegí un tema">

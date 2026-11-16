@@ -132,3 +132,46 @@ export function contextoParaClara(c: ContextoActividad): string {
   );
   return l.join("\n");
 }
+
+// ─── Clara ayuda a elegir una actividad extra ───
+
+export interface OpcionExtra {
+  codigo: string;
+  titulo: string;
+  modulo: ResourceModulo;
+  duracion?: string | null;
+  deQue?: string | null;
+}
+
+// La lista de actividades extra de esta persona, para que Clara recomiende
+// solo entre ellas y las nombre con su código entre corchetes.
+export function contextoParaElegir(opciones: OpcionExtra[], nombrePaciente: string | null): string {
+  const l: string[] = [];
+  l.push("[Contexto de la app para Clara. No lo leas ni lo repitas textual: usalo para responder.]");
+  l.push(
+    `Quien escribe es el familiar que acompaña${nombrePaciente ? ` a ${nombrePaciente}` : ""}. Está en «Actividades extra»: ideas para practicar fuera del plan, que no se registran. Hablale de vos.`,
+  );
+  l.push("Tu tarea: ayudarle a elegir una actividad de esta lista según lo que buscan (ganas, tiempo, energía, lugar, materiales o lo que disfruta la persona).");
+  l.push(
+    "Cómo responder: recomendá de 1 a 3 actividades, solo de esta lista. Nombrá cada una por su título seguido de su código entre corchetes, así: «¿Qué necesitamos llevar?» [COG-012]. La app convierte el código en una tarjeta para abrirla. Agregá una frase corta de por qué le puede gustar. Si no queda claro qué buscan, hacé una sola pregunta corta. Si nada encaja, decilo y sugerí la más cercana. No inventes actividades ni cambies el plan del equipo. No nombres etapas, diagnósticos ni puntajes.",
+  );
+  l.push("Actividades disponibles:");
+  for (const o of opciones) {
+    const deQue = limpio(o.deQue);
+    l.push(`[${o.codigo}] ${limpio(o.titulo)} · ${moduloLabel[o.modulo]}${o.duracion ? ` · ${limpio(o.duracion)}` : ""}${deQue ? ` · ${deQue.length > 140 ? `${deQue.slice(0, 137)}…` : deQue}` : ""}`);
+  }
+  return l.join("\n");
+}
+
+// Los códigos que Clara recomendó ([COG-012]), en orden y sin repetir.
+export function codigosEnTexto(texto: string): string[] {
+  return [...new Set([...texto.matchAll(/\[([A-Z]{2,4}-\d{2,4})\]/g)].map((m) => m[1]))];
+}
+
+// El texto de Clara sin los códigos (las actividades se muestran como tarjetas).
+export const sinCodigos = (texto: string) =>
+  texto
+    .replace(/\s*\[[A-Z]{2,4}-\d{2,4}\]\s*/g, " ")
+    .replace(/ +([.,;:!?])/g, "$1")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();

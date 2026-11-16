@@ -14,6 +14,14 @@ Solo en el botón **Ayuda** de cada paso de la sesión guiada (no en el detalle 
 
 Funciona para la familia y para el participante. Al participante, Clara le habla con frases cortas y, ante una urgencia, le muestra «Necesito ayuda» en lugar de la guía de emergencia de la familia.
 
+## Clara ayuda a elegir en «Actividades extra»
+
+En «¿Con ganas de más?», entre «Una idea para hoy» y los temas, está el bloque **«O contale a Clara qué buscan»**. La familia escribe lo que tiene ganas de hacer («algo corto y tranquilo», «para movernos con música») y Clara recomienda de 1 a 3 actividades.
+
+- La app le manda a Clara la lista de actividades extra de esa persona: código, título, tema, duración y de qué se trata (`contextoParaElegir` en `src/lib/claraActividad.ts`). Clara recomienda solo de esa lista.
+- Clara nombra cada actividad por su título seguido de su código entre corchetes («Ritmo y movimiento» [MUS-003]). La app saca el código del texto y muestra cada recomendación como una tarjeta para abrirla (`src/components/clara/ClaraElige.tsx`). No hace falta configurar nada en ElevenLabs.
+- Si no queda claro qué buscan, Clara hace una sola pregunta corta.
+
 ## Cómo funciona
 
 1. La tarjeta es liviana. El chat y el SDK de ElevenLabs se cargan recién con la primera pregunta.
@@ -66,6 +74,7 @@ La base se genera con un script a partir de los guiones (código) y de los campo
 | Chat mínimo «Preguntale a Clara» (parte liviana) | `src/components/clara/ClaraActividad.tsx` |
 | Chat (se carga a pedido) | `src/components/clara/ChatClaraActividad.tsx` |
 | En la sesión guiada | `src/components/sesion/SesionGuiada.tsx` (hoja «Ayuda») |
+| Clara ayuda a elegir (Actividades extra) | `src/components/clara/ClaraElige.tsx` |
 | Generador de la base | `scripts/clara/generar-base.ts` |
 
 ## Pendiente y próximos pasos

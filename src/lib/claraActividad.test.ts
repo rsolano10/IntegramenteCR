@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GUIONES, escenasVisibles, resumenPasos } from "./sesiones";
-import { contextoParaClara, describirEscena } from "./claraActividad";
+import { codigosEnTexto, contextoParaClara, contextoParaElegir, describirEscena, sinCodigos } from "./claraActividad";
 
 const g = GUIONES["COG-012"];
 
@@ -29,4 +29,13 @@ test("en el tablero, el contexto trae cómo va a ser", () => {
 
 test("todas las escenas de todos los guiones se pueden describir", () => {
   for (const guion of Object.values(GUIONES)) for (const e of guion.escenas) assert.ok(describirEscena(e, guion, {}).length > 10, `${guion.codigo} ${e.tipo}`);
+});
+
+test("elegir: Clara recibe la lista con códigos y la app los lee de la respuesta", () => {
+  const txt = contextoParaElegir([{ codigo: "COG-012", titulo: "¿Qué necesitamos llevar?", modulo: "cognicion", duracion: "5–10 min", deQue: "Imaginar una salida." }], "Rosa");
+  assert.match(txt, /\[COG-012\] ¿Qué necesitamos llevar\? · Atención y memoria · 5–10 min · Imaginar una salida\./);
+  assert.match(txt, /acompaña a Rosa/);
+  const r = "Les recomiendo «Pelota y categorías» [MOV-003] para moverse y «¿Qué necesitamos llevar?» [COG-012], que es tranquila. Y de nuevo [MOV-003].";
+  assert.deepEqual(codigosEnTexto(r), ["MOV-003", "COG-012"]);
+  assert.equal(sinCodigos(r), "Les recomiendo «Pelota y categorías» para moverse y «¿Qué necesitamos llevar?», que es tranquila. Y de nuevo.");
 });
