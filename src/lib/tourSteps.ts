@@ -2,12 +2,12 @@ import type { TourStep } from "../components/ui/ProductTour";
 
 export const familiarTourSteps: TourStep[] = [
   {
-    title: "¡Bienvenida a IntegraMente en Casa!",
-    body: "Este es tu espacio para acompañar a tu familiar día a día. Te mostramos rápido dónde está cada cosa — son solo tres lugares.",
+    title: "Te damos la bienvenida a IntegraMente en Casa",
+    body: "Este es tu espacio para acompañar a tu familiar día a día. Te mostramos rápido dónde está cada cosa: son solo tres lugares.",
   },
   {
     title: "Hoy",
-    body: "Las actividades del día. Tocá una para verla paso a paso y marcala como realizada cuando la terminen juntos.",
+    body: "Las actividades del día. Tocá una para ver de qué se trata y empezarla. Al terminar, la app les pregunta cómo les fue.",
   },
   {
     title: "Mi semana",
@@ -19,18 +19,18 @@ export const familiarTourSteps: TourStep[] = [
   },
   {
     title: "Tu cuenta",
-    body: "Arriba a la derecha, en el menú con tu nombre, están tu cuenta, el perfil de tu familiar y el calendario para recibir avisos en el teléfono.",
+    body: "Arriba a la derecha, en el menú con tu nombre, están tu cuenta, el perfil de tu familiar y los avisos en tu teléfono.",
   },
 ];
 
 export const participanteTourSteps: TourStep[] = [
   {
-    title: "¡Bienvenido a IntegraMente en Casa!",
+    title: "Te damos la bienvenida a IntegraMente en Casa",
     body: "Este es tu espacio. Acá vas a ver las actividades que preparamos para vos, un día a la vez.",
   },
   {
-    title: "Hoy toca",
-    body: "Tocá una actividad para empezarla. Cuando termines, marcala como realizada — así tu equipo sabe cómo te fue.",
+    title: "Hoy",
+    body: "Tocá una actividad para ver de qué se trata y empezarla. Al terminar, la app te pregunta cómo te fue: así tu equipo lo sabe.",
   },
   {
     title: "Tu foto y tu cuenta",

@@ -318,13 +318,13 @@ Luego **"Ver resumen de la semana"**: qué funcionó, qué costó y, cuando el e
     - "Avisar automáticamente ante una caída, un cambio repentino o un extravío" (al abrir una guía de emergencia, el equipo recibe el aviso sin tocar nada más).
   - **Seguridad**: cambiar la contraseña y **"Cerrar todas las sesiones"** (útil si se entró desde un teléfono que ya no se usa).
 - **Perfil de [nombre]**: las respuestas del cuestionario. Si algo cambió, se toca **"Editar"** junto a esa respuesta; no hace falta repetir todo.
-- **Calendario en tu teléfono**: aparece cuando ya hay plan. Ver 6.15.
+- **Avisos en tu teléfono**: aparece cuando ya hay plan. Ver 6.15.
 - **Contactanos**: correo, teléfono y WhatsApp del equipo.
 - **Cerrar sesión**.
 
 ### 6.15 Avisos en el teléfono (calendario)
 La forma más confiable de recibir un aviso a la hora de cada actividad:
-1. Menú de la cuenta → **"Calendario en tu teléfono"** (también se ofrece al llegar una semana nueva).
+1. Menú de la cuenta → **"Avisos en tu teléfono"** (también se ofrece al llegar una semana nueva).
 2. Tocá **"Agregar a mi calendario"**: el teléfono abre su pantalla para suscribirse al calendario.
 3. Listo: **cada semana nueva aparece sola**, con un aviso a la hora de cada actividad que tenga hora.
 - En Google Calendar desde la computadora: **"Copiar enlace"** y pegarlo en "Otros calendarios → Desde URL".

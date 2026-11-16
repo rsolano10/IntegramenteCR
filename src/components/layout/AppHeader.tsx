@@ -140,7 +140,7 @@ export function AppHeader() {
               ? [{ label: role === "paciente" ? "Mi perfil" : `Perfil de ${myPatient.nombre.split(" ")[0]}`, onClick: () => navigate("/app/perfil/resumen") }]
               : []),
             ...(myPatient && myPatient.plan_status !== "pendiente"
-              ? [{ label: "Calendario en tu teléfono", onClick: () => setModal("calendario") }]
+              ? [{ label: "Avisos en tu teléfono", onClick: () => setModal("calendario") }]
               : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },

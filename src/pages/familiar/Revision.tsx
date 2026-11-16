@@ -87,7 +87,7 @@ export function Revision() {
             options={[
               { value: "better", label: "Mejor" },
               { value: "same", label: "Igual" },
-              { value: "worse", label: "Peor" },
+              { value: "worse", label: "Más difícil" },
             ]}
           />
         </div>

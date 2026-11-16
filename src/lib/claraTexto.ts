@@ -77,7 +77,7 @@ const reglas: { destino: Destino; patron: RegExp }[] = [
   { destino: "activar", patron: /activar (mi|tu|el) programa|activ(á|a) tu programa/i },
   { destino: "evaluar", patron: /evaluar la semana/i },
   { destino: "semana", patron: /mi semana|actividades sugeridas/i },
-  { destino: "calendario", patron: /calendario en tu tel[eé]fono|agregar a mi calendario|calendario del tel[eé]fono/i },
+  { destino: "calendario", patron: /calendario en tu tel[eé]fono|avisos en tu tel[eé]fono|agregar a mi calendario|calendario del tel[eé]fono/i },
   { destino: "cuenta", patron: /mi cuenta|contraseña|recordatorios por whatsapp/i },
   { destino: "perfil", patron: /perfil de [A-ZÁÉÍÓÚÑ]/ },
   { destino: "emergencia", patron: /\bSOS\b|gu[ií]a de emergencia/i },

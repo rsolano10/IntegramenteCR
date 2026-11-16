@@ -24,6 +24,7 @@ test("destaca lo que va entre comillas o asteriscos, sin las comillas", () => {
 test("ofrece ir a las pantallas que Clara nombra", () => {
   assert.deepEqual(destinosEnTexto('En la pestaña "Mi semana" ves todos los días.'), ["semana"]);
   assert.deepEqual(destinosEnTexto("Abrí el menú y tocá Calendario en tu teléfono."), ["calendario"]);
+  assert.deepEqual(destinosEnTexto("Abrí el menú y tocá Avisos en tu teléfono."), ["calendario"]);
   assert.deepEqual(destinosEnTexto("Usá el botón SOS o mirá Mi semana."), ["semana", "emergencia"]);
   assert.deepEqual(destinosEnTexto("Escribile al equipo por WhatsApp al +506 8346 4703."), ["whatsapp"]);
   assert.deepEqual(destinosEnTexto("Activá los Recordatorios por WhatsApp en Mi cuenta."), ["cuenta"]);

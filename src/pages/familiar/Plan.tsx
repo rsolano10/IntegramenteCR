@@ -230,7 +230,7 @@ function MasActividades() {
         <div>
           <p className="m-0 mb-1 text-[13px] tracking-[0.14em] uppercase text-tinta-tenue">Más actividades para hacer juntos</p>
           <p className="m-0 text-[14.5px] leading-relaxed text-tinta-suave">
-            Elegidas según el perfil — para los días con ganas de más, además de lo que ya está en el plan.
+            Elegidas según el perfil, para los días con ganas de más, además de lo que ya está en el plan.
           </p>
         </div>
         <button

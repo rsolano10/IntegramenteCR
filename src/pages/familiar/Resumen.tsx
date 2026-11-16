@@ -16,7 +16,7 @@ import { Cargando } from "../../components/ui/Cargando";
 const animo: Record<string, { texto: string; frase: string; fondo: string; tinta: string }> = {
   better: { texto: "Mejor", frase: "El ánimo estuvo mejor esta semana. ¡Qué lindo!", fondo: "#e3efe3", tinta: "#4c7a4c" },
   same: { texto: "Igual", frase: "El ánimo se mantuvo estable.", fondo: "#f2eede", tinta: "#6b5726" },
-  worse: { texto: "Más bajo", frase: "Fue una semana más difícil. Gracias por contarnos: lo tenemos en cuenta.", fondo: "#fbefeb", tinta: "#8c3f2a" },
+  worse: { texto: "Más difícil", frase: "Fue una semana más difícil. Gracias por contarnos: lo tenemos en cuenta.", fondo: "#fbefeb", tinta: "#8c3f2a" },
 };
 
 interface FilaTarea {
