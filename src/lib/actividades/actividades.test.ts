@@ -24,6 +24,7 @@ import { mandado, revisarBolsa } from "./mandado.ts";
 import { TEXTOS } from "./bancos/comprension.ts";
 import { comprension } from "./comprension.ts";
 import { CONSIGNAS, agregarPalabras, normalizar, pizarra } from "./pizarra.ts";
+import { corral, porton } from "./corral.ts";
 import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
@@ -48,7 +49,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 18);
+  assert.equal(ACTIVIDADES.length, 19);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -674,4 +675,28 @@ test("pizarra: niveles válidos, una consigna por ejercicio, el dictado necesita
   }
   assert.ok(pizarra.validar({ ...pizarra.porNivel.suave, modoEntrada: "dictado" }).length > 0);
   for (const k of CONSIGNAS) assert.ok(k.pistas.length >= 2 && k.ejemplo, k.id);
+});
+
+test("corral: los cambios de regla son reales y cada tramo usa los dos portones", () => {
+  const azar = crearAzar(9);
+  for (const nivel of NIVELES) {
+    const c = corral.porNivel[nivel];
+    assert.deepEqual(corral.validar(c), []);
+    for (const e of corral.generar(c, 8, { azar, ahora: new Date() })) {
+      assert.equal(e.tramos.length, c.cambios + 1);
+      e.tramos.forEach((t, k) => {
+        assert.ok(c.criterios.includes(t.criterio));
+        assert.equal(t.animales.length, c.animalesPorRegla);
+        const destinos = t.animales.map((a) => porton(a, t.criterio, e.especies));
+        assert.ok(destinos.includes(0) && destinos.includes(1), "usa los dos portones");
+        for (const a of t.animales) assert.ok(e.especies.includes(a.especie));
+        if (k > 0) {
+          const antes = e.tramos[k - 1].criterio;
+          assert.notEqual(t.criterio, antes, "nunca la misma regla dos veces seguidas");
+          assert.ok(t.animales.some((a) => porton(a, antes, e.especies) !== porton(a, t.criterio, e.especies)), "el cambio importa");
+        }
+      });
+    }
+  }
+  assert.ok(corral.validar({ ...corral.porNivel.suave, criterios: ["color"] }).length > 0);
 });

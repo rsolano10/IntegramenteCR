@@ -258,6 +258,7 @@ Algunas actividades son juegos que se hacen tocando la pantalla. Cada uno pasa e
 - **El mandado**: aprender la lista del mandado (escrita o para escuchar) y, de memoria, tocar en los puestos del Mercado Central lo que hay que traer.
 - **La radio y El correo**: escuchar un aviso de la radio del pueblo (también se puede leer) o leer una carta de la familia, y responder unas preguntas tocando la respuesta.
 - **La pizarra de la escuela**: decir todas las palabras de una categoría que se ocurran (frutas, animales, palabras con M…). El familiar marca cada palabra con **"Dijo una palabra"** o las escribe; no hay tiempo ni palabras malas. Se termina con **"Ya terminé"**.
+- **El corral**: mandar cada animal de la finca al portón que le toca según el rótulo (por animal, por color o por tamaño). De vez en cuando el rótulo cambia de regla y se sigue con la nueva.
 
 ### 6.11 "Mi semana"
 - Los días de la semana con sus actividades; el día de hoy aparece resaltado.

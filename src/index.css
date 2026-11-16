@@ -405,6 +405,12 @@
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(30px); }
 }
+/* El rótulo del corral se voltea al cambiar de regla. */
+@keyframes pueblo-volteo {
+  0% { transform: rotateX(90deg); }
+  60% { transform: rotateX(-12deg); }
+  100% { transform: none; }
+}
 /* Se arranca la hoja del almanaque. */
 @keyframes pueblo-arranque {
   0% { transform: none; opacity: 1; }
