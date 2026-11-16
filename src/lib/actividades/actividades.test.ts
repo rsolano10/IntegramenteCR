@@ -23,6 +23,7 @@ import { PRODUCTOS } from "./bancos/mandado.ts";
 import { mandado, revisarBolsa } from "./mandado.ts";
 import { TEXTOS } from "./bancos/comprension.ts";
 import { comprension } from "./comprension.ts";
+import { CONSIGNAS, agregarPalabras, normalizar, pizarra } from "./pizarra.ts";
 import { CASAS, COLUMNAS, FILAS, REFERENCIAS, descripcionCasa, generarSena, recorrer } from "./senas.ts";
 
 const ex = (tipo: string, extra: Partial<ExtrasInteractiva> = {}): ExtrasInteractiva => ({ modo: "interactiva", tipo, ...extra });
@@ -47,7 +48,7 @@ test("cada tipo del registro está completo y su configuración por defecto vali
       assert.ok(def.consigna(config).length > 10);
     }
   }
-  assert.equal(ACTIVIDADES.length, 17);
+  assert.equal(ACTIVIDADES.length, 18);
 });
 
 test("misma semilla, mismos ejercicios; otra semilla, otros", () => {
@@ -654,4 +655,23 @@ test("comprensión: el banco alcanza y las pistas están en el texto", () => {
     }
   }
   for (const escena of ["radio", "correo"] as const) for (const l of ["corta", "media"] as const) assert.ok(TEXTOS.filter((x) => x.escena === escena && x.longitud === l).length >= 2, `${escena} ${l}`);
+});
+
+test("pizarra: sin repetidas (ni por mayúsculas ni tildes), nada se valida", () => {
+  assert.deepEqual(agregarPalabras(["Mango"], "mango, Papaya, papayá,  piña "), ["Mango", "Papaya", "piña"]);
+  assert.deepEqual(agregarPalabras([], "perro gato   perro", true), ["perro", "gato"]);
+  assert.equal(normalizar("  Guaria  Morada "), "guaria morada");
+  assert.deepEqual(agregarPalabras(["sol"], " , ; "), ["sol"]);
+});
+
+test("pizarra: niveles válidos, una consigna por ejercicio, el dictado necesita permiso", () => {
+  for (const nivel of NIVELES) {
+    const c = pizarra.porNivel[nivel];
+    assert.deepEqual(pizarra.validar(c), []);
+    assert.equal(c.permitirDictado, false, "el dictado arranca apagado (decisión 6.2)");
+    const ejs = pizarra.generar(c, c.consignas.length, { azar: crearAzar(2), ahora: new Date() });
+    assert.equal(new Set(ejs.map((e) => e.consigna.id)).size, c.consignas.length, "no repite hasta agotar");
+  }
+  assert.ok(pizarra.validar({ ...pizarra.porNivel.suave, modoEntrada: "dictado" }).length > 0);
+  for (const k of CONSIGNAS) assert.ok(k.pistas.length >= 2 && k.ejemplo, k.id);
 });
