@@ -1235,9 +1235,11 @@ function Pregunta<T extends string>({
   const t = useTam();
   return (
     <fieldset className="m-0 p-0 border-0 grid gap-2">
-      <legend className={`p-0 mb-1 font-semibold text-tinta ${t.cuerpo}`}>{titulo}</legend>
-      {ayuda && <p className={`m-0 -mt-1 mb-1 text-tinta-tenue ${t.chico}`}>{ayuda}</p>}
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={titulo}>
+      {/* Títulos y ayuda con las líneas parejas (sin una palabra sola abajo). */}
+      <legend className={`p-0 mb-1 font-semibold text-tinta [text-wrap:balance] ${t.cuerpo}`}>{titulo}</legend>
+      {ayuda && <p className={`m-0 -mt-1 mb-1 text-tinta-tenue [text-wrap:pretty] ${t.chico}`}>{ayuda}</p>}
+      {/* Las opciones toman el ancho de su texto, sin cortarlo («Más o menos»). */}
+      <div className="flex gap-2" role="radiogroup" aria-label={titulo}>
         {opciones.map((o) => (
           <button
             key={o.id}
@@ -1245,7 +1247,7 @@ function Pregunta<T extends string>({
             role="radio"
             aria-checked={valor === o.id}
             onClick={() => onElegir(o.id)}
-            className={`min-h-14 px-2 rounded-2xl border-2 font-semibold leading-tight cursor-pointer transition-colors ${t.chico} ${
+            className={`flex-1 min-h-14 px-3 rounded-2xl border-2 font-semibold leading-tight whitespace-nowrap cursor-pointer transition-colors ${t.chico} ${
               valor === o.id ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta"
             }`}
           >
