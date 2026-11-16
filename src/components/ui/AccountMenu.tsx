@@ -13,6 +13,7 @@ export function AccountMenu({
   subtitle,
   badge,
   items,
+  etiqueta,
 }: {
   initials: string;
   name: string;
@@ -20,6 +21,8 @@ export function AccountMenu({
   /** Distintivo del rol (p. ej. «Administrador»): anillo mostaza en el avatar y etiqueta junto al nombre. */
   badge?: string;
   items: AccountMenuItem[];
+  /** Si viene, el botón muestra solo el avatar y esta etiqueta (la familia: el nombre de la persona del programa). */
+  etiqueta?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -48,10 +51,14 @@ export function AccountMenu({
         >
           {initials}
         </span>
-        <span className="hidden sm:block text-left leading-tight">
-          <span className="block text-[13px] font-semibold text-tinta">{name}</span>
-          {badge ? <BadgeRol texto={badge} /> : <span className="block text-[11px] text-tinta-tenue">{subtitle}</span>}
-        </span>
+        {etiqueta ? (
+          <span className="hidden md:block text-[15px] font-semibold text-tinta">{etiqueta}</span>
+        ) : (
+          <span className="hidden sm:block text-left leading-tight">
+            <span className="block text-[13px] font-semibold text-tinta">{name}</span>
+            {badge ? <BadgeRol texto={badge} /> : <span className="block text-[11px] text-tinta-tenue">{subtitle}</span>}
+          </span>
+        )}
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="shrink-0 text-tinta-tenue">
           <path d="M3.5 5.5 7 9l3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

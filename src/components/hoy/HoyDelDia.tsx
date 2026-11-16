@@ -40,7 +40,12 @@ function momentoDe(t: PlanTask): Momento {
 export function ResumenDelDia({ tasks, quien, size = "compact" }: { tasks: PlanTask[]; quien: string | null; size?: HoySize }) {
   const hechas = contarHechas(tasks);
   const pendientes = tasks.filter((t) => !estaRegistrada(t)).length;
-  const { titulo, detalle } = mensajeDelDia({ hechas, pendientes, total: tasks.length }, size === "large" ? "participante" : "familia", quien);
+  const cuenta = (e: PlanTask["estado"]) => tasks.filter((t) => t.estado === e).length;
+  const { titulo, detalle } = mensajeDelDia(
+    { hechas, pendientes, total: tasks.length, enteras: cuenta("realizado"), enParte: cuenta("parcial"), no: cuenta("no") },
+    size === "large" ? "participante" : "familia",
+    quien,
+  );
   return <CajaAvance hechas={hechas} total={tasks.length} titulo={titulo} detalle={detalle} large={size === "large"} />;
 }
 

@@ -15,3 +15,15 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" }) {
     </span>
   );
 }
+
+// Variante de la app de la familia: «en casa» integrado al logotipo, en
+// minúscula normal y sin separador.
+export function LogoEnCasa() {
+  return (
+    <span className="inline-flex items-end gap-1.5 h-8" aria-label="IntegraMente en casa">
+      <img src="/marca/isotipo.png" alt="" className="h-full w-auto" />
+      <img src="/marca/logotipo.png" alt="" className="h-[88%] w-auto" />
+      <span className="pb-[3px] font-sans text-[15px] font-semibold leading-none text-verde-profundo whitespace-nowrap">en casa</span>
+    </span>
+  );
+}

@@ -11,7 +11,8 @@ import { Modal } from "../ui/Modal";
 import { MiPerfilModal } from "../ui/MiPerfilModal";
 import { ContactanosModal } from "../ui/ContactanosModal";
 import { CalendarModal } from "../ui/CalendarSyncCard";
-import { Logo } from "../ui/Logo";
+import { Logo, LogoEnCasa } from "../ui/Logo";
+import { PestanasFamilia } from "./FamiliarNav";
 
 const crumbs: [string, string][] = [
   ["/app/login", "Ingreso"],
@@ -43,6 +44,9 @@ const crumbs: [string, string][] = [
   ["/app/estado/offline", "Sin conexión"],
   ["/app/estado/vacio", "Sin plan"],
 ];
+
+// Las pantallas de la app de la familia (con su propio encabezado).
+const RUTAS_FAMILIA = ["/app/hoy", "/app/plan", "/app/historial", "/app/ayuda", "/app/emergencia", "/app/revision", "/app/resumen"];
 
 function crumbFor(pathname: string): string {
   const hit = crumbs.find(([prefix]) => pathname.startsWith(prefix));
@@ -93,31 +97,9 @@ export function AppHeader() {
     await supabase.auth.signOut({ scope });
   }
 
-  const isAuthed = session.status === "authed";
-  // Logo del libro de marca (isotipo + logotipo), igual que en el home.
-  const logoContent = <Logo size="sm" />;
-
-  return (
-    <header className="flex items-center justify-between gap-3 sm:gap-6 px-4 sm:px-6 lg:px-8 py-3.5 bg-white border-b border-borde sticky top-0 z-20">
-      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-        {/* Logged in, the logo is a label, not an exit — leaving the app is
-            only ever "Cerrar sesión" so a stray tap can't drop someone out
-            of their session without meaning to. */}
-        {isAuthed ? (
-          <span className="flex items-center shrink-0">{logoContent}</span>
-        ) : (
-          <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="flex items-center no-underline shrink-0">
-            {logoContent}
-          </Link>
-        )}
-        {crumbFor(pathname) && (
-          <span className="hidden sm:inline text-sm text-tinta-tenue pl-5 border-l border-borde truncate">{crumbFor(pathname)}</span>
-        )}
-      </div>
-
-      {(role === "familiar" || (role === "paciente" && myPatient?.vista_completa)) && (
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+  const menuCuenta = (etiqueta?: string) => (
         <AccountMenu
+          etiqueta={etiqueta}
           initials={
             nombre
               .split(" ")
@@ -146,8 +128,88 @@ export function AppHeader() {
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
         />
-        </div>
+  );
+
+  const ventanas = (
+    <>
+      {modal === "mi-perfil" && (role === "familiar" || role === "paciente" || role === "profesional") && (
+        <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} onLogoutAll={() => doLogout("global")} />
       )}
+
+      {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
+      {modal === "calendario" && myPatient && session.status === "authed" && (
+        <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />
+      )}
+
+      {modal === "auditoria" && (
+        <Modal onClose={() => setModal(null)}>
+          <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Historial de auditoría</h2>
+          <p className="m-0 mb-5 text-sm text-tinta-tenue">Toda edición queda registrada con autor, fecha y acción.</p>
+          {auditLog.length === 0 ? (
+            <p className="m-0 text-sm text-tinta-tenue">Todavía no hay actividad registrada en esta sesión.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
+              {auditLog.map((entry) => (
+                <div key={entry.id} className="bg-campo border border-borde-suave rounded-xl px-3.5 py-3">
+                  <p className="m-0 text-[13px] text-tinta-tenue">
+                    {entry.creadoEn} · <strong className="text-tinta">{entry.autor}</strong>
+                  </p>
+                  <p className="m-0 mt-0.5 text-[14px] text-tinta">
+                    {entry.entidad}: {entry.accion}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Modal>
+      )}
+    </>
+  );
+
+  // La app de la familia: una sola barra del crema de la página, alineada
+  // al mismo contenedor que el contenido. Logo con «en casa», las pestañas
+  // al lado (en escritorio; en el celular van abajo) y, a la derecha, el
+  // avatar con el nombre de la persona del programa (el resto, en el menú).
+  const enAppFamilia = role === "familiar" && RUTAS_FAMILIA.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  if (enAppFamilia) {
+    const pendiente = !!myPatient && (myPatient.estado_cuenta === "rechazada" || (myPatient.plan_status === "pendiente" && !myPatient.tiene_plan_visible));
+    return (
+      <header className="sticky top-0 z-20 bg-fondo-papel/95 backdrop-blur-sm border-b border-borde">
+        <div className="max-w-3xl mx-auto h-16 md:h-[72px] px-5 sm:px-8 lg:px-12 flex items-center gap-3 lg:gap-4">
+          <span className="shrink-0">
+            <LogoEnCasa />
+          </span>
+          {!pendiente && <PestanasFamilia />}
+          <div className="ml-auto shrink-0">{menuCuenta(myPatient?.nombre?.split(" ")[0])}</div>
+        </div>
+        {ventanas}
+      </header>
+    );
+  }
+
+  const isAuthed = session.status === "authed";
+  // Logo del libro de marca (isotipo + logotipo), igual que en el home.
+  const logoContent = <Logo size="sm" />;
+
+  return (
+    <header className="flex items-center justify-between gap-3 sm:gap-6 px-4 sm:px-6 lg:px-8 py-3.5 bg-white border-b border-borde sticky top-0 z-20">
+      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+        {/* Logged in, the logo is a label, not an exit — leaving the app is
+            only ever "Cerrar sesión" so a stray tap can't drop someone out
+            of their session without meaning to. */}
+        {isAuthed ? (
+          <span className="flex items-center shrink-0">{logoContent}</span>
+        ) : (
+          <Link to="/" aria-label="IntegraMente en Casa, ir al inicio" className="flex items-center no-underline shrink-0">
+            {logoContent}
+          </Link>
+        )}
+        {crumbFor(pathname) && (
+          <span className="hidden sm:inline text-sm text-tinta-tenue pl-5 border-l border-borde truncate">{crumbFor(pathname)}</span>
+        )}
+      </div>
+
+      {(role === "familiar" || (role === "paciente" && myPatient?.vista_completa)) && <div className="flex items-center gap-2 sm:gap-3 shrink-0">{menuCuenta()}</div>}
 
       {role === "profesional" && (
         <AccountMenu
@@ -180,37 +242,7 @@ export function AppHeader() {
         </button>
       )}
 
-      {modal === "mi-perfil" && (role === "familiar" || role === "paciente" || role === "profesional") && (
-        <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} onLogoutAll={() => doLogout("global")} />
-      )}
-
-      {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
-      {modal === "calendario" && myPatient && session.status === "authed" && (
-        <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />
-      )}
-
-      {modal === "auditoria" && (
-        <Modal onClose={() => setModal(null)}>
-          <h2 className="font-serif font-normal text-2xl m-0 mb-1.5">Historial de auditoría</h2>
-          <p className="m-0 mb-5 text-sm text-tinta-tenue">Toda edición queda registrada con autor, fecha y acción.</p>
-          {auditLog.length === 0 ? (
-            <p className="m-0 text-sm text-tinta-tenue">Todavía no hay actividad registrada en esta sesión.</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-2.5 max-h-[50vh] overflow-y-auto pr-1">
-              {auditLog.map((entry) => (
-                <div key={entry.id} className="bg-campo border border-borde-suave rounded-xl px-3.5 py-3">
-                  <p className="m-0 text-[13px] text-tinta-tenue">
-                    {entry.creadoEn} · <strong className="text-tinta">{entry.autor}</strong>
-                  </p>
-                  <p className="m-0 mt-0.5 text-[14px] text-tinta">
-                    {entry.entidad}: {entry.accion}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Modal>
-      )}
+      {ventanas}
     </header>
   );
 }

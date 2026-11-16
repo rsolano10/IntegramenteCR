@@ -13,7 +13,7 @@ const items: NavItem[] = [
   {
     label: "Hoy",
     to: "/app/hoy",
-    match: (p) => p === "/app/hoy" || p.startsWith("/app/hoy/actividad"),
+    match: (p) => p === "/app/hoy" || p.startsWith("/app/hoy/"),
     icon: (active) => (
       <svg {...iconProps}>
         <path
@@ -22,6 +22,8 @@ const items: NavItem[] = [
           strokeWidth={active ? 2 : 1.6}
           strokeLinecap="round"
           strokeLinejoin="round"
+          fill="currentColor"
+          fillOpacity={active ? 0.22 : 0}
         />
       </svg>
     ),
@@ -32,7 +34,7 @@ const items: NavItem[] = [
     match: (p) => p === "/app/plan" || p.startsWith("/app/plan/actividad") || p === "/app/historial" || p === "/app/revision" || p === "/app/resumen",
     icon: (active) => (
       <svg {...iconProps}>
-        <rect x="3.5" y="4.5" width="15" height="14" rx="2.5" stroke="currentColor" strokeWidth={active ? 2 : 1.6} />
+        <rect x="3.5" y="4.5" width="15" height="14" rx="2.5" stroke="currentColor" strokeWidth={active ? 2 : 1.6} fill="currentColor" fillOpacity={active ? 0.22 : 0} />
         <path d="M3.5 9h15M7.5 3v3M14.5 3v3" stroke="currentColor" strokeWidth={active ? 2 : 1.6} strokeLinecap="round" />
       </svg>
     ),
@@ -48,62 +50,66 @@ const items: NavItem[] = [
           stroke="currentColor"
           strokeWidth={active ? 2 : 1.6}
           strokeLinejoin="round"
+          fill="currentColor"
+          fillOpacity={active ? 0.22 : 0}
         />
       </svg>
     ),
   },
 ];
 
-// Tres pestañas (antes cinco): Hoy, Mi semana (plan + evaluación +
-// actividades sugeridas) y Ayuda (respuestas rápidas + WhatsApp con el equipo).
-// Menos destinos = botones más grandes en la barra inferior del teléfono.
+// Tres pestañas: Hoy, Mi semana y Ayuda.
+// · Celular: barra inferior fija, tres botones grandes (ícono y texto, 64 px),
+//   donde llega el pulgar y como en WhatsApp.
+// · Escritorio: las pestañas van en el encabezado, junto al logo
+//   (PestanasFamilia, en AppHeader); la activa es una pastilla rellena.
 export function FamiliarNav() {
   const { pathname } = useLocation();
-
   return (
-    <>
-      {/* Phone: fixed bottom tab bar */}
-      <nav
-        data-menu-inferior
-        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-3"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {items.map((item) => {
-          const active = item.match(pathname);
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`flex flex-col items-center justify-center gap-1 min-h-[60px] pt-1.5 ${
-                active ? "text-verde-profundo" : "text-tinta-tenue"
-              }`}
-            >
-              {item.icon(active)}
-              <span className={`text-[14px] ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
-              <span className={`h-[3px] w-6 rounded-full ${active ? "bg-verde-serenidad" : "bg-transparent"}`} />
-            </Link>
-          );
-        })}
-      </nav>
+    <nav
+      data-menu-inferior
+      aria-label="Secciones"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-borde grid grid-cols-3"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {items.map((item) => {
+        const active = item.match(pathname);
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            aria-current={active ? "page" : undefined}
+            className={`flex flex-col items-center justify-center gap-1 min-h-16 no-underline ${active ? "text-verde-profundo" : "text-tinta-suave"}`}
+          >
+            <span className={`inline-flex items-center justify-center w-14 h-8 rounded-full transition-colors ${active ? "bg-verde-serenidad/20" : ""}`}>{item.icon(active)}</span>
+            <span className={`text-[14px] leading-none ${active ? "font-bold" : "font-semibold"}`}>{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
-      {/* Tablet / desktop: top tab row */}
-      <nav className="hidden md:flex items-center gap-1 border-b border-borde">
-        {items.map((item) => {
-          const active = item.match(pathname);
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`inline-flex items-center gap-2 px-4 lg:px-5 py-3.5 border-b-[3px] font-sans text-[15px] font-semibold ${
-                active ? "text-tinta border-verde-serenidad" : "text-tinta-tenue border-transparent hover:text-tinta"
-              }`}
-            >
-              {item.icon(active)}
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </>
+export function PestanasFamilia() {
+  const { pathname } = useLocation();
+  return (
+    <nav aria-label="Secciones" className="hidden md:flex items-center gap-0.5">
+      {items.map((item) => {
+        const active = item.match(pathname);
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            aria-current={active ? "page" : undefined}
+            className={`inline-flex items-center gap-2 min-h-11 px-3.5 rounded-full font-sans text-[15px] font-semibold whitespace-nowrap no-underline transition-colors ${
+              active ? "bg-verde-serenidad/20 text-verde-profundo" : "text-tinta hover:bg-campo"
+            }`}
+          >
+            {item.icon(active)}
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

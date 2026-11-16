@@ -9,19 +9,33 @@ const nuevas = (n: number) => `${actividades(n)} ${n === 1 ? "nueva" : "nuevas"}
 
 // La caja de avance de Hoy. `hechas` = enteras o en parte; `pendientes` =
 // las que todavía no tienen registro.
+// El desglose de lo registrado, con las mismas palabras de los estados:
+// «Las 2 hechas», «1 hecha y 1 en parte», «1 hecha, 1 en parte y 1 que no se hizo».
+export function desglose({ enteras, enParte, no }: { enteras: number; enParte: number; no: number }): string {
+  const total = enteras + enParte + no;
+  if (total > 0 && enteras === total) return total === 1 ? "Hecha." : `Las ${total} hechas.`;
+  const partes = [
+    enteras ? `${enteras} ${enteras === 1 ? "hecha" : "hechas"}` : null,
+    enParte ? `${enParte} en parte` : null,
+    no ? `${no} que no se ${no === 1 ? "hizo" : "hicieron"}` : null,
+  ].filter((x): x is string => !!x);
+  if (!partes.length) return "";
+  const frase = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(", ")} y ${partes[partes.length - 1]}`;
+  return `${frase.charAt(0).toUpperCase()}${frase.slice(1)}.`;
+}
+
+// La caja de avance de Hoy: un resumen sobrio de lo que pasó. La
+// celebración («¡Listo por hoy!») queda una sola vez, abajo, en el cierre.
 export function mensajeDelDia(
-  { hechas, pendientes, total }: { hechas: number; pendientes: number; total: number },
+  { hechas, pendientes, total, enteras = hechas, enParte = 0, no = 0 }: { hechas: number; pendientes: number; total: number; enteras?: number; enParte?: number; no?: number },
   quien: Quien,
   nombre: string | null,
 ): { titulo: string; detalle: string } {
   const participante = quien === "participante";
   if (total === 0) return { titulo: "Hoy es un día libre", detalle: "No hay actividades programadas." };
-  if (pendientes === 0 && hechas === total) {
-    return { titulo: "¡Día completo!", detalle: participante ? "Hiciste todo lo de hoy." : "Hicieron todas las actividades de hoy." };
-  }
   if (pendientes === 0) {
-    // Alguna quedó en «No se hizo»: sin tono de fracaso.
-    return { titulo: "Listo por hoy", detalle: participante ? "Ya contaste cómo te fue en todo." : "Ya contaron cómo les fue en todo." };
+    const cuales = total === 1 ? "la actividad" : `las ${total} actividades`;
+    return { titulo: `${participante ? "Registraste" : "Registraron"} ${cuales} de hoy`, detalle: desglose({ enteras, enParte, no }) };
   }
   if (pendientes === total) {
     const con = nombre && !participante ? ` con ${nombre}` : "";

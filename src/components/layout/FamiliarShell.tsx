@@ -104,13 +104,16 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
 
 // Hoy: la fecha (confirma que son las actividades de hoy) y el saludo, sin
 // fondo y en chico, como parte del contenido.
-function SaludoDelDia({ nombre }: { nombre: string }) {
+// «El plan de …» ancla para quién es todo lo que sigue (sin «don/doña»: no
+// sabemos el género de la persona).
+function SaludoDelDia({ nombre, paciente }: { nombre: string; paciente: string | null }) {
   return (
     <div className="mb-4">
       <p className="m-0 text-[14px] text-tinta-suave first-letter:uppercase">
         {new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" })}
       </p>
       <p className="m-0 font-serif text-[24px] leading-tight text-tinta">Hola, {nombre}</p>
+      {paciente && <p className="m-0 mt-0.5 text-[15px] text-tinta-suave">El plan de {paciente}</p>}
     </div>
   );
 }
@@ -179,13 +182,8 @@ export function FamiliarShell() {
       </div>
       )}
 
-      {!pendiente && (
-        <div className="shrink-0 bg-white md:px-8 lg:px-12">
-          <div className="max-w-3xl mx-auto">
-            <FamiliarNav />
-          </div>
-        </div>
-      )}
+      {/* Celular: la barra inferior. En escritorio las pestañas están en el encabezado. */}
+      {!pendiente && <FamiliarNav />}
 
       {modoChat ? (
         // El aviso de estado de la cuenta va dentro de la conversación (Ayuda).
@@ -200,7 +198,7 @@ export function FamiliarShell() {
           <PendienteRevision nombre={myPatient?.nombre ?? "tu familiar"} desdeAyuda={pathname === "/app/ayuda"} programaElegido={myPatient?.programa_elegido ?? true} />
         ) : (
           <>
-            {pathname === "/app/hoy" && <SaludoDelDia nombre={nombreFamiliar} />}
+            {pathname === "/app/hoy" && <SaludoDelDia nombre={nombreFamiliar} paciente={myPatient?.nombre?.split(" ")[0] ?? null} />}
             {myPatient && conAvisoCuenta && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
             <Outlet />
           </>
