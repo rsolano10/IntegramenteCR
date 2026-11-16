@@ -108,7 +108,7 @@ export function Resumen() {
               <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4" />
             </svg>
           </Dato>
-          <Dato valor={`${r.conAyuda}`} etiqueta={r.conAyuda === 1 ? "con ayuda" : "con ayuda"} fondo="#f5f9f9" tinta="#3f6a70">
+          <Dato valor={`${r.conAyuda}`} etiqueta="en parte" fondo="#f5f9f9" tinta="#3f6a70">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mx-auto mt-1.5">
               <path d="M7 11.5l3.2-3.2a2 2 0 0 1 2.8 0l4 4M4 14l5 5h6l5-5" />
             </svg>
@@ -194,7 +194,7 @@ export function Resumen() {
                   <path d="M2.5 6.2l2.2 2.2 4.8-4.9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {t.titulo}
-                {t.estado === "parcial" && <span className="text-[12px] text-semaforo-amarillo-texto font-semibold">· con ayuda</span>}
+                {t.estado === "parcial" && <span className="text-[14px] text-semaforo-amarillo-texto font-semibold">· en parte</span>}
               </li>
             ))}
           </ul>

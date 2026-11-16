@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
+import { contarHechas } from "./estadoActividad";
 
 export interface SemanaAnterior {
   id: string;
@@ -40,7 +41,7 @@ export function useSemanasAnteriores(patientId: string | undefined, limite: numb
           publish_at: p.publish_at,
           family_reviewed_at: p.family_reviewed_at,
           total: tareas.length,
-          hechas: tareas.filter((t) => t.estado === "realizado" || t.estado === "parcial").length,
+          hechas: contarHechas(tareas),
         } satisfies SemanaAnterior;
       });
       return { semanas, totalAnteriores: Math.max(0, (count ?? 0) - 1) };

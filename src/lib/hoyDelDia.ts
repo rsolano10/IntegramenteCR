@@ -1,8 +1,7 @@
 // Funciones del día para la pantalla "Hoy" (components/hoy/HoyDelDia.tsx).
 import type { PlanTask } from "./mockData";
 
-const REGISTRADA: PlanTask["estado"][] = ["realizado", "parcial", "no"];
-export const estaRegistrada = (t: PlanTask) => REGISTRADA.includes(t.estado);
+export { estaRegistrada } from "./estadoActividad";
 
 // "9:00 a.m." / "17:00" / texto libre → minutos desde medianoche.
 export function minutosDe(hora: string): number | null {

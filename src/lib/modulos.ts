@@ -34,3 +34,6 @@ export const moduloLabel: Record<ResourceModulo, string> = {
 // Módulos con formato de ficha (business/integramente-recursos-spec.md):
 // ¿Para quién?, ¿Sabías que…?, Tu actividad, Tené en cuenta, Para cerrar.
 export const modulosFicha: ResourceModulo[] = ["gerontogimnasia", "nutricion"];
+
+// El tema de una actividad: el de su módulo, o el de la marca si no tiene.
+export const temaDeTarea = (t: { modulo?: ResourceModulo | null }) => (t.modulo ? moduloTheme[t.modulo] : moduloTheme.bienvenida);

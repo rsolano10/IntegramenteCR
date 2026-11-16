@@ -1,9 +1,9 @@
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useCurrentPlanMeta } from "../../lib/usePlan";
-import { Button } from "../../components/ui/Button";
 import { CierreDelDia, DiaLibre, LineaDelDia, ResumenDelDia } from "../../components/hoy/HoyDelDia";
 import { siguienteDia } from "../../lib/siguienteDia";
 import { AvisoPedidoAyuda } from "../../components/familiar/AvisoPedidoAyuda";
+import { AvisoEvaluarSemana, AvisoSemanaEnRevision } from "../../components/familiar/AvisoEvaluarSemana";
 import { Cargando } from "../../components/ui/Cargando";
 
 const rutaActividad = (id: string) => `/app/hoy/actividad/${id}`;
@@ -28,29 +28,14 @@ export function Hoy() {
         <DiaLibre mensaje="No hay actividades programadas para hoy. Podés mirar lo que viene en la pestaña de la semana." />
       ) : (
         <>
-          <ResumenDelDia tasks={tasks} quien={quien} rutaActividad={rutaActividad} />
+          <ResumenDelDia tasks={tasks} quien={quien} />
           <LineaDelDia tasks={tasks} rutaActividad={rutaActividad} />
           {!weekComplete && <CierreDelDia pendientes={tasks.filter((t) => t.estado === "pendiente").length} siguiente={siguienteDia(days ?? [])} />}
         </>
       )}
 
-      {weekComplete && planMeta && !planMeta.family_reviewed_at && (
-        <div className="border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-[22px] p-5">
-          <p className="m-0 mb-1 text-[17px] font-bold text-verde-profundo">¡Semana completa!</p>
-          <p className="m-0 mb-3 text-[14.5px] text-tinta-suave">Ya registraste todas las actividades de la semana. Contanos cómo estuvo.</p>
-          <Button variant="ink" dense to={`/app/revision?plan=${planMeta.id}`}>
-            Evaluar la semana
-          </Button>
-        </div>
-      )}
-
-      {weekComplete && planMeta?.family_reviewed_at && (
-        <div className="border border-borde bg-white rounded-[22px] p-5">
-          <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
-            Tu equipo clínico está revisando la semana. Pronto vas a tener novedades y las actividades de la próxima semana.
-          </p>
-        </div>
-      )}
+      {weekComplete && planMeta && !planMeta.family_reviewed_at && <AvisoEvaluarSemana to={`/app/revision?plan=${planMeta.id}`} />}
+      {weekComplete && planMeta?.family_reviewed_at && <AvisoSemanaEnRevision />}
     </div>
   );
 }

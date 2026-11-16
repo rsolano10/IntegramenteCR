@@ -1,10 +1,11 @@
 import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../ui/Modal";
-import { ModuloIcon } from "../ui/ModuloIcon";
 import { Icono } from "../sesion/Icono";
 import { MisionSemana } from "../sesion/ResumenSesion";
 import { CienciaActividad } from "./CienciaActividad";
+import { GlifoActividad } from "./IconoActividad";
+import { CHIP_ESTADO, ETIQUETA_ESTADO } from "../../lib/estadoActividad";
 import { esInteractivo } from "../../lib/clasificarNumeros";
 import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, guionDe, resumenPasos, type PasoResumen, type Progreso } from "../../lib/sesiones";
@@ -23,11 +24,6 @@ const PortadaJuego = lazy(() => import("../actividades/interactivas/Marco").then
 
 export type ModoInicio = "normal" | "sobrescribir" | "sin-registro";
 
-const ESTADO: Partial<Record<PlanTask["estado"], string>> = {
-  realizado: "Realizada",
-  parcial: "Hecha en parte",
-  no: "No se realizó",
-};
 
 export function PanelActividad({
   task,
@@ -50,7 +46,7 @@ export function PanelActividad({
   const guion = guionDe(task.codigo);
   const juego = esInteractivo(task.extras) && task.extras?.modo === "interactiva" ? task.extras.tipo : null;
   const tema = task.modulo ? moduloTheme[task.modulo] : moduloTheme.bienvenida;
-  const hecha = ESTADO[task.estado] ?? null;
+  const hecha = ETIQUETA_ESTADO[task.estado] ?? null;
   const hoyPendiente = !!dia.isToday && (task.estado === "pendiente" || task.estado === "futuro");
   const cuando = cuandoEsElDia(dia.dia, publishAt);
   // Sin guion (los juegos): sus pasos, tal como están en la ficha.
@@ -100,12 +96,11 @@ export function PanelActividad({
       >
         {hecha && (
           <span
-            className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 font-semibold ${large ? "text-[16px]" : "text-[13.5px]"}`}
-            style={{ color: tema.ink }}
+            className={`absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold ${large ? "text-[16px]" : "text-[14px]"} ${CHIP_ESTADO[task.estado]}`}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            {task.estado === "realizado" && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M2.5 6.2l2.2 2.2 4.8-4.9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            </svg>}
             {hecha}
           </span>
         )}
@@ -117,13 +112,8 @@ export function PanelActividad({
           </div>
         ) : (
           <span className={`mb-4 sm:mb-0 sm:float-left sm:mr-5 flex items-center justify-center rounded-full bg-white/80 ${large ? "w-24 h-24" : "w-20 h-20 sm:w-24 sm:h-24"}`} aria-hidden="true">
-            {guion ? (
-              <Icono nombre={guion.icono} className="w-[62%] h-[62%] text-tinta" relleno={`${tema.to}80`} />
-            ) : task.modulo ? (
-              <span className="text-tinta">
-                <ModuloIcon modulo={task.modulo} className="w-10 h-10" />
-              </span>
-            ) : null}
+            {/* El mismo dibujo que en Hoy y Mi semana. */}
+            <GlifoActividad task={task} className="w-[62%] h-[62%]" />
           </span>
         )}
         <h1 className={`m-0 font-serif font-normal leading-tight text-tinta ${t.titulo}`}>{task.titulo}</h1>
