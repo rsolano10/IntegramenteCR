@@ -10,6 +10,7 @@ import { useEsAdmin } from "../../lib/useEsAdmin";
 import { AccountMenu } from "../ui/AccountMenu";
 import { Modal } from "../ui/Modal";
 import { MiPerfilModal } from "../ui/MiPerfilModal";
+import { MiProgramaModal } from "../ui/MiProgramaModal";
 import { ContactanosModal } from "../ui/ContactanosModal";
 import { CalendarModal } from "../ui/CalendarSyncCard";
 import { Logo, LogoEnCasa } from "../ui/Logo";
@@ -54,7 +55,7 @@ function crumbFor(pathname: string): string {
   return hit ? hit[1] : "";
 }
 
-type OpenModal = "mi-perfil" | "contacto" | "calendario" | "auditoria" | null;
+type OpenModal = "mi-perfil" | "mi-programa" | "contacto" | "calendario" | "auditoria" | null;
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -119,6 +120,7 @@ export function AppHeader() {
           }
           items={[
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
+            ...(myPatient && role === "familiar" ? [{ label: "Mi programa", onClick: () => setModal("mi-programa") }] : []),
             ...(myPatient
               ? [{ label: role === "paciente" ? "Mi perfil" : `Perfil de ${myPatient.nombre.split(" ")[0]}`, onClick: () => navigate("/app/perfil/resumen") }]
               : []),
@@ -139,6 +141,7 @@ export function AppHeader() {
         <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} onLogoutAll={() => doLogout("global")} />
       )}
 
+      {modal === "mi-programa" && <MiProgramaModal onClose={() => setModal(null)} nombreCuenta={nombre} />}
       {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
       {modal === "calendario" && myPatient && session.status === "authed" && (
         <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />

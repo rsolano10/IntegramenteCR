@@ -291,13 +291,15 @@ function MiPerfilContent({
                 <input type="text" inputMode="numeric" value={patientEdad} onChange={(e) => setPatientEdad(e.target.value)} className={inputClass} />
               </Field>
             </div>
-            <ProgramaCard
+            {/* El programa de la familia tiene su propia ventana («Mi programa»
+                en el menú); el participante lo sigue viendo acá. */}
+            {isSelf && <ProgramaCard
               patient={myPatient}
               onChoose={() => {
                 onClose();
                 navigate("/app/perfil/programa");
               }}
-            />
+            />}
           </div>
         )}
 
