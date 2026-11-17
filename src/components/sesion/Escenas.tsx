@@ -1458,7 +1458,7 @@ function EscenaJuego() {
           <p className="m-0 text-[17px] text-tinta-suave">Este juego no está disponible por ahora.</p>
         )}
       </div>
-      <Pie etiqueta="Siguiente" habilitado={terminado} />
+      <Pie etiqueta="Siguiente" habilitado={terminado} compacto />
     </>
   );
 }

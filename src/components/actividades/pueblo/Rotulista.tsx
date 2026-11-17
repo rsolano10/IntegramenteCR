@@ -201,7 +201,7 @@ export function Portada({ final = false }: { final?: boolean }) {
 function Taller() {
   return (
     <div className="relative pueblo-grano" style={{ backgroundColor: P.cal }}>
-      <svg viewBox="0 0 360 130" className="block w-full h-[130px] sm:h-[150px]" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <svg viewBox="0 0 360 130" className="block w-full h-[104px] sm:h-[118px]" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
         {/* Repisa con tarros */}
         <rect x="16" y="52" width="130" height="6" fill={P.madera} />
         {[

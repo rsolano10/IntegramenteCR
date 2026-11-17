@@ -240,7 +240,7 @@ export function DibujoP({ d, size }: { d: DibujoProducto; size: number }) {
 function Cielo({ sol }: { sol: number }) {
   const y = 110 - sol * 70; // el sol sube
   return (
-    <svg viewBox="0 0 360 150" preserveAspectRatio="xMidYMax slice" className="block w-full h-[150px] sm:h-[180px] transition-[background-color] duration-700" style={{ backgroundColor: sol >= 1 ? P.mostaza : P.rosa }} aria-hidden="true">
+    <svg viewBox="0 0 360 150" preserveAspectRatio="xMidYMax slice" className="block w-full h-[104px] sm:h-[130px] transition-[background-color] duration-700" style={{ backgroundColor: sol >= 1 ? P.mostaza : P.rosa }} aria-hidden="true">
       {/* Banda de luz que crece con el sol */}
       <rect x="0" y="0" width="360" height={60 + sol * 60} fill={P.mostaza} opacity={0.35 + sol * 0.45} className="transition-all duration-700 motion-reduce:transition-none" />
       <circle cx="270" cy={y} r="26" fill={P.cal} opacity="0.55" className="transition-all duration-700 motion-reduce:transition-none" />

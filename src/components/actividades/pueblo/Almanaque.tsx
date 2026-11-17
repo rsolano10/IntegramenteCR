@@ -106,7 +106,7 @@ function Corredor({ pistas, mesesSeca, hoja, numero, mes, arrancar }: { pistas: 
   const minutos = new Date().getMinutes();
   return (
     <div className="relative pueblo-grano" style={{ backgroundColor: P.cal }}>
-      <svg viewBox="0 0 360 170" preserveAspectRatio="xMidYMax slice" className="block w-full h-[170px] sm:h-[200px]" aria-hidden="true">
+      <svg viewBox="0 0 360 170" preserveAspectRatio="xMidYMax slice" className="block w-full h-[128px] sm:h-[150px]" aria-hidden="true">
         {/* Arcos del corredor con el patio */}
         {[0, 1].map((k) => (
           <g key={k}>

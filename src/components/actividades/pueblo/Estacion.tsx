@@ -183,7 +183,7 @@ function Locomotora({ humo = false }: { humo?: boolean }) {
 // Alero de la estación con calado de madera, rótulo y cielo de tarde.
 function EstacionFondo() {
   return (
-    <svg viewBox="0 0 360 120" preserveAspectRatio="xMidYMax slice" className="block w-full h-[120px] sm:h-[150px]" style={{ background: P.rosa }} aria-hidden="true">
+    <svg viewBox="0 0 360 120" preserveAspectRatio="xMidYMax slice" className="block w-full h-[96px] sm:h-[112px]" style={{ background: P.rosa }} aria-hidden="true">
       <rect x="0" y="0" width="360" height="54" fill={P.mostaza} opacity="0.45" />
       {/* Cerros lejanos */}
       <path d="M0 92 C60 70 110 74 160 86 C210 68 280 64 360 82 V120 H0z" fill={P.serenidad} />

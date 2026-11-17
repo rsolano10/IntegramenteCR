@@ -34,19 +34,22 @@ export function Pie({
   tono = "principal",
   sinAtras = false,
   solo = false,
+  compacto = false,
 }: {
   etiqueta: string;
   onClick?: () => void;
   habilitado?: boolean;
   tono?: "principal" | "suave";
   sinAtras?: boolean;
+  // En el juego: menos aire, para que el juego entre entero en la pantalla.
+  compacto?: boolean;
   // Solo la acción principal, a lo ancho (portada y cierre).
   solo?: boolean;
 }) {
   const { siguiente, anterior, abrirAyuda, large } = useSesion();
   const alto = large ? "min-h-[64px] text-[20px]" : "min-h-[56px] text-[17px]";
   return (
-    <div className="sticky bottom-0 z-10 -mx-5 mt-auto sm:mt-10 px-5 pt-6 pb-[max(18px,env(safe-area-inset-bottom))] sm:pb-10 bg-gradient-to-t from-fondo-papel from-70% to-transparent">
+    <div data-pie="" className={`sticky bottom-0 z-10 -mx-5 mt-auto px-5 pb-[max(18px,env(safe-area-inset-bottom))] ${compacto ? "pt-4 sm:mt-4 sm:pb-6" : "pt-6 sm:mt-10 sm:pb-10"} bg-gradient-to-t from-fondo-papel from-70% to-transparent`}>
       <div className="flex items-center gap-2.5">
         {anterior && !sinAtras && !solo && (
           <button

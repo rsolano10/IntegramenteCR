@@ -17,6 +17,7 @@ import { Button } from "./Button";
 import { BigActionButton } from "./BigActionButton";
 import { WarningIcon } from "./Icons";
 import { MaterialDeApoyo } from "./ResourceDetailView";
+import { IconoActividad } from "../actividad/IconoActividad";
 import { RegistroJuegoContexto } from "../../lib/actividades/registroJuego";
 import type { PlanTask } from "../../lib/mockData";
 
@@ -384,15 +385,56 @@ export function StepByStepActivity({
   }
 
   if (saved) {
-    const messages: Record<string, string> = {
-      done: "¡Listo! Quedó registrado. Mañana hay otra.",
-      partial: "Quedó registrado. No pasa nada: cada actividad es distinta.",
-      no: "Quedó registrado, sin penalizar. Mañana hay otra.",
-      practica: "¡Listo! Esta vez no se registró: fue para practicar.",
-    };
+    // La pantalla final: una tarjeta de cierre con la imagen de la
+    // actividad, un sello de hecho y, en la práctica, la aclaración de que
+    // no se registró. Sin puntajes.
+    const fin = {
+      done: { ceja: "Actividad registrada", titulo: "¡Listo!", texto: "Quedó registrado. Mañana hay otra." },
+      partial: { ceja: "Actividad registrada", titulo: "¡Bien hecho!", texto: "Quedó registrado. No pasa nada: cada actividad es distinta." },
+      no: { ceja: "Actividad registrada", titulo: "Gracias por contarlo", texto: "Quedó registrado, sin penalizar. Mañana hay otra." },
+      practica: { ceja: "Práctica terminada", titulo: "¡Listo!", texto: large ? "Lo hiciste para practicar." : "La hicieron para practicar." },
+    }[saved];
     return shell(
-      <div>
-        <p className={`m-0 mb-6 ${large ? "text-[24px]" : "text-[20px]"} leading-relaxed text-verde-profundo`}>{messages[saved]}</p>
+      <div className="grid gap-5">
+        <section
+          role="status"
+          className="relative overflow-hidden rounded-[32px] border border-borde bg-white px-6 pt-9 pb-7 sm:px-10 text-center shadow-[0_24px_50px_-36px_rgba(31,51,56,0.6)]"
+        >
+          {/* Fondo: dos gotas de la marca, suaves */}
+          <span aria-hidden="true" className="absolute -top-16 -left-14 w-48 h-48 rounded-full bg-verde-tenue" />
+          <span aria-hidden="true" className="absolute -top-10 -right-16 w-40 h-40 rounded-full bg-mostaza-vital/30" />
+
+          <div className="relative mx-auto w-fit motion-safe:animate-[pueblo-aparece_480ms_ease-out_both]">
+            <span className="block rounded-[30px] overflow-hidden ring-[6px] ring-white">
+              <IconoActividad modulo={task.modulo} lado={large ? 128 : 112} />
+            </span>
+            {/* Sello de hecho */}
+            <span
+              aria-hidden="true"
+              className="absolute -right-3 -bottom-3 w-12 h-12 rounded-full bg-verde-profundo text-white flex items-center justify-center ring-4 ring-white motion-safe:animate-[pueblo-asentar_420ms_ease-out_300ms_both]"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </div>
+
+          <p className={`relative m-0 mt-7 tracking-[0.14em] uppercase font-semibold text-tinta-suave ${large ? "text-[15px]" : "text-[13px]"}`}>{fin.ceja}</p>
+          <h1 className={`relative m-0 mt-1.5 font-serif font-normal leading-tight text-tinta ${large ? "text-[40px]" : "text-[34px] sm:text-[38px]"}`}>{fin.titulo}</h1>
+          <p className={`relative m-0 mt-2 mx-auto max-w-sm font-semibold leading-snug text-verde-profundo [text-wrap:balance] ${large ? "text-[21px]" : "text-[18px]"}`}>«{task.titulo}»</p>
+          <p className={`relative m-0 mt-3 mx-auto max-w-sm leading-relaxed text-tinta [text-wrap:balance] ${large ? "text-[21px]" : "text-[18px]"}`}>{fin.texto}</p>
+
+          {saved === "practica" && (
+            <p className={`relative m-0 mt-5 mx-auto w-fit max-w-full inline-flex items-center gap-2 rounded-full bg-fondo-papel border border-borde px-4 py-2 text-tinta-suave ${large ? "text-[17px]" : "text-[15px]"}`}>
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="shrink-0">
+                <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M10 9v5M10 6.2v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              Esta vez no se registra en el plan.
+            </p>
+          )}
+        </section>
+
         <div className="grid gap-3">
           <Button variant="principal" fullWidth onClick={() => navigate(backTo, { replace: true })}>
             Volver

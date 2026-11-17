@@ -176,7 +176,7 @@ function Fondo() {
           boxShadow: "0 3px 0 rgba(51,36,28,0.22)",
         }}
       />
-      <svg viewBox="12 16 336 156" className="relative block mx-auto w-full max-w-[520px] h-auto">
+      <svg viewBox="12 16 336 156" className="relative block mx-auto w-full max-w-[520px] h-[112px] sm:h-[132px]">
 
         {/* Estante de arriba */}
         <Frasco x={22} y={74} contenido={P.tierra} />

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { Suspense, lazy, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { RegistroJuegoContexto, type RegistroJuego, type ValorRegistro } from "../../../lib/actividades/registroJuego";
 import { DIFICULTADES, dificultadLabel, type Dificultad } from "../../../lib/actividades/nivelSugerido";
 import { nuevaSemilla } from "../../../lib/actividades/azar";
@@ -104,6 +104,7 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
   const [barra, setBarra] = useState<HTMLDivElement | null>(null);
   const zona = useRef<HTMLDivElement>(null);
   const cine = usePantallaCompleta();
+  const ajuste = useAjusteAPantalla(!!enSesion && !cine.activo);
   const registro = useContext(RegistroJuegoContexto);
   useEffect(() => () => detenerVoz(), []);
 
@@ -199,10 +200,11 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
       aria-label={def.nombre}
       className={cine.activo ? `${cine.nativo ? "" : "fixed inset-0 z-[70]"} overflow-y-auto overscroll-contain bg-fondo-papel` : "min-w-0"}
     >
-      <div className={cine.activo ? "mx-auto w-full max-w-[880px] min-h-full px-4 py-5 sm:px-8 sm:py-8 flex flex-col gap-2" : "grid gap-2"}>
+      <div style={ajuste.externo}>
+      <div ref={ajuste.ref} style={ajuste.interno} className={cine.activo ? "mx-auto w-full max-w-[880px] min-h-full px-4 py-5 sm:px-8 sm:py-8 flex flex-col gap-2" : "grid gap-2"}>
         {/* El cuadro del juego: todo lo del juego va adentro (rótulo, avance,
             consigna, mensajes, pista y el pase al siguiente ejercicio). */}
-        <div className="rounded-[28px] border border-borde bg-white/85 shadow-[0_18px_40px_-30px_rgba(31,51,56,0.55)] p-4 sm:p-5">
+        <div className={`rounded-[28px] border border-borde bg-white/85 shadow-[0_18px_40px_-30px_rgba(31,51,56,0.55)] ${enSesion ? "p-3 sm:p-5" : "p-4 sm:p-5"}`}>
           {fase === "inicio" && (
             <div className="flex flex-col items-center text-center gap-4 py-1">
               <h3 className="m-0 -mb-1">
@@ -221,12 +223,12 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
           )}
 
           {fase === "juego" && (
-            <div className="grid gap-4">
+            <div className={`grid ${enSesion ? "gap-3" : "gap-4"}`}>
               <div ref={zona} tabIndex={-1} className="outline-none flex items-center justify-between gap-3">
                 <h3 className="m-0 min-w-0">
                   <Rotulo texto={def.nombre} />
                 </h3>
-                <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
+                <RuedaProgreso total={total} completados={hechos} actual={indice + 1} size={enSesion ? 50 : 60} />
               </div>
 
               {/* El juego, con su letrero abajo; las pancartas salen en su lugar
@@ -339,6 +341,7 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
           {botonCine}
         </div>
       </div>
+      </div>
     </section>
   );
 }
@@ -445,6 +448,56 @@ function CierreConRegistro({ registro, large }: { registro: RegistroJuego; large
       </div>
     </div>
   );
+}
+
+// En la sesión, el juego entra entero en la pantalla, sin scroll: si no
+// cabe entre su borde de arriba y la barra de abajo de la sesión
+// (data-pie), se achica parejo (como mucho al 70 %). En el celular además
+// gana ancho, para que el contenido se acomode mejor; en pantallas anchas se
+// centra (ahí, más ancho haría más altas las escenas). No mide desempeño ni cambia el juego.
+const ESCALA_MINIMA = 0.7;
+function useAjusteAPantalla(activo: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [escala, setEscala] = useState(1);
+  const [alto, setAlto] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!activo || !el) {
+      setEscala(1);
+      return;
+    }
+    let actual = 1;
+    const medir = () => {
+      const natural = el.offsetHeight; // sin la transformación
+      const arriba = el.parentElement!.getBoundingClientRect().top + window.scrollY;
+      const pie = document.querySelector<HTMLElement>("[data-pie]");
+      const margenPie = pie ? parseFloat(getComputedStyle(pie).marginTop) || 0 : 0;
+      const altoPie = (pie?.offsetHeight ?? 0) + (window.matchMedia("(min-width: 640px)").matches ? margenPie : 0);
+      const disponible = window.innerHeight - arriba - altoPie - 10;
+      const s = Math.max(ESCALA_MINIMA, Math.min(1, disponible / Math.max(1, natural)));
+      setAlto(natural);
+      // Con margen, para no oscilar al cambiar el ancho.
+      if (Math.abs(s - actual) > 0.015 || (s === 1 && actual !== 1)) {
+        actual = s;
+        setEscala(s);
+      }
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    window.addEventListener("resize", medir);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", medir);
+    };
+  }, [activo]);
+  const achica = activo && escala < 1;
+  const angosta = typeof window !== "undefined" && window.innerWidth < 640;
+  return {
+    ref,
+    externo: achica ? { height: alto * escala } : undefined,
+    interno: achica ? (angosta ? { width: `${100 / escala}%`, transform: `scale(${escala})`, transformOrigin: "top left" } : { transform: `scale(${escala})`, transformOrigin: "top center" }) : undefined,
+  };
 }
 
 // Pantalla completa («modo cine»): usa la API del navegador cuando existe
