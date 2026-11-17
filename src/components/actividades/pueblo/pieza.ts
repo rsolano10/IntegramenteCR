@@ -3,7 +3,8 @@ import { P } from "./paleta";
 
 // Comportamiento de las piezas tocables de todas las escenas. Se distinguen
 // del decorado por tres señales a la vez: más contraste, sombra de papel y
-// borde claro. Seleccionada: se levanta y gana borde mostaza. Acierto: se
+// borde claro. Seleccionada: se levanta y gana borde mostaza (siempre del
+// mismo grosor, para que la pieza no cambie de tamaño). Acierto: se
 // asienta con un rebote corto. Reintento: vuelve con suavidad. 150-400 ms.
 
 export type EstadoPieza = "reposo" | "elegida" | "pista" | "regreso" | "asentada" | "quieta";
@@ -16,10 +17,10 @@ export function estiloPieza(estado: EstadoPieza, sombra = "rgba(51,36,28,0.38)")
     case "elegida":
       return {
         className: "-translate-y-1.5 scale-[1.04]",
-        style: { border: `3px solid ${P.mostaza}`, boxShadow: `0 9px 0 rgba(51,36,28,0.22), 0 0 0 3px ${P.tierra}22` },
+        style: { border: `2px solid ${P.mostaza}`, boxShadow: `0 9px 0 rgba(51,36,28,0.22), 0 0 0 1px ${P.mostaza}, 0 0 0 4px ${P.tierra}22` },
       };
     case "pista":
-      return { className: "", style: { border: `3px dashed ${P.mostaza}`, boxShadow: `0 4px 0 ${sombra}` } };
+      return { className: "", style: { border: `2px dashed ${P.mostaza}`, boxShadow: `0 4px 0 ${sombra}, 0 0 0 1px ${P.mostaza}` } };
     case "regreso":
       return { className: "motion-safe:animate-[pueblo-regreso_320ms_ease-out]", style: { border: `2px solid ${P.cal}`, boxShadow: `0 4px 0 ${sombra}` } };
     case "asentada":

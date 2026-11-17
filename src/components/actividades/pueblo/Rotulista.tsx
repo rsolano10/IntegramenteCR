@@ -62,7 +62,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioPalabra; ctl
     revisar(c);
   });
 
-  const libres = ej.fichas.filter((f) => !usadas.has(f.id));
   const ancho = n > 7 ? "w-9 h-12 text-[26px]" : n > 5 ? "w-11 h-14 text-[32px]" : "w-12 h-16 text-[38px]";
 
   return (
@@ -121,11 +120,12 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioPalabra; ctl
             <span className="w-2.5 h-5" style={{ background: P.maderaOscura }} />
           </div>
         </div>
-        {/* Banco de trabajo con las letras de madera */}
-        {!hecho && (
-          <div className="px-3 pt-4 pb-4" style={{ background: `repeating-linear-gradient(180deg, ${P.maderaClara} 0 22px, #CF9A5E 22px 23px)`, borderTop: `8px solid ${P.madera}` }}>
+        {/* Banco de trabajo con las letras de madera. Las usadas dejan su
+            lugar vacío, y el banco queda al terminar: nada cambia de tamaño. */}
+        <div className="px-3 pt-4 pb-4" style={{ background: `repeating-linear-gradient(180deg, ${P.maderaClara} 0 22px, #CF9A5E 22px 23px)`, borderTop: `8px solid ${P.madera}` }}>
             <ul className="list-none m-0 p-0 mx-auto max-w-[520px] flex flex-wrap justify-center gap-3" aria-label="Letras de madera">
-              {libres.map((f) => {
+              {ej.fichas.map((f) => {
+                if (hecho || usadas.has(f.id)) return <li key={f.id} aria-hidden="true" className="invisible w-14 h-14" />;
                 const est = estiloPieza(devueltas.includes(f.id) ? "regreso" : "reposo");
                 const color = COLORES_LETRA[f.id % COLORES_LETRA.length];
                 return (
@@ -144,7 +144,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioPalabra; ctl
               })}
             </ul>
           </div>
-        )}
       </div>
       <Letrero large={L} clavado>
         {hecho ? `¡Quedó pintado: ${mayus(ej.objetivo.join(""))}!` : "Tocá las letras en orden para pintar la palabra."}

@@ -39,7 +39,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioIntr
     ctl.reintento(`«${ej.cosas[i].texto}» sí va. Probemos con otra.`);
   }
 
-  const enMesa = ej.cosas.map((c, i) => ({ c, i })).filter(({ i }) => !adentro.includes(i));
 
   return (
     <div className="grid gap-4">
@@ -51,7 +50,16 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioIntr
             {ej.titulo}
           </p>
           <ul className="list-none m-0 p-0 mx-auto max-w-[560px] grid grid-cols-2 sm:grid-cols-3 gap-3" aria-label="Sobre la mesa">
-            {enMesa.map(({ c, i }) => {
+            {ej.cosas.map((c, i) => {
+              // Lo que ya entró a la olla deja su lugar vacío en la mesa.
+              if (adentro.includes(i))
+                return (
+                  <li key={i} aria-hidden="true" className="invisible">
+                    <span className={`${clasePieza} block w-full rounded-[14px]`}>
+                      <CosaDibujo cosa={c} large={L} />
+                    </span>
+                  </li>
+                );
               const esEl = hallado && i === ej.intruso;
               const est = estiloPieza(esEl ? "elegida" : "reposo");
               return (

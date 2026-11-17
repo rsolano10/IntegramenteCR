@@ -1,4 +1,4 @@
-import { Suspense, lazy, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { Suspense, lazy, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { RegistroJuegoContexto, type RegistroJuego, type ValorRegistro } from "../../../lib/actividades/registroJuego";
 import { DIFICULTADES, dificultadLabel, type Dificultad } from "../../../lib/actividades/nivelSugerido";
 import { nuevaSemilla } from "../../../lib/actividades/azar";
@@ -239,22 +239,28 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
               </div>
 
               {/* El juego, con su letrero: los mensajes se escriben en él. */}
-              <MensajeJuego.Provider value={enLetrero}>
-                <Suspense fallback={<Cargando />}>
-                  <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
-                </Suspense>
-              </MensajeJuego.Provider>
+              {/* El alto del juego nunca baja mientras se juega (las piezas que se
+                  acomodan o el cambio de ejercicio no hacen «brincar» la pantalla). */}
+              <SinEncoger reinicio={semilla}>
+                <MensajeJuego.Provider value={enLetrero}>
+                  <Suspense fallback={<Cargando />}>
+                    <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+                  </Suspense>
+                </MensajeJuego.Provider>
+              </SinEncoger>
               <p aria-live="polite" className="sr-only">
                 {mensaje?.texto ?? ""}
               </p>
 
-              {/* Acciones del juego (Listo, Vaciar…) y la pista; o el pase cuando se resolvió. */}
+              {/* Acciones del juego (Listo, Vaciar…) y la pista; o el pase cuando se
+                  resolvió. La fila tiene siempre su alto, aunque esté vacía: que
+                  aparezca «Siguiente ejercicio» no mueve nada. */}
               {resuelto ? (
                 <Boton onClick={siguiente} autoFocus large={large} icono={ultimo ? undefined : <IconoSiguiente />} className="w-full flex-row-reverse">
                   {ultimo ? "Ver cómo terminó" : "Siguiente ejercicio"}
                 </Boton>
               ) : (
-                <div className="flex gap-3 empty:hidden">
+                <div className="flex gap-3 min-h-14">
                   <div ref={setBarra} className="flex flex-1 min-w-0 gap-3 empty:hidden [&>*]:shrink-0 [&>*:first-child]:flex-1 [&>*:first-child]:shrink [&>*:first-child]:min-w-[6rem]" />
                   {intentos >= 2 && (
                     <Boton
@@ -453,6 +459,35 @@ function CierreConRegistro({ registro, large }: { registro: RegistroJuego; large
   );
 }
 
+// Un contenedor que nunca se achica: guarda el alto más grande que tuvo
+// su contenido y lo usa de mínimo. Se reinicia al empezar otra partida.
+function SinEncoger({ reinicio, children }: { reinicio: unknown; children: ReactNode }) {
+  const caja = useRef<HTMLDivElement>(null);
+  const dentro = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const c = caja.current;
+    const d = dentro.current;
+    if (!c || !d) return;
+    let max = 0;
+    c.style.minHeight = "";
+    const medir = () => {
+      if (d.offsetHeight > max) {
+        max = d.offsetHeight;
+        c.style.minHeight = `${max}px`;
+      }
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(d);
+    return () => ro.disconnect();
+  }, [reinicio]);
+  return (
+    <div ref={caja}>
+      <div ref={dentro}>{children}</div>
+    </div>
+  );
+}
+
 // En la sesión, el juego entra entero en la pantalla, sin scroll: si no
 // cabe entre su borde de arriba y la barra de abajo de la sesión
 // (data-pie), se achica parejo (como mucho al 70 %). En el celular además
@@ -470,7 +505,10 @@ function useAjusteAPantalla(activo: boolean) {
       return;
     }
     let actual = 1;
-    const medir = () => {
+    // Cuando cambia el contenido, la escala solo puede bajar (si subiera y
+    // bajara, el juego «respiraría»); al cambiar el tamaño de la ventana, se
+    // recalcula entera.
+    const medir = (libre = false) => {
       const natural = el.offsetHeight; // sin la transformación
       const arriba = el.parentElement!.getBoundingClientRect().top + window.scrollY;
       const pie = document.querySelector<HTMLElement>("[data-pie]");
@@ -480,18 +518,20 @@ function useAjusteAPantalla(activo: boolean) {
       const s = Math.max(ESCALA_MINIMA, Math.min(1, disponible / Math.max(1, natural)));
       setAlto(natural);
       // Con margen, para no oscilar al cambiar el ancho.
+      if (!libre && s > actual) return;
       if (Math.abs(s - actual) > 0.015 || (s === 1 && actual !== 1)) {
         actual = s;
         setEscala(s);
       }
     };
-    medir();
-    const ro = new ResizeObserver(medir);
+    const alCambiarVentana = () => medir(true);
+    medir(true);
+    const ro = new ResizeObserver(() => medir());
     ro.observe(el);
-    window.addEventListener("resize", medir);
+    window.addEventListener("resize", alCambiarVentana);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", medir);
+      window.removeEventListener("resize", alCambiarVentana);
     };
   }, [activo]);
   const achica = activo && escala < 1;

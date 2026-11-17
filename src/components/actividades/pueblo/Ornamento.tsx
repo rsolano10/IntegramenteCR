@@ -149,12 +149,24 @@ const clavos = (
 // consigna. Los aciertos, en letras mostaza.
 export function Letrero({ children, detalle, large = false, clavado = false, grande = false, className = "" }: { children: ReactNode; detalle?: ReactNode; large?: boolean; clavado?: boolean; grande?: boolean; className?: string }) {
   const aviso = useContext(MensajeJuego);
+  // El letrero no se achica: si una consigna necesitó más lugar (una línea
+  // chica de más), lo conserva aunque después no la tenga.
+  const tabla = useRef<HTMLDivElement>(null);
+  const maximo = useRef(0);
+  useLayoutEffect(() => {
+    const el = tabla.current;
+    if (!el) return;
+    if (el.offsetHeight > maximo.current) {
+      maximo.current = el.offsetHeight;
+      el.style.minHeight = `${maximo.current}px`;
+    }
+  });
   if (!children && !aviso) return null;
   const tam = grande ? (large ? "text-[34px]" : "text-[30px]") : large ? "text-[26px]" : "text-[22px] sm:text-[24px]";
   const sombra = "0 2px 0 rgba(51,36,28,0.45)";
   return (
     <div className={`relative z-10 flex justify-center px-2 ${clavado ? "-mt-6" : ""} ${className}`}>
-      <div className="relative w-full max-w-[560px] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
+      <div ref={tabla} className="relative w-full max-w-[560px] px-7 py-4 grid content-center text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
         {clavos}
         {/* La consigna marca el tamaño (mínimo, dos líneas); con un mensaje queda invisible debajo. */}
         <div className={`grid content-center min-h-[2.3em] transition-opacity duration-300 motion-reduce:transition-none ${tam} ${aviso ? "opacity-0" : "opacity-100"}`} aria-hidden={!!aviso}>

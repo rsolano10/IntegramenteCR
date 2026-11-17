@@ -46,7 +46,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
     else ctl.acierto(`Muy bien, ${e.texto.toLowerCase()} en ${ej.grupos.find((x) => x.id === g)!.nombre.toLowerCase()}.`);
   }
 
-  const pendientes = ej.elementos.map((e, i) => ({ e, i })).filter(({ i }) => ubicados[i] === undefined);
   // El sol sube con cada ejercicio (y un poco más al terminar este).
   const sol = (ctl.indice + (listo ? 1 : 0)) / Math.max(1, ctl.total);
 
@@ -61,6 +60,11 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
             <div className={`grid gap-3 ${ej.grupos.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
               {ej.grupos.map((g, k) => {
                 const dentro = ej.elementos.map((e, i) => ({ e, i })).filter(({ i }) => ubicados[i] === g.id);
+                // Lugar reservado desde el principio para lo que va en este
+                // canasto: al llenarse no crece (ni empuja la escena).
+                const enSuLugar = ej.elementos
+                  .map((e, i) => ({ e, i }))
+                  .filter(({ e, i }) => ubicados[i] === g.id || (ubicados[i] === undefined && e.validos[0] === g.id));
                 const ejemplos = ej.ejemplos.filter((x) => x.grupo === g.id);
                 const marcado = pistaGrupo === g.id;
                 const cajon = k % 2 === 1;
@@ -96,8 +100,8 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
                       {ejemplos.map((x) => (
                         <Producto key={x.texto} texto={x.texto} dibujo={ej.elementos.find((e) => e.texto === x.texto)?.dibujo} chico />
                       ))}
-                      {dentro.map(({ e, i }) => (
-                        <span key={i} className={i === recien ? "motion-safe:animate-[pueblo-asentar_320ms_ease-out]" : ""}>
+                      {enSuLugar.map(({ e, i }) => (
+                        <span key={i} aria-hidden={ubicados[i] !== g.id || undefined} className={ubicados[i] !== g.id ? "invisible" : i === recien ? "motion-safe:animate-[pueblo-asentar_320ms_ease-out]" : ""}>
                           <Producto texto={e.texto} dibujo={e.dibujo} chico />
                         </span>
                       ))}
@@ -112,11 +116,19 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
               })}
             </div>
 
-            {/* Productos por acomodar, sobre el tablón */}
-            {pendientes.length > 0 && (
+            {/* Productos por acomodar, sobre el tablón. Los ya acomodados dejan
+                su lugar vacío (invisible): la escena no se achica ni «brinca». */}
               <ul className="list-none m-0 mt-5 p-0 flex flex-wrap justify-center gap-3" aria-label="Productos por acomodar">
-                {pendientes.map(({ e, i }) => {
+                {ej.elementos.map((e, i) => {
                   const est = estiloPieza(elegido === i ? "elegida" : devuelto === i ? "regreso" : "reposo");
+                  if (ubicados[i] !== undefined)
+                    return (
+                      <li key={i} aria-hidden="true" className="invisible">
+                        <span className={`${clasePieza} block rounded-[14px] border-2`}>
+                          <Producto texto={e.texto} dibujo={e.dibujo} large={L} />
+                        </span>
+                      </li>
+                    );
                   return (
                     <li key={i}>
                       <button
@@ -136,7 +148,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
                   );
                 })}
               </ul>
-            )}
           </div>
         </div>
       </div>
