@@ -174,7 +174,11 @@ export function AppHeader() {
   // al mismo contenedor que el contenido. Logo con «en casa», las pestañas
   // al lado (en escritorio; en el celular van abajo) y, a la derecha, el
   // avatar con el nombre de la persona del programa (el resto, en el menú).
-  const enAppFamilia = role === "familiar" && RUTAS_FAMILIA.some((r) => pathname === r || pathname.startsWith(`${r}/`));
+  // El perfil (y su edición) también, una vez terminada la inscripción;
+  // durante la inscripción esas mismas pantallas siguen con su encabezado.
+  const inscripcionHecha = !!myPatient && myPatient.programa_elegido && !myPatient.needsReregistration;
+  const enAppFamilia =
+    role === "familiar" && (RUTAS_FAMILIA.some((r) => pathname === r || pathname.startsWith(`${r}/`)) || (inscripcionHecha && pathname.startsWith("/app/perfil/")));
   if (enAppFamilia) {
     const pendiente = !!myPatient && (myPatient.estado_cuenta === "rechazada" || (myPatient.plan_status === "pendiente" && !myPatient.tiene_plan_visible));
     return (
