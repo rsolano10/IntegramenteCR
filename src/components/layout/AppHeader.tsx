@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { EVENTO_ABRIR_CUENTA, type VentanaCuenta } from "../../lib/abrirCuenta";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -130,7 +131,9 @@ export function AppHeader() {
         />
   );
 
-  const ventanas = (
+  // Las ventanas van directo al body: dentro del encabezado (que tiene
+  // backdrop-blur) un elemento fixed queda encerrado en su franja y se corta.
+  const ventanas = createPortal(
     <>
       {modal === "mi-perfil" && (role === "familiar" || role === "paciente" || role === "profesional") && (
         <MiPerfilModal onClose={() => setModal(null)} isSelf={role === "paciente"} onLogoutAll={() => doLogout("global")} />
@@ -163,7 +166,8 @@ export function AppHeader() {
           )}
         </Modal>
       )}
-    </>
+    </>,
+    document.body,
   );
 
   // La app de la familia: una sola barra del crema de la página, alineada
