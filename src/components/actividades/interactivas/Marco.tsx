@@ -228,8 +228,9 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
                 <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
               </div>
 
-              {/* El juego, con su letrero abajo; las pancartas salen sobre esa zona. */}
-              <div className="relative">
+              {/* El juego (con su letrero arriba) y, debajo, la franja libre
+                  donde descansan las pancartas de los mensajes. */}
+              <div className="relative pb-[72px]">
                 <Suspense fallback={<Cargando />}>
                   <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
                 </Suspense>

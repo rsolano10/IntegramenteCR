@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { roseton, type ParamsRoseton } from "../../../lib/actividades/roseton";
 import { P } from "./paleta";
 
@@ -139,13 +139,13 @@ const clavos = (
   </>
 );
 
-// El letrero de la consigna, dentro de la escena. Con `clavado` se monta
-// sobre el pie de la escena de arriba, como un rótulo clavado al tablón.
-export function Letrero({ children, detalle, large = false, clavado = false, grande = false, className = "" }: { children: ReactNode; detalle?: ReactNode; large?: boolean; clavado?: boolean; grande?: boolean; className?: string }) {
+// El letrero de la consigna, arriba de la escena. Con `arriba` se monta
+// sobre el borde de la escena de abajo, como un rótulo colgado.
+export function Letrero({ children, detalle, large = false, arriba = false, grande = false, className = "" }: { children: ReactNode; detalle?: ReactNode; large?: boolean; arriba?: boolean; grande?: boolean; className?: string }) {
   if (!children) return null;
   const tam = grande ? (large ? "text-[34px]" : "text-[30px]") : large ? "text-[26px]" : "text-[22px] sm:text-[24px]";
   return (
-    <div data-letrero="" className={`relative z-10 flex justify-center px-2 ${clavado ? "-mt-6" : ""} ${className}`}>
+    <div className={`relative z-10 flex justify-center px-2 ${arriba ? "-mb-6" : ""} ${className}`}>
       <div className="relative max-w-[560px] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
         {clavos}
         <p className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] ${tam}`} style={{ color: P.cal, textShadow: "0 2px 0 rgba(51,36,28,0.45)" }}>
@@ -170,22 +170,12 @@ const espera = (texto: string) => Math.min(6500, Math.max(2800, 1500 + texto.len
 
 // La pancarta de los mensajes: un cartel de madera en su palo que sale
 // despacio de la esquina inferior derecha, se queda un rato y se vuelve a
-// esconder. Se apoya en el borde de abajo del último letrero del juego
-// (nunca sobre las piezas) y deja pasar los toques. El texto, para lectores, está en la región aria-live
+// esconder. Descansa en la franja libre que el marco deja debajo del juego
+// (nunca sobre las piezas ni sobre la consigna) y deja pasar los toques. El texto, para lectores, está en la región aria-live
 // del marco.
 export function Pancarta({ aviso, large = false }: { aviso: Aviso | null; large?: boolean }) {
   const [visto, setVisto] = useState<Aviso | null>(null);
   const [arriba, setArriba] = useState(false);
-  const [abajo, setAbajo] = useState(0);
-  const caja = useRef<HTMLDivElement>(null);
-  // Dónde está el letrero: la pancarta sale desde su borde de abajo.
-  useLayoutEffect(() => {
-    const padre = caja.current?.parentElement;
-    if (!aviso || !padre) return;
-    const letreros = padre.querySelectorAll("[data-letrero]");
-    const l = letreros[letreros.length - 1];
-    setAbajo(l ? Math.max(0, padre.getBoundingClientRect().bottom - l.getBoundingClientRect().bottom - 4) : 0);
-  }, [aviso]);
   useEffect(() => {
     if (!aviso) {
       setArriba(false);
@@ -201,7 +191,7 @@ export function Pancarta({ aviso, large = false }: { aviso: Aviso | null; large?
   }, [aviso]);
   const clara = visto?.tipo === "info";
   return (
-    <div ref={caja} aria-hidden="true" className="absolute -right-4 sm:-right-5 w-[calc(100%+2rem)] h-56 overflow-hidden pointer-events-none z-20" style={{ bottom: abajo }}>
+    <div aria-hidden="true" className="absolute -right-4 sm:-right-5 bottom-0 w-[calc(100%+2rem)] h-56 overflow-hidden pointer-events-none z-20">
       {visto && (
       <div
         className="absolute right-4 sm:right-6 bottom-0 max-w-[min(82%,420px)] flex flex-col items-end origin-bottom-right motion-reduce:!transition-opacity"

@@ -43,6 +43,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioIntr
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hallado ? (config.mostrarCriterio ? ej.criterio : "¡Esa era la que no iba!") : "¿Cuál no va con las demás?"}
+      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Cocina hierve={adentro.length} servido={false} />
         {/* La mesa de madera (la mesa de juego) */}
@@ -77,9 +80,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioIntr
           </ul>
         </div>
       </div>
-      <Letrero large={L} clavado>
-        {hallado ? (config.mostrarCriterio ? ej.criterio : "¡Esa era la que no iba!") : "¿Cuál no va con las demás?"}
-      </Letrero>
     </div>
   );
 }

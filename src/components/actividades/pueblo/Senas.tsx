@@ -49,6 +49,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioSena
   const camino = recorrer(partida, ej.tramos.slice(0, tramosVistos)) ?? [];
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡Llegaste a la casa!" : "Tocá la casa a la que se llega."}
+      </Letrero>
       {/* La seña, en un papelito */}
       <div className="relative mx-auto w-full max-w-[600px] flex items-start gap-3">
       <div className="flex-1 min-w-0 rounded-[4px] px-4 py-3 -rotate-[0.6deg]" style={{ background: P.cal, boxShadow: "0 3px 0 rgba(51,36,28,0.3)" }}>
@@ -85,9 +88,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioSena
           onTocar={hecho ? undefined : tocar}
         />
       </div>
-      <Letrero large={L} clavado>
-        {hecho ? "¡Llegaste a la casa!" : "Tocá la casa a la que se llega."}
-      </Letrero>
     </div>
   );
 }

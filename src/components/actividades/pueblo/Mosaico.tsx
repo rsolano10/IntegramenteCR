@@ -49,6 +49,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPare
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {completo ? "¡El piso quedó completo!" : e.esperando ? "Mirá bien dónde están." : "Tocá dos baldosas."}
+      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Corredor />
         {/* El piso (la mesa de juego): sisas de cemento entre baldosas */}
@@ -93,9 +96,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPare
           </Boton>
         </Acciones>
       )}
-      <Letrero large={L} clavado>
-        {completo ? "¡El piso quedó completo!" : e.esperando ? "Mirá bien dónde están." : "Tocá dos baldosas."}
-      </Letrero>
     </div>
   );
 }

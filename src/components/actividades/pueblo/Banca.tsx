@@ -38,6 +38,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioDich
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>{hecho ? "¡Eso mismo!" : ej.tipo === "significado" ? "¿Qué quiere decir?" : "¿Cómo sigue el dicho?"}</Letrero>
       <div>
         <div className="overflow-hidden rounded-[20px]" style={sombraCapa}>
           <Parque campana={hecho} />
@@ -57,7 +58,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioDich
           <BotonEscuchar texto={escuchar} etiqueta="Escuchar el dicho" />
         </div>
       )}
-      <Letrero large={L}>{hecho ? "¡Eso mismo!" : ej.tipo === "significado" ? "¿Qué quiere decir?" : "¿Cómo sigue el dicho?"}</Letrero>
       <ul className="list-none m-0 p-0 grid gap-2.5" aria-label={ej.tipo === "completar" ? "Finales para elegir" : "Significados para elegir"}>
         {ej.opciones.map((o, i) => {
           const descartada = fuera.includes(i);

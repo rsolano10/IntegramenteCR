@@ -43,6 +43,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioContar; ctl:
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡Las frutas volvieron al canasto!" : "¿Cuántas hay de cada una?"}
+      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         {/* El mantel con las frutas (y el canasto volcado) */}
         <figure className="relative m-0 px-3 pt-4 pb-5" style={{ background: MANTEL }} aria-label={`Mantel con ${ej.tipos.map((t) => sinArt(t.plural)).join(", ")}`}>
@@ -114,9 +117,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioContar; ctl:
           </Boton>
         </Acciones>
       )}
-      <Letrero large={L} clavado>
-        {hecho ? "¡Las frutas volvieron al canasto!" : "¿Cuántas hay de cada una?"}
-      </Letrero>
     </div>
   );
 }

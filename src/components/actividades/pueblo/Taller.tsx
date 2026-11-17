@@ -48,6 +48,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioIguales; ctl
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡La carreta ya tiene sus ruedas!" : "Tocá todas las ruedas iguales a la del clavo."}
+      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Pared>
           {/* Rueda modelo colgada de un clavo */}
@@ -100,9 +103,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioIguales; ctl
           </Boton>
         </Acciones>
       )}
-      <Letrero large={L} clavado>
-        {hecho ? "¡La carreta ya tiene sus ruedas!" : "Tocá todas las ruedas iguales a la del clavo."}
-      </Letrero>
     </div>
   );
 }

@@ -64,6 +64,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioCorr
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡Todos los animales quedaron en su corral!" : `¿A qué portón va ${a(animal)}?`}
+      </Letrero>
       <div className="overflow-hidden rounded-[20px] pueblo-grano" style={{ ...sombraCapa, backgroundColor: P.rosa }}>
         {/* El rótulo de la regla, que se voltea al cambiar */}
         <div className="flex justify-center pt-4 px-3" style={{ perspective: 600 }}>
@@ -120,9 +123,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioCorr
           ))}
         </div>
       </div>
-      <Letrero large={L} clavado>
-        {hecho ? "¡Todos los animales quedaron en su corral!" : `¿A qué portón va ${a(animal)}?`}
-      </Letrero>
     </div>
   );
 }

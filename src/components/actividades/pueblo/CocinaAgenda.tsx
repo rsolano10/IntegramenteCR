@@ -88,6 +88,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioAgenda; ctl:
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡El día quedó bien organizado!" : sinPoner.length ? "" : "Cuando te parezca bien, tocá «Listo»."}
+      </Letrero>
       <div className="overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Encabezado titulo={ej.titulo} final={hecho} />
         <div className="pueblo-grano px-3 py-3 grid gap-3" style={{ backgroundColor: "#C9A26B" }}>
@@ -155,9 +158,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioAgenda; ctl:
         </div>
       </div>
 
-      <Letrero large={L} clavado>
-        {hecho ? "¡El día quedó bien organizado!" : sinPoner.length ? "" : "Cuando te parezca bien, tocá «Listo»."}
-      </Letrero>
 
       {!hecho && (
         <Acciones ctl={ctl}>

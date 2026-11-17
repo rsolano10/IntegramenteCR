@@ -57,6 +57,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioRued
   const disponibles = ej.pinturas;
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡La rueda quedó igual al modelo!" : bote === null ? "Tocá un bote de pintura." : `Tocá los sectores que van de ${PINTURAS[bote].nombre}.`}
+      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Taller>
           <div className="mx-auto max-w-[560px] grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3 sm:gap-6 items-end">
@@ -105,9 +108,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioRued
           </ul>
         </div>
       </div>
-      <Letrero large={L} clavado>
-        {hecho ? "¡La rueda quedó igual al modelo!" : bote === null ? "Tocá un bote de pintura." : `Tocá los sectores que van de ${PINTURAS[bote].nombre}.`}
-      </Letrero>
       {!hecho && (
         <Acciones ctl={ctl}>
           <Boton onClick={listo} disabled={pintura.every((v) => v === null)} large={L}>

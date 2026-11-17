@@ -60,15 +60,15 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioMand
   if (fase === "lista") {
     return (
       <div className="grid gap-4">
+        <Letrero large={L} detalle="Cuando la sepas, tocá «Ya me la aprendí».">
+          {config.formato === "escuchada" ? "Escuchá la lista las veces que quieras." : "Leé la lista con calma."}
+        </Letrero>
         <Papelito ej={ej} formato={config.formato} large={L} />
         {config.formato !== "escrita" && (
           <div className="flex justify-center">
             <BotonEscuchar texto={ej.texto} etiqueta="Escuchar la lista" />
           </div>
         )}
-        <Letrero large={L} detalle="Cuando la sepas, tocá «Ya me la aprendí».">
-          {config.formato === "escuchada" ? "Escuchá la lista las veces que quieras." : "Leé la lista con calma."}
-        </Letrero>
         <Acciones ctl={ctl}>
           <Boton onClick={() => setFase("compras")} large={L}>
             Ya me la aprendí
@@ -80,6 +80,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioMand
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? "¡El mandado está completo!" : bolsa.length ? "Cuando tengas todo, tocá «Listo»." : "Tocá lo que había que traer."}
+      </Letrero>
       <div className="overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Entrada />
         <div className="pueblo-grano px-3 pt-3 pb-4 grid gap-3 sm:grid-cols-2" style={{ backgroundColor: P.cal }}>
@@ -117,9 +120,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioMand
       </div>
       <Bolsa ids={bolsa} saliendo={saliendo} large={L} />
       {config.verLista && !hecho && mirando && <Papelito ej={ej} formato="escrita" large={L} />}
-      <Letrero large={L}>
-        {hecho ? "¡El mandado está completo!" : bolsa.length ? "Cuando tengas todo, tocá «Listo»." : "Tocá lo que había que traer."}
-      </Letrero>
       {!hecho && (
         <Acciones ctl={ctl}>
           <Boton onClick={listo} disabled={!bolsa.length} large={L}>

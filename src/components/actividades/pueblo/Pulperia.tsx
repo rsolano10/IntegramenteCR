@@ -47,6 +47,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
 
   return (
     <div className="grid gap-4">
+      <Letrero large={L} arriba>
+        {hecho ? (vuelto ? "¡El vuelto quedó justo!" : "¡Pagado justo!") : vuelto ? "Armá el vuelto justo con la plata de la gaveta." : "Tocá la plata para pagar justo."}
+      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={{ boxShadow: sombraPapel(4, "rgba(51,36,28,0.25)") }}>
         <Fondo />
         <Mostrador>
@@ -110,9 +113,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
         </Mostrador>
       </div>
 
-      <Letrero large={L} clavado>
-        {hecho ? (vuelto ? "¡El vuelto quedó justo!" : "¡Pagado justo!") : vuelto ? "Armá el vuelto justo con la plata de la gaveta." : "Tocá la plata para pagar justo."}
-      </Letrero>
       {!hecho && (
         <>
           <Acciones ctl={ctl}>
