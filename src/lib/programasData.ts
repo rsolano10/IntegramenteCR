@@ -46,9 +46,9 @@ export const programas: Programa[] = [
     descripcion: "Un plan semanal con recursos seleccionados por nuestro equipo a partir de las respuestas sobre vos o tu ser querido.",
     ...precioDe("autoguiado"),
     idealSi: [
-      "Tienen tiempo y confianza para organizar las actividades en casa",
-      "Buscan mantener y estimular, sin cambios recientes importantes",
-      "Prefieren un costo más bajo",
+      "Tenés tiempo y confianza para organizar las actividades en casa",
+      "Buscás mantener y estimular, sin cambios recientes importantes",
+      "Preferís un costo más bajo",
     ],
     incluye: [
       "Plan semanal de actividades",
@@ -68,9 +68,9 @@ export const programas: Programa[] = [
     periodo: "",
     notaPrecio: "El costo depende de las sesiones y los servicios que se definan para tu programa.",
     idealSi: [
-      "Han notado cambios recientes en la memoria, el ánimo o la movilidad",
-      "Quieren sesiones con profesionales, además de las actividades en casa",
-      "Buscan objetivos individualizados y seguimiento de la evolución",
+      "Notaste cambios recientes en la memoria, el ánimo o la movilidad",
+      "Querés sesiones con profesionales, además de las actividades en casa",
+      "Buscás objetivos individualizados y seguimiento de la evolución",
     ],
     incluye: [
       "Acceso a los recursos de la aplicación",
