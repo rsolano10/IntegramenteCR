@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { roseton, type ParamsRoseton } from "../../../lib/actividades/roseton";
 import { P } from "./paleta";
 import { MensajeJuego } from "../interactivas/comun";
@@ -142,28 +142,59 @@ const clavos = (
 
 // El letrero de la consigna, dentro de la escena. Con `clavado` se monta
 // sobre el pie de la escena de arriba, como un rótulo clavado al tablón.
-// Los mensajes del juego se escriben en este mismo letrero (el letrero no
-// se mueve: solo cambia el texto, con un fundido corto) y después vuelve la
+// Tiene siempre el mismo tamaño (todo el ancho, hasta 560 px, y lugar para
+// dos líneas): los mensajes del juego se escriben encima de la consigna,
+// en el mismo letrero, con un fundido corto; si un mensaje no entra, la
+// letra se achica un poco en vez de agrandar el letrero. Después vuelve la
 // consigna. Los aciertos, en letras mostaza.
 export function Letrero({ children, detalle, large = false, clavado = false, grande = false, className = "" }: { children: ReactNode; detalle?: ReactNode; large?: boolean; clavado?: boolean; grande?: boolean; className?: string }) {
   const aviso = useContext(MensajeJuego);
   if (!children && !aviso) return null;
   const tam = grande ? (large ? "text-[34px]" : "text-[30px]") : large ? "text-[26px]" : "text-[22px] sm:text-[24px]";
+  const sombra = "0 2px 0 rgba(51,36,28,0.45)";
   return (
     <div className={`relative z-10 flex justify-center px-2 ${clavado ? "-mt-6" : ""} ${className}`}>
-      <div className="relative max-w-[560px] min-w-[min(100%,280px)] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
+      <div className="relative w-full max-w-[560px] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
         {clavos}
-        <div key={aviso ? aviso.id : "consigna"} className="motion-safe:animate-[pueblo-letrero_280ms_ease-out_both]">
-          <p className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] ${tam}`} style={{ color: aviso?.tipo === "ok" ? P.mostaza : P.cal, textShadow: "0 2px 0 rgba(51,36,28,0.45)" }}>
-            {aviso ? aviso.texto : children}
+        {/* La consigna marca el tamaño (mínimo, dos líneas); con un mensaje queda invisible debajo. */}
+        <div className={`grid content-center min-h-[2.3em] transition-opacity duration-300 motion-reduce:transition-none ${tam} ${aviso ? "opacity-0" : "opacity-100"}`} aria-hidden={!!aviso}>
+          <p className="m-0 font-rotulo leading-[1.15] [text-wrap:balance]" style={{ color: P.cal, textShadow: sombra }}>
+            {children}
           </p>
-          {detalle && !aviso && (
-            <p className={`m-0 mt-1.5 font-semibold leading-snug [text-wrap:balance] ${large ? "text-[19px]" : "text-[17px]"}`} style={{ color: `${P.cal}e6` }}>
+          {detalle && (
+            <p className={`m-0 mt-1.5 font-sans font-semibold leading-snug [text-wrap:balance] ${large ? "text-[19px]" : "text-[17px]"}`} style={{ color: `${P.cal}e6` }}>
               {detalle}
             </p>
           )}
         </div>
+        {aviso && (
+          <div className="absolute inset-x-7 inset-y-3 flex items-center justify-center">
+            <TextoAjustado key={aviso.id} className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] motion-safe:animate-[pueblo-letrero_280ms_ease-out_both] ${tam}`} color={aviso.tipo === "ok" ? P.mostaza : P.cal} sombra={sombra}>
+              {aviso.texto}
+            </TextoAjustado>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+// Un texto que se achica hasta entrar en su caja (sin bajar de 15 px).
+function TextoAjustado({ children, className, color, sombra }: { children: ReactNode; className: string; color: string; sombra: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const caja = el?.parentElement;
+    if (!el || !caja) return;
+    let px = parseFloat(getComputedStyle(el).fontSize);
+    while (px > 15 && (el.scrollHeight > caja.clientHeight || el.scrollWidth > caja.clientWidth)) {
+      px -= 1;
+      el.style.fontSize = `${px}px`;
+    }
+  }, [children]);
+  return (
+    <p ref={ref} className={className} style={{ color, textShadow: sombra }}>
+      {children}
+    </p>
   );
 }
