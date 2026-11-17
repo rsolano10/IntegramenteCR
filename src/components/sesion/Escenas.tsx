@@ -1237,7 +1237,7 @@ function Pregunta<T extends string>({
   return (
     <fieldset className="m-0 p-0 border-0 grid gap-2">
       {/* Títulos y ayuda con las líneas parejas (sin una palabra sola abajo). */}
-      <legend className={`p-0 mb-1 font-semibold text-tinta [text-wrap:balance] ${t.cuerpo}`}>{titulo}</legend>
+      <legend className={`w-full p-0 mb-1 font-semibold text-tinta [text-wrap:balance] ${t.cuerpo}`}>{titulo}</legend>
       {ayuda && <p className={`m-0 -mt-1 mb-1 text-tinta-tenue [text-wrap:pretty] ${t.chico}`}>{ayuda}</p>}
       {/* Las opciones toman el ancho de su texto, sin cortarlo («Más o menos»). */}
       <div className="flex gap-2" role="radiogroup" aria-label={titulo}>

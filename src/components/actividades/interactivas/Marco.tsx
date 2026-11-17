@@ -199,7 +199,6 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
       {cine.activo ? <IconoReducir /> : <IconoAmpliar />}
     </button>
   );
-  const texto = large ? "text-[20px]" : "text-[18px]";
 
   return (
     <section
@@ -296,9 +295,11 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
 
               {/* En la sesión: cómo le resultó (opcional; sirve para sugerir el nivel). */}
               {enSesion && (
-                <fieldset className="m-0 p-0 border-0 w-full max-w-md grid gap-2.5 mt-1">
-                  <legend className={`mx-auto mb-2 font-semibold text-tinta ${large ? "text-[21px]" : "text-[18px]"}`}>¿Cómo le resultó? (opcional)</legend>
-                  <div className="flex gap-2" role="radiogroup">
+                <fieldset className="m-0 p-0 border-0 w-full grid justify-items-center mt-1">
+                  <legend className={`w-full p-0 text-center mb-2.5 font-semibold text-tinta ${large ? "text-[20px]" : "text-[17px]"}`}>
+                    ¿Cómo le resultó? <span className="font-normal text-tinta-suave">(opcional)</span>
+                  </legend>
+                  <div className="flex flex-wrap justify-center gap-2" role="radiogroup">
                     {DIFICULTADES.map((d) => (
                       <button
                         key={d}
@@ -310,8 +311,8 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
                           setDificultad(v);
                           enSesion.onDificultad(v);
                         }}
-                        className={`flex-1 min-h-14 px-3 rounded-2xl border-2 font-sans font-semibold whitespace-nowrap cursor-pointer focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${texto} ${
-                          dificultad === d ? "border-verde-profundo bg-verde-tenue text-verde-profundo" : "border-borde bg-white text-tinta hover:border-verde-serenidad"
+                        className={`${large ? "min-w-[112px] min-h-14 text-[19px]" : "min-w-[96px] min-h-12 text-[17px]"} px-5 rounded-full border-2 font-sans font-semibold whitespace-nowrap cursor-pointer transition-colors focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-verde-profundo ${
+                          dificultad === d ? "border-verde-profundo bg-verde-profundo text-white" : "border-borde bg-white text-tinta hover:border-verde-serenidad"
                         }`}
                       >
                         {dificultadLabel[d]}
@@ -420,7 +421,7 @@ function CierreConRegistro({ registro, large }: { registro: RegistroJuego; large
   return (
     <div className="w-full max-w-md grid gap-5 mt-3 rounded-[24px] bg-white/80 border border-borde px-4 py-5 sm:px-6">
       <fieldset className="m-0 p-0 border-0 grid gap-2.5">
-        <legend className={`${titulo} mb-2.5 mx-auto`}>¿Cómo le resultó?</legend>
+        <legend className={`${titulo} w-full p-0 text-center mb-2.5`}>¿Cómo le resultó?</legend>
         <div className="grid grid-cols-3 gap-2" role="radiogroup">
           {DIFICULTADES.map((d) => (
             <button
