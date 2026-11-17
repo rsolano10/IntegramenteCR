@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { Suspense, lazy, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMyPatient, type MyPatient } from "../../lib/useMyPatient";
 import { programas, type Programa } from "../../lib/programasData";
@@ -7,6 +7,10 @@ import { iniciarCompra } from "../../lib/pagos";
 import { waEquipo } from "../../lib/whatsapp";
 import { Modal } from "./Modal";
 import { BotonWhatsApp } from "./BotonWhatsApp";
+import { ClaraAvatar } from "../clara/ClaraAvatar";
+import { contextoParaProgramas } from "../../lib/claraActividad";
+
+const ChatClara = lazy(() => import("../clara/ChatClaraActividad"));
 
 // «Mi programa», desde el menú de la cuenta de la familia: el programa
 // actual y su estado, y los dos programas con el mismo formato (para quién
@@ -144,11 +148,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
           </section>
         )}
 
-        {!pendientePlan && (
-          <p className="m-0 text-[14px] leading-relaxed text-tinta-tenue text-center">
-            ¿Querés cambiar de programa o tenés dudas? Escribinos: lo vemos juntos, sin compromiso.
-          </p>
-        )}
+        <ClaraProgramas nombre={nombre} actual={clinico ? tierClinico.nombre : (actual?.nombre ?? null)} />
       </div>
     </div>
   );
@@ -183,7 +183,6 @@ function Cuadro({ programa, esActual, patient, pie }: { programa: Programa; esAc
           <p className="m-0 text-[12.5px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">Incluye</p>
           <Lista items={programa.incluye} />
         </div>
-        {programa.requisito && <p className="m-0 text-[13.5px] leading-relaxed text-tinta-tenue">{programa.requisito}</p>}
       </div>
       {esActual && <div className="px-5 pb-5 mt-auto">{pie}</div>}
       {!esActual && (
@@ -197,24 +196,94 @@ function Cuadro({ programa, esActual, patient, pie }: { programa: Programa; esAc
   );
 }
 
-// Para quien tiene el Autoguiado: cómo pasar al programa con sesiones.
+// Para quien tiene el Autoguiado: cómo pasar al programa con sesiones,
+// con la identidad de IntegraMente (verde profundo, el isotipo y sus gotas).
 function ComoObtenerlo() {
+  const pasos = [
+    { titulo: "Nos escribís", texto: "Por WhatsApp, y conversamos sobre lo que estás notando." },
+    { titulo: "Vemos la valoración", texto: "Compartís una de los últimos 12 meses o la coordinamos con IntegraMente (se paga aparte)." },
+    { titulo: "Armamos tu programa", texto: "Te enviamos el presupuesto según las sesiones que necesite." },
+  ];
   return (
-    <div className="rounded-3xl bg-fila-calida border border-borde px-5 py-5 grid gap-3">
-      <p className="m-0 font-semibold text-[16px] text-tinta">¿Cómo paso al programa con sesiones?</p>
-      <ol className="m-0 p-0 list-none grid gap-2.5">
-        {[
-          "Nos escribís por WhatsApp y conversamos sobre lo que estás notando.",
-          "Vemos la valoración neuropsicológica: compartís una de los últimos 12 meses o la coordinamos con IntegraMente (se paga aparte).",
-          "Te enviamos el presupuesto según las sesiones que necesite y armamos el programa.",
-        ].map((t, i) => (
-          <li key={i} className="flex gap-3 items-start">
-            <span className="shrink-0 w-7 h-7 rounded-full bg-verde-profundo text-white text-[14px] font-semibold flex items-center justify-center">{i + 1}</span>
-            <span className="text-[15px] leading-relaxed text-tinta pt-0.5">{t}</span>
+    <div className="relative overflow-hidden rounded-[28px] bg-verde-profundo text-white px-5 sm:px-7 pt-6 pb-6">
+      {/* Gotas de la marca */}
+      <span aria-hidden="true" className="absolute -right-12 -top-14 w-44 h-44 rounded-full bg-verde-serenidad/45" />
+      <span aria-hidden="true" className="absolute right-24 -bottom-20 w-36 h-36 rounded-full bg-mostaza-vital/25" />
+      <span aria-hidden="true" className="absolute -left-10 bottom-6 w-20 h-20 rounded-full bg-[#e6a58c]/20" />
+      <div className="relative flex items-center gap-3">
+        <span className="shrink-0 w-12 h-12 rounded-2xl bg-white flex items-center justify-center p-2 shadow-[0_8px_18px_-10px_rgba(0,0,0,0.5)]">
+          <img src="/marca/isotipo.png" alt="" className="h-full w-auto" />
+        </span>
+        <div>
+          <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-[#c4dbdb]">Con el equipo de IntegraMente</p>
+          <p className="m-0 font-serif text-[22px] sm:text-[24px] leading-tight text-white">¿Cómo paso al programa con sesiones?</p>
+        </div>
+      </div>
+      <ol className="relative m-0 mt-5 p-0 list-none grid gap-3 sm:grid-cols-3">
+        {pasos.map((p, i) => (
+          <li key={p.titulo} className="rounded-2xl bg-white/10 border border-white/15 px-4 py-4">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-mostaza-vital text-verde-profundo font-serif text-[18px]">{i + 1}</span>
+            <p className="m-0 mt-2.5 font-semibold text-[16px] text-white">{p.titulo}</p>
+            <p className="m-0 mt-1 text-[14.5px] leading-relaxed text-[#dcebea]">{p.texto}</p>
           </li>
         ))}
       </ol>
     </div>
+  );
+}
+
+// Clara, para cualquier duda sobre los programas. El chat (y el SDK de
+// ElevenLabs) se carga con la primera pregunta.
+function ClaraProgramas({ nombre, actual }: { nombre: string; actual: string | null }) {
+  const [primera, setPrimera] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const contexto = contextoParaProgramas(programas, actual, nombre);
+  const enviar = () => input.trim() && setPrimera(input.trim());
+  return (
+    <section aria-label="Preguntale a Clara" className="rounded-[24px] border border-borde bg-fila-calida px-5 py-5 grid gap-3">
+      <div className="flex items-center gap-3">
+        <ClaraAvatar tam={40} />
+        <div>
+          <p className="m-0 font-semibold text-[16px] text-tinta">¿Dudas sobre los programas?</p>
+          <p className="m-0 text-[14.5px] text-tinta-suave">Preguntale a Clara: te ayuda a ver cuál le conviene a {nombre}.</p>
+        </div>
+      </div>
+      {primera ? (
+        <Suspense fallback={<p className="m-0 text-[15px] text-tinta-suave">Abriendo el chat…</p>}>
+          <ChatClara contexto={contexto} inicial={primera} quien="familia" placeholder="Escribí otra duda…" />
+        </Suspense>
+      ) : (
+        <form
+          className="flex items-end gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            enviar();
+          }}
+        >
+          <label className="sr-only" htmlFor="clara-programas">
+            Tu duda para Clara
+          </label>
+          <textarea
+            id="clara-programas"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                enviar();
+              }
+            }}
+            rows={1}
+            placeholder="Escribí tu duda…"
+            className="flex-1 min-h-12 max-h-32 resize-none rounded-2xl border-[1.5px] border-borde-campo bg-white px-4 py-3 font-sans text-[16px] leading-snug text-tinta"
+          />
+          <button type="submit" disabled={!input.trim()} className="shrink-0 min-h-12 px-5 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed">
+            Enviar
+          </button>
+        </form>
+      )}
+      <p className="m-0 text-[12.5px] leading-snug text-tinta-suave">Clara es una IA y puede equivocarse. Para cambiar de programa, el equipo te atiende por WhatsApp.</p>
+    </section>
   );
 }
 

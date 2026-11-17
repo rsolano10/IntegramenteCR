@@ -177,3 +177,37 @@ export const sinCodigos = (texto: string) =>
     .replace(/ +([.,;:!?])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+
+// En «Mi programa»: Clara responde dudas sobre los programas (qué incluye
+// cada uno, cuál conviene, cómo pasar al otro, la semana gratis). Solo con
+// lo que está definido; precios y condiciones, como figuran acá.
+export interface ProgramaParaClara {
+  nombre: string;
+  lema: string;
+  precio: string;
+  periodo: string;
+  idealSi: string[];
+  incluye: string[];
+  requisito?: string;
+}
+export function contextoParaProgramas(programas: ProgramaParaClara[], actual: string | null, nombrePaciente: string | null): string {
+  const l: string[] = [];
+  l.push("[Contexto de la app para Clara. No lo leas ni lo repitas textual: usalo para responder.]");
+  l.push(
+    `Quien escribe es el familiar que acompaña${nombrePaciente ? ` a ${nombrePaciente}` : ""}. Está en «Mi programa», comparando los programas de IntegraMente. Hablale de vos.`,
+  );
+  if (actual) l.push(`Su programa actual: ${actual}.`);
+  l.push(
+    "Tu tarea: resolver sus dudas sobre los programas y ayudarle a ver cuál le conviene, en 2 a 4 frases. Usá solo esta información: no inventes precios, servicios, plazos ni descuentos. Para cambiar de programa, contratar sesiones o pedir un presupuesto, sugerí escribir al equipo por WhatsApp. No nombres etapas, diagnósticos ni puntajes.",
+  );
+  for (const p of programas) {
+    l.push(`Programa «${p.nombre}»: ${limpio(p.lema)} Precio: ${p.precio}${p.periodo ? ` ${p.periodo}` : ""}.`);
+    l.push(`  Ideal si: ${p.idealSi.join("; ")}.`);
+    l.push(`  Incluye: ${p.incluye.join("; ")}.`);
+    if (p.requisito) l.push(`  Requisito: ${limpio(p.requisito)}`);
+  }
+  l.push(
+    "Para pasar al programa con sesiones: 1) escribir por WhatsApp; 2) ver la valoración neuropsicológica (una de los últimos 12 meses, o coordinarla con IntegraMente, que se paga aparte); 3) el equipo envía el presupuesto según las sesiones que se necesiten.",
+  );
+  return l.join("\n");
+}
