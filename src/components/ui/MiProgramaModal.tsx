@@ -89,7 +89,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
 
       <div className="px-6 sm:px-8 py-7 grid gap-8">
         {/* Los dos programas, uno al lado del otro, para ver cuál les queda mejor */}
-        <section className="grid gap-4">
+        <section className="grid gap-4 min-w-0">
           <div>
             <p className="m-0 font-serif text-[24px] leading-tight text-tinta">¿Cuál es el programa ideal?</p>
             <p className="m-0 mt-1 text-[15.5px] leading-relaxed text-tinta-suave">Compará los dos y fijate cuál se ajusta mejor a lo que necesita {nombre}.</p>
@@ -154,8 +154,8 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
 }
 
 // Los programas en carrusel: uno por vez, a todo el ancho. Se pasa con las
-// pestañas de arriba (con el nombre de cada uno), deslizando con el dedo
-// (scroll-snap) o, en pantallas anchas, con las flechas. Empieza en el programa de la familia.
+// flechas de los costados, deslizando con el dedo (scroll-snap) o con los
+// puntos de abajo. Empieza en el programa de la familia.
 function CarruselProgramas({ nombres, inicial, children }: { nombres: string[]; inicial: number; children: ReactNode[] }) {
   const pista = useRef<HTMLDivElement>(null);
   const [actual, setActual] = useState(inicial);
@@ -169,51 +169,57 @@ function CarruselProgramas({ nombres, inicial, children }: { nombres: string[]; 
     const k = Math.max(0, Math.min(nombres.length - 1, i));
     el.scrollTo({ left: k * el.clientWidth, behavior: "smooth" });
   };
-  const flecha = (dir: -1 | 1) => (
-    <button
-      type="button"
-      onClick={() => ir(actual + dir)}
-      disabled={dir < 0 ? actual === 0 : actual === nombres.length - 1}
-      aria-label={dir < 0 ? "Programa anterior" : "Programa siguiente"}
-      className="shrink-0 w-11 h-11 rounded-full border border-borde bg-white text-verde-profundo hidden sm:inline-flex items-center justify-center cursor-pointer hover:border-verde-serenidad disabled:opacity-35 disabled:cursor-default"
-    >
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d={dir < 0 ? "M12.5 4.5L7 10l5.5 5.5" : "M7.5 4.5L13 10l-5.5 5.5"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
+  // Flechas a los costados del cuadro, centradas en su alto; la que no
+  // lleva a ningún lado se esconde.
+  const flecha = (dir: -1 | 1) => {
+    const fin = dir < 0 ? actual === 0 : actual === nombres.length - 1;
+    return (
+      <button
+        type="button"
+        onClick={() => ir(actual + dir)}
+        disabled={fin}
+        aria-label={dir < 0 ? "Programa anterior" : "Programa siguiente"}
+        className={`absolute top-1/2 z-10 w-11 h-11 rounded-full border border-borde bg-white text-verde-profundo inline-flex items-center justify-center cursor-pointer shadow-[0_8px_20px_-8px_rgba(31,51,56,0.45)] hover:border-verde-serenidad transition-opacity duration-200 ${
+          dir < 0 ? "left-0 -translate-x-1/2" : "right-0 translate-x-1/2"
+        } -translate-y-1/2 ${fin ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+      >
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d={dir < 0 ? "M12.5 4.5L7 10l5.5 5.5" : "M7.5 4.5L13 10l-5.5 5.5"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    );
+  };
   return (
-    <div className="grid gap-3" role="region" aria-roledescription="carrusel" aria-label="Programas">
-      <div className="flex items-center gap-2">
-        {flecha(-1)}
-        <div role="tablist" className="flex-1 flex p-1 rounded-full bg-campo border border-borde">
-          {nombres.map((n, i) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={i === actual}
-              onClick={() => ir(i)}
-              className={`flex-1 min-h-10 px-3 rounded-full border-0 whitespace-nowrap font-semibold text-[14.5px] leading-tight cursor-pointer transition-colors ${i === actual ? "bg-verde-profundo text-white" : "bg-transparent text-tinta-suave hover:text-tinta"}`}
-            >
-              {n}
-            </button>
+    <div className="grid gap-2 min-w-0" role="region" aria-roledescription="carrusel" aria-label="Programas">
+      <div className="relative min-w-0">
+        <div
+          ref={pista}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setActual(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+          }}
+          className="flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {children.map((c, i) => (
+            <div key={nombres[i]} className="shrink-0 w-full snap-center px-px pb-3" inert={i !== actual} aria-label={nombres[i]}>
+              {c}
+            </div>
           ))}
         </div>
+        {flecha(-1)}
         {flecha(1)}
       </div>
-      <div
-        ref={pista}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          setActual(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
-        }}
-        className="flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {children.map((c, i) => (
-          <div key={nombres[i]} className="shrink-0 w-full snap-center px-px pb-3" inert={i !== actual}>
-            {c}
-          </div>
+      {/* Puntos: en cuál están */}
+      <div className="flex justify-center gap-2">
+        {nombres.map((n, i) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => ir(i)}
+            aria-label={`Ver ${n}`}
+            aria-current={i === actual}
+            className={`h-2.5 rounded-full border-0 p-0 cursor-pointer transition-all duration-300 ${i === actual ? "w-7 bg-verde-profundo" : "w-2.5 bg-borde hover:bg-verde-serenidad"}`}
+          />
         ))}
       </div>
     </div>
