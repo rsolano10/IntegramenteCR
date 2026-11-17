@@ -3,6 +3,7 @@ import { NOMBRE_ESPECIE, ROTULO, porton, portones, type Animal, type EjercicioCo
 import { leerEnVoz } from "../../../lib/voz";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { sombraCapa } from "./pieza";
 
 // «El corral». La finca de tarde: el rótulo de madera sobre los dos
@@ -119,9 +120,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioCorr
           ))}
         </div>
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>
+      <Letrero large={L} clavado>
         {hecho ? "¡Todos los animales quedaron en su corral!" : `¿A qué portón va ${a(animal)}?`}
-      </p>
+      </Letrero>
     </div>
   );
 }

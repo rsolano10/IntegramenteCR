@@ -2,6 +2,7 @@ import { useState } from "react";
 import { esSiguienteValida, siguienteCorrecta, type EjercicioOrdenar } from "../../../lib/actividades/ordenar";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «La estación» (ordenar-secuencia). Andén de una estación de tren antigua,
@@ -91,9 +92,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioOrdenar; ctl
           <Riel />
         </div>
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {completo ? "¡Listo para salir!" : enganchados.length === 0 ? "¿Cuál vagón va primero?" : "¿Cuál vagón sigue?"}
-      </p>
+      </Letrero>
     </div>
   );
 }

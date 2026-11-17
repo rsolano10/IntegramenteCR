@@ -6,6 +6,7 @@ import { BotonEscuchar } from "../ClasificarNumeros";
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «El mandado». Primero, el papelito con la lista (escrita y/o para
@@ -65,9 +66,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioMand
             <BotonEscuchar texto={ej.texto} etiqueta="Escuchar la lista" />
           </div>
         )}
-        <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>
-          {config.formato === "escuchada" ? "Escuchá la lista las veces que quieras." : "Leela con calma."} Cuando la sepas, tocá «Ya me la aprendí».
-        </p>
+        <Letrero large={L} detalle="Cuando la sepas, tocá «Ya me la aprendí».">
+          {config.formato === "escuchada" ? "Escuchá la lista las veces que quieras." : "Leé la lista con calma."}
+        </Letrero>
         <Acciones ctl={ctl}>
           <Boton onClick={() => setFase("compras")} large={L}>
             Ya me la aprendí
@@ -116,9 +117,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioMand
       </div>
       <Bolsa ids={bolsa} saliendo={saliendo} large={L} />
       {config.verLista && !hecho && mirando && <Papelito ej={ej} formato="escrita" large={L} />}
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>
+      <Letrero large={L}>
         {hecho ? "¡El mandado está completo!" : bolsa.length ? "Cuando tengas todo, tocá «Listo»." : "Tocá lo que había que traer."}
-      </p>
+      </Letrero>
       {!hecho && (
         <Acciones ctl={ctl}>
           <Boton onClick={listo} disabled={!bolsa.length} large={L}>

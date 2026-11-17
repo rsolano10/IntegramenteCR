@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DIAS, MESES, momentoCR, opcionADescartar, parteDelDia, type EjercicioOrientacion } from "../../../lib/actividades/orientacionHoy";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «El almanaque» (orientacion-hoy). El corredor de la casa: el almanaque de
@@ -44,9 +45,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioOrie
         <Corredor pistas={config.pistasEnEscena} mesesSeca={config.mesesSeca} hoja={hecho ? mayuscula(ej.correcta) : "?"} arrancar={hecho} />
         {/* La mesa del corredor, con las hojas del almanaque */}
         <div className="px-3 pt-4 pb-4" style={{ background: `repeating-linear-gradient(90deg, ${P.maderaClara} 0 40px, #CF9A5E 40px 42px)`, borderTop: `8px solid ${P.madera}` }}>
-          <p className={`m-0 mb-3 mx-auto max-w-[520px] font-rotulo leading-tight ${L ? "text-[28px]" : "text-[25px]"}`} style={{ color: P.tierra }}>
+          <Letrero large={L} className="mb-4">
             {ej.texto}
-          </p>
+          </Letrero>
           <ul className="list-none m-0 p-0 mx-auto max-w-[520px] grid grid-cols-2 gap-3" aria-label="Hojas del almanaque">
             {ej.opciones.map((o, i) => {
               const fuera = descartadas.includes(o);

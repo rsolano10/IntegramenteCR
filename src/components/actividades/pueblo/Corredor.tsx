@@ -3,6 +3,7 @@ import { LUGARES, OBJETOS, lugarEsPiso, revisarCorredor, type EjercicioCorredor,
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, sombraCapa } from "./pieza";
 
 // «El corredor» (qué cambió). El corredor de una casa de adobe: pared
@@ -53,9 +54,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioCorr
           </span>
         )}
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {fase === "mirar" ? "Mirá bien todo lo que hay en el corredor." : hecho ? "¡Encontraste lo que cambió!" : ej.cambios.length === 1 ? "Algo cambió. Tocá lo que cambió." : `Cambiaron ${ej.cambios.length} cosas. Tocalas.`}
-      </p>
+      </Letrero>
       {!hecho && (
         <Acciones ctl={ctl}>
           {fase === "mirar" ? (

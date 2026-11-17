@@ -6,6 +6,7 @@ import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { Figura } from "../interactivas/Figura";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, sombraCapa } from "./pieza";
 
 // «El piso de mosaico» (parejas). El piso de baldosa hidráulica del corredor
@@ -92,9 +93,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPare
           </Boton>
         </Acciones>
       )}
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {completo ? "¡El piso quedó completo!" : e.esperando ? "Mirá bien dónde están." : "Tocá dos baldosas."}
-      </p>
+      </Letrero>
     </div>
   );
 }

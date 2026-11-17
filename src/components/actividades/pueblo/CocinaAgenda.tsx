@@ -3,6 +3,7 @@ import { etiquetaHora, franjaFija, franjasDe, revisarAgenda, type EjercicioAgend
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «La pizarra de la cocina» (agenda). El tablero de corcho de la cocina con
@@ -154,9 +155,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioAgenda; ctl:
         </div>
       </div>
 
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>
+      <Letrero large={L} clavado>
         {hecho ? "¡El día quedó bien organizado!" : sinPoner.length ? "" : "Cuando te parezca bien, tocá «Listo»."}
-      </p>
+      </Letrero>
 
       {!hecho && (
         <Acciones ctl={ctl}>

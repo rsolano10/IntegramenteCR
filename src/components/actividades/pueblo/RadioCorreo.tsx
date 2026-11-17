@@ -5,6 +5,7 @@ import { BotonEscuchar } from "../ClasificarNumeros";
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «La radio y El correo» (comprension). La radio de tubos en la repisa, con
@@ -77,9 +78,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioComp
           </button>
         </div>
       )}
-      {fase === "texto" && !radio && !abierta && (
-        <p className={`m-0 text-center leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>Llegó una carta. Tocá el sobre para abrirla.</p>
-      )}
+      {fase === "texto" && !radio && !abierta && <Letrero large={L} clavado>Llegó una carta. Tocá el sobre para abrirla.</Letrero>}
 
       {mostrarTexto && <Escrito ej={ej} resaltar={resaltar} large={L} />}
       {fase === "texto" && !radio && abierta && (
@@ -95,7 +94,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioComp
               Pregunta {q + 1} de {ej.preguntas.length}
             </p>
           )}
-          <p className={`m-0 font-semibold leading-snug text-tinta ${L ? "text-[25px]" : "text-[22px]"}`}>{pregunta.texto}</p>
+          <Letrero large={L}>{hecho ? "¡Eso es!" : pregunta.texto}</Letrero>
           <ul className="list-none m-0 p-0 grid gap-2.5" aria-label="Respuestas">
             {pregunta.opciones.map((o, i) => {
               const descartada = fuera.includes(i);

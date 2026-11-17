@@ -4,6 +4,7 @@ import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { Figura } from "../interactivas/Figura";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { sombraCapa } from "./pieza";
 
 // «El canasto» (contar-por-tipo). Un canasto volcado sobre un mantel de
@@ -113,7 +114,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioContar; ctl:
           </Boton>
         </Acciones>
       )}
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{hecho ? "¡Las frutas volvieron al canasto!" : "¿Cuántas hay de cada una?"}</p>
+      <Letrero large={L} clavado>
+        {hecho ? "¡Las frutas volvieron al canasto!" : "¿Cuántas hay de cada una?"}
+      </Letrero>
     </div>
   );
 }

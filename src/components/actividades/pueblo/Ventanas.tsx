@@ -3,6 +3,7 @@ import { revisarPosiciones, type EjercicioPosiciones } from "../../../lib/activi
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { sombraCapa } from "./pieza";
 
 // «Las ventanas del pueblo» (recordar-posiciones). La fachada de una casa al
@@ -57,11 +58,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPosi
         apagadas={apagadas}
         estado={fase}
       />
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado detalle={fase === "mirar" ? "Tomate el tiempo que necesités." : undefined}>
         {fase === "mirar" ? "Mirá qué ventanas tienen luz." : fase === "responder" ? "Se apagaron las luces. ¿Cuáles estaban encendidas?" : "¡Encendiste las ventanas!"}
-      </p>
-
-      {fase === "mirar" && <p className={`m-0 -mt-2 text-tinta-suave ${L ? "text-[20px]" : "text-[18px]"}`}>Tomate el tiempo que necesités.</p>}
+      </Letrero>
       {fase === "responder" && <Medidor total={n} llevas={Math.min(marcadas.length, n)} large={L} />}
 
       <Acciones ctl={ctl}>

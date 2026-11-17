@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { palabraFormada, type EjercicioPalabra } from "../../../lib/actividades/formarPalabra";
 import { usePista, type Control } from "../interactivas/comun";
-import { Roseton } from "./Ornamento";
+import { Roseton, Letrero } from "./Ornamento";
 import { P } from "./paleta";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
@@ -146,9 +146,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioPalabra; ctl
           </div>
         )}
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {hecho ? `¡Quedó pintado: ${mayus(ej.objetivo.join(""))}!` : "Tocá las letras en orden para pintar la palabra."}
-      </p>
+      </Letrero>
     </div>
   );
 }

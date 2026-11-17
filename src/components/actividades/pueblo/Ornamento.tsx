@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { roseton, type ParamsRoseton } from "../../../lib/actividades/roseton";
 import { P } from "./paleta";
 
@@ -105,5 +105,126 @@ export function Rotulo({ texto, size = "md", color = P.naranja, className = "" }
       {texto}
       <span aria-hidden="true" className="w-2 h-2 rounded-full" style={{ background: P.mostaza }} />
     </span>
+  );
+}
+
+// ─── Madera pintada: el letrero de la consigna y las pancartas ───
+
+// Dos tablas con veta, canto oscuro y un filete pintado a mano, como los
+// rótulos de pulpería. «clara» para avisos informativos.
+function madera(tono: "oscura" | "clara" = "oscura", filete: string = P.mostaza): CSSProperties {
+  const base = tono === "clara" ? ["#E2B57E", P.maderaClara, "#C9935A"] : ["#9A6640", P.madera, "#764B2C"];
+  return {
+    background: [
+      // veta
+      `repeating-linear-gradient(178deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 7px, rgba(51,36,28,0.06) 7px 8px, transparent 8px 13px)`,
+      // junta entre las dos tablas
+      `linear-gradient(180deg, transparent calc(50% - 1.5px), rgba(51,36,28,0.35) calc(50% - 1.5px) calc(50% + 1px), transparent calc(50% + 1px))`,
+      `linear-gradient(180deg, ${base[0]}, ${base[1]} 48%, ${base[2]})`,
+    ].join(", "),
+    borderRadius: 6,
+    boxShadow: `inset 0 0 0 3px ${tono === "clara" ? P.madera : P.maderaOscura}, inset 0 0 0 6px transparent, inset 0 0 0 7.5px ${filete}aa, 0 5px 0 rgba(51,36,28,0.38)`,
+  };
+}
+
+const Clavo = ({ className }: { className: string }) => (
+  <span aria-hidden="true" className={`absolute w-[7px] h-[7px] rounded-full ${className}`} style={{ background: P.tierra, boxShadow: "inset 1px 1px 0 rgba(255,255,255,0.35)" }} />
+);
+const clavos = (
+  <>
+    <Clavo className="left-2.5 top-2.5" />
+    <Clavo className="right-2.5 top-2.5" />
+    <Clavo className="left-2.5 bottom-2.5" />
+    <Clavo className="right-2.5 bottom-2.5" />
+  </>
+);
+
+// El letrero de la consigna, dentro de la escena. Con `clavado` se monta
+// sobre el pie de la escena de arriba, como un rótulo clavado al tablón.
+export function Letrero({ children, detalle, large = false, clavado = false, grande = false, className = "" }: { children: ReactNode; detalle?: ReactNode; large?: boolean; clavado?: boolean; grande?: boolean; className?: string }) {
+  if (!children) return null;
+  const tam = grande ? (large ? "text-[34px]" : "text-[30px]") : large ? "text-[26px]" : "text-[22px] sm:text-[24px]";
+  return (
+    <div data-letrero="" className={`relative z-10 flex justify-center px-2 ${clavado ? "-mt-6" : ""} ${className}`}>
+      <div className="relative max-w-[560px] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
+        {clavos}
+        <p className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] ${tam}`} style={{ color: P.cal, textShadow: "0 2px 0 rgba(51,36,28,0.45)" }}>
+          {children}
+        </p>
+        {detalle && (
+          <p className={`m-0 mt-1.5 font-semibold leading-snug [text-wrap:balance] ${large ? "text-[19px]" : "text-[17px]"}`} style={{ color: `${P.cal}e6` }}>
+            {detalle}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export type Aviso = { id: number; tipo: "ok" | "reintento" | "info"; texto: string };
+
+const ENTRADA = 900;
+const SALIDA = 650;
+// Tiempo arriba: más largo cuanto más texto (entre 2,8 y 6,5 segundos).
+const espera = (texto: string) => Math.min(6500, Math.max(2800, 1500 + texto.length * 55));
+
+// La pancarta de los mensajes: un cartel de madera en su palo que sale
+// despacio de la esquina inferior derecha, se queda un rato y se vuelve a
+// esconder. Se apoya en el borde de abajo del último letrero del juego
+// (nunca sobre las piezas) y deja pasar los toques. El texto, para lectores, está en la región aria-live
+// del marco.
+export function Pancarta({ aviso, large = false }: { aviso: Aviso | null; large?: boolean }) {
+  const [visto, setVisto] = useState<Aviso | null>(null);
+  const [arriba, setArriba] = useState(false);
+  const [abajo, setAbajo] = useState(0);
+  const caja = useRef<HTMLDivElement>(null);
+  // Dónde está el letrero: la pancarta sale desde su borde de abajo.
+  useLayoutEffect(() => {
+    const padre = caja.current?.parentElement;
+    if (!aviso || !padre) return;
+    const letreros = padre.querySelectorAll("[data-letrero]");
+    const l = letreros[letreros.length - 1];
+    setAbajo(l ? Math.max(0, padre.getBoundingClientRect().bottom - l.getBoundingClientRect().bottom - 4) : 0);
+  }, [aviso]);
+  useEffect(() => {
+    if (!aviso) {
+      setArriba(false);
+      return;
+    }
+    setVisto(aviso);
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => setArriba(true)));
+    const t = window.setTimeout(() => setArriba(false), ENTRADA + espera(aviso.texto));
+    return () => {
+      cancelAnimationFrame(r);
+      window.clearTimeout(t);
+    };
+  }, [aviso]);
+  const clara = visto?.tipo === "info";
+  return (
+    <div ref={caja} aria-hidden="true" className="absolute -right-4 sm:-right-5 w-[calc(100%+2rem)] h-56 overflow-hidden pointer-events-none z-20" style={{ bottom: abajo }}>
+      {visto && (
+      <div
+        className="absolute right-4 sm:right-6 bottom-0 max-w-[min(82%,420px)] flex flex-col items-end origin-bottom-right motion-reduce:!transition-opacity"
+        style={{
+          transform: arriba ? "translate(0, 0) rotate(-3deg)" : "translate(35%, 112%) rotate(14deg)",
+          opacity: arriba ? 1 : 0.001,
+          transition: arriba ? `transform ${ENTRADA}ms cubic-bezier(0.2, 0.8, 0.25, 1.06), opacity 200ms` : `transform ${SALIDA}ms cubic-bezier(0.55, 0, 0.8, 0.3), opacity 200ms ${SALIDA - 150}ms`,
+        }}
+      >
+        <div className="relative px-6 py-3.5" style={madera(clara ? "clara" : "oscura", visto.tipo === "ok" ? P.mostaza : P.cal)}>
+          {clavos}
+          <p
+            key={visto.id}
+            className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] motion-safe:animate-[pueblo-asentar_320ms_ease-out] ${large ? "text-[23px]" : "text-[20px]"}`}
+            style={{ color: clara ? P.tierra : P.cal, textShadow: clara ? "none" : "0 2px 0 rgba(51,36,28,0.45)" }}
+          >
+            {visto.texto}
+          </p>
+        </div>
+        {/* El palo del que se sostiene */}
+        <span className="mr-[22%] w-3.5 h-4 -mt-1" style={{ background: `linear-gradient(90deg, ${P.maderaOscura}, ${P.madera} 45%, ${P.maderaOscura})` }} />
+      </div>
+      )}
+    </div>
   );
 }

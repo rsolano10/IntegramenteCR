@@ -4,6 +4,7 @@ import { dictadoDisponible, useDictado } from "../../../lib/voz";
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { sombraCapa } from "./pieza";
 
 // «La pizarra de la escuela» (pizarra). El aula de la escuela rural: la
@@ -98,9 +99,11 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPiza
         </Aula>
       </div>
 
+      <Letrero large={L} clavado detalle={!hecho && modo !== "marcas" && palabras.length > 0 ? "Si una palabra quedó mal escrita, tocala en la pizarra para borrarla." : undefined}>
+        {hecho ? "¡Qué pizarra más llena! Suena la campana." : k.frase}
+      </Letrero>
       {!hecho && (
         <>
-          <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>{k.frase}</p>
           {modos.length > 1 && (
             <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Cómo anotar las palabras">
               {modos.map((m) => (
@@ -172,10 +175,8 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPiza
               {escuchando ? "Escuchando… tocá para parar" : "Tocá y decí las palabras"}
             </button>
           )}
-          {modo !== "marcas" && palabras.length > 0 && <p className="m-0 text-[15px] text-tinta-tenue">Si una palabra quedó mal escrita, tocala en la pizarra para borrarla.</p>}
         </>
       )}
-      {hecho && <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>¡Qué pizarra más llena! Suena la campana.</p>}
 
       {!hecho && (
         <Acciones ctl={ctl}>

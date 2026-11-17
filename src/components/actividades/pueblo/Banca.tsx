@@ -3,6 +3,7 @@ import type { EjercicioDicho } from "../../../lib/actividades/dichos";
 import { BotonEscuchar } from "../ClasificarNumeros";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «La banca del parque» (dichos). De tarde, frente a la iglesia del pueblo:
@@ -56,7 +57,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioDich
           <BotonEscuchar texto={escuchar} etiqueta="Escuchar el dicho" />
         </div>
       )}
-      {ej.tipo === "significado" && !hecho && <p className={`m-0 font-semibold text-tinta ${L ? "text-[22px]" : "text-[19px]"}`}>¿Qué quiere decir?</p>}
+      <Letrero large={L}>{hecho ? "¡Eso mismo!" : ej.tipo === "significado" ? "¿Qué quiere decir?" : "¿Cómo sigue el dicho?"}</Letrero>
       <ul className="list-none m-0 p-0 grid gap-2.5" aria-label={ej.tipo === "completar" ? "Finales para elegir" : "Significados para elegir"}>
         {ej.opciones.map((o, i) => {
           const descartada = fuera.includes(i);
@@ -77,7 +78,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioDich
           );
         })}
       </ul>
-      {hecho && ej.tipo === "significado" && <p className={`m-0 leading-snug text-tinta ${L ? "text-[24px]" : "text-[21px]"}`}>¡Eso mismo!</p>}
     </div>
   );
 }

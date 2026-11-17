@@ -3,6 +3,7 @@ import type { DibujoProducto } from "../../../lib/actividades/bancos/clasificar"
 import { esGrupoValido, type EjercicioClasificar } from "../../../lib/actividades/clasificarObjetos";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «La feria» (clasificar). Un tramo de la feria del agricultor al amanecer:
@@ -139,9 +140,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
           </div>
         </div>
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {listo ? "¡El tramo quedó acomodado!" : elegido === null ? "Tocá un producto y después su canasto." : `¿Dónde va «${ej.elementos[elegido].texto}»?`}
-      </p>
+      </Letrero>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import type { EjercicioIntruso } from "../../../lib/actividades/intruso";
 import { usePista, type Control } from "../interactivas/comun";
 import { DibujoP } from "./Feria";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «La olla de carne» (intruso). La cocina de leña: pared encalada, el fogón
@@ -76,9 +77,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioIntr
           </ul>
         </div>
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {hallado ? (config.mostrarCriterio ? ej.criterio : "¡Esa era la que no iba!") : "¿Cuál no va con las demás?"}
-      </p>
+      </Letrero>
     </div>
   );
 }

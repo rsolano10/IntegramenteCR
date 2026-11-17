@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from "react";
 import { PINTURAS, celda, objetivo, revisarRueda, type EjercicioRueda, type Marca } from "../../../lib/actividades/pintarRueda";
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
-import { Roseton } from "./Ornamento";
+import { Roseton, Letrero } from "./Ornamento";
 import { P } from "./paleta";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
@@ -105,9 +105,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioRued
           </ul>
         </div>
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {hecho ? "¡La rueda quedó igual al modelo!" : bote === null ? "Tocá un bote de pintura." : `Tocá los sectores que van de ${PINTURAS[bote].nombre}.`}
-      </p>
+      </Letrero>
       {!hecho && (
         <Acciones ctl={ctl}>
           <Boton onClick={listo} disabled={pintura.every((v) => v === null)} large={L}>

@@ -7,12 +7,14 @@ import { prepararSesion } from "../../../lib/actividades/registro";
 import { detenerVoz } from "../../../lib/voz";
 import { Boton, IconoAmpliar, IconoPista, IconoReducir, IconoSalir, IconoSiguiente } from "./ui";
 import type { Control } from "./comun";
-import { Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
+import { Letrero, Pancarta, Rotulo, RuedaProgreso, type Aviso } from "../pueblo/Ornamento";
 
 // Marco común de las actividades «Un día en el pueblo»: cada actividad es un
 // lugar con su rótulo pintado. Inicio con la escena y la consigna; un
 // ejercicio por vez con la rueda de carreta que se pinta como progreso
-// (para lectores: «Ejercicio 2 de 5»); mensajes en una región aria-live;
+// (para lectores: «Ejercicio 2 de 5»); la consigna en un letrero de
+// madera dentro de la escena; los mensajes, en pancartas que salen de la
+// esquina y se esconden (y en una región aria-live para lectores);
 // «Ver una pista» tras 2 intentos en el mismo paso; «Terminar por hoy»
 // siempre a mano; cierre con el momento final del lugar, sin resumen de
 // desempeño. Si la pantalla da un registro (actividad de hoy sin
@@ -70,7 +72,9 @@ export function PortadaDeJuego({ tipo }: { tipo: string }) {
   );
 }
 
-type Mensaje = { tipo: "ok" | "reintento" | "info"; texto: string } | null;
+type Mensaje = Aviso | null;
+let idAviso = 0;
+const avisar = (tipo: Aviso["tipo"], texto: string): Aviso => ({ id: ++idAviso, tipo, texto });
 
 const Cargando = () => <div className="min-h-[280px] rounded-[20px] bg-beige-serenidad/60" aria-busy="true" />;
 
@@ -112,18 +116,18 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
     () => ({
       acierto: (texto = "Muy bien.") => {
         setIntentos(0);
-        setMensaje({ tipo: "ok", texto });
+        setMensaje(avisar("ok", texto));
       },
       reintento: (texto = "Probemos otra vez.") => {
         setIntentos((n) => n + 1);
-        setMensaje({ tipo: "reintento", texto });
+        setMensaje(avisar("reintento", texto));
       },
-      aviso: (texto) => setMensaje({ tipo: "info", texto }),
+      aviso: (texto) => setMensaje(avisar("info", texto)),
       listo: () => {
         setResuelto(true);
         setHechos((n) => n + 1);
         setIntentos(0);
-        setMensaje({ tipo: "ok", texto: "Muy bien." });
+        setMensaje(avisar("ok", "¡Muy bien!"));
       },
       pista,
       large,
@@ -206,10 +210,9 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
               <Suspense fallback={<Cargando />}>
                 <Portada config={config} />
               </Suspense>
-              <p className={`m-0 leading-snug text-tinta ${large ? "text-[24px]" : "text-[21px]"}`}>{consigna}</p>
-              <p className={`m-0 text-tinta-suave ${texto}`}>
-                Son {total} {total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro: podés terminar cuando quieras.
-              </p>
+              <Letrero large={large} className="-mt-6" detalle={`Son ${total} ${total === 1 ? "ejercicio" : "ejercicios"}. Sin apuro.`}>
+                {consigna}
+              </Letrero>
               <Boton onClick={empezar} large={large} className="w-full max-w-sm">
                 Empezar
               </Boton>
@@ -225,16 +228,14 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
                 <RuedaProgreso total={total} completados={hechos} actual={indice + 1} />
               </div>
 
-              <Suspense fallback={<Cargando />}>
-                <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
-              </Suspense>
-
-              <p
-                aria-live="polite"
-                className={`m-0 flex items-center gap-2.5 rounded-2xl leading-snug ${mensaje ? "min-h-12 px-4 py-2.5" : "min-h-0 p-0"} ${texto} ${
-                  mensaje?.tipo === "ok" ? "bg-mostaza-vital/45 text-tinta font-semibold" : mensaje?.tipo === "reintento" ? "bg-aviso text-aviso-texto font-semibold" : "text-tinta-suave"
-                }`}
-              >
+              {/* El juego, con su letrero abajo; las pancartas salen sobre esa zona. */}
+              <div className="relative">
+                <Suspense fallback={<Cargando />}>
+                  <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+                </Suspense>
+                <Pancarta aviso={mensaje} large={large} />
+              </div>
+              <p aria-live="polite" className="sr-only">
                 {mensaje?.texto ?? ""}
               </p>
 
@@ -274,8 +275,9 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
               <Suspense fallback={<Cargando />}>
                 <Portada final config={config} />
               </Suspense>
-              <p className={`m-0 font-serif leading-tight text-tinta ${large ? "text-[32px]" : "text-[28px]"}`}>{hechos >= total ? "¡Listo!" : "Listo por hoy."}</p>
-              <p className={`m-0 text-tinta-suave ${texto}`}>{hechos >= total ? `Terminaron los ${total} ejercicios.` : "Gracias por tu tiempo."}</p>
+              <Letrero grande large={large} className="-mt-6" detalle={hechos >= total ? `Terminaron los ${total} ejercicios.` : "Gracias por tu tiempo."}>
+                {hechos >= total ? "¡Listo!" : "Listo por hoy."}
+              </Letrero>
 
               {/* En la sesión: cómo le resultó (opcional; sirve para sugerir el nivel). */}
               {enSesion && (

@@ -3,6 +3,7 @@ import { CASAS, COLORES_CASA, COLUMNAS, DETALLES_CASA, FILAS, REFERENCIAS, descr
 import { BotonEscuchar } from "../ClasificarNumeros";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { sombraCapa } from "./pieza";
 
 // «Las señas» (senas). El pueblo visto desde arriba, como un mapa pintado:
@@ -84,7 +85,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioSena
           onTocar={hecho ? undefined : tocar}
         />
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{hecho ? "¡Llegaste a la casa!" : "Tocá la casa a la que se llega."}</p>
+      <Letrero large={L} clavado>
+        {hecho ? "¡Llegaste a la casa!" : "Tocá la casa a la que se llega."}
+      </Letrero>
     </div>
   );
 }

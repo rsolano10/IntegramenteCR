@@ -5,7 +5,7 @@ import type { ParamsRoseton } from "../../../lib/actividades/roseton";
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { Figura } from "../interactivas/Figura";
-import { Roseton } from "./Ornamento";
+import { Roseton, Letrero } from "./Ornamento";
 import { P } from "./paleta";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
@@ -100,7 +100,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioIguales; ctl
           </Boton>
         </Acciones>
       )}
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{hecho ? "¡La carreta ya tiene sus ruedas!" : "Tocá todas las ruedas iguales a la del clavo."}</p>
+      <Letrero large={L} clavado>
+        {hecho ? "¡La carreta ya tiene sus ruedas!" : "Tocá todas las ruedas iguales a la del clavo."}
+      </Letrero>
     </div>
   );
 }

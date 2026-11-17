@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { esSiguienteValida, siguienteCorrecta, type EjercicioOrdenar } from "../../../lib/actividades/ordenar";
 import { usePista, type Control } from "../interactivas/comun";
 import { P } from "./paleta";
+import { Letrero } from "./Ornamento";
 import { clasePieza, estiloPieza, sombraCapa } from "./pieza";
 
 // «El café de la tarde» (ordenar-pasos). La cocina de la casa en la tarde:
@@ -80,9 +81,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioOrdenar; ctl
           </div>
         </div>
       </div>
-      <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>
+      <Letrero large={L} clavado>
         {listo ? "¡Todo en orden!" : colocadas.length === 0 ? "¿Qué se hace primero?" : "¿Y después?"}
-      </p>
+      </Letrero>
     </div>
   );
 }

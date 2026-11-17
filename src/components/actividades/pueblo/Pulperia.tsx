@@ -3,7 +3,7 @@ import { colones, combinacion, esBillete, revisarPago, type EjercicioPago } from
 import { usePista, type Control } from "../interactivas/comun";
 import { Acciones, Boton } from "../interactivas/ui";
 import { roseton } from "../../../lib/actividades/roseton";
-import { Roseton } from "./Ornamento";
+import { Roseton, Letrero } from "./Ornamento";
 import { BILLETES, MONEDA, P, sombraPapel } from "./paleta";
 
 // «La pulpería» (pago-exacto). En el modo vuelto, la cuenta ya está pagada
@@ -110,9 +110,11 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPago
         </Mostrador>
       </div>
 
+      <Letrero large={L} clavado>
+        {hecho ? (vuelto ? "¡El vuelto quedó justo!" : "¡Pagado justo!") : vuelto ? "Armá el vuelto justo con la plata de la gaveta." : "Tocá la plata para pagar justo."}
+      </Letrero>
       {!hecho && (
         <>
-          <p className={`m-0 leading-snug text-tinta ${L ? "text-[26px]" : "text-[24px]"}`}>{vuelto ? "Armá el vuelto justo con la plata de la gaveta." : "Tocá la plata para pagar justo."}</p>
           <Acciones ctl={ctl}>
             <Boton onClick={listo} disabled={!pago.length} large={L}>
               Listo
