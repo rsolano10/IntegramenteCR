@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMyPatient, type MyPatient } from "../../lib/useMyPatient";
 import { programas, type Programa } from "../../lib/programasData";
@@ -80,7 +80,6 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
         <div className="relative pr-10">
           <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-[#c4dbdb]">El programa de {nombre}</p>
           <h2 className="m-0 mt-1.5 font-serif font-normal text-[30px] sm:text-[34px] leading-tight text-white">{clinico ? tierClinico.nombre : actual?.nombre}</h2>
-          <p className="m-0 mt-1.5 text-[16px] leading-snug text-[#dcebea] max-w-md">{clinico ? tierClinico.tagline : actual?.lema}</p>
           <span className="inline-flex items-center gap-2 mt-4 text-[13px] font-semibold bg-white/15 rounded-full px-3 py-1.5">
             <span className={`w-2 h-2 rounded-full ${estado.activar ? "bg-mostaza-vital" : "bg-[#9fd3b8]"}`} />
             {estado.texto}
@@ -95,7 +94,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
             <p className="m-0 font-serif text-[24px] leading-tight text-tinta">¿Cuál es el programa ideal?</p>
             <p className="m-0 mt-1 text-[15.5px] leading-relaxed text-tinta-suave">Compará los dos y fijate cuál se ajusta mejor a lo que necesita {nombre}.</p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 items-stretch">
+          <CarruselProgramas nombres={programas.map((p) => (p.id === "orientado" ? "Con sesiones" : p.nombre))} inicial={Math.max(0, programas.findIndex((p) => !clinico && p.id === actual?.id))}>
             {programas.map((p) => (
               <Cuadro
                 key={p.id}
@@ -126,7 +125,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
                 }
               />
             ))}
-          </div>
+          </CarruselProgramas>
           {actual?.id === "autoguiado" && !pendientePlan && <ComoObtenerlo />}
         </section>
 
@@ -154,6 +153,73 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
   );
 }
 
+// Los programas en carrusel: uno por vez, a todo el ancho. Se pasa con las
+// pestañas de arriba (con el nombre de cada uno), deslizando con el dedo
+// (scroll-snap) o, en pantallas anchas, con las flechas. Empieza en el programa de la familia.
+function CarruselProgramas({ nombres, inicial, children }: { nombres: string[]; inicial: number; children: ReactNode[] }) {
+  const pista = useRef<HTMLDivElement>(null);
+  const [actual, setActual] = useState(inicial);
+  useEffect(() => {
+    const el = pista.current;
+    if (el) el.scrollLeft = inicial * el.clientWidth;
+  }, [inicial]);
+  const ir = (i: number) => {
+    const el = pista.current;
+    if (!el) return;
+    const k = Math.max(0, Math.min(nombres.length - 1, i));
+    el.scrollTo({ left: k * el.clientWidth, behavior: "smooth" });
+  };
+  const flecha = (dir: -1 | 1) => (
+    <button
+      type="button"
+      onClick={() => ir(actual + dir)}
+      disabled={dir < 0 ? actual === 0 : actual === nombres.length - 1}
+      aria-label={dir < 0 ? "Programa anterior" : "Programa siguiente"}
+      className="shrink-0 w-11 h-11 rounded-full border border-borde bg-white text-verde-profundo hidden sm:inline-flex items-center justify-center cursor-pointer hover:border-verde-serenidad disabled:opacity-35 disabled:cursor-default"
+    >
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d={dir < 0 ? "M12.5 4.5L7 10l5.5 5.5" : "M7.5 4.5L13 10l-5.5 5.5"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+  return (
+    <div className="grid gap-3" role="region" aria-roledescription="carrusel" aria-label="Programas">
+      <div className="flex items-center gap-2">
+        {flecha(-1)}
+        <div role="tablist" className="flex-1 flex p-1 rounded-full bg-campo border border-borde">
+          {nombres.map((n, i) => (
+            <button
+              key={n}
+              type="button"
+              role="tab"
+              aria-selected={i === actual}
+              onClick={() => ir(i)}
+              className={`flex-1 min-h-10 px-3 rounded-full border-0 whitespace-nowrap font-semibold text-[14.5px] leading-tight cursor-pointer transition-colors ${i === actual ? "bg-verde-profundo text-white" : "bg-transparent text-tinta-suave hover:text-tinta"}`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        {flecha(1)}
+      </div>
+      <div
+        ref={pista}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setActual(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+        }}
+        className="flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children.map((c, i) => (
+          <div key={nombres[i]} className="shrink-0 w-full snap-center px-px pb-3" inert={i !== actual}>
+            {c}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Un programa, con el mismo formato para los dos: nombre, frase, precio,
 // para quién es ideal y qué incluye. El de la familia se marca como «Tu
 // programa»; el otro ofrece escribir por WhatsApp.
@@ -161,32 +227,36 @@ function Cuadro({ programa, esActual, patient, pie }: { programa: Programa; esAc
   const sesiones = programa.id === "orientado";
   return (
     <article
-      className={`relative overflow-hidden rounded-[28px] bg-white flex flex-col ${esActual ? "border-2 border-verde-profundo shadow-[0_20px_40px_-30px_rgba(31,51,56,0.7)]" : "border border-borde"}`}
+      className={`relative h-full overflow-hidden rounded-[28px] bg-white flex flex-col ${esActual ? "border-2 border-verde-profundo shadow-[0_20px_40px_-30px_rgba(31,51,56,0.7)]" : "border border-borde"}`}
     >
-      <div className={`relative px-5 pt-5 pb-4 overflow-hidden ${sesiones ? "bg-mostaza-vital/25" : "bg-verde-tenue"}`}>
-        <span aria-hidden="true" className={`absolute -right-10 -top-12 w-32 h-32 rounded-full ${sesiones ? "bg-mostaza-vital/50" : "bg-verde-serenidad/30"}`} />
-        <div className="relative flex items-start justify-between gap-2">
-          <p className="m-0 font-serif text-[24px] leading-tight text-tinta">{programa.nombre}</p>
-          {esActual && <span className="shrink-0 mt-1 rounded-full bg-verde-profundo text-white text-[12px] font-semibold px-2.5 py-1">Tu programa</span>}
+      <div className={`relative px-5 sm:px-6 pt-5 pb-4 overflow-hidden ${sesiones ? "bg-mostaza-vital/25" : "bg-verde-tenue"}`}>
+        <span aria-hidden="true" className={`absolute -right-10 -top-14 w-36 h-36 rounded-full ${sesiones ? "bg-mostaza-vital/50" : "bg-verde-serenidad/30"}`} />
+        <div className="relative flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="m-0 font-serif text-[24px] leading-tight text-tinta">{programa.nombre}</p>
+              {esActual && <span className="shrink-0 rounded-full bg-verde-profundo text-white text-[12px] font-semibold px-2.5 py-1">Tu programa</span>}
+            </div>
+            <p className="m-0 mt-1 text-[15px] leading-snug text-tinta-suave">{programa.lema}</p>
+          </div>
+          <p className="m-0 font-semibold text-[16px] text-tinta">
+            {programa.precio} {programa.periodo}
+          </p>
         </div>
-        <p className="relative m-0 mt-1 text-[15px] leading-snug text-tinta-suave">{programa.lema}</p>
-        <p className="relative m-0 mt-3 font-semibold text-[16px] text-tinta">
-          {programa.precio} {programa.periodo}
-        </p>
       </div>
-      <div className="px-5 pt-4 pb-5 grid gap-4 flex-1 content-start">
-        <div className="grid gap-2">
+      <div className="px-5 sm:px-6 pt-4 pb-5 grid gap-4 sm:grid-cols-2 sm:gap-6 flex-1 content-start">
+        <div className="grid gap-2 content-start">
           <p className="m-0 text-[12.5px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">Ideal si…</p>
           <Lista items={programa.idealSi} />
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-2 content-start">
           <p className="m-0 text-[12.5px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">Incluye</p>
           <Lista items={programa.incluye} />
         </div>
       </div>
-      {esActual && <div className="px-5 pb-5 mt-auto">{pie}</div>}
+      {esActual && <div className="px-5 sm:px-6 pb-5 mt-auto">{pie}</div>}
       {!esActual && (
-        <div className="px-5 pb-5 mt-auto">
+        <div className="px-5 sm:px-6 pb-5 mt-auto">
           <BotonWhatsApp fullWidth href={waEquipo(`Quiero saber más del programa ${programa.nombre}.`, patient.nombre)}>
             Quiero saber más
           </BotonWhatsApp>
