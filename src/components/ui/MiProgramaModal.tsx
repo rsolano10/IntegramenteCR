@@ -1,7 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMyPatient, type MyPatient } from "../../lib/useMyPatient";
-import { usePlan } from "../../lib/usePlan";
 import { programas, type Programa } from "../../lib/programasData";
 import { planTiers } from "../../lib/mockData";
 import { iniciarCompra } from "../../lib/pagos";
@@ -37,7 +36,6 @@ export function MiProgramaModal({ onClose, nombreCuenta }: { onClose: () => void
 
 function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nombreCuenta: string; onClose: () => void }) {
   const navigate = useNavigate();
-  const { data: days } = usePlan(patient.id);
   const [abriendo, setAbriendo] = useState(false);
   const nombre = patient.nombre.split(" ")[0];
   const clinico = patient.modalidad === "clinico";
@@ -45,7 +43,6 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
   const otro = actual ? programas.find((p) => p.id !== actual.id)! : null;
   const tierClinico = planTiers.find((t) => t.id === "clinico")!;
   const pendientePlan = patient.plan_status === "pendiente";
-  const registradas = (days ?? []).flatMap((d) => d.tasks).filter((t) => t.estado === "realizado" || t.estado === "parcial").length;
 
   const estado = (() => {
     switch (patient.estado_cuenta) {
@@ -108,33 +105,14 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
       </div>
 
       <div className="px-6 sm:px-8 py-7 grid gap-8">
-        {/* Lo que ya están haciendo */}
-        {registradas > 0 && (
-          <p className="m-0 rounded-2xl bg-fila-calida border border-borde px-4 py-3.5 text-[16px] leading-relaxed text-tinta">
-            <strong className="font-semibold">Esta semana ya registraron {registradas} {registradas === 1 ? "actividad" : "actividades"} con {nombre}.</strong>{" "}
-            Cada una suma: lo que se hace seguido, en casa y en buena compañía, es lo que más acompaña.
-          </p>
-        )}
-
         {/* Cómo los acompaña */}
         <section className="grid gap-4">
           <Ceja>Cómo los acompaña</Ceja>
-          <ol className="m-0 p-0 list-none grid gap-3 sm:grid-cols-3">
-            {historia.map((h, i) => (
-              <li key={h.titulo} className="relative flex gap-3 sm:block rounded-2xl border border-borde bg-white px-4 py-3.5 sm:pt-4 sm:pb-4">
-                <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-verde-tenue text-verde-profundo font-serif text-[18px]">{i + 1}</span>
-                <span className="block min-w-0">
-                  <span className="block sm:mt-2.5 font-semibold text-[16px] leading-snug text-tinta">{h.titulo}</span>
-                  <span className="block mt-0.5 sm:mt-1 text-[14.5px] leading-relaxed text-tinta-suave">{h.texto}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
+          <Carrusel pasos={historia} />
           {actual && !clinico && (
             <div className="grid gap-2">
               <p className="m-0 text-[15px] font-semibold text-tinta">Incluye</p>
               <Lista items={actual.incluye} />
-              {actual.aclaracion && <p className="m-0 text-[14px] text-tinta-tenue">{actual.aclaracion}</p>}
             </div>
           )}
         </section>
@@ -185,7 +163,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
         )}
 
         {/* El paso siguiente: el otro programa */}
-        {otro && !pendientePlan && (otro.id === "orientado" ? <PasoMas programa={otro} nombre={nombre} patient={patient} /> : <SoloEnCasa programa={otro} patient={patient} />)}
+        {otro && !pendientePlan && (otro.id === "orientado" ? <PasoMas programa={otro} patient={patient} /> : <SoloEnCasa programa={otro} patient={patient} />)}
 
         {!pendientePlan && (
           <p className="m-0 text-[14px] leading-relaxed text-tinta-tenue text-center">
@@ -199,7 +177,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
 
 // Para quien tiene el Autoguiado: el programa con sesiones, contado como el
 // paso siguiente, con para quién es, qué suma y cómo se obtiene.
-function PasoMas({ programa, nombre, patient }: { programa: Programa; nombre: string; patient: MyPatient }) {
+function PasoMas({ programa, patient }: { programa: Programa; patient: MyPatient }) {
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-borde bg-white">
       <div aria-hidden="true" className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-verde-tenue" />
@@ -207,10 +185,6 @@ function PasoMas({ programa, nombre, patient }: { programa: Programa; nombre: st
         <div>
           <Ceja>Cuando hace falta un paso más</Ceja>
           <p className="m-0 mt-2 font-serif text-[26px] leading-tight text-tinta">{programa.nombre}</p>
-          <p className="m-0 mt-2 text-[16px] leading-relaxed text-tinta">
-            Hay momentos en que las actividades en casa no alcanzan solas. Si notan cambios en la memoria, el ánimo o la movilidad de {nombre}, una mirada
-            profesional ayuda a entender qué está pasando y a trabajar con objetivos pensados solo para {nombre}.
-          </p>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -238,7 +212,6 @@ function PasoMas({ programa, nombre, patient }: { programa: Programa; nombre: st
               </li>
             ))}
           </ol>
-          {programa.notaPrecio && <p className="m-0 text-[14px] text-tinta-tenue">{programa.notaPrecio}</p>}
         </div>
 
         <BotonWhatsApp fullWidth href={waEquipo(`Quiero saber más del programa ${programa.nombre}.`, patient.nombre)}>
@@ -262,6 +235,127 @@ function SoloEnCasa({ programa, patient }: { programa: Programa; patient: MyPati
         Consultar
       </BotonWhatsApp>
     </section>
+  );
+}
+
+// «Cómo los acompaña»: una tarjeta por vez, que se desliza con el dedo
+// (scroll-snap) o con las flechas; los puntos dicen en cuál están. Cada
+// tarjeta tiene su color y su dibujo, con las gotas de la marca.
+const TONOS = [
+  { fondo: "#e4efee", gota: "#6a969c", tinta: "#3f6a70" },
+  { fondo: "#fbeed3", gota: "#f4d096", tinta: "#8a5a1f" },
+  { fondo: "#f6e3da", gota: "#e6a58c", tinta: "#8f4a33" },
+];
+
+function Carrusel({ pasos }: { pasos: { titulo: string; texto: string }[] }) {
+  const pista = useRef<HTMLDivElement>(null);
+  const [actual, setActual] = useState(0);
+  const ir = (i: number) => {
+    const el = pista.current;
+    if (!el) return;
+    const k = Math.max(0, Math.min(pasos.length - 1, i));
+    el.scrollTo({ left: k * el.clientWidth, behavior: "smooth" });
+  };
+  const flecha = (dir: -1 | 1) => (
+    <button
+      type="button"
+      onClick={() => ir(actual + dir)}
+      disabled={dir < 0 ? actual === 0 : actual === pasos.length - 1}
+      aria-label={dir < 0 ? "Anterior" : "Siguiente"}
+      className="w-11 h-11 rounded-full border border-borde bg-white text-verde-profundo inline-flex items-center justify-center cursor-pointer hover:border-verde-serenidad disabled:opacity-35 disabled:cursor-default"
+    >
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d={dir < 0 ? "M12.5 4.5L7 10l5.5 5.5" : "M7.5 4.5L13 10l-5.5 5.5"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+  return (
+    <div className="grid gap-3" role="region" aria-roledescription="carrusel" aria-label="Cómo los acompaña">
+      <div
+        ref={pista}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setActual(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+        }}
+        className="flex overflow-x-auto snap-x snap-mandatory overscroll-x-contain rounded-[26px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {pasos.map((p, i) => {
+          const t = TONOS[i % TONOS.length];
+          return (
+            <article
+              key={p.titulo}
+              aria-roledescription="tarjeta"
+              aria-label={`${i + 1} de ${pasos.length}`}
+              className="relative shrink-0 w-full snap-center overflow-hidden px-6 sm:px-8 pt-6 pb-7 min-h-[230px] flex flex-col sm:flex-row sm:items-center gap-5"
+              style={{ background: t.fondo }}
+            >
+              {/* Gotas de fondo */}
+              <span aria-hidden="true" className="absolute -right-10 -top-12 w-40 h-40 rounded-full opacity-40" style={{ background: t.gota }} />
+              <span aria-hidden="true" className="absolute right-20 -bottom-16 w-28 h-28 rounded-full opacity-25" style={{ background: t.gota }} />
+              <span aria-hidden="true" className="relative shrink-0 w-[92px] h-[92px] rounded-[30px] bg-white/80 flex items-center justify-center shadow-[0_12px_24px_-16px_rgba(31,51,56,0.5)]">
+                <Dibujo n={i} color={t.tinta} acento={t.gota} />
+              </span>
+              <div className="relative min-w-0">
+                <p className="m-0 text-[13px] tracking-[0.14em] uppercase font-semibold" style={{ color: t.tinta }}>
+                  Paso {i + 1} de {pasos.length}
+                </p>
+                <p className="m-0 mt-1 font-serif text-[26px] sm:text-[28px] leading-tight text-tinta">{p.titulo}</p>
+                <p className="m-0 mt-2 text-[16px] leading-relaxed text-tinta max-w-md">{p.texto}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        {flecha(-1)}
+        <div className="flex items-center gap-2">
+          {pasos.map((p, i) => (
+            <button
+              key={p.titulo}
+              type="button"
+              onClick={() => ir(i)}
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-current={i === actual}
+              className={`h-2.5 rounded-full border-0 p-0 cursor-pointer transition-all duration-300 ${i === actual ? "w-7 bg-verde-profundo" : "w-2.5 bg-borde hover:bg-verde-serenidad"}`}
+            />
+          ))}
+        </div>
+        {flecha(1)}
+      </div>
+    </div>
+  );
+}
+
+// Un dibujo por momento: conocer (corazón con la persona), elegir (tarjetas
+// con una estrella) y hacer en casa (la casa con la gota).
+function Dibujo({ n, color, acento }: { n: number; color: string; acento: string }) {
+  const trazo = { stroke: color, strokeWidth: 2.4, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
+  return (
+    <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+      {n % 3 === 0 && (
+        <>
+          <circle cx="28" cy="20" r="8" fill={acento} />
+          <path d="M14 46c1.5-8 7-12 14-12s12.5 4 14 12" {...trazo} />
+          <circle cx="28" cy="20" r="8" {...trazo} />
+          <path d="M41 10c1.6-2.6 5.6-2 5.6 1.2 0 2.8-3.6 4.8-5.6 6-2-1.2-5.6-3.2-5.6-6 0-3.2 4-3.8 5.6-1.2z" fill={color} />
+        </>
+      )}
+      {n % 3 === 1 && (
+        <>
+          <rect x="10" y="16" width="22" height="28" rx="4" fill={acento} transform="rotate(-8 21 30)" />
+          <rect x="22" y="12" width="22" height="28" rx="4" {...trazo} fill="#fff" transform="rotate(6 33 26)" />
+          <path d="M33 19l2 4.2 4.6.6-3.3 3.2.8 4.6-4.1-2.2-4.1 2.2.8-4.6-3.3-3.2 4.6-.6z" fill={color} transform="rotate(6 33 26)" />
+        </>
+      )}
+      {n % 3 === 2 && (
+        <>
+          <path d="M10 27L28 12l18 15" {...trazo} />
+          <path d="M15 24v20h26V24" fill={acento} />
+          <path d="M15 24v20h26V24" {...trazo} />
+          <path d="M28 30c2.6 3.2 4 5.3 4 7.2a4 4 0 0 1-8 0c0-1.9 1.4-4 4-7.2z" fill={color} />
+        </>
+      )}
+    </svg>
   );
 }
 
