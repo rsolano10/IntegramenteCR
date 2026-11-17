@@ -6,15 +6,15 @@ import type { ExtrasInteractiva } from "../../../lib/actividades/contrato";
 import { prepararSesion } from "../../../lib/actividades/registro";
 import { detenerVoz } from "../../../lib/voz";
 import { Boton, IconoAmpliar, IconoPista, IconoReducir, IconoSalir, IconoSiguiente } from "./ui";
-import { PancartaArriba, type Control } from "./comun";
-import { Letrero, Pancarta, Rotulo, RuedaProgreso, type Aviso } from "../pueblo/Ornamento";
+import { MensajeJuego, esperaMensaje, type Aviso, type Control } from "./comun";
+import { Letrero, Rotulo, RuedaProgreso } from "../pueblo/Ornamento";
 
 // Marco común de las actividades «Un día en el pueblo»: cada actividad es un
 // lugar con su rótulo pintado. Inicio con la escena y la consigna; un
 // ejercicio por vez con la rueda de carreta que se pinta como progreso
 // (para lectores: «Ejercicio 2 de 5»); la consigna en un letrero de
-// madera dentro de la escena; los mensajes, en pancartas que salen de la
-// esquina y se esconden (y en una región aria-live para lectores);
+// madera dentro de la escena, donde también se escriben los mensajes un
+// rato (y en una región aria-live para lectores);
 // «Ver una pista» tras 2 intentos en el mismo paso; «Terminar por hoy»
 // siempre a mano; cierre con el momento final del lugar, sin resumen de
 // desempeño. Si la pantalla da un registro (actividad de hoy sin
@@ -100,7 +100,14 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
   const [resuelto, setResuelto] = useState(false);
   const [mensaje, setMensaje] = useState<Mensaje>(null);
   const [hechos, setHechos] = useState(0);
-  const [pancartaArriba, setPancartaArriba] = useState(false);
+  // El mensaje que se ve en el letrero (se borra solo, a los pocos segundos).
+  const [enLetrero, setEnLetrero] = useState<Aviso | null>(null);
+  useEffect(() => {
+    setEnLetrero(mensaje);
+    if (!mensaje) return;
+    const t = window.setTimeout(() => setEnLetrero(null), esperaMensaje(mensaje.texto));
+    return () => window.clearTimeout(t);
+  }, [mensaje]);
   const [barra, setBarra] = useState<HTMLDivElement | null>(null);
   const zona = useRef<HTMLDivElement>(null);
   const cine = usePantallaCompleta();
@@ -231,16 +238,12 @@ export default function ActividadInteractiva({ extras, size = "compact", enSesio
                 <RuedaProgreso total={total} completados={hechos} actual={indice + 1} size={enSesion ? 50 : 60} />
               </div>
 
-              {/* El juego, con su letrero abajo; las pancartas salen en su lugar
-                  y el letrero se esconde mientras tanto (se alternan). */}
-              <div className="relative">
-                <PancartaArriba.Provider value={pancartaArriba}>
-                  <Suspense fallback={<Cargando />}>
-                    <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
-                  </Suspense>
-                </PancartaArriba.Provider>
-                <Pancarta aviso={mensaje} large={large} onArriba={setPancartaArriba} />
-              </div>
+              {/* El juego, con su letrero: los mensajes se escriben en él. */}
+              <MensajeJuego.Provider value={enLetrero}>
+                <Suspense fallback={<Cargando />}>
+                  <Juego key={`${semilla}-${indice}`} ejercicio={ejercicios[indice]} config={config} ctl={ctl} />
+                </Suspense>
+              </MensajeJuego.Provider>
               <p aria-live="polite" className="sr-only">
                 {mensaje?.texto ?? ""}
               </p>

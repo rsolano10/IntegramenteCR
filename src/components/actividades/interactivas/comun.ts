@@ -1,8 +1,12 @@
 import { createContext, useEffect, useRef } from "react";
 
-// Mientras una pancarta de mensaje está arriba, el letrero de la consigna se
-// esconde (se alternan, para que nunca se tapen).
-export const PancartaArriba = createContext(false);
+// Los mensajes del juego («Muy bien…», «Probemos otra vez», las pistas) se
+// muestran en el mismo letrero de la consigna: el letrero queda fijo y solo
+// cambia el texto un rato; después vuelve la consigna.
+export type Aviso = { id: number; tipo: "ok" | "reintento" | "info"; texto: string };
+export const MensajeJuego = createContext<Aviso | null>(null);
+// Cuánto queda un mensaje en el letrero: más cuanto más texto (entre 2,6 y 6 segundos).
+export const esperaMensaje = (texto: string) => Math.min(6000, Math.max(2600, 1400 + texto.length * 55));
 
 // Contrato entre el marco y cada juego, y ayudas comunes (sin componentes).
 

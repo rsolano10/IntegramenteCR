@@ -394,6 +394,11 @@
   from { transform: translateX(-18%); }
   to { transform: none; }
 }
+/* El texto del letrero cambia: fundido corto, sin mover el letrero. */
+@keyframes pueblo-letrero {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
 /* La campana de la iglesia se mece. */
 @keyframes pueblo-campana {
   0%, 100% { transform: rotate(0); }

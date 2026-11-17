@@ -1,7 +1,7 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { roseton, type ParamsRoseton } from "../../../lib/actividades/roseton";
 import { P } from "./paleta";
-import { PancartaArriba } from "../interactivas/comun";
+import { MensajeJuego } from "../interactivas/comun";
 
 // Piezas visuales comunes de «Un día en el pueblo»: el rosetón de carreta,
 // la rueda de progreso que se pinta y el rótulo pintado de cada lugar.
@@ -142,98 +142,28 @@ const clavos = (
 
 // El letrero de la consigna, dentro de la escena. Con `clavado` se monta
 // sobre el pie de la escena de arriba, como un rótulo clavado al tablón.
+// Los mensajes del juego se escriben en este mismo letrero (el letrero no
+// se mueve: solo cambia el texto, con un fundido corto) y después vuelve la
+// consigna. Los aciertos, en letras mostaza.
 export function Letrero({ children, detalle, large = false, clavado = false, grande = false, className = "" }: { children: ReactNode; detalle?: ReactNode; large?: boolean; clavado?: boolean; grande?: boolean; className?: string }) {
-  const oculto = useContext(PancartaArriba);
-  if (!children) return null;
+  const aviso = useContext(MensajeJuego);
+  if (!children && !aviso) return null;
   const tam = grande ? (large ? "text-[34px]" : "text-[30px]") : large ? "text-[26px]" : "text-[22px] sm:text-[24px]";
   return (
-    <div
-      data-letrero=""
-      className={`relative z-10 flex justify-center px-2 transition-[opacity,transform] motion-reduce:transition-none ${oculto ? "opacity-0 translate-y-2 duration-300" : "opacity-100 duration-500 delay-200"} ${clavado ? "-mt-6" : ""} ${className}`}
-    >
-      <div className="relative max-w-[560px] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
+    <div className={`relative z-10 flex justify-center px-2 ${clavado ? "-mt-6" : ""} ${className}`}>
+      <div className="relative max-w-[560px] min-w-[min(100%,280px)] px-7 py-4 text-center -rotate-[0.6deg] motion-safe:animate-[pueblo-asentar_320ms_ease-out]" style={madera()}>
         {clavos}
-        <p className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] ${tam}`} style={{ color: P.cal, textShadow: "0 2px 0 rgba(51,36,28,0.45)" }}>
-          {children}
-        </p>
-        {detalle && (
-          <p className={`m-0 mt-1.5 font-semibold leading-snug [text-wrap:balance] ${large ? "text-[19px]" : "text-[17px]"}`} style={{ color: `${P.cal}e6` }}>
-            {detalle}
+        <div key={aviso ? aviso.id : "consigna"} className="motion-safe:animate-[pueblo-letrero_280ms_ease-out_both]">
+          <p className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] ${tam}`} style={{ color: aviso?.tipo === "ok" ? P.mostaza : P.cal, textShadow: "0 2px 0 rgba(51,36,28,0.45)" }}>
+            {aviso ? aviso.texto : children}
           </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export type Aviso = { id: number; tipo: "ok" | "reintento" | "info"; texto: string };
-
-const ENTRADA = 900;
-const SALIDA = 650;
-// Tiempo arriba: más largo cuanto más texto (entre 2,8 y 6,5 segundos).
-const espera = (texto: string) => Math.min(6500, Math.max(2800, 1500 + texto.length * 55));
-
-// La pancarta de los mensajes: un cartel de madera en su palo que sale
-// despacio de la esquina inferior derecha, se queda un rato y se vuelve a
-// esconder. Ocupa el lugar del último letrero del juego, que se esconde
-// mientras tanto (nunca tapa las piezas) y deja pasar los toques. El texto, para lectores, está en la región aria-live
-// del marco.
-export function Pancarta({ aviso, large = false, onArriba }: { aviso: Aviso | null; large?: boolean; onArriba?: (arriba: boolean) => void }) {
-  const [visto, setVisto] = useState<Aviso | null>(null);
-  const [arriba, setArriba] = useState(false);
-  const [abajo, setAbajo] = useState(0);
-  const caja = useRef<HTMLDivElement>(null);
-  // Dónde está el letrero: la pancarta sale desde su borde de abajo.
-  useLayoutEffect(() => {
-    const padre = caja.current?.parentElement;
-    if (!aviso || !padre) return;
-    const letreros = padre.querySelectorAll("[data-letrero]");
-    const l = letreros[letreros.length - 1];
-    setAbajo(l ? Math.max(0, padre.getBoundingClientRect().bottom - l.getBoundingClientRect().bottom - 4) : 0);
-  }, [aviso]);
-  useEffect(() => {
-    if (!aviso) {
-      setArriba(false);
-      return;
-    }
-    setVisto(aviso);
-    const r = requestAnimationFrame(() => requestAnimationFrame(() => setArriba(true)));
-    const t = window.setTimeout(() => setArriba(false), ENTRADA + espera(aviso.texto));
-    return () => {
-      cancelAnimationFrame(r);
-      window.clearTimeout(t);
-    };
-  }, [aviso]);
-  // Avisa al marco para que el letrero se esconda mientras está arriba.
-  const avisarArriba = useRef(onArriba);
-  avisarArriba.current = onArriba;
-  useEffect(() => avisarArriba.current?.(arriba), [arriba]);
-  const clara = visto?.tipo === "info";
-  return (
-    <div ref={caja} aria-hidden="true" className="absolute -right-4 sm:-right-5 w-[calc(100%+2rem)] h-56 overflow-hidden pointer-events-none z-20" style={{ bottom: abajo }}>
-      {visto && (
-      <div
-        className="absolute right-4 sm:right-6 bottom-0 max-w-[min(82%,420px)] flex flex-col items-end origin-bottom-right motion-reduce:!transition-opacity"
-        style={{
-          transform: arriba ? "translate(0, 0) rotate(-3deg)" : "translate(35%, 112%) rotate(14deg)",
-          opacity: arriba ? 1 : 0.001,
-          transition: arriba ? `transform ${ENTRADA}ms cubic-bezier(0.2, 0.8, 0.25, 1.06), opacity 200ms` : `transform ${SALIDA}ms cubic-bezier(0.55, 0, 0.8, 0.3), opacity 200ms ${SALIDA - 150}ms`,
-        }}
-      >
-        <div className="relative px-6 py-3.5" style={madera(clara ? "clara" : "oscura", visto.tipo === "ok" ? P.mostaza : P.cal)}>
-          {clavos}
-          <p
-            key={visto.id}
-            className={`m-0 font-rotulo leading-[1.15] [text-wrap:balance] motion-safe:animate-[pueblo-asentar_320ms_ease-out] ${large ? "text-[23px]" : "text-[20px]"}`}
-            style={{ color: clara ? P.tierra : P.cal, textShadow: clara ? "none" : "0 2px 0 rgba(51,36,28,0.45)" }}
-          >
-            {visto.texto}
-          </p>
+          {detalle && !aviso && (
+            <p className={`m-0 mt-1.5 font-semibold leading-snug [text-wrap:balance] ${large ? "text-[19px]" : "text-[17px]"}`} style={{ color: `${P.cal}e6` }}>
+              {detalle}
+            </p>
+          )}
         </div>
-        {/* El palo del que se sostiene */}
-        <span className="mr-[22%] w-3.5 h-4 -mt-1" style={{ background: `linear-gradient(90deg, ${P.maderaOscura}, ${P.madera} 45%, ${P.maderaOscura})` }} />
       </div>
-      )}
     </div>
   );
 }
