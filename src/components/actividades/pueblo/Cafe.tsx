@@ -41,9 +41,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioOrdenar; ctl
 
   return (
     <div className="grid gap-4">
-      <Letrero large={L} arriba>
-        {listo ? "¡Todo en orden!" : colocadas.length === 0 ? "¿Qué se hace primero?" : "¿Y después?"}
-      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Cocina titulo={ej.titulo ?? ""} listo={listo} />
         {/* Mesa de madera: la receta que se arma y los pasos sueltos */}
@@ -84,6 +81,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioOrdenar; ctl
           </div>
         </div>
       </div>
+      <Letrero large={L} clavado>
+        {listo ? "¡Todo en orden!" : colocadas.length === 0 ? "¿Qué se hace primero?" : "¿Y después?"}
+      </Letrero>
     </div>
   );
 }

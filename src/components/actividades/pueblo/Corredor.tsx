@@ -46,9 +46,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioCorr
 
   return (
     <div className="grid gap-4">
-      <Letrero large={L} arriba>
-        {fase === "mirar" ? "Mirá bien todo lo que hay en el corredor." : hecho ? "¡Encontraste lo que cambió!" : ej.cambios.length === 1 ? "Algo cambió. Tocá lo que cambió." : `Cambiaron ${ej.cambios.length} cosas. Tocalas.`}
-      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Escena puestos={escena} tocados={mirando ? [] : tocados} pistas={mirando ? [] : pistas} onTocar={mirando || hecho ? undefined : tocar} gato={hecho ? "estira" : "duerme"} />
         {mirando && fase === "buscar" && (
@@ -57,6 +54,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioCorr
           </span>
         )}
       </div>
+      <Letrero large={L} clavado>
+        {fase === "mirar" ? "Mirá bien todo lo que hay en el corredor." : hecho ? "¡Encontraste lo que cambió!" : ej.cambios.length === 1 ? "Algo cambió. Tocá lo que cambió." : `Cambiaron ${ej.cambios.length} cosas. Tocalas.`}
+      </Letrero>
       {!hecho && (
         <Acciones ctl={ctl}>
           {fase === "mirar" ? (

@@ -52,9 +52,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
 
   return (
     <div className="grid gap-4" onKeyDown={(e) => e.key === "Escape" && setElegido(null)}>
-      <Letrero large={L} arriba>
-        {listo ? "¡El tramo quedó acomodado!" : elegido === null ? "Tocá un producto y después su canasto." : `¿Dónde va «${ej.elementos[elegido].texto}»?`}
-      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Cielo sol={sol} />
         {/* Tramo: tablones de madera (la mesa de juego) */}
@@ -143,6 +140,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioClasificar; 
           </div>
         </div>
       </div>
+      <Letrero large={L} clavado>
+        {listo ? "¡El tramo quedó acomodado!" : elegido === null ? "Tocá un producto y después su canasto." : `¿Dónde va «${ej.elementos[elegido].texto}»?`}
+      </Letrero>
     </div>
   );
 }

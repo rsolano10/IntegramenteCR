@@ -42,9 +42,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPosi
 
   return (
     <div className="grid gap-4">
-      <Letrero large={L} arriba detalle={fase === "mirar" ? "Tomate el tiempo que necesités." : undefined}>
-        {fase === "mirar" ? "Mirá qué ventanas tienen luz." : fase === "responder" ? "Se apagaron las luces. ¿Cuáles estaban encendidas?" : "¡Encendiste las ventanas!"}
-      </Letrero>
       <Escena
         filas={ej.filas}
         columnas={ej.columnas}
@@ -61,6 +58,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPosi
         apagadas={apagadas}
         estado={fase}
       />
+      <Letrero large={L} clavado detalle={fase === "mirar" ? "Tomate el tiempo que necesités." : undefined}>
+        {fase === "mirar" ? "Mirá qué ventanas tienen luz." : fase === "responder" ? "Se apagaron las luces. ¿Cuáles estaban encendidas?" : "¡Encendiste las ventanas!"}
+      </Letrero>
       {fase === "responder" && <Medidor total={n} llevas={Math.min(marcadas.length, n)} large={L} />}
 
       <Acciones ctl={ctl}>

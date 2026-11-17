@@ -67,9 +67,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPiza
 
   return (
     <div className="grid gap-4">
-      <Letrero large={L} arriba detalle={!hecho && modo !== "marcas" && palabras.length > 0 ? "Si una palabra quedó mal escrita, tocala en la pizarra para borrarla." : undefined}>
-        {hecho ? "¡Qué pizarra más llena! Suena la campana." : k.frase}
-      </Letrero>
       <div className="overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Aula campana={hecho}>
           <p className={`m-0 mb-3 font-rotulo leading-tight ${L ? "text-[24px]" : "text-[20px] sm:text-[22px]"}`} style={{ color: TIZA }}>
@@ -102,6 +99,9 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioPiza
         </Aula>
       </div>
 
+      <Letrero large={L} clavado detalle={!hecho && modo !== "marcas" && palabras.length > 0 ? "Si una palabra quedó mal escrita, tocala en la pizarra para borrarla." : undefined}>
+        {hecho ? "¡Qué pizarra más llena! Suena la campana." : k.frase}
+      </Letrero>
       {!hecho && (
         <>
           {modos.length > 1 && (

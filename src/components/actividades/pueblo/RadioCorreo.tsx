@@ -62,7 +62,6 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioComp
 
   return (
     <div className="grid gap-4">
-      {fase === "texto" && !radio && !abierta && <Letrero large={L} arriba>Llegó una carta. Tocá el sobre para abrirla.</Letrero>}
       <div className="overflow-hidden rounded-[20px]" style={sombraCapa}>
         {radio ? <Repisa sonando={hecho} /> : <Apartado abierta={abierta} colgada={false} onAbrir={() => setAbierta(true)} />}
       </div>
@@ -79,6 +78,7 @@ export function Juego({ ejercicio: ej, config, ctl }: { ejercicio: EjercicioComp
           </button>
         </div>
       )}
+      {fase === "texto" && !radio && !abierta && <Letrero large={L} clavado>Llegó una carta. Tocá el sobre para abrirla.</Letrero>}
 
       {mostrarTexto && <Escrito ej={ej} resaltar={resaltar} large={L} />}
       {fase === "texto" && !radio && abierta && (

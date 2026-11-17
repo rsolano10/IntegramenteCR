@@ -67,9 +67,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioPalabra; ctl
 
   return (
     <div className="grid gap-4">
-      <Letrero large={L} arriba>
-        {hecho ? `¡Quedó pintado: ${mayus(ej.objetivo.join(""))}!` : "Tocá las letras en orden para pintar la palabra."}
-      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <Taller />
         {/* La tabla sobre el caballete */}
@@ -149,6 +146,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioPalabra; ctl
           </div>
         )}
       </div>
+      <Letrero large={L} clavado>
+        {hecho ? `¡Quedó pintado: ${mayus(ej.objetivo.join(""))}!` : "Tocá las letras en orden para pintar la palabra."}
+      </Letrero>
     </div>
   );
 }

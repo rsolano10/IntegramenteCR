@@ -1,4 +1,8 @@
-import { useEffect, useRef } from "react";
+import { createContext, useEffect, useRef } from "react";
+
+// Mientras una pancarta de mensaje está arriba, el letrero de la consigna se
+// esconde (se alternan, para que nunca se tapen).
+export const PancartaArriba = createContext(false);
 
 // Contrato entre el marco y cada juego, y ayudas comunes (sin componentes).
 

@@ -42,9 +42,6 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioOrdenar; ctl
 
   return (
     <div className="grid gap-4">
-      <Letrero large={L} arriba>
-        {completo ? "¡Listo para salir!" : enganchados.length === 0 ? "¿Cuál vagón va primero?" : "¿Cuál vagón sigue?"}
-      </Letrero>
       <div className="relative overflow-hidden rounded-[20px]" style={sombraCapa}>
         <EstacionFondo />
         {/* Andén y vía principal: el tren que se va formando */}
@@ -95,6 +92,9 @@ export function Juego({ ejercicio: ej, ctl }: { ejercicio: EjercicioOrdenar; ctl
           <Riel />
         </div>
       </div>
+      <Letrero large={L} clavado>
+        {completo ? "¡Listo para salir!" : enganchados.length === 0 ? "¿Cuál vagón va primero?" : "¿Cuál vagón sigue?"}
+      </Letrero>
     </div>
   );
 }
