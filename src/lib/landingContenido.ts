@@ -243,8 +243,7 @@ export const areas: {
     frase: "Actividades adaptadas para mantener habilidades cotidianas, favorecer la autonomía y promover la participación en tareas significativas, según las capacidades de cada persona.",
     fondo: "#e8b5a1",
     tinta: "#1f3338",
-    // Pendiente: foto de una persona mayor en una actividad cotidiana en casa.
-    foto: null,
+    foto: { webp: "/areas/terapia-ocupacional.webp", jpg: "/areas/terapia-ocupacional.jpg", alt: "Una señora sonriente ordena piezas de madera sobre la mesa de su sala." },
     // Mientras no haya recursos propios del área: una tarea cotidiana real.
     ejemplo: { codigo: "COG-021", tipo: "ficha" },
     responsable: { area: "terapia ocupacional", miembro: 5 },
