@@ -100,7 +100,7 @@ function ClaraEligeConPermiso({ recursos }: { recursos: MediaResource[] }) {
                 }
               }}
               rows={1}
-              placeholder="Por ejemplo: algo corto y tranquilo"
+              placeholder="Ej.: algo tranquilo"
               className="flex-1 min-h-12 max-h-32 resize-none rounded-2xl border-[1.5px] border-borde-campo bg-campo px-4 py-3 font-sans text-[16px] leading-snug text-tinta"
             />
             <button type="submit" disabled={!input.trim()} className="shrink-0 min-h-12 px-5 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed">

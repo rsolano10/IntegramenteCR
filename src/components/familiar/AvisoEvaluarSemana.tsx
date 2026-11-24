@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 
 // El pedido de evaluar la semana, igual en Hoy (familia y participante) y
-// en Mi semana: mismo texto, mismo botón.
-export function AvisoEvaluarSemana({ to, large = false }: { to: string; large?: boolean }) {
+// en Mi semana: mismo texto, mismo botón. `completa`: si se hizo todo
+// («¡Semana completa!»); si no, la semana simplemente terminó.
+export function AvisoEvaluarSemana({ to, large = false, completa = true }: { to: string; large?: boolean; completa?: boolean }) {
   return (
     <section className={`border-[1.5px] border-verde-serenidad bg-verde-tenue rounded-[22px] ${large ? "p-5" : "p-4.5 sm:p-5"}`}>
-      <p className={`m-0 mb-1 font-bold text-verde-profundo ${large ? "text-[22px]" : "text-[17px]"}`}>¡Semana completa!</p>
+      <p className={`m-0 mb-1 font-bold text-verde-profundo ${large ? "text-[22px]" : "text-[17px]"}`}>{completa ? "¡Semana completa!" : "La semana terminó"}</p>
       <p className={`m-0 mb-3.5 text-tinta-suave ${large ? "text-[18px]" : "text-[15px]"}`}>Contanos cómo estuvo: son tres preguntas.</p>
       <Link
         to={to}

@@ -118,16 +118,24 @@ export function AppHeader() {
                 ? `Familiar de ${myPatient.nombre}`
                 : "Completá el perfil de tu familiar"
           }
+          // Agrupado: lo de la cuenta de quien entra, lo de la persona del
+          // programa, y al final contacto y salir.
           items={[
-            { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
-            ...(myPatient && role === "familiar" ? [{ label: "Mi programa", onClick: () => setModal("mi-programa") }] : []),
-            ...(myPatient
-              ? [{ label: role === "paciente" ? "Mi perfil" : `Perfil de ${myPatient.nombre.split(" ")[0]}`, onClick: () => navigate("/app/perfil/resumen") }]
-              : []),
+            { seccion: "Tu cuenta", label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
+            { seccion: "Tu cuenta", label: "Mis datos y permisos", onClick: () => navigate("/app/mis-datos") },
             ...(myPatient && myPatient.plan_status !== "pendiente"
-              ? [{ label: "Avisos en tu teléfono", onClick: () => setModal("calendario") }]
+              ? [{ seccion: "Tu cuenta", label: "Avisos en tu teléfono", onClick: () => setModal("calendario") }]
               : []),
-            { label: "Mis datos y permisos", onClick: () => navigate("/app/mis-datos") },
+            ...(myPatient
+              ? [
+                  {
+                    seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0],
+                    label: role === "paciente" ? "Mi perfil" : "Perfil",
+                    onClick: () => navigate("/app/perfil/resumen"),
+                  },
+                ]
+              : []),
+            ...(myPatient && role === "familiar" ? [{ seccion: myPatient.nombre.split(" ")[0], label: "Programa", onClick: () => setModal("mi-programa") }] : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
@@ -198,7 +206,8 @@ export function AppHeader() {
               <PestanasFamilia />
             </div>
           )}
-          <div className="shrink-0">{menuCuenta(myPatient?.nombre?.split(" ")[0])}</div>
+          {/* El botón dice quién entró (no la persona del programa). */}
+          <div className="shrink-0">{menuCuenta(nombre.split(" ")[0] || "Mi cuenta")}</div>
         </div>
         {ventanas}
       </header>

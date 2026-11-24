@@ -5,6 +5,7 @@ import { siguienteDia } from "../../lib/siguienteDia";
 import { AvisoEvaluarSemana, AvisoSemanaEnRevision } from "../../components/familiar/AvisoEvaluarSemana";
 import { Cargando } from "../../components/ui/Cargando";
 import { estaRegistrada } from "../../lib/estadoActividad";
+import { semanaTerminada } from "../../lib/planWeek";
 
 const rutaActividad = (id: string) => `/app/participante/actividad/${id}`;
 
@@ -18,6 +19,15 @@ export function ParticipanteHoy() {
   const weekComplete = allTasks.length > 0 && allTasks.every((t) => t.estado !== "pendiente" && t.estado !== "futuro");
 
   if (loadingPlan) return <Cargando />;
+
+  if (planMeta && semanaTerminada(planMeta.publish_at)) {
+    return (
+      <>
+        <DiaLibre size="large" titulo="Estamos preparando la próxima semana" mensaje="El equipo está armando tus actividades. Pronto las vas a ver acá." />
+        {!planMeta.family_reviewed_at && <AvisoEvaluarSemana large completa={weekComplete} to={`/app/participante/revision?plan=${planMeta.id}`} />}
+      </>
+    );
+  }
 
   return (
     <>

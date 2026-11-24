@@ -47,19 +47,19 @@ import { iniciarCompra } from "../../lib/pagos";
 const CLARA_AGENT_ID = "agent_6101m6vtn05pf4mtqvys2jnavkt4";
 
 // Preguntas para empezar: mismos íconos y colores de la paleta oficial.
-// Preguntas para empezar (desde tablet), sobre lo que Clara responde: el
-// uso de la app. Mismos íconos y colores de la paleta oficial.
+// Preguntas para empezar: las dudas del día a día de quien cuida, más el
+// uso de la app. Tarjetas desde tablet; en celular, botones compactos.
 const preguntasIniciales = [
-  { t: "¿Cómo registro una actividad?", icono: "check", fondo: "#6a969c", tinta: "#ffffff" },
-  { t: "¿Cómo recibo avisos en el teléfono?", icono: "campana", fondo: "#e8b5a1", tinta: "#1f3338" },
-  { t: "¿Qué es la semana gratis?", icono: "sol", fondo: "#f4d096", tinta: "#1f3338" },
-  { t: "¿Cómo cambio de programa?", icono: "ajuste", fondo: "#a9c49f", tinta: "#1f3338" },
+  { t: "¿Qué hago si no quiere hacer la actividad?", corta: "Si no quiere hacerla", icono: "sol", fondo: "#f4d096", tinta: "#1f3338" },
+  { t: "¿Cómo adapto una actividad si le cuesta?", corta: "Si le cuesta", icono: "ajuste", fondo: "#a9c49f", tinta: "#1f3338" },
+  { t: "¿Cómo registro una actividad?", corta: "Registrar una actividad", icono: "check", fondo: "#6a969c", tinta: "#ffffff" },
+  { t: "¿Cómo recibo avisos en el teléfono?", corta: "Avisos en el teléfono", icono: "campana", fondo: "#e8b5a1", tinta: "#1f3338" },
 ];
 
 // Ejemplos que rotan en el campo vacío: una pista de qué preguntar sin
 // ocupar lugar (sobre todo en el celular, donde no hay tarjetas).
 // Cortos, para que entren en una línea en el celular.
-const ejemplos = ["¿qué es la semana gratis?", "¿cómo registro algo?", "¿cómo recibo avisos?", "¿cómo veo mi semana?", "¿cómo cambio la clave?"];
+const ejemplos = ["¿qué hago si no quiere?", "¿cómo registro algo?", "¿y si le cuesta?", "¿cómo recibo avisos?", "¿cómo veo mi semana?"];
 
 interface Burbuja {
   key: string;
@@ -1095,7 +1095,7 @@ function Bienvenida({
             "Ya podés hablarme."
           ) : conPreguntas ? (
             <>
-              <span className="md:hidden">Escribime tu duda abajo o tocá el micrófono para hablar.</span>
+              <span className="md:hidden">Escribime, tocá el micrófono o elegí una de estas:</span>
               <span className="hidden md:inline">Escribime, tocá el micrófono para hablar o elegí una pregunta:</span>
             </>
           ) : null}
@@ -1103,7 +1103,23 @@ function Bienvenida({
       </div>
       {conPreguntas && !enVoz && (
         <div className="clara-entra pl-10">
-          {/* En el celular las tarjetas desplazaban el saludo: solo desde tablet. */}
+          {/* Celular: botones compactos (las tarjetas desplazaban el saludo). */}
+          <ul className="list-none m-0 mt-3 p-0 flex flex-wrap gap-2 md:hidden">
+            {preguntasIniciales.map((q) => (
+              <li key={q.t}>
+                <button
+                  type="button"
+                  onClick={() => onPregunta(q.t)}
+                  className="inline-flex items-center gap-2 min-h-11 pl-1.5 pr-3.5 rounded-full border border-borde bg-white cursor-pointer font-sans text-[14.5px] font-semibold text-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+                >
+                  <span aria-hidden="true" className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: q.fondo, color: q.tinta }}>
+                    <Icono name={q.icono} className="w-4.5 h-4.5" />
+                  </span>
+                  {q.corta}
+                </button>
+              </li>
+            ))}
+          </ul>
           <ul className="list-none m-0 mt-3 p-0 hidden md:grid grid-cols-2 gap-2">
             {preguntasIniciales.map((q) => (
               <li key={q.t}>

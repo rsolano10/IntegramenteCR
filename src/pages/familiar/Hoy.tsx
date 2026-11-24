@@ -6,6 +6,7 @@ import { AvisoPedidoAyuda } from "../../components/familiar/AvisoPedidoAyuda";
 import { AvisoEvaluarSemana, AvisoSemanaEnRevision } from "../../components/familiar/AvisoEvaluarSemana";
 import { Cargando } from "../../components/ui/Cargando";
 import { estaRegistrada } from "../../lib/estadoActividad";
+import { semanaTerminada } from "../../lib/planWeek";
 
 const rutaActividad = (id: string) => `/app/hoy/actividad/${id}`;
 
@@ -24,6 +25,22 @@ export function Hoy() {
   const extras = sugeridas && sugeridas.length > 0 ? RUTA_EXTRAS : undefined;
 
   if (loadingPlan) return <Cargando />;
+
+  // La semana del último plan ya terminó y la clínica no publicó la
+  // siguiente: nada de «hoy» con actividades de la semana pasada.
+  if (planMeta && semanaTerminada(planMeta.publish_at)) {
+    return (
+      <div className="grid gap-6">
+        <AvisoPedidoAyuda patientId={myPatient?.id} nombre={quien ?? "Tu familiar"} />
+        <DiaLibre
+          titulo="Estamos preparando la próxima semana"
+          mensaje={`El equipo está armando las actividades${quien ? ` de ${quien}` : ""}. Te avisamos cuando estén listas.`}
+          extras={extras}
+        />
+        {!planMeta.family_reviewed_at && <AvisoEvaluarSemana completa={weekComplete} to={`/app/revision?plan=${planMeta.id}`} />}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6">

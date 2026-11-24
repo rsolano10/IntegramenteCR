@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { usePlanMeta } from "../../lib/usePlan";
@@ -12,6 +12,7 @@ import { moduloLabel, moduloTheme, type ResourceModulo } from "../../lib/modulos
 import { calcularResumen, titularSemana, DIAS_SEMANA, type TareaResumen } from "../../lib/resumenSemana";
 import { BotonVolver } from "../../components/ui/BotonVolver";
 import { Cargando } from "../../components/ui/Cargando";
+import { actividadesHechas, rangoSemana } from "../../lib/planWeek";
 
 const animo: Record<string, { texto: string; frase: string; fondo: string; tinta: string }> = {
   better: { texto: "Mejor", frase: "El ánimo estuvo mejor esta semana. ¡Qué lindo!", fondo: "#e3efe3", tinta: "#4c7a4c" },
@@ -54,6 +55,9 @@ export function Resumen() {
     enabled: !!planId,
   });
 
+  // Sin semana elegida no hay nada que resumir: a Mi semana (ahí está la
+  // lista de semanas con su resumen).
+  if (!planId) return <Navigate to={session.status === "authed" && session.profile.role === "paciente" ? "/app/participante/hoy" : "/app/plan"} replace />;
   if (isLoading) return <Cargando />;
 
   const r = calcularResumen(tareas ?? []);
@@ -63,7 +67,7 @@ export function Resumen() {
   const mood = planMeta?.week_mood ? animo[planMeta.week_mood] : null;
   const nombre = myPatient?.nombre?.split(" ")[0];
   const esPropia = session.status === "authed" && session.profile.role === "paciente";
-  const semana = planMeta?.publish_at ? new Date(planMeta.publish_at).toLocaleDateString("es-CR", { day: "numeric", month: "long" }) : null;
+  const semana = planMeta?.publish_at ? rangoSemana(planMeta.publish_at) : null;
   const hechasLista = (tareas ?? []).filter((t) => t.estado === "realizado" || t.estado === "parcial");
   const pendientesLista = (tareas ?? []).filter((t) => t.estado === "no");
 
@@ -81,13 +85,13 @@ export function Resumen() {
         <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="absolute -left-12 -bottom-12 w-40 opacity-[0.08] -rotate-12 select-none" />
         {r.pct >= 0.3 && <Petalos />}
         <p className="relative m-0 text-[13px] tracking-[0.16em] uppercase font-semibold text-[#c4dbdb]">
-          Tu semana{semana ? ` del ${semana}` : ""}
+          {semana ? `Tu semana · ${semana}` : "Tu semana"}
         </p>
         <AnilloLogro logradas={r.logradas} total={r.total} />
         <h1 className="relative m-0 mt-5 font-serif font-normal text-[32px] sm:text-[38px] leading-tight text-white">{titulo}</h1>
         <p className="relative m-0 mt-2 mx-auto max-w-[24em] text-[16px] leading-relaxed text-white/85">
           {r.total
-            ? `${esPropia ? "Hiciste" : nombre ? `${nombre} hizo` : "Hicieron"} ${r.logradas} de ${r.total} actividades. ${frase}`
+            ? `${esPropia ? "Hiciste" : nombre ? `${nombre} hizo` : "Hicieron"} ${r.logradas} de ${r.total} ${r.total === 1 ? "actividad" : "actividades"}. ${frase}`
             : "Esta semana no tuvo actividades registradas."}
         </p>
       </section>
@@ -227,7 +231,7 @@ function AnilloLogro({ logradas, total }: { logradas: number; total: number }) {
   const R = 54;
   const C = 2 * Math.PI * R;
   return (
-    <div className="relative mx-auto mt-5 w-[150px] h-[150px]" role="img" aria-label={`${logradas} de ${total} actividades hechas`}>
+    <div className="relative mx-auto mt-5 w-[150px] h-[150px]" role="img" aria-label={actividadesHechas(logradas, total)}>
       <svg viewBox="0 0 132 132" className="w-full h-full -rotate-90" aria-hidden="true">
         <circle cx="66" cy="66" r={R} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="12" />
         <circle cx="66" cy="66" r={R} fill="none" stroke="#f4d096" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${pct * progreso * C} ${C}`} />

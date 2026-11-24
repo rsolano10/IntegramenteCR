@@ -13,6 +13,7 @@ import { ProductTour } from "../ui/ProductTour";
 import { familiarTourSteps } from "../../lib/tourSteps";
 import { useProductTour } from "../../lib/useProductTour";
 import { useCurrentPlanMeta, usePlan } from "../../lib/usePlan";
+import { semanaTerminada } from "../../lib/planWeek";
 import { NuevaSemanaModal } from "../ui/NuevaSemanaModal";
 import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
 import { waEquipo } from "../../lib/whatsapp";
@@ -133,7 +134,7 @@ function SaludoDelDia({ nombre, paciente }: { nombre: string; paciente: string |
         {paciente && (
           <p className="m-0 mt-1.5 inline-flex items-center gap-2 rounded-full bg-white border border-borde pl-2 pr-3.5 py-1 text-[15px] text-tinta-suave">
             <img src="/marca/isotipo.png" alt="" aria-hidden="true" className="w-[18px] h-auto" />
-            El plan de <strong className="font-semibold text-tinta">{paciente}</strong>
+            Hoy acompañás a <strong className="font-semibold text-tinta">{paciente}</strong>
           </p>
         )}
       </div>
@@ -243,6 +244,8 @@ export function FamiliarShell() {
           planMeta &&
           planDias &&
           planDias.some((d) => d.tasks.length > 0) &&
+          // Una semana que ya terminó no se anuncia como «nueva».
+          !semanaTerminada(planMeta.publish_at) &&
           semanaCerrada !== planMeta.id &&
           semanaNuevaPendiente(userId, planMeta.id)
         ) {

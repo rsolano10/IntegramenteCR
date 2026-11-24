@@ -5,6 +5,8 @@ export interface AccountMenuItem {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  /** Título del grupo: se muestra antes del primer ítem de cada grupo. */
+  seccion?: string;
 }
 
 export function AccountMenu({
@@ -86,9 +88,13 @@ export function AccountMenu({
               )}
             </div>
             <div className="grid py-1.5">
-              {items.map((item) => (
+              {items.map((item, i) => (
+                <div key={item.label} className="contents">
+                {item.seccion && item.seccion !== items[i - 1]?.seccion && (
+                  <p className={`m-0 px-4 pb-1 text-[11.5px] font-semibold tracking-[0.12em] uppercase text-tinta-tenue ${i > 0 ? "pt-3 mt-1.5 border-t border-borde-suave" : "pt-1.5"}`}>{item.seccion}</p>
+                )}
+                {!item.seccion && items[i - 1]?.seccion && <span aria-hidden="true" className="block mt-1.5 mb-1 border-t border-borde-suave" />}
                 <button
-                  key={item.label}
                   type="button"
                   role="menuitem"
                   onClick={() => {
@@ -99,6 +105,7 @@ export function AccountMenu({
                 >
                   {item.label}
                 </button>
+                </div>
               ))}
             </div>
           </div>

@@ -117,3 +117,29 @@ export function diaConFecha(dia: string, fecha: Date | null): string {
   const d = dia.toLowerCase();
   return fecha ? `el ${d} ${fecha.getDate()} de ${fecha.toLocaleDateString("es-CR", { month: "long" })}` : `el ${d}`;
 }
+
+// ¿La semana de un plan ya terminó? (su último día quedó antes de hoy).
+// Si la clínica todavía no publicó la siguiente, la familia no debe ver la
+// semana vieja como si fuera la actual.
+export function semanaTerminada(publishAt: string | null | undefined, ahora: Date = new Date()): boolean {
+  if (!publishAt) return false;
+  const dias = weekDays(new Date(publishAt));
+  const ultimo = dias[dias.length - 1]?.date;
+  return !!ultimo && atMidnight(ultimo).getTime() < hoyEnCostaRica(ahora).getTime();
+}
+
+// «15 al 21 de noviembre», o «29 de octubre al 4 de noviembre»: los días
+// reales que cubre un plan (un plan publicado un sábado dura dos días).
+export function rangoSemana(publishAt: string): string {
+  const dias = weekDays(new Date(publishAt));
+  const a = dias[0].date;
+  const b = dias[dias.length - 1].date;
+  const mes = (d: Date) => d.toLocaleDateString("es-CR", { month: "long" });
+  if (a.getTime() === b.getTime()) return `${a.getDate()} de ${mes(a)}`;
+  return mes(a) === mes(b) ? `${a.getDate()} al ${b.getDate()} de ${mes(b)}` : `${a.getDate()} de ${mes(a)} al ${b.getDate()} de ${mes(b)}`;
+}
+
+// «1 actividad hecha» / «3 de 9 actividades hechas».
+export function actividadesHechas(hechas: number, total: number): string {
+  return `${hechas} de ${total} ${total === 1 ? "actividad hecha" : "actividades hechas"}`;
+}

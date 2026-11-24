@@ -5,6 +5,7 @@ import type { PlanDay, PlanTask, PlanDayStatus } from "./mockData";
 import type { AdaptacionPorEtapa, MediaResource, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
 import type { Progreso } from "./sesiones/tipos";
+import { hoyEnCostaRica, semanaTerminada, weekDays } from "./planWeek";
 
 const DIAS_BY_WEEKDAY = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const DIAS_ORDER = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -187,14 +188,24 @@ export function useActividadesSugeridas() {
   });
 }
 
-function groupIntoDays(rows: PlanTaskRow[]): PlanDay[] {
-  const today = currentDia();
+// «Hoy» por la FECHA real (inicio del plan + día de la semana), no solo por
+// el nombre del día: si la semana del plan ya terminó y la clínica no
+// publicó la siguiente, ningún día es hoy (antes el martes de la semana
+// pasada aparecía como «hoy»).
+function groupIntoDays(rows: PlanTaskRow[], publishAt: string | null): PlanDay[] {
   const byDia = new Map<string, PlanTask[]>();
   for (const row of rows) {
     if (!byDia.has(row.dia)) byDia.set(row.dia, []);
     byDia.get(row.dia)!.push(toPlanTask(row));
   }
-  return DIAS_ORDER.filter((dia) => byDia.has(dia)).map((dia) => ({ dia, isToday: dia === today, tasks: byDia.get(dia)! }));
+  const hoy = hoyEnCostaRica().getTime();
+  const fechas = new Map((publishAt ? weekDays(new Date(publishAt)) : []).map((d) => [d.dia, d.date.getTime()]));
+  const today = currentDia();
+  return DIAS_ORDER.filter((dia) => byDia.has(dia)).map((dia) => ({
+    dia,
+    isToday: publishAt ? fechas.get(dia) === hoy && !semanaTerminada(publishAt) : dia === today,
+    tasks: byDia.get(dia)!,
+  }));
 }
 
 // Real Supabase-backed replacement for the local Zustand demo plan — reads
@@ -207,7 +218,7 @@ export function usePlan(patientId: string | undefined) {
     queryFn: async () => {
       const { data: plan, error: planError } = await supabase
         .from("plans")
-        .select("id")
+        .select("id, publish_at")
         .eq("patient_id", patientId!)
         .eq("status", "published")
         .lte("publish_at", new Date().toISOString())
@@ -226,7 +237,7 @@ export function usePlan(patientId: string | undefined) {
         .order("sort_order", { ascending: true });
       if (tasksError) throw tasksError;
 
-      return groupIntoDays((tasks ?? []) as PlanTaskRow[]);
+      return groupIntoDays((tasks ?? []) as PlanTaskRow[], plan.publish_at as string);
     },
     enabled: !!patientId,
   });
@@ -305,7 +316,9 @@ export function usePendingReviews(patientId: string | undefined) {
         const { data: tasks, error: tasksError } = await supabase.from("plan_tasks").select("estado").eq("plan_id", p.id);
         if (tasksError) throw tasksError;
         const allDone = (tasks ?? []).length > 0 && tasks!.every((t) => t.estado !== "pendiente" && t.estado !== "futuro");
-        if (allDone) results.push({ id: p.id, publishAt: p.publish_at });
+        // Se puede evaluar cuando todo está registrado o cuando la semana ya
+        // terminó (lo mismo que ofrece «Evaluar» en Mi semana).
+        if (allDone || semanaTerminada(p.publish_at)) results.push({ id: p.id, publishAt: p.publish_at });
       }
       return results;
     },

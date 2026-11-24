@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { PlanTask } from "../../lib/mockData";
 import { CHIP_ESTADO, ETIQUETA_ESTADO, estaRegistrada } from "../../lib/estadoActividad";
 import { duracionCorta } from "../../lib/duracion";
-import { moduloLabel, temaDeTarea } from "../../lib/modulos";
+import { moduloLabel } from "../../lib/modulos";
 import { IconoActividad } from "./IconoActividad";
 
 // La tarjeta de una actividad, la misma en Hoy y en Mi semana (familia y
@@ -24,7 +24,6 @@ export function TarjetaActividad({
 }) {
   const registrada = estaRegistrada(task);
   const etiqueta = ETIQUETA_ESTADO[task.estado];
-  const tema = temaDeTarea(task);
   const datos = [task.modulo ? moduloLabel[task.modulo] : null, duracionCorta(task.duracion)].filter(Boolean).join(" · ");
 
   return (
@@ -40,7 +39,7 @@ export function TarjetaActividad({
           <span className={`block font-bold uppercase tracking-[0.12em] text-verde-profundo ${large ? "text-[15px]" : "text-[13px]"}`}>Próxima</span>
         )}
         {task.hora && (
-          <span className={`block font-semibold leading-snug whitespace-nowrap ${large ? "text-[17px]" : "text-[14.5px]"}`} style={{ color: registrada ? undefined : tema.ink }}>
+          <span className={`block font-semibold leading-snug whitespace-nowrap ${large ? "text-[17px]" : "text-[14.5px]"} ${registrada ? "text-tinta-suave" : "text-verde-profundo"}`}>
             {task.hora}
           </span>
         )}

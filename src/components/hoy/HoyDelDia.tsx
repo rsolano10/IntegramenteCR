@@ -148,7 +148,7 @@ export function CierreDelDia({ pendientes, siguiente, size = "compact", extras }
 
 // ─── Estado vacío ───
 
-export function DiaLibre({ size = "compact", mensaje, extras }: { size?: HoySize; mensaje: string; extras?: string }) {
+export function DiaLibre({ size = "compact", titulo = "Hoy es un día libre", mensaje, extras }: { size?: HoySize; titulo?: string; mensaje: string; extras?: string }) {
   const large = size === "large";
   return (
     <div className="rounded-[26px] bg-white border border-borde px-6 py-8 text-center grid justify-items-center gap-3">
@@ -157,7 +157,7 @@ export function DiaLibre({ size = "compact", mensaje, extras }: { size?: HoySize
         <circle cx="32" cy="28" r="9" fill="#f4d096" />
         <path d="M14 44c5-6 11-9 18-9s13 3 18 9" stroke="#6a969c" strokeWidth="3" strokeLinecap="round" />
       </svg>
-      <p className={`m-0 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>Hoy es un día libre</p>
+      <p className={`m-0 font-serif text-tinta ${large ? "text-[24px]" : "text-[20px]"}`}>{titulo}</p>
       <p className={`m-0 text-tinta-suave max-w-[28em] ${large ? "text-[18px]" : "text-[15px]"}`}>{mensaje}</p>
       {extras && <EnlaceExtras to={extras} />}
     </div>

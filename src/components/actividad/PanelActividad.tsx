@@ -46,6 +46,8 @@ export function PanelActividad({
 }) {
   const navigate = useNavigate();
   const [preguntando, setPreguntando] = useState(false);
+  // La familia en celular tiene el menú inferior fijo; el botón va encima.
+  const conMenuInferior = !demo && !large && typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
   const guion = guionDe(task.codigo);
   const tema = task.modulo ? moduloTheme[task.modulo] : moduloTheme.bienvenida;
   const hecha = ETIQUETA_ESTADO[task.estado] ?? null;
@@ -119,8 +121,17 @@ export function PanelActividad({
         <span className="block clear-both" aria-hidden="true" />
       </section>
 
-      {/* La ciencia de esta actividad */}
-      {ciencia && <CienciaActividad ciencia={ciencia} large={large} />}
+      {/* Lo que contaron al registrarla */}
+      {hecha && task.comentario && (
+        <section className="rounded-[22px] bg-white border border-borde px-4 py-3.5">
+          <p className={`m-0 mb-1 tracking-[0.12em] uppercase font-semibold text-tinta-tenue ${t.seccion}`}>Lo que contaron</p>
+          <p className={`m-0 leading-relaxed text-tinta ${t.cuerpo}`}>«{task.comentario}»</p>
+        </section>
+      )}
+
+      {/* En qué situación está (era para otro día, es práctica…): arriba,
+          para entender el botón antes de llegar a él. */}
+      {accion.nota && <p className={`m-0 rounded-2xl bg-campo border border-borde-suave px-4 py-3 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{accion.nota}</p>}
 
       {/* Lo que mandó el equipo */}
       {task.notaClinica && (
@@ -185,13 +196,20 @@ export function PanelActividad({
         </section>
       )}
 
-      {/* Al final, la acción */}
-      <div className="grid gap-2 pt-1">
-        {accion.nota && <p className={`m-0 rounded-2xl bg-campo border border-borde-suave px-4 py-3 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14.5px]"}`}>{accion.nota}</p>}
+      {/* La ciencia, después de cómo se hace: resumida, con «Leer más». */}
+      {ciencia && <CienciaActividad ciencia={ciencia} large={large} compacta />}
+
+      {/* La acción, siempre a mano: fija abajo (sobre el menú inferior en
+          celular) mientras se lee la actividad. */}
+      <div
+        className="sticky z-10 -mx-2 px-2 pt-4 pb-2 bg-[linear-gradient(to_top,var(--color-fondo-papel)_70%,transparent)]"
+        style={{ bottom: conMenuInferior ? "calc(4.75rem + env(safe-area-inset-bottom, 0px))" : "0.5rem" }}
+      >
         <button
           type="button"
           onClick={accion.onClick}
           className={`flex items-center justify-center gap-2.5 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer hover:bg-tinta transition-colors ${large ? "min-h-16 text-[21px]" : "min-h-14 text-[17px]"}`}
+          style={{ width: "100%" }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M5 3.2v9.6a.6.6 0 0 0 .92.5l7.4-4.8a.6.6 0 0 0 0-1L5.92 2.7A.6.6 0 0 0 5 3.2Z" />

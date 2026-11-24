@@ -10,12 +10,7 @@ import { CajaAvance } from "../../components/ui/CajaAvance";
 import { TarjetaActividad } from "../../components/actividad/TarjetaActividad";
 import { AvisoEvaluarSemana } from "../../components/familiar/AvisoEvaluarSemana";
 import { contarHechas } from "../../lib/estadoActividad";
-
-// «15 al 21 de noviembre», o «29 de octubre al 4 de noviembre».
-function rangoDeFechas(a: Date, b: Date) {
-  const mes = (d: Date) => d.toLocaleDateString("es-CR", { month: "long" });
-  return mes(a) === mes(b) ? `${a.getDate()} al ${b.getDate()} de ${mes(b)}` : `${a.getDate()} de ${mes(a)} al ${b.getDate()} de ${mes(b)}`;
-}
+import { rangoSemana, semanaTerminada } from "../../lib/planWeek";
 
 export function Plan() {
   const { data: myPatient } = useMyPatient();
@@ -28,14 +23,19 @@ export function Plan() {
   return (
     <div className="grid gap-8">
       {/* Evaluación semanal: solo aparece cuando corresponde. */}
-      {pendientes && pendientes.length > 0 && <AvisoEvaluarSemana to={`/app/revision?plan=${pendientes[0].id}`} />}
+      {pendientes && pendientes.length > 0 && !semanaTerminada(planMeta?.publish_at) && <AvisoEvaluarSemana to={`/app/revision?plan=${pendientes[0].id}`} />}
 
       {!plan || plan.length === 0 ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Todavía no hay un plan asignado.</p>
       ) : (
         // Toda actividad se abre en su pantalla (la misma que desde Hoy);
         // «Volver» regresa a Mi semana.
-        <EstaSemana plan={plan} publishAt={planMeta?.publish_at ?? null} />
+        <EstaSemana
+          plan={plan}
+          publishAt={planMeta?.publish_at ?? null}
+          nombre={myPatient?.nombre?.split(" ")[0] ?? null}
+          evaluar={pendientes && pendientes.length > 0 ? `/app/revision?plan=${pendientes[0].id}` : null}
+        />
       )}
 
       {myPatient?.id && <SemanasAnteriores patientId={myPatient.id} />}
@@ -48,7 +48,8 @@ export function Plan() {
 // La semana como línea de tiempo: encabezado con el avance, y cada día con
 // su fecha "de calendario" a la izquierda — hoy resaltado, días pasados más
 // tenues — y sus actividades a la derecha.
-function EstaSemana({ plan, publishAt }: { plan: PlanDay[]; publishAt: string | null }) {
+function EstaSemana({ plan, publishAt, nombre, evaluar }: { plan: PlanDay[]; publishAt: string | null; nombre: string | null; evaluar: string | null }) {
+  const terminada = semanaTerminada(publishAt);
   const fechas = new Map((publishAt ? weekDays(new Date(publishAt)) : []).map((d) => [d.dia, d.date]));
   const todas = plan.flatMap((d) => d.tasks);
   const hechas = contarHechas(todas);
@@ -58,16 +59,26 @@ function EstaSemana({ plan, publishAt }: { plan: PlanDay[]; publishAt: string | 
   const dias = plan
     .filter((d) => d.tasks.length > 0)
     .sort((a, b) => (fechas.get(a.dia)?.getTime() ?? 0) - (fechas.get(b.dia)?.getTime() ?? 0));
-  const primera = fechas.size ? [...fechas.values()][0] : null;
-  const ultima = fechas.size ? [...fechas.values()][fechas.size - 1] : null;
-  const rango = primera && ultima ? rangoDeFechas(primera, ultima) : "Tu plan";
+  const rango = publishAt ? rangoSemana(publishAt) : "Tu plan";
   const hoyIdx = dias.findIndex((d) => d.isToday);
 
   return (
     <section>
+      {/* Semana terminada sin la siguiente publicada: se muestra como «la
+          última», con aviso de que el equipo prepara la próxima. */}
+      {terminada && (
+        <p className="m-0 mb-4 rounded-[22px] border border-borde bg-white px-5 py-4 text-[15.5px] leading-relaxed text-tinta">
+          <strong className="font-semibold">Estamos preparando la próxima semana.</strong> El equipo está armando las actividades{nombre ? ` de ${nombre}` : ""}. Te avisamos cuando estén listas.
+        </p>
+      )}
+      {terminada && evaluar && (
+        <div className="mb-4">
+          <AvisoEvaluarSemana to={evaluar} completa={todas.length > 0 && todas.every((t) => t.estado !== "pendiente" && t.estado !== "futuro")} />
+        </div>
+      )}
       <div className="mb-6">
         <CajaAvance
-          antetitulo="Esta semana"
+          antetitulo={terminada ? "La última semana" : "Esta semana"}
           hechas={hechas}
           total={todas.length}
           titulo={rango}
@@ -80,8 +91,16 @@ function EstaSemana({ plan, publishAt }: { plan: PlanDay[]; publishAt: string | 
           const fecha = fechas.get(day.dia);
           const pasado = hoyIdx >= 0 && i < hoyIdx;
           return (
-            <li key={day.dia} className={`grid grid-cols-[52px_1fr] sm:grid-cols-[64px_1fr] gap-3 sm:gap-4 ${pasado ? "opacity-75" : ""}`}>
-              <div className="flex flex-col items-center">
+            <li key={day.dia} className={`grid gap-2.5 sm:grid-cols-[64px_1fr] sm:gap-4 ${pasado ? "opacity-75" : ""}`}>
+              {/* Celular: el día como encabezado, así las tarjetas usan todo el ancho. */}
+              <p className={`sm:hidden m-0 flex items-center gap-2 text-[15px] font-semibold ${day.isToday ? "text-verde-profundo" : "text-tinta-suave"}`}>
+                <span className="first-letter:uppercase">
+                  {day.dia}
+                  {fecha ? ` ${fecha.getDate()}` : ""}
+                </span>
+                {day.isToday && <span className="rounded-full bg-verde-profundo px-2.5 py-0.5 text-[12px] font-bold uppercase tracking-wider text-white">Hoy</span>}
+              </p>
+              <div className="hidden sm:flex flex-col items-center">
                 <div
                   className={`w-[52px] sm:w-[60px] rounded-2xl text-center py-2 ${
                     day.isToday ? "bg-verde-profundo text-white shadow-elevada" : "bg-white border border-borde text-tinta"

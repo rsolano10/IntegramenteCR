@@ -1,3 +1,4 @@
+import { actividadesHechas } from "../../lib/planWeek";
 // La caja de avance, la misma en Hoy y en Mi semana: verde de la marca, el
 // anillo a la izquierda (trazo mostaza) con «n de total» adentro, y a la
 // derecha el título y el detalle. El anillo cuenta las actividades hechas
@@ -54,7 +55,7 @@ export function CajaAvance({
     <section
       className="relative overflow-hidden rounded-[26px] px-5 py-5 sm:px-6 text-white flex items-center gap-4.5"
       style={{ backgroundImage: "linear-gradient(140deg, #4f7d83 0%, #3f6a70 55%, #2f5459 100%)" }}
-      aria-label={`${hechas} de ${total} actividades hechas`}
+      aria-label={actividadesHechas(hechas, total)}
     >
       <span aria-hidden="true" className="absolute -right-10 -top-12 w-40 h-40 rounded-full bg-white/[0.07]" />
       <span aria-hidden="true" className="absolute right-10 -bottom-14 w-28 h-28 rounded-full bg-mostaza-vital/15" />

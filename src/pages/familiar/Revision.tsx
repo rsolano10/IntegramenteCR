@@ -8,10 +8,9 @@ import { OptionGroup } from "../../components/ui/OptionGroup";
 import { Button } from "../../components/ui/Button";
 import { BotonVolver } from "../../components/ui/BotonVolver";
 import { Cargando } from "../../components/ui/Cargando";
+import { rangoSemana } from "../../lib/planWeek";
 
-function formatWeekOf(publishAt: string) {
-  return new Date(publishAt).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
-}
+const formatWeekOf = rangoSemana;
 
 export function Revision() {
   const navigate = useNavigate();
@@ -51,7 +50,7 @@ export function Revision() {
                 onClick={() => navigate(`${revisionBase}?plan=${p.id}`)}
                 className="text-left flex items-center justify-between gap-3 bg-white border border-borde rounded-2xl px-4 py-3.5 cursor-pointer hover:border-verde-serenidad"
               >
-                <span className="text-[15px] font-semibold text-tinta">Semana del {formatWeekOf(p.publishAt)}</span>
+                <span className="text-[15px] font-semibold text-tinta">{formatWeekOf(p.publishAt)}</span>
                 <span className="text-[14px] font-semibold text-verde-profundo">Evaluar ›</span>
               </button>
             ))}

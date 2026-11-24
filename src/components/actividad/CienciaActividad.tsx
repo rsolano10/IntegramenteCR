@@ -1,3 +1,4 @@
+import { useState } from "react";
 // «La ciencia de esta actividad», con la línea gráfica de IntegraMente: el
 // verde serenidad y el beige de la marca, las gotas del isotipo como fondo,
 // la idea principal en la serif de la marca, el cierre con el acento
@@ -22,7 +23,10 @@ export interface TextoCiencia {
   cierre?: string;
 }
 
-export function CienciaActividad({ ciencia, large = false }: { ciencia: TextoCiencia; large?: boolean }) {
+// `compacta`: solo el titular y «Leer más» (en el tablero de la actividad,
+// para que lo primero sea cómo se hace).
+export function CienciaActividad({ ciencia, large = false, compacta = false }: { ciencia: TextoCiencia; large?: boolean; compacta?: boolean }) {
+  const [abierta, setAbierta] = useState(!compacta);
   let titular = sinEmojis(ciencia.gancho ?? "");
   let cuerpo = sinEmojis(ciencia.evidencia ?? "");
   const cierre = sinEmojis(ciencia.cierre ?? "");
@@ -45,9 +49,18 @@ export function CienciaActividad({ ciencia, large = false }: { ciencia: TextoCie
       <span className="relative mt-3 block h-[3px] w-12 rounded-full bg-mostaza-vital" aria-hidden="true" />
 
       {titular && <p className={`relative m-0 mt-3 font-serif leading-snug text-tinta ${large ? "text-[26px]" : "text-[22px]"}`}>{titular}</p>}
-      {cuerpo && <p className={`relative m-0 mt-2.5 leading-relaxed text-tinta-suave ${large ? "text-[19px]" : "text-[15.5px]"}`}>{cuerpo}</p>}
+      {abierta && cuerpo && <p className={`relative m-0 mt-2.5 leading-relaxed text-tinta-suave ${large ? "text-[19px]" : "text-[15.5px]"}`}>{cuerpo}</p>}
+      {!abierta && (cuerpo || cierre) && (
+        <button
+          type="button"
+          onClick={() => setAbierta(true)}
+          className={`relative mt-2 min-h-11 p-0 border-0 bg-transparent font-sans font-semibold text-verde-profundo underline underline-offset-4 cursor-pointer ${large ? "text-[18px]" : "text-[15.5px]"}`}
+        >
+          Leer más
+        </button>
+      )}
 
-      {cierre && (
+      {abierta && cierre && (
         <div className="relative mt-4 flex items-stretch gap-3 rounded-2xl bg-white/80 px-4 py-3 shadow-[0_6px_16px_-12px_rgba(31,51,56,0.5)]">
           <span className="w-1.5 shrink-0 rounded-full bg-mostaza-vital" aria-hidden="true" />
           <p className={`m-0 font-semibold leading-snug text-tinta ${large ? "text-[19px]" : "text-[15.5px]"}`}>{cierre}</p>

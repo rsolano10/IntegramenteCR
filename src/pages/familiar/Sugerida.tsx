@@ -19,7 +19,9 @@ import { ClaraElige } from "../../components/clara/ClaraElige";
 // temas). Cada actividad se abre con el mismo tablero y la misma sesión
 // guiada que las del plan, en modo práctica (sin registro).
 
-const ORDEN_TEMAS: ResourceModulo[] = ["cognicion", "movimiento", "gerontogimnasia", "musica", "reminiscencia", "sentidos", "nutricion", "bienvenida"];
+// Sin «Bienvenida»: son presentaciones de la app y de las áreas, no un tipo
+// de actividad (siguen en el plan de la primera semana).
+const ORDEN_TEMAS: ResourceModulo[] = ["cognicion", "movimiento", "gerontogimnasia", "musica", "reminiscencia", "sentidos", "nutricion"];
 const POR_PAGINA = 10;
 
 // Una idea distinta cada día, igual para toda la jornada.
@@ -56,7 +58,8 @@ export function Extras() {
   const temaParam = params.get("tema") as ResourceModulo | null;
   const tema = temaParam && moduloLabel[temaParam] ? temaParam : null;
   const temas = ORDEN_TEMAS.map((m) => ({ m, n: recursos.filter((r) => r.modulo === m).length })).filter((t) => t.n > 0);
-  const idea = ideaDelDia(recursos);
+  // La idea del día, solo entre actividades (nunca una presentación).
+  const idea = ideaDelDia(recursos.filter((r) => r.modulo !== "bienvenida"));
 
   if (isLoading) return <Cargando />;
 
