@@ -110,6 +110,10 @@ export function PlanificadorTab({
       ? `¡Hola! Ya revisamos con cuidado el perfil de ${nombre} y armamos su programa personalizado. Esta semana empezamos suave, con actividades pensadas para sus gustos. Cualquier duda, escribinos por WhatsApp. Estamos para acompañarles.`
       : `¡Hola! Ya está lista la semana de ${nombre}, con actividades pensadas para sus gustos. Cualquier duda, escribinos por WhatsApp.`,
   );
+  // Mensaje sugerido con IA (mensaje-semana). Se pide solo mientras la
+  // clínica no lo haya editado a mano; «Sugerir otro» lo pide de nuevo.
+  const [editado, setEditado] = useState(false);
+  const [ia, setIa] = useState<{ estado: "idle" | "cargando" | "ok" | "sin_ia" | "error"; nota?: string }>({ estado: "idle" });
   const [avisar, setAvisar] = useState(true);
   const [vistaCompleta, setVistaCompleta] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -184,6 +188,8 @@ export function PlanificadorTab({
     setTarget(t);
     setDrafts([]);
     setError("");
+    setEditado(false);
+    setIa({ estado: "idle" });
     setMensaje(
       t.kind === "plan" && new Date(t.plan.publish_at).getTime() <= now
         ? `¡Hola! Agregamos actividades a la semana de ${nombre}. Ya las pueden ver en la app.`
@@ -263,6 +269,50 @@ export function PlanificadorTab({
   }
 
   const visibleDesde = publishDate.getTime() > now ? publishDate : null;
+
+  // Pide a la IA el mensaje para la familia (solo semanas nuevas). `forzar`:
+  // el botón «Sugerir otro», aunque el texto se haya editado.
+  async function sugerirMensaje(forzar = false) {
+    if (target.kind !== "nueva" || draftsInWeek.length === 0 || (editado && !forzar)) return;
+    setIa({ estado: "cargando" });
+    const mes = (d: Date) => d.toLocaleDateString("es-CR", { month: "long" });
+    const a = days[0].date;
+    const b = days[days.length - 1].date;
+    const semana = mes(a) === mes(b) ? `${a.getDate()} al ${b.getDate()} de ${mes(b)}` : `${a.getDate()} de ${mes(a)} al ${b.getDate()} de ${mes(b)}`;
+    try {
+      const { data, error: e } = await supabase.functions.invoke<{ mensaje: string | null; motivo: string | null }>("mensaje-semana", {
+        body: {
+          patientId,
+          primeraVez: isFirstAssignment,
+          semana,
+          actividades: draftsInWeek.map((t) => ({ titulo: t.titulo, dia: t.dia, area: t.modulo ? moduloLabel[t.modulo] : null })),
+        },
+      });
+      if (e || !data) throw e ?? new Error("sin respuesta");
+      if (data.mensaje) {
+        setMensaje(data.mensaje);
+        setEditado(false);
+        setIa({ estado: "ok" });
+      } else {
+        setIa({
+          estado: "sin_ia",
+          nota: data.motivo === "sin_consentimiento" ? "La familia no autorizó el uso de IA: el mensaje es el de siempre." : "La IA no pudo redactarlo esta vez: quedó el mensaje de siempre.",
+        });
+      }
+    } catch {
+      setIa({ estado: "error", nota: "La IA no respondió: quedó el mensaje de siempre." });
+    }
+  }
+
+  // Automático: al cambiar las actividades de una semana nueva (con una
+  // pausa, para no pedirlo por cada actividad que se agrega).
+  const firmaSemana = draftsInWeek.map((t) => `${t.dia}|${t.titulo}`).join(";");
+  useEffect(() => {
+    if (target.kind !== "nueva" || !firmaSemana || editado) return;
+    const t = window.setTimeout(() => sugerirMensaje(), 1500);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaSemana, target.kind]);
   const fechaLarga = (d: Date) => d.toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long" });
 
   async function publish() {
@@ -627,10 +677,36 @@ export function PlanificadorTab({
           <textarea
             id="mensaje-familia"
             value={mensaje}
-            onChange={(e) => setMensaje(e.target.value)}
+            onChange={(e) => {
+              setMensaje(e.target.value);
+              setEditado(true);
+            }}
             rows={4}
             className="w-full rounded-2xl border-[1.5px] border-verde-serenidad bg-verde-tenue px-4 py-3 font-sans text-[14.5px] leading-relaxed text-tinta resize-y"
           />
+          )}
+          {target.kind === "nueva" && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className={`m-0 text-[12.5px] leading-snug ${ia.estado === "sin_ia" || ia.estado === "error" ? "text-tinta-tenue" : "text-verde-profundo"}`}>
+                {ia.estado === "cargando"
+                  ? "✦ Redactando con IA…"
+                  : ia.estado === "ok"
+                    ? "✦ Sugerido con IA a partir de esta semana y de cómo les fue. Revisalo antes de publicar."
+                    : ia.estado === "sin_ia" || ia.estado === "error"
+                      ? ia.nota
+                      : draftsInWeek.length === 0
+                        ? "Al agregar actividades, la IA propone un mensaje personalizado."
+                        : ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => sugerirMensaje(true)}
+                disabled={ia.estado === "cargando" || draftsInWeek.length === 0}
+                className="min-h-9 px-3.5 rounded-full border-[1.5px] border-verde-profundo bg-white text-[13px] font-semibold text-verde-profundo cursor-pointer hover:bg-verde-tenue disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ✦ {ia.estado === "ok" ? "Sugerir otro" : "Sugerir con IA"}
+              </button>
+            </div>
           )}
           {(target.kind === "nueva" || avisar) && (
           <div className="flex flex-wrap gap-2">
