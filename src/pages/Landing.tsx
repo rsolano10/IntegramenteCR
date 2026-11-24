@@ -806,25 +806,8 @@ export function Landing() {
                           <Icono name={a.icono} className="w-20 h-20 opacity-70" />
                         </div>
                       )}
-                      {/* La presentación del área, en video. */}
-                      <button
-                        type="button"
-                        onClick={() => setVideo(a.video)}
-                        aria-label={`Ver el video de ${a.t}`}
-                        className="group/video absolute inset-0 w-full h-full p-0 border-0 bg-transparent cursor-pointer"
-                      >
-                        <span aria-hidden="true" className="absolute inset-0 bg-black/10 transition-colors group-hover/video:bg-black/20" />
-                        <span
-                          aria-hidden="true"
-                          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white/35 backdrop-blur-[2px] ring-1 ring-white/60 text-white flex items-center justify-center shadow-[0_10px_28px_-10px_rgba(0,0,0,.5)] transition-[transform,background-color] duration-300 group-hover/video:scale-105 group-hover/video:bg-white/50"
-                        >
-                          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" className="ml-1 drop-shadow">
-                            <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
-                          </svg>
-                        </span>
-                      </button>
                       <span
-                        className="pointer-events-none absolute right-3.5 top-3.5 w-11 h-11 rounded-full flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] ring-2 ring-white/70"
+                        className="absolute right-3.5 top-3.5 w-11 h-11 rounded-full flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] ring-2 ring-white/70"
                         style={{ background: a.fondo, color: a.tinta }}
                       >
                         <Icono name={a.icono} className="w-6 h-6" />
@@ -859,6 +842,16 @@ export function Landing() {
                           )}
                         </span>
                         Ver una actividad de ejemplo
+                      </button>
+                      {/* La presentación del área, en video. */}
+                      <button type="button" onClick={() => setVideo(a.video)} className="-mt-3 self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer text-left whitespace-nowrap font-sans text-[15px] xl:text-[14.5px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad">
+                        <span aria-hidden="true" className="w-7 h-7 rounded-full bg-verde-tenue flex items-center justify-center no-underline">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="6.5" width="12.5" height="11" rx="2.5" />
+                            <path d="M15.5 10.5l5-3v9l-5-3z" />
+                          </svg>
+                        </span>
+                        Conocé el área en video
                       </button>
                     </div>
                     {/* Respaldo profesional, sutil. Alto fijo (hasta tres líneas)
