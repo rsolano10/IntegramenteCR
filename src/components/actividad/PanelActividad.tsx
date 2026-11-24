@@ -30,6 +30,7 @@ export function PanelActividad({
   large = false,
   onGuardarProgreso,
   practica = false,
+  demo,
 }: {
   task: PlanTask;
   dia: PlanDay;
@@ -40,6 +41,8 @@ export function PanelActividad({
   onGuardarProgreso?: (p: Progreso) => Promise<void>;
   // Una actividad sugerida, fuera del plan: se hace para practicar, sin registro.
   practica?: boolean;
+  // El ejemplo del home: «Empezar» abre la sesión ahí mismo, con su nota.
+  demo?: { onEmpezar: () => void; nota: string };
 }) {
   const navigate = useNavigate();
   const [preguntando, setPreguntando] = useState(false);
@@ -72,7 +75,9 @@ export function PanelActividad({
   const ir = (modo: ModoInicio) => navigate(modo === "normal" ? rutaPasos : `${rutaPasos}?modo=${modo}`);
 
   // Qué dice el botón y qué hace, según el estado de la actividad.
-  const accion = practica
+  const accion = demo
+    ? { texto: "Empezar", nota: demo.nota, onClick: demo.onEmpezar }
+    : practica
     ? { texto: "Empezar", nota: "Es una actividad extra, fuera del plan: la hacen para practicar y no se registra.", onClick: () => ir("sin-registro") }
     : hoyPendiente
     ? { texto: "Empezar", nota: null, onClick: () => ir("normal") }

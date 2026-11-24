@@ -880,7 +880,11 @@ export function Landing() {
                         className="mt-auto self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer text-left whitespace-nowrap font-sans text-[15px] xl:text-[14.5px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad"
                       >
                         <span aria-hidden="true" className="w-7 h-7 rounded-full bg-verde-tenue flex items-center justify-center no-underline">
-                          {a.ejemplo.tipo === "video" ? (
+                          {a.ejemplo.tipo === "juego" ? (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.4l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" />
+                            </svg>
+                          ) : a.ejemplo.tipo === "video" ? (
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
                             </svg>

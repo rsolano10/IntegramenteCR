@@ -28,6 +28,7 @@ export function SesionGuiada({
   registro = true,
   rutaEmergencia,
   inicio = -1,
+  conClara = true,
 }: {
   guion: Guion;
   datos: DatosSesion;
@@ -44,6 +45,8 @@ export function SesionGuiada({
   rutaEmergencia?: string;
   // Escena con que abre (-1: la portada). Para revisar una escena suelta.
   inicio?: number;
+  // Sin cuenta (el ejemplo del home) no hay Clara: necesita la sesión.
+  conClara?: boolean;
 }) {
   const large = size === "large";
   const [idx, setIdx] = useState(inicio); // -1: portada
@@ -77,6 +80,8 @@ export function SesionGuiada({
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    // En el ejemplo del home, la sesión scrollea dentro de su ventana.
+    document.querySelector("[data-sesion-scroll]")?.scrollTo(0, 0);
     medida.current.maxIdx = Math.max(medida.current.maxIdx, idx);
   }, [idx]);
 
@@ -273,7 +278,7 @@ export function SesionGuiada({
               </div>
             )}
             {/* Después de los consejos: Clara, con el contexto de este paso. */}
-            <ClaraActividad
+            {conClara && <ClaraActividad
               quien={participante ? "participante" : "familia"}
               large={large}
               contexto={{
@@ -291,7 +296,7 @@ export function SesionGuiada({
                 indicacion: datos.indicacionIndividual,
                 porQue: datos.sabiasQue,
               }}
-            />
+            />}
           </div>
         </Hoja>
       )}

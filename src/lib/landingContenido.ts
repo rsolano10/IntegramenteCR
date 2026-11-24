@@ -189,11 +189,14 @@ export interface FotoArea {
 }
 
 // Actividad de ejemplo: el recurso real de la biblioteca, por código. El
-// home lo abre con la misma vista que la app (EjemploActividad.tsx).
+// home lo abre como en la app: el tablero y la sesión guiada o el juego
+// (EjemploActividad.tsx). Elegidas por vistosas y fáciles de entender:
+// La feria (juego), Sentarse y levantarse (video guiado), Hojas verdes
+// (elegir y armar) y Organicemos una salida (elegir y ordenar).
 export interface EjemploArea {
   codigo: string;
   // Solo para el ícono del enlace.
-  tipo: "video" | "ficha";
+  tipo: "video" | "ficha" | "juego";
 }
 
 export const areas: {
@@ -214,7 +217,7 @@ export const areas: {
     fondo: "#3f6a70",
     tinta: "#ffffff",
     foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
-    ejemplo: { codigo: "COG-004", tipo: "ficha" },
+    ejemplo: { codigo: "COG-037", tipo: "juego" },
     responsable: { area: "estimulación cognitiva", miembro: 2 },
   },
   {
@@ -234,7 +237,7 @@ export const areas: {
     fondo: "#a9c49f",
     tinta: "#1f3338",
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
-    ejemplo: { codigo: "PRE-002", tipo: "ficha" },
+    ejemplo: { codigo: "PRE-005", tipo: "ficha" },
     responsable: { area: "nutrición", miembro: 4 },
   },
   {
@@ -244,8 +247,9 @@ export const areas: {
     fondo: "#e8b5a1",
     tinta: "#1f3338",
     foto: { webp: "/areas/terapia-ocupacional.webp", jpg: "/areas/terapia-ocupacional.jpg", alt: "Una señora sonriente ordena piezas de madera sobre la mesa de su sala." },
-    // Mientras no haya recursos propios del área: una tarea cotidiana real.
-    ejemplo: { codigo: "COG-021", tipo: "ficha" },
+    // Mientras no haya recursos propios del área: organizar una salida
+    // real (elegirla y ordenar los pasos para prepararse).
+    ejemplo: { codigo: "COG-005", tipo: "ficha" },
     responsable: { area: "terapia ocupacional", miembro: 5 },
   },
 ];
