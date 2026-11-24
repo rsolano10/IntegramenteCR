@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { contarHechas } from "./estadoActividad";
+import { semanaTerminada } from "./planWeek";
 
 export interface SemanaAnterior {
   id: string;
@@ -34,7 +35,11 @@ export function useSemanasAnteriores(patientId: string | undefined, limite: numb
       if (limite !== null) q = q.range(0, limite); // la en curso + `limite` anteriores
       const { data, error, count } = await q;
       if (error) throw error;
-      const semanas = ((data ?? []) as Fila[]).slice(1).map((p) => {
+      const filas = (data ?? []) as Fila[];
+      // La primera es la semana en curso, salvo que ya haya terminado (sin
+      // otra publicada): entonces también va con las anteriores.
+      const saltar = filas.length > 0 && !semanaTerminada(filas[0].publish_at) ? 1 : 0;
+      const semanas = filas.slice(saltar, limite !== null ? saltar + limite : undefined).map((p) => {
         const tareas = p.plan_tasks ?? [];
         return {
           id: p.id,
@@ -44,7 +49,7 @@ export function useSemanasAnteriores(patientId: string | undefined, limite: numb
           hechas: contarHechas(tareas),
         } satisfies SemanaAnterior;
       });
-      return { semanas, totalAnteriores: Math.max(0, (count ?? 0) - 1) };
+      return { semanas, totalAnteriores: Math.max(0, (count ?? 0) - saltar) };
     },
     enabled: !!patientId,
   });

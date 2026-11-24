@@ -20,23 +20,36 @@ export function Plan() {
 
   if (loadingPlan) return <Cargando />;
 
+  // Sin semana en curso (la última ya terminó y no hay otra publicada): solo
+  // el aviso, sin el detalle de la semana pasada, que queda en «Semanas
+  // anteriores» como las demás.
+  const sinSemanaActual = semanaTerminada(planMeta?.publish_at);
+  const nombre = myPatient?.nombre?.split(" ")[0] ?? null;
+  // Evaluación semanal, solo cuando corresponde. Si la semana sigue en curso
+  // y está pendiente, es porque se hizo todo.
+  const aviso =
+    pendientes && pendientes.length > 0 ? (
+      <AvisoEvaluarSemana to={`/app/revision?plan=${pendientes[0].id}`} completa={!semanaTerminada(pendientes[0].publishAt)} />
+    ) : null;
+
   return (
     <div className="grid gap-8">
-      {/* Evaluación semanal: solo aparece cuando corresponde. */}
-      {pendientes && pendientes.length > 0 && !semanaTerminada(planMeta?.publish_at) && <AvisoEvaluarSemana to={`/app/revision?plan=${pendientes[0].id}`} />}
-
-      {!plan || plan.length === 0 ? (
+      {/* Con semana en curso, el aviso de evaluar va arriba de todo. */}
+      {!sinSemanaActual && aviso}
+      {sinSemanaActual ? (
+        <p className="m-0 rounded-[22px] border border-borde bg-white px-5 py-4 text-[15.5px] leading-relaxed text-tinta">
+          <strong className="font-semibold">Estamos preparando la próxima semana.</strong> El equipo está armando las actividades{nombre ? ` de ${nombre}` : ""}. Te avisamos cuando estén listas.
+        </p>
+      ) : !plan || plan.length === 0 ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Todavía no hay un plan asignado.</p>
       ) : (
         // Toda actividad se abre en su pantalla (la misma que desde Hoy);
         // «Volver» regresa a Mi semana.
-        <EstaSemana
-          plan={plan}
-          publishAt={planMeta?.publish_at ?? null}
-          nombre={myPatient?.nombre?.split(" ")[0] ?? null}
-          evaluar={pendientes && pendientes.length > 0 ? `/app/revision?plan=${pendientes[0].id}` : null}
-        />
+        <EstaSemana plan={plan} publishAt={planMeta?.publish_at ?? null} />
       )}
+
+      {/* Sin semana en curso, el aviso de evaluar va después del mensaje. */}
+      {sinSemanaActual && aviso}
 
       {myPatient?.id && <SemanasAnteriores patientId={myPatient.id} />}
 
@@ -48,8 +61,7 @@ export function Plan() {
 // La semana como línea de tiempo: encabezado con el avance, y cada día con
 // su fecha "de calendario" a la izquierda — hoy resaltado, días pasados más
 // tenues — y sus actividades a la derecha.
-function EstaSemana({ plan, publishAt, nombre, evaluar }: { plan: PlanDay[]; publishAt: string | null; nombre: string | null; evaluar: string | null }) {
-  const terminada = semanaTerminada(publishAt);
+function EstaSemana({ plan, publishAt }: { plan: PlanDay[]; publishAt: string | null }) {
   const fechas = new Map((publishAt ? weekDays(new Date(publishAt)) : []).map((d) => [d.dia, d.date]));
   const todas = plan.flatMap((d) => d.tasks);
   const hechas = contarHechas(todas);
@@ -64,21 +76,9 @@ function EstaSemana({ plan, publishAt, nombre, evaluar }: { plan: PlanDay[]; pub
 
   return (
     <section>
-      {/* Semana terminada sin la siguiente publicada: se muestra como «la
-          última», con aviso de que el equipo prepara la próxima. */}
-      {terminada && (
-        <p className="m-0 mb-4 rounded-[22px] border border-borde bg-white px-5 py-4 text-[15.5px] leading-relaxed text-tinta">
-          <strong className="font-semibold">Estamos preparando la próxima semana.</strong> El equipo está armando las actividades{nombre ? ` de ${nombre}` : ""}. Te avisamos cuando estén listas.
-        </p>
-      )}
-      {terminada && evaluar && (
-        <div className="mb-4">
-          <AvisoEvaluarSemana to={evaluar} completa={todas.length > 0 && todas.every((t) => t.estado !== "pendiente" && t.estado !== "futuro")} />
-        </div>
-      )}
       <div className="mb-6">
         <CajaAvance
-          antetitulo={terminada ? "La última semana" : "Esta semana"}
+          antetitulo="Esta semana"
           hechas={hechas}
           total={todas.length}
           titulo={rango}
