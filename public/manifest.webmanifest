@@ -1,0 +1,16 @@
+{
+  "name": "IntegraMente en Casa",
+  "short_name": "IntegraMente en Casa",
+  "description": "Un plan semanal de estimulación cognitiva para acompañar en casa.",
+  "lang": "es-CR",
+  "start_url": "/app/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f4e9",
+  "theme_color": "#3f6a70",
+  "icons": [
+    { "src": "/iconos/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/iconos/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/iconos/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
