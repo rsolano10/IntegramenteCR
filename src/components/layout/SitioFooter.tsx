@@ -35,11 +35,15 @@ export function SitioFooter() {
         </div>
         <div className="grid gap-2.5 text-[15px] content-start">
           <span className="text-[#a9b9bb] text-xs tracking-[0.14em] uppercase">Contacto</span>
-          <span>{contacto.telefono}</span>
+          <a href={`tel:${contacto.telefono.replace(/\s/g, "")}`} className="text-[#d3dcdd] py-2 md:py-0">
+            Llamadas · {contacto.telefono}
+          </a>
           <a href={whatsappHome.general} target="_blank" rel="noreferrer" className="text-[#d3dcdd] py-2 md:py-0">
             WhatsApp · {WHATSAPP_EQUIPO_VISIBLE}
           </a>
-          <span>{contacto.correo}</span>
+          <a href={`mailto:${contacto.correo}`} className="text-[#d3dcdd] py-2 md:py-0 break-all">
+            {contacto.correo}
+          </a>
           <span>Costa Rica</span>
         </div>
         <div className="grid gap-2.5 text-[15px] content-start">
@@ -48,7 +52,7 @@ export function SitioFooter() {
             Condiciones de uso
           </Link>
           <Link to="/legal/privacidad" className="text-[#d3dcdd] py-2 md:py-0">
-            Privacidad y datos
+            Política de privacidad
           </Link>
           <Link to="/legal/emergencias" className="text-[#d3dcdd] py-2 md:py-0">
             Emergencias

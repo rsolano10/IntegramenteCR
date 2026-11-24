@@ -88,6 +88,10 @@ export interface MiembroEquipo {
   nombre: string;
   // Cargo adicional, si hace falta mostrarlo aparte del área.
   cargo?: string;
+  // Grado académico y colegio profesional (ej. «MSc. en Neuropsicología ·
+  // Colegio de Psicólogos 1234»). Sin dato, no se muestra.
+  // TODO(IntegraMente): cargar la credencial de cada integrante.
+  credencial?: string;
   area: string;
   descripcion: string;
   // Foto en public/equipo/, en webp con respaldo jpg. Sin foto se muestra
@@ -178,6 +182,8 @@ export const programasHome = {
       "Registro de las actividades realizadas.",
     ],
     aclaracion: "No incluye sesiones profesionales ni valoración neuropsicológica.",
+    ideal: "Ideal para empezar ya y acompañar en casa.",
+    prueba: "Primera semana gratis · sin cobros automáticos",
   },
   sesiones: {
     nombre: "Con sesiones profesionales",
@@ -186,7 +192,9 @@ export const programasHome = {
     // Versión corta del texto del PO, para que la tarjeta mida lo mismo que
     // la del Autoguiado.
     descripcion: "Sesiones profesionales y actividades para el hogar, orientadas por una valoración neuropsicológica.",
-    presupuesto: "Presupuesto según tu plan",
+    presupuesto: "Precio a medida",
+    presupuestoDetalle: "Te enviamos el presupuesto según las sesiones que se necesiten.",
+    ideal: "Ideal si hay un diagnóstico o se necesita seguimiento profesional.",
     incluye: [
       "Acceso a los recursos de la aplicación.",
       "Objetivos de intervención individualizados.",
@@ -238,7 +246,7 @@ export const areas: {
   {
     icono: "cerebro",
     t: "Estimulación cognitiva",
-    frase: "Actividades y juegos en pantalla para trabajar la atención, la memoria, el lenguaje y otras capacidades cognitivas, conectándolas con la vida cotidiana de cada persona.",
+    frase: "Actividades y juegos en pantalla para trabajar la atención, la memoria y el lenguaje, conectados con la vida cotidiana.",
     fondo: "#3f6a70",
     tinta: "#ffffff",
     foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
@@ -249,7 +257,7 @@ export const areas: {
   {
     icono: "equilibrio",
     t: "Gerontogimnasia",
-    frase: "Ejercicios con video que combinan movimiento y retos cognitivos para cuidar la fuerza, el equilibrio y la seguridad al moverse, según las capacidades de cada persona.",
+    frase: "Ejercicios con video que combinan movimiento y retos cognitivos para cuidar la fuerza, el equilibrio y la seguridad al moverse.",
     fondo: "#f4d096",
     tinta: "#1f3338",
     foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora sentada en una silla estira el brazo en la sala de su casa, con mancuernas a sus pies." },
@@ -261,7 +269,7 @@ export const areas: {
   {
     icono: "manzana",
     t: "Nutrición",
-    frase: "Orientación especializada en alimentación e hidratación, para cuidar la salud cerebral y las necesidades de cada persona con deterioro cognitivo leve, Alzheimer u otras demencias.",
+    frase: "Orientación en alimentación e hidratación para cuidar la salud cerebral, también con deterioro cognitivo, Alzheimer u otras demencias.",
     fondo: "#a9c49f",
     tinta: "#1f3338",
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
@@ -272,7 +280,7 @@ export const areas: {
   {
     icono: "hogar",
     t: "Terapia Ocupacional",
-    frase: "Actividades adaptadas para mantener habilidades cotidianas, favorecer la autonomía y promover la participación en tareas significativas, según las capacidades de cada persona.",
+    frase: "Actividades adaptadas para mantener las habilidades cotidianas, favorecer la autonomía y participar en tareas con sentido.",
     fondo: "#e8b5a1",
     tinta: "#1f3338",
     foto: { webp: "/areas/terapia-ocupacional.webp", jpg: "/areas/terapia-ocupacional.jpg", alt: "Una señora sonriente ordena piezas de madera sobre la mesa de su sala." },

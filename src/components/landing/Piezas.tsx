@@ -130,7 +130,7 @@ export function AyudaWhatsApp({ href }: { href: string }) {
       rel="noreferrer"
       aria-label="¿Necesitás ayuda? Escribinos por WhatsApp"
       tabIndex={oculto ? -1 : undefined}
-      className={`${flotanteBase} right-3 sm:right-6 inline-flex items-center gap-2 min-h-11 pl-1.5 pr-3.5 rounded-full text-tinta text-[14px] font-semibold no-underline hover:border-verde-serenidad ${
+      className={`${flotanteBase} right-3 sm:right-6 inline-flex items-center gap-2 min-h-11 p-1.5 sm:pr-3.5 rounded-full text-tinta text-[14px] font-semibold no-underline hover:border-verde-serenidad ${
         oculto ? "opacity-0 translate-y-3 pointer-events-none" : ""
       }`}
       style={flotanteBottom}
@@ -138,7 +138,8 @@ export function AyudaWhatsApp({ href }: { href: string }) {
       <span className="w-8 h-8 rounded-full bg-[#25d366] text-white flex items-center justify-center">
         <WhatsAppIcon size={18} />
       </span>
-      ¿Necesitás ayuda?
+      {/* En celular, solo el ícono: el texto tapaba contenido y botones. */}
+      <span className="hidden sm:inline">¿Necesitás ayuda?</span>
     </a>
   );
 }

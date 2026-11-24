@@ -31,8 +31,7 @@ import {
 import { Logo } from "../components/ui/Logo";
 import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
 import { CarruselMovil } from "../components/landing/CarruselMovil";
-import { flotanteBase, flotanteBottom, useOcultoEnElPie } from "../lib/flotantes";
-import { FacebookIcon, InstagramIcon, SitioFooter } from "../components/layout/SitioFooter";
+import { SitioFooter } from "../components/layout/SitioFooter";
 
 // Vista real de una actividad (misma que la app). Se carga recién al abrirla.
 const EjemploActividad = lazy(() => import("../components/landing/EjemploActividad"));
@@ -251,21 +250,7 @@ const pasosUso: { icono: string; t: string; d: string }[] = [
   { icono: "profesional", t: "Tu equipo revisa tu avance", d: "Profesionales revisan tu semana y ajustan el plan." },
 ];
 
-// Preguntas frecuentes como carrusel: cada pregunta es una tarjeta con la
-// respuesta ya visible (nada que abrir). Desplazamiento nativo con
-// scroll-snap (dedo, trackpad, teclado) + flechas y puntos que también
-// sirven para saltar. La tarjeta siguiente asoma para invitar a seguir.
-const margenContenido = "max(1.25rem, calc((100vw - 1280px) / 2 + 3rem))";
-
-const tonosFaq = [
-  { from: "#4f7d83", to: "#3f6a70" },
-  { from: "#e8b5a1", to: "#c0664f" },
-  { from: "#fadfa9", to: "#d9a441" },
-  { from: "#89c0c6", to: "#4f8a91" },
-  { from: "#ece3c4", to: "#b7a06d" },
-];
-
-// Texto recortado en celular (preguntas frecuentes, áreas): así todas las
+// Texto recortado en celular (áreas): así todas las
 // tarjetas miden lo mismo. Si no entra completo aparece «Ver más», que lo
 // abre en un modal (la tarjeta no cambia de tamaño). El recorte va en
 // `clase` (line-clamp-N md:line-clamp-none): desde tablet se ve completo y
@@ -300,149 +285,57 @@ function TextoConVerMas({ texto, clase, onVerMas }: { texto: string; clase: stri
   );
 }
 
-function FaqCarousel() {
-  const pista = useRef<HTMLDivElement>(null);
-  const [activa, setActiva] = useState(0);
-  const [abierta, setAbierta] = useState<number | null>(null);
-  const total = preguntas.length;
+// Preguntas frecuentes como acordeón (<details>): se leen de arriba abajo,
+// funcionan con teclado y lector de pantalla sin código extra, y el texto
+// queda en la página para los buscadores. Se muestran las primeras; el
+// resto, con «Ver todas».
+const PREGUNTAS_VISIBLES = 6;
 
-  function irA(i: number) {
-    const el = pista.current;
-    const card = el?.children[i] as HTMLElement | undefined;
-    if (!el || !card) return;
-    el.scrollTo({ left: card.offsetLeft - el.offsetLeft, behavior: prefersReducedMotion() ? "auto" : "smooth" });
-  }
-
-  useEffect(() => {
-    const el = pista.current;
-    if (!el) return;
-    const onScroll = () => {
-      const cards = Array.from(el.children) as HTMLElement[];
-      const x = el.scrollLeft;
-      let best = 0;
-      cards.forEach((c, i) => {
-        if (Math.abs(c.offsetLeft - el.offsetLeft - x) < Math.abs(cards[best].offsetLeft - el.offsetLeft - x)) best = i;
-      });
-      // Al llegar al final, la última se marca aunque no pueda alinearse a la izquierda.
-      if (x + el.clientWidth >= el.scrollWidth - 4) best = cards.length - 1;
-      setActiva(best);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
-
+function FaqAcordeon() {
+  const [todas, setTodas] = useState(false);
+  const lista = todas ? preguntas : preguntas.slice(0, PREGUNTAS_VISIBLES);
   return (
-    <div role="region" aria-roledescription="carrusel" aria-label="Preguntas frecuentes">
-      <div
-        ref={pista}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowRight") {
-            e.preventDefault();
-            irA(Math.min(total - 1, activa + 1));
-          }
-          if (e.key === "ArrowLeft") {
-            e.preventDefault();
-            irA(Math.max(0, activa - 1));
-          }
-        }}
-        // De borde a borde de la pantalla, pero alineado con el contenido:
-        // el relleno lateral replica el margen del contenedor de 1280px.
-        style={{ paddingInline: margenContenido, scrollPaddingInline: margenContenido }}
-        className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-6 pt-2 outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-verde-serenidad/40"
-      >
-        {preguntas.map((q, i) => {
-          const t = tonosFaq[i % tonosFaq.length];
-          return (
-            <article
-              key={q.p}
-              aria-roledescription="tarjeta"
-              aria-label={`${i + 1} de ${total}`}
-              className={`snap-start shrink-0 w-[84%] sm:w-[400px] lg:w-[420px] rounded-[32px] bg-white border border-borde overflow-hidden flex flex-col transition-[transform,box-shadow,opacity] duration-500 ${
-                i === activa ? "shadow-elevada" : "opacity-[0.88]"
-              }`}
-            >
-              <div className="relative px-6 sm:px-7 pt-6 pb-7 text-white min-h-[228px] md:min-h-[184px] flex flex-col" style={{ backgroundImage: `linear-gradient(150deg, ${t.from}, ${t.to})` }}>
-                <span aria-hidden="true" className="absolute right-6 top-3 font-serif italic text-[96px] leading-none text-white/20 select-none">
-                  ?
+    <div className="max-w-[880px] mx-auto px-5 sm:px-8">
+      <ul className="list-none m-0 p-0 grid gap-3">
+        {lista.map((q, i) => (
+          <li key={q.p}>
+            <details open={i === 0} className="group rounded-3xl bg-white border border-borde open:shadow-[0_18px_40px_-30px_rgba(31,51,56,.5)]">
+              <summary className="flex items-center justify-between gap-4 min-h-14 px-5 sm:px-6 py-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden font-serif text-[20px] sm:text-[22px] leading-snug text-tinta rounded-3xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo">
+                {q.p}
+                <span aria-hidden="true" className="shrink-0 w-9 h-9 rounded-full bg-verde-tenue text-verde-profundo flex items-center justify-center transition-transform group-open:rotate-45 font-sans text-[22px] leading-none">
+                  +
                 </span>
-                <span aria-hidden="true" className="absolute right-10 bottom-[-46px] w-28 h-28 rounded-full bg-white/10" />
-                <span className="relative text-[12px] font-semibold tracking-[0.16em] text-white/80">
-                  {String(i + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
-                </span>
-                <h3 className="relative m-0 mt-auto pt-6 font-serif font-normal text-[23px] sm:text-[28px] leading-[1.15] drop-shadow-sm" style={{ textWrap: "balance" }}>
-                  {q.p}
-                </h3>
-              </div>
-              <div className="px-6 sm:px-7 py-6 flex flex-col flex-1">
-                <TextoConVerMas
-                  texto={q.r}
-                  clase="text-[16px] leading-relaxed text-tinta-suave whitespace-pre-line line-clamp-4 md:line-clamp-none"
-                  onVerMas={() => setAbierta(i)}
-                />
+              </summary>
+              <div className="px-5 sm:px-6 pb-5 -mt-1">
+                <p className="m-0 text-[16.5px] leading-relaxed text-tinta whitespace-pre-line">{q.r}</p>
                 {q.video && (
                   <button
                     type="button"
                     onClick={() => reproducirVideo(q.video!)}
-                    className="mt-4 self-start inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
+                    className="mt-4 inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-verde-tenue border-0 text-verde-profundo font-semibold text-[15px] cursor-pointer hover:bg-beige-serenidad"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
                     </svg>
-                    Ver el video «Así de fácil se usa»
+                    Ver el video
                   </button>
                 )}
               </div>
-            </article>
-          );
-        })}
-      </div>
-
-      {/* Controles */}
-      <div className="flex items-center justify-between gap-4 max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 mt-2">
-        <div className="flex items-center gap-1.5" role="tablist" aria-label="Elegir pregunta">
-          {preguntas.map((q, i) => (
-            <button
-              key={q.p}
-              type="button"
-              role="tab"
-              aria-selected={i === activa}
-              aria-label={`Pregunta ${i + 1}: ${q.p}`}
-              onClick={() => irA(i)}
-              // El punto se ve igual, pero el área táctil mide 44 px de alto.
-              className={`relative h-2 rounded-full border-none cursor-pointer transition-all duration-300 after:absolute after:content-[''] after:-inset-y-[18px] after:-inset-x-[3px] ${i === activa ? "w-8 bg-verde-profundo" : "w-2 bg-borde-campo hover:bg-verde-serenidad"}`}
-            />
-          ))}
+            </details>
+          </li>
+        ))}
+      </ul>
+      {preguntas.length > PREGUNTAS_VISIBLES && (
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setTodas((t) => !t)}
+            aria-expanded={todas}
+            className="min-h-12 px-6 rounded-full border-[1.5px] border-verde-profundo bg-white font-sans text-[16px] font-semibold text-verde-profundo cursor-pointer hover:bg-verde-tenue"
+          >
+            {todas ? "Ver menos preguntas" : `Ver todas las preguntas (${preguntas.length})`}
+          </button>
         </div>
-        <div className="hidden sm:flex gap-2.5">
-          {[
-            { d: -1, label: "Pregunta anterior", path: "M12.5 4.5L7 10l5.5 5.5" },
-            { d: 1, label: "Pregunta siguiente", path: "M7.5 4.5L13 10l-5.5 5.5" },
-          ].map((b) => {
-            const destino = activa + b.d;
-            const off = destino < 0 || destino > total - 1;
-            return (
-              <button
-                key={b.d}
-                type="button"
-                aria-label={b.label}
-                onClick={() => irA(destino)}
-                disabled={off}
-                className="w-12 h-12 rounded-full bg-white border border-borde flex items-center justify-center text-tinta cursor-pointer transition-all hover:bg-verde-profundo hover:text-white hover:border-verde-profundo disabled:opacity-35 disabled:cursor-default disabled:hover:bg-white disabled:hover:text-tinta disabled:hover:border-borde"
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <path d={b.path} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      {abierta !== null && (
-        <Modal onClose={() => setAbierta(null)}>
-          <h3 className="m-0 mb-4 pr-10 font-serif font-normal text-[26px] leading-[1.15] text-tinta">{preguntas[abierta].p}</h3>
-          <p className="m-0 text-[16.5px] leading-relaxed text-tinta-suave whitespace-pre-line">{preguntas[abierta].r}</p>
-        </Modal>
       )}
     </div>
   );
@@ -502,6 +395,19 @@ function GaleriaSesiones() {
 // (para mí / para un ser querido) se elige en la primera pregunta del
 // cuestionario.
 const registro = "/ingresar?mode=register";
+// El botón de registro dice qué se obtiene: la semana de prueba. Al lado,
+// siempre, que no hay cobros automáticos (antes solo estaba en las preguntas).
+const CTA = "Probar una semana gratis";
+const PRUEBA = "La semana gratis empieza cuando aprobamos tu cuenta. Sin cobros automáticos.";
+
+// Atajos del encabezado (escritorio).
+const secciones = [
+  { id: "como-funciona", t: "Cómo funciona" },
+  { id: "areas", t: "Áreas" },
+  { id: "equipo", t: "Equipo" },
+  { id: "programas", t: "Programas" },
+  { id: "preguntas", t: "Preguntas" },
+];
 
 // Botón de WhatsApp del home. "primario" solo donde es la acción principal
 // de la tarjeta; el resto queda contorneado para no competir con el registro.
@@ -512,7 +418,7 @@ function BotonWhatsApp({ href, children, primario = false, className = "" }: { h
       target="_blank"
       rel="noreferrer"
       className={`inline-flex items-center justify-center gap-2.5 min-h-[52px] px-6 rounded-full font-sans font-semibold text-[16px] no-underline transition-colors ${
-        primario ? "bg-verde-serenidad text-white hover:bg-verde-profundo" : "bg-white border-[1.5px] border-verde-serenidad text-verde-profundo hover:bg-verde-tenue"
+        primario ? "bg-verde-profundo text-white hover:bg-tinta" : "bg-white border-[1.5px] border-verde-profundo text-verde-profundo hover:bg-verde-tenue"
       } ${className}`}
     >
       <WhatsAppIcon size={20} /> {children}
@@ -556,48 +462,13 @@ function FotoEquipo({ foto, alt, i }: { foto: MiembroEquipo["foto"]; alt: string
   );
 }
 
-// Redes sociales: a la izquierda, con menos peso que «Crear mi cuenta
-// gratis». En celular va en columna angosta para no chocar con el botón de
-// WhatsApp; desde tablet, en fila.
-function RedesFlotantes() {
-  const oculto = useOcultoEnElPie();
-  const redes = [
-    { href: contacto.instagram, label: "Seguinos en Instagram (se abre en otra pestaña)", icono: <InstagramIcon size={18} /> },
-    { href: contacto.facebook, label: "Seguinos en Facebook (se abre en otra pestaña)", icono: <FacebookIcon size={18} /> },
-  ];
-  return (
-    <div
-      className={`${flotanteBase} left-3 sm:left-6 hidden sm:flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 p-1 sm:pl-3.5 sm:pr-1.5 rounded-[22px] sm:rounded-full ${
-        oculto ? "opacity-0 translate-y-3 pointer-events-none" : ""
-      }`}
-      style={flotanteBottom}
-      aria-hidden={oculto || undefined}
-    >
-      <span className="text-[10.5px] sm:text-[14px] font-semibold text-tinta-suave pt-1 sm:pt-0 sm:mr-0.5">Seguinos</span>
-      {redes.map((r) => (
-        <a
-          key={r.href}
-          href={r.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={r.label}
-          tabIndex={oculto ? -1 : undefined}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-verde-profundo hover:bg-verde-tenue transition-colors"
-        >
-          {r.icono}
-        </a>
-      ))}
-    </div>
-  );
-}
-
-
 // «Para quién es»: dos caminos (primero familiares, que suelen ser quienes
 // deciden), sin botones de registro. Médicos tiene su propia sección más
 // abajo («Para médicos y geriatras»).
 const caminos = [
   {
-    para: "Para familias y cuidadores",
+    para: "ser-querido",
+    etiqueta: "Para familias y cuidadores",
     t: "Acompaño a un ser querido",
     d: "Un plan claro para cada día, con seguimiento profesional.",
     figura: "#6a969c",
@@ -605,7 +476,8 @@ const caminos = [
     ilustracion: <IlustracionAcompanar />,
   },
   {
-    para: "Para vos",
+    para: "mi",
+    etiqueta: "Para vos",
     t: "Cuido mi salud cerebral",
     d: "Actividades para tu mente y tu cuerpo, a tu ritmo.",
     figura: "#f4d096",
@@ -649,17 +521,24 @@ export function Landing() {
       >
         <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-8 lg:px-12 lg:py-4 max-w-[1280px] mx-auto">
           <a href="#top" aria-label="IntegraMente en Casa, ir al inicio" className="no-underline shrink-0">
-            <Logo />
+            <Logo compacto />
           </a>
-          <div className="flex items-center gap-2">
-            <Link to="/ingresar?mode=login" className="inline-flex items-center min-h-10 px-3 sm:px-4 rounded-full text-[15px] font-semibold text-tinta no-underline hover:bg-white whitespace-nowrap">
-              Iniciar sesión
+          {/* Página larga: atajos a cada sección (solo en pantallas grandes). */}
+          <nav aria-label="Secciones" className="hidden xl:flex items-center gap-1">
+            {secciones.map((x) => (
+              <a key={x.id} href={`#${x.id}`} className="px-3 py-2 rounded-full text-[15px] font-semibold text-tinta-suave no-underline hover:text-tinta hover:bg-white">
+                {x.t}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Link to="/ingresar?mode=login" className="inline-flex items-center min-h-10 px-2 sm:px-4 rounded-full text-[15px] font-semibold text-tinta no-underline hover:bg-white whitespace-nowrap">
+              <span className="sm:hidden">Ingresar</span>
+              <span className="hidden sm:inline">Iniciar sesión</span>
             </Link>
-            <span className="hidden sm:inline-flex">
-              <Button dense to={registro}>
-                Crear mi cuenta gratis
-              </Button>
-            </span>
+            <Button dense variant="principal" to={registro} className="whitespace-nowrap !min-h-10 !px-3.5 sm:!px-5">
+              Probar gratis
+            </Button>
           </div>
         </div>
       </header>
@@ -671,17 +550,26 @@ export function Landing() {
           <h1 className="font-serif font-normal text-[42px] sm:text-[56px] lg:text-[72px] leading-[1.02] tracking-[-0.01em] m-0 mb-5" style={{ textWrap: "balance" }}>
             Saber qué hacer hoy, <em className="italic text-verde-profundo">sin improvisar.</em>
           </h1>
-          <p className="text-[17px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta-suave max-w-[32em] m-0 mb-4">
-            Cuidá tu salud cerebral o acompañá a un ser querido con un plan semanal de estimulación cognitiva, movimiento y orientaciones de
-            nutrición, elaborado por el equipo de IntegraMente.
+          <p className="text-[18px] sm:text-lg lg:text-[21px] leading-relaxed text-tinta max-w-[30em] m-0 mb-8">
+            Un plan semanal de actividades para la mente, el cuerpo y la alimentación, para vos o para un ser querido.
           </p>
-          <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
           <div className="flex flex-wrap gap-3">
-            <Button to={registro}>Crear mi cuenta gratis</Button>
+            <Button variant="principal" to={registro}>
+              {CTA}
+            </Button>
             <Button variant="secondary" onClick={() => setVideo(videosSitio.app)}>
               Ver el video
             </Button>
           </div>
+          <p className="m-0 mt-4 text-[15px] leading-relaxed text-tinta-suave">{PRUEBA}</p>
+          <p className="m-0 mt-5 flex items-center gap-2.5 text-[15px] font-semibold text-tinta">
+            <span aria-hidden="true" className="flex -space-x-2 shrink-0">
+              {equipo.slice(0, 3).map((m) =>
+                m.foto ? <img key={m.nombre} src={m.foto.jpg} alt="" className="w-8 h-8 rounded-full object-cover object-[center_25%] ring-2 ring-fondo-papel" /> : null,
+              )}
+            </span>
+            Diseñado por el equipo clínico de IntegraMente · Costa Rica
+          </p>
         </div>
         {/* En celular el video de presentación va justo después del texto:
             la maqueta del teléfono se muestra desde escritorio. */}
@@ -693,45 +581,40 @@ export function Landing() {
       <PruebaSocial />
 
       {/* ─── Para quién es ─── */}
+      {/* Dos caminos que llevan al registro con la modalidad ya elegida
+          (/ingresar?para=…): compactos, y cada tarjeta entera es el enlace. */}
       <section className="bg-seccion-arena">
-        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
+        <div className="max-w-[1080px] mx-auto px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
           <Reveal className="text-center">
             <Eyebrow>Para quién es</Eyebrow>
-            <SectionTitle className="max-w-[18em] mx-auto mb-10 lg:mb-12">Para vos y para quienes acompañás.</SectionTitle>
+            <SectionTitle className="max-w-[18em] mx-auto mb-8 lg:mb-10">Para vos y para quienes acompañás.</SectionTitle>
           </Reveal>
-          {/* Un solo panel partido en dos: la decisión es «para alguien que
-              querés o para vos», unidas por una «o». Sin botones: la sección
-              informa, el registro está en el encabezado y en el cierre. */}
-          <Reveal className="max-w-[1080px] mx-auto">
-            <div className="relative grid md:grid-cols-2 rounded-[36px] overflow-hidden border border-borde shadow-[0_30px_60px_-40px_rgba(31,51,56,.45)]">
-              {caminos.map((c, i) => (
-                <article key={c.t} className="relative flex flex-col items-center text-center px-7 pt-10 pb-11 sm:px-12 lg:px-16 lg:pt-12 lg:pb-14" style={{ background: c.mitad }}>
-                  <div className="relative mb-7 w-[230px] h-[170px] sm:w-[260px] sm:h-[190px]">
-                    <span aria-hidden="true" className="absolute inset-x-3 bottom-0 top-5 rounded-[48%_52%_44%_56%/58%_50%_50%_42%]" style={{ background: c.figura }} />
-                    <span aria-hidden="true" className="absolute -right-1 top-1 w-9 h-9 rounded-full opacity-60" style={{ background: c.figura }} />
-                    <span aria-hidden="true" className="absolute -left-2 bottom-8 w-5 h-5 rounded-full opacity-40" style={{ background: c.figura }} />
-                    <div className="relative h-full flex items-end justify-center overflow-hidden rounded-b-[40%] [&>svg]:w-[86%] [&>svg]:h-auto">{c.ilustracion}</div>
-                  </div>
-                  <p className="m-0 mb-2 text-[12.5px] tracking-[0.16em] uppercase font-semibold text-tinta-suave">{c.para}</p>
-                  <h3 className="m-0 mb-3 font-serif font-normal text-[30px] sm:text-[34px] leading-[1.1] text-tinta" style={{ textWrap: "balance" }}>
-                    {c.t}
-                  </h3>
-                  <p className="m-0 max-w-[22em] text-[17px] leading-relaxed text-tinta" style={{ textWrap: "balance" }}>
-                    {c.d}
-                  </p>
-                  {/* La «o» que une las dos mitades: al centro en escritorio,
-                      sobre el borde entre ambas en celular. */}
-                  {i === 0 && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute z-10 left-1/2 -bottom-7 -translate-x-1/2 md:left-auto md:bottom-auto md:-right-7 md:top-1/2 md:translate-x-0 md:-translate-y-1/2 w-14 h-14 rounded-full bg-white border border-borde shadow-[0_10px_24px_-12px_rgba(31,51,56,.5)] flex items-center justify-center font-serif italic text-[26px] text-verde-profundo"
-                    >
-                      o
+          <Reveal>
+            <ul className="list-none m-0 p-0 grid gap-4 md:grid-cols-2 md:gap-5">
+              {caminos.map((c) => (
+                <li key={c.t}>
+                  <Link
+                    to={`${registro}&para=${c.para}`}
+                    className="group h-full grid grid-cols-[88px_1fr] sm:grid-cols-[112px_1fr] gap-4 sm:gap-5 items-center rounded-[28px] border border-borde p-4 sm:p-5 no-underline text-tinta transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-elevada focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde-profundo"
+                    style={{ background: c.mitad }}
+                  >
+                    <span aria-hidden="true" className="relative w-[88px] h-[72px] sm:w-[112px] sm:h-[92px]">
+                      <span className="absolute inset-0 rounded-[48%_52%_44%_56%/58%_50%_50%_42%]" style={{ background: c.figura }} />
+                      <span className="relative h-full flex items-end justify-center overflow-hidden rounded-b-[40%] [&>svg]:w-[86%] [&>svg]:h-auto">{c.ilustracion}</span>
                     </span>
-                  )}
-                </article>
+                    <span className="grid gap-1">
+                      <span className="text-[12px] tracking-[0.14em] uppercase font-semibold text-tinta-suave">{c.etiqueta}</span>
+                      <span className="font-serif text-[23px] sm:text-[26px] leading-[1.1]">{c.t}</span>
+                      <span className="text-[15.5px] leading-snug text-tinta">{c.d}</span>
+                      <span className="mt-1 inline-flex items-center gap-1.5 text-[15.5px] font-semibold text-verde-profundo">
+                        Empezar
+                        <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+                      </span>
+                    </span>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </Reveal>
         </div>
       </section>
@@ -770,7 +653,9 @@ export function Landing() {
             ))}
           </ol>
           <div className="mt-9">
-            <Button to={registro}>Crear mi cuenta gratis</Button>
+            <Button variant="principal" to={registro}>
+              {CTA}
+            </Button>
           </div>
         </Reveal>
       </section>
@@ -781,7 +666,10 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto py-16 lg:py-24">
           <Reveal className="px-5 sm:px-8 lg:px-12">
             <Eyebrow>Las áreas del programa</Eyebrow>
-            <SectionTitle className="max-w-[18em] mb-10 lg:mb-14">Cuidamos la mente, el movimiento, la autonomía y la alimentación.</SectionTitle>
+            <SectionTitle className="max-w-[18em] mb-3">Cuidamos la mente, el movimiento, la autonomía y la alimentación.</SectionTitle>
+            <p className="m-0 mb-10 lg:mb-12 text-[17px] leading-relaxed text-tinta-suave max-w-[40em]">
+              Cada área la diseña un especialista de nuestro <a href="#equipo" className="font-semibold text-verde-profundo">equipo</a>.
+            </p>
           </Reveal>
           {/* Celular: carrusel horizontal (no una pared de tarjetas). Desde
               tablet: dos columnas; en pantallas grandes, las cuatro. */}
@@ -791,7 +679,6 @@ export function Landing() {
             style={{ scrollPaddingInline: "1.25rem" }}
           >
             {areas.map((a, i) => {
-              const persona = equipo[a.responsable.miembro];
               return (
                 <li key={a.t} className="snap-start shrink-0 w-[84%] sm:w-[62%] md:w-auto">
                   <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-elevada">
@@ -854,15 +741,6 @@ export function Landing() {
                         Conocé el área en video
                       </button>
                     </div>
-                    {/* Respaldo profesional, sutil. Alto fijo (hasta tres líneas)
-                        para que el enlace de ejemplo y este pie queden a la
-                        misma altura en todas las tarjetas. */}
-                    <div className="flex items-center gap-2.5 min-h-[80px] px-5 sm:px-6 py-3 bg-campo border-t border-borde-suave">
-                      {persona?.foto && (
-                        <img src={persona.foto.jpg} alt={persona.nombre} className="w-8 h-8 rounded-full object-cover object-[center_25%] shrink-0" loading="lazy" />
-                      )}
-                      <p className="m-0 text-[13px] leading-snug text-tinta-suave">Diseñado por el área de {a.responsable.area} de IntegraMente</p>
-                    </div>
                   </article>
                 </li>
               );
@@ -870,6 +748,67 @@ export function Landing() {
           </ul>
         </div>
       </section>
+
+      {/* ─── Equipo ─── */}
+      <section id="equipo" className="bg-seccion-arena scroll-mt-20">
+        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
+          <Reveal className="text-center">
+            <Eyebrow>Conocé al equipo</Eyebrow>
+            <SectionTitle className="max-w-[17em] mx-auto mb-3">Profesionales detrás de cada plan.</SectionTitle>
+            <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
+              Un equipo especializado en neuropsicología, terapia física y gerontogimnasia, nutrición y terapia ocupacional que trabaja para adaptar las actividades a las necesidades de cada persona.
+            </p>
+          </Reveal>
+          <Reveal>
+          <CarruselMovil etiqueta="Equipo" escritorio="md:flex-wrap md:justify-center md:gap-5" item="md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
+            {equipo.map((m, i) => (
+                <figure key={m.nombre} className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
+                  <div className="relative aspect-[16/10] bg-campo">
+                    <FotoEquipo foto={m.foto} alt={m.nombre} i={i} />
+                    {!m.foto && (
+                      <span className="absolute top-3 left-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-tinta bg-white/85 rounded-full px-2 py-0.5">
+                        Foto pronto
+                      </span>
+                    )}
+                  </div>
+                  <figcaption className="px-5 py-4 grid gap-1">
+                    <p className="m-0 text-[12px] font-bold uppercase tracking-[0.12em] text-verde-profundo">{m.area}</p>
+                    <p className="m-0 font-serif text-[21px] leading-tight text-tinta">{m.nombre}</p>
+                    {m.cargo && <p className="m-0 text-[14.5px] font-semibold text-tinta">{m.cargo}</p>}
+                    {m.credencial && <p className="m-0 text-[14px] text-tinta-suave">{m.credencial}</p>}
+                    <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta-suave">{m.descripcion}</p>
+                  </figcaption>
+                </figure>
+            ))}
+          </CarruselMovil>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── Fotos de las sesiones ─── */}
+      {fotosSesiones.length > 0 && <div className="bg-seccion-arena"><GaleriaSesiones /></div>}
+
+      {/* ─── Testimonios (solo si hay reales) ─── */}
+      {testimonios.length > 0 && (
+        <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+          <Reveal>
+            <Eyebrow>Familias que nos acompañan</Eyebrow>
+            <SectionTitle className="mb-10">Lo que nos cuentan.</SectionTitle>
+          </Reveal>
+          <div className="grid gap-5 md:grid-cols-3">
+            {testimonios.map((t, i) => (
+              <Reveal key={t.nombre} delay={i * 90}>
+                <figure className="m-0 h-full rounded-3xl bg-white border border-borde p-6 flex flex-col gap-4">
+                  <blockquote className="m-0 font-serif text-[20px] leading-snug text-tinta">“{t.cita}”</blockquote>
+                  <figcaption className="mt-auto text-[14.5px] text-tinta-suave">
+                    <strong className="text-tinta">{t.nombre}</strong> · {t.relacion}
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ─── Programas ─── */}
       <section id="programas" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
@@ -886,15 +825,19 @@ export function Landing() {
                 <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{auto.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{auto.subtitulo}</p>
               </div>
-              <p className="m-0 flex items-baseline gap-2 pb-4 sm:pb-5 border-b border-borde-suave">
-                <span className="font-serif text-[34px] sm:text-[40px] leading-none">{autoguiado.precio}</span>
-                <span className="text-[15px] text-tinta-suave">{autoguiado.periodo}</span>
-              </p>
+              <div className="pb-4 sm:pb-5 border-b border-borde-suave grid gap-2">
+                <p className="m-0 flex items-baseline gap-2">
+                  <span className="font-serif text-[34px] sm:text-[40px] leading-none">{autoguiado.precio}</span>
+                  <span className="text-[15px] text-tinta-suave">{autoguiado.periodo}</span>
+                </p>
+                <p className="m-0 justify-self-start rounded-full bg-verde-tenue px-3 py-1 text-[14px] font-semibold text-verde-profundo">{auto.prueba}</p>
+                <p className="m-0 text-[15px] text-tinta">{auto.ideal}</p>
+              </div>
               <ListaIncluye items={auto.incluye} />
               <p className="m-0 text-[14.5px] sm:text-[15px] leading-relaxed text-tinta bg-campo border border-borde-suave rounded-2xl px-4 py-2.5 sm:py-3">{auto.aclaracion}</p>
               <div className="mt-auto">
-                <Button to={registro} className="w-full sm:w-auto">
-                  Crear mi cuenta gratis
+                <Button variant="principal" to={registro} className="w-full sm:w-auto">
+                  {CTA}
                 </Button>
               </div>
             </article>
@@ -904,7 +847,11 @@ export function Landing() {
                 <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{ses.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{ses.subtitulo}</p>
               </div>
-              <p className="m-0 pb-4 sm:pb-5 border-b border-borde-suave font-serif text-[22px] sm:text-[28px] leading-tight text-tinta">{ses.presupuesto}</p>
+              <div className="pb-4 sm:pb-5 border-b border-borde-suave grid gap-2">
+                <p className="m-0 font-serif text-[28px] sm:text-[34px] leading-tight text-tinta">{ses.presupuesto}</p>
+                <p className="m-0 text-[15px] text-tinta-suave">{ses.presupuestoDetalle}</p>
+                <p className="m-0 text-[15px] text-tinta">{ses.ideal}</p>
+              </div>
               <ListaIncluye items={ses.incluye} />
               {/* Requisito como nota al pie: discreto, sin caja ni color de
                   aviso, con el mismo contraste legible del resto. */}
@@ -936,141 +883,14 @@ export function Landing() {
         </p>
       </section>
 
-      {/* ─── Equipo ─── */}
-      <section id="equipo" className="bg-seccion-arena scroll-mt-20">
-        <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
-          <Reveal className="text-center">
-            <Eyebrow>Conocé al equipo</Eyebrow>
-            <SectionTitle className="max-w-[17em] mx-auto mb-3">Profesionales detrás de cada plan.</SectionTitle>
-            <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-              Un equipo especializado en neuropsicología, terapia física y gerontogimnasia, nutrición y terapia ocupacional que trabaja para adaptar las actividades a las necesidades de cada persona.
-            </p>
-          </Reveal>
-          <Reveal>
-          <CarruselMovil etiqueta="Equipo" escritorio="md:flex-wrap md:justify-center md:gap-5" item="md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
-            {equipo.map((m, i) => (
-                <figure key={m.nombre} className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
-                  <div className="relative aspect-[16/10] bg-campo">
-                    <FotoEquipo foto={m.foto} alt={m.nombre} i={i} />
-                    {!m.foto && (
-                      <span className="absolute top-3 left-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-tinta bg-white/85 rounded-full px-2 py-0.5">
-                        Foto pronto
-                      </span>
-                    )}
-                  </div>
-                  <figcaption className="px-5 py-4 grid gap-1">
-                    <p className="m-0 text-[12px] font-bold uppercase tracking-[0.12em] text-verde-profundo">{m.area}</p>
-                    <p className="m-0 font-serif text-[21px] leading-tight text-tinta">{m.nombre}</p>
-                    {m.cargo && <p className="m-0 text-[14.5px] font-semibold text-tinta">{m.cargo}</p>}
-                    <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta-suave">{m.descripcion}</p>
-                  </figcaption>
-                </figure>
-            ))}
-          </CarruselMovil>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─── Fotos de las sesiones ─── */}
-      {fotosSesiones.length > 0 && <div className="bg-seccion-arena"><GaleriaSesiones /></div>}
-
-      {/* ─── Para médicos ─── */}
-      <div className="bg-white">
-      <section id="medicos" className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24 scroll-mt-20">
-        <div>
-          <div className="rounded-[32px] bg-tinta text-white overflow-hidden grid lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="p-7 sm:p-10 lg:p-14">
-              {/* Celular: la foto queda a la derecha del título, como en
-                  computadora, en lugar de caer al final de la tarjeta. */}
-              <div className="grid grid-cols-[1fr_104px] sm:grid-cols-[1fr_140px] lg:block gap-4 items-start mb-6">
-                <div>
-                  <p className="m-0 mb-3 text-xs sm:text-sm tracking-[0.16em] uppercase text-[#a9c7ca] font-semibold">Para médicos y geriatras</p>
-                  <h2 className="m-0 font-serif font-normal text-[27px] sm:text-[38px] lg:text-[44px] leading-[1.1] text-white" style={{ textWrap: "balance" }}>
-                    Un aliado entre consultas para tus pacientes.
-                  </h2>
-                </div>
-                {equipo[0].foto && (
-                  <picture className="lg:hidden">
-                    <source srcSet={equipo[0].foto.webp} type="image/webp" />
-                    <img src={equipo[0].foto.jpg} alt={`${equipo[0].nombre}, ${equipo[0].area}`} loading="lazy" decoding="async" className="block w-full aspect-[3/4] object-cover object-[center_20%] rounded-2xl" />
-                  </picture>
-                )}
-              </div>
-              <ul className="list-none m-0 p-0 grid gap-3 mb-8">
-                {[
-                  "Evaluación funcional estandarizada y plan según etapa.",
-                  "Te avisamos si detectamos señales que requieren consulta.",
-                  "Podemos adaptar la aplicación a tu clínica.",
-                ].map((x) => (
-                  <li key={x} className="flex gap-3 text-[16px] leading-snug text-[#dce9e9]">
-                    <span aria-hidden="true" className="text-mostaza-vital font-bold">✓</span>
-                    {x}
-                  </li>
-                ))}
-              </ul>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/medicos/referir"
-                  className="inline-flex items-center justify-center min-h-[52px] px-7 rounded-full bg-mostaza-vital text-tinta font-bold text-[16px] no-underline hover:bg-white"
-                >
-                  Referir un paciente
-                </Link>
-                <a
-                  href={whatsappHome.profesional}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 min-h-[52px] px-6 rounded-full border-[1.5px] border-[#6f8a8e] text-white font-semibold text-[16px] no-underline hover:border-white"
-                >
-                  <WhatsAppIcon size={20} /> Hablar con el equipo
-                </a>
-              </div>
-              <Link to={guiaProfesionales} className="inline-block mt-6 text-[15px] font-semibold text-[#a9c7ca] hover:text-white">
-                Ver metodología y cómo trabajamos →
-              </Link>
-            </div>
-            <div className="hidden lg:block relative min-h-[240px] bg-verde-profundo">
-              {equipo[0].foto && (
-                <picture>
-                  <source srcSet={equipo[0].foto.webp} type="image/webp" />
-                  <img src={equipo[0].foto.jpg} alt={`${equipo[0].nombre}, ${equipo[0].area}`} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_25%]" />
-                </picture>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-      </div>
-
-      {/* ─── Testimonios (solo si hay reales) ─── */}
-      {testimonios.length > 0 && (
-        <section className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
-          <Reveal>
-            <Eyebrow>Familias que nos acompañan</Eyebrow>
-            <SectionTitle className="mb-10">Lo que nos cuentan.</SectionTitle>
-          </Reveal>
-          <div className="grid gap-5 md:grid-cols-3">
-            {testimonios.map((t, i) => (
-              <Reveal key={t.nombre} delay={i * 90}>
-                <figure className="m-0 h-full rounded-3xl bg-white border border-borde p-6 flex flex-col gap-4">
-                  <blockquote className="m-0 font-serif text-[20px] leading-snug text-tinta">“{t.cita}”</blockquote>
-                  <figcaption className="mt-auto text-[14.5px] text-tinta-suave">
-                    <strong className="text-tinta">{t.nombre}</strong> · {t.relacion}
-                  </figcaption>
-                </figure>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ─── Preguntas frecuentes ─── */}
       <section id="preguntas" className="bg-seccion-fria py-16 lg:py-24 scroll-mt-20 overflow-hidden">
-        <div className="max-w-[1280px] mx-auto px-5 sm:px-8 lg:px-12 flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
+        <div className="max-w-[880px] mx-auto px-5 sm:px-8 grid gap-3 mb-8 lg:mb-10">
           <Reveal>
             <Eyebrow>Preguntas frecuentes</Eyebrow>
             <SectionTitle>Lo que suelen preguntarnos.</SectionTitle>
           </Reveal>
-          <p className="m-0 text-[15.5px] text-tinta-suave max-w-[24em]">
+          <p className="m-0 text-[15.5px] text-tinta-suave">
             ¿Tenés otra consulta? Escribinos a <strong className="text-tinta">{contacto.correo}</strong> o por{" "}
             <a href={whatsappHome.general} target="_blank" rel="noreferrer" className="text-verde-profundo font-semibold inline-block py-2.5 -my-2.5 md:py-0 md:my-0">
               WhatsApp
@@ -1078,25 +898,52 @@ export function Landing() {
             .
           </p>
         </div>
-        <FaqCarousel />
+        <FaqAcordeon />
       </section>
 
       {/* ─── CTA final ─── */}
-      <section className="bg-verde-profundo text-white relative overflow-hidden">
+      <section data-sin-flotantes="" className="bg-verde-profundo text-white relative overflow-hidden">
         <div aria-hidden="true" className="absolute -right-20 -top-24 w-80 h-80 rounded-full bg-verde-serenidad/40" />
         <div className="relative max-w-[1280px] mx-auto px-5 py-14 sm:px-8 lg:px-12 lg:py-22 grid gap-6 lg:gap-14 items-center text-center lg:text-left lg:grid-cols-[1fr_auto]">
           <div>
             <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 mb-3 text-white">Cuidar la mente es cuidar la vida.</h2>
+            <p className="m-0 mb-2 font-serif italic text-[20px] lg:text-[22px] text-mostaza-vital">Preservá lo que te hace ser vos.</p>
             <p className="m-0 text-[17px] lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
-              Empezá con un cuestionario de unos 10 minutos.
+              Empezá con un cuestionario de unos 10 minutos. {PRUEBA}
             </p>
           </div>
           <Link
             to={registro}
             className="inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-mostaza-vital text-tinta font-bold text-[17px] whitespace-nowrap hover:bg-white transition-colors no-underline mx-auto lg:mx-0"
           >
-            Crear mi cuenta gratis
+            {CTA}
           </Link>
+        </div>
+      </section>
+
+      {/* ─── Para médicos ─── */}
+      {/* Otro público: franja breve al final, el detalle está en /medicos. */}
+      <section id="medicos" className="bg-fondo-papel border-t border-borde scroll-mt-20">
+        <div className="max-w-[1280px] mx-auto px-5 py-10 sm:px-8 lg:px-12 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="m-0 mb-1.5 text-xs sm:text-[13px] tracking-[0.16em] uppercase font-semibold text-tinta-suave">Para médicos y geriatras</p>
+            <h2 className="m-0 font-serif font-normal text-[25px] sm:text-[30px] leading-[1.15] text-tinta">Un aliado entre consultas para tus pacientes.</h2>
+            <p className="m-0 mt-2 text-[15.5px] leading-relaxed text-tinta-suave max-w-[46em]">
+              Evaluación funcional estandarizada, plan según etapa y aviso si detectamos señales que requieren consulta.{" "}
+              <Link to={guiaProfesionales} className="font-semibold text-verde-profundo">
+                Ver metodología
+              </Link>
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/medicos/referir"
+              className="inline-flex items-center justify-center min-h-[52px] px-6 rounded-full bg-verde-profundo text-white font-semibold text-[16px] no-underline hover:bg-tinta"
+            >
+              Referir un paciente
+            </Link>
+            <BotonWhatsApp href={whatsappHome.profesional}>Hablar con el equipo</BotonWhatsApp>
+          </div>
         </div>
       </section>
 
@@ -1121,7 +968,6 @@ export function Landing() {
           />
         </Suspense>
       )}
-      <RedesFlotantes />
       <AyudaWhatsApp href={whatsappHome.general} />
     </div>
   );
