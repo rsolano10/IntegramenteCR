@@ -73,6 +73,15 @@ function taskEventUtc(publishDate: Date, dia: string, hora: string): Date | null
   );
 }
 
+// Meta rechaza parámetros con saltos de línea, tabulaciones, más de 4
+// espacios seguidos o vacíos ("(#100) Invalid parameter"). Se limpian y
+// se acortan antes de enviar.
+function limpiarParam(texto: string, max: number): string {
+  const limpio = texto.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim();
+  if (!limpio) return "-";
+  return limpio.length > max ? `${limpio.slice(0, max - 1).trimEnd()}…` : limpio;
+}
+
 interface TemplateParam {
   type: "text";
   text: string;
@@ -90,10 +99,10 @@ async function sendWhatsappTemplate(
   }
   const components: Record<string, unknown>[] = [];
   if (headerParam !== null) {
-    components.push({ type: "header", parameters: [{ type: "text", text: headerParam } satisfies TemplateParam] });
+    components.push({ type: "header", parameters: [{ type: "text", text: limpiarParam(headerParam, 55) } satisfies TemplateParam] });
   }
   if (bodyParams.length > 0) {
-    components.push({ type: "body", parameters: bodyParams.map((text) => ({ type: "text", text } satisfies TemplateParam)) });
+    components.push({ type: "body", parameters: bodyParams.map((text) => ({ type: "text", text: limpiarParam(text, 700) } satisfies TemplateParam)) });
   }
   if (buttonUrlSuffix !== null) {
     components.push({
@@ -261,7 +270,7 @@ Deno.serve(async (req) => {
       if (eventUtc) {
         const res = Array.isArray(primary.media_resources) ? primary.media_resources[0] : primary.media_resources;
         const ciencia = res?.ciencia as { gancho?: string } | null;
-        const gancho = ciencia?.gancho ?? `Hoy toca "${primary.titulo}" — un paso a la vez, sin apuro.`;
+        const gancho = ciencia?.gancho ?? `Hoy toca «${primary.titulo}»: un paso a la vez, sin apuro.`;
 
         if (nowUtc >= eventUtc && remainingCap > 0 && !(await alreadyLogged("start", primary.id, eventUtc))) {
           // Sin emoji: Meta no acepta emojis en los encabezados de texto.
