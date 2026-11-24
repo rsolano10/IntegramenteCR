@@ -193,7 +193,6 @@ export const programasHome = {
     // la del Autoguiado.
     descripcion: "Sesiones profesionales y actividades para el hogar, orientadas por una valoración neuropsicológica.",
     presupuesto: "Precio a medida",
-    presupuestoDetalle: "Te enviamos el presupuesto según las sesiones que se necesiten.",
     ideal: "Ideal si hay un diagnóstico o se necesita seguimiento profesional.",
     incluye: [
       "Acceso a los recursos de la aplicación.",

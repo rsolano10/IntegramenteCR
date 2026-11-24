@@ -808,38 +808,42 @@ export function Landing() {
         {/* Mismo orden en las dos: nombre, descripción, precio, beneficios, condiciones y botón.
             Mismo alto, con los botones alineados abajo. */}
         <Reveal className="max-w-[1040px] mx-auto">
-          <CarruselMovil etiqueta="Programas" escritorio="md:grid md:grid-cols-2 md:gap-5" item="md:w-auto">
-            <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 border-[1.5px] border-borde bg-white">
+          <CarruselMovil etiqueta="Programas" escritorio="md:grid md:grid-cols-2 md:gap-x-5 md:gap-y-0" item="md:w-auto md:grid md:grid-rows-subgrid md:row-span-3">
+            <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 md:grid md:grid-rows-subgrid md:row-span-3 md:gap-y-5 border-[1.5px] border-borde bg-white">
               <div>
                 <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{auto.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{auto.subtitulo}</p>
               </div>
-              <div className="pb-4 sm:pb-5 border-b border-borde-suave grid gap-2">
+              <div className="pb-4 sm:pb-5 border-b border-borde-suave grid gap-3 content-start">
                 <p className="m-0 flex items-baseline gap-2">
                   <span className="font-serif text-[34px] sm:text-[40px] leading-none">{autoguiado.precio}</span>
                   <span className="text-[15px] text-tinta-suave">{autoguiado.periodo}</span>
                 </p>
-                <p className="m-0 justify-self-start rounded-full bg-verde-tenue px-3 py-1 text-[14px] font-semibold text-verde-profundo">{auto.prueba}</p>
-                <p className="m-0 text-[15px] text-tinta">{auto.ideal}</p>
+                <div className="grid gap-2">
+                  <p className="m-0 justify-self-start rounded-full bg-verde-tenue px-3 py-1 text-[14px] font-semibold text-verde-profundo">{auto.prueba}</p>
+                  <p className="m-0 text-[15px] text-tinta">{auto.ideal}</p>
+                </div>
               </div>
+              <div className="flex flex-col gap-4 sm:gap-5">
               <ListaIncluye items={auto.incluye} />
               <p className="m-0 text-[14.5px] sm:text-[15px] leading-relaxed text-tinta bg-campo border border-borde-suave rounded-2xl px-4 py-2.5 sm:py-3">{auto.aclaracion}</p>
               <div className="mt-auto">
-                <Button variant="principal" to={registro} className="w-full sm:w-auto">
+                <Button variant="principal" to={registro} className="w-full sm:w-auto whitespace-nowrap !px-4 sm:!px-8 max-sm:!text-[16px]">
                   {CTA}
                 </Button>
               </div>
+              </div>
             </article>
-            <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 border-[1.5px] border-verde-serenidad bg-verde-tenue">
+            <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 md:grid md:grid-rows-subgrid md:row-span-3 md:gap-y-5 border-[1.5px] border-verde-serenidad bg-verde-tenue">
               <div>
                 <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{ses.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{ses.subtitulo}</p>
               </div>
-              <div className="pb-4 sm:pb-5 border-b border-borde-suave grid gap-2">
-                <p className="m-0 font-serif text-[28px] sm:text-[34px] leading-tight text-tinta">{ses.presupuesto}</p>
-                <p className="m-0 text-[15px] text-tinta-suave">{ses.presupuestoDetalle}</p>
+              <div className="pb-4 sm:pb-5 border-b border-borde-suave grid gap-3 content-start">
+                <p className="m-0 font-serif text-[34px] sm:text-[40px] leading-none text-tinta">{ses.presupuesto}</p>
                 <p className="m-0 text-[15px] text-tinta">{ses.ideal}</p>
               </div>
+              <div className="flex flex-col gap-4 sm:gap-5">
               <ListaIncluye items={ses.incluye} />
               {/* Requisito como nota al pie: discreto, sin caja ni color de
                   aviso, con el mismo contraste legible del resto. */}
@@ -857,9 +861,10 @@ export function Landing() {
               </p>
               <BotonWhatsApp href={whatsappHome.programaSesiones} primario className="mt-auto w-full sm:w-auto sm:self-start">
                 {/* En celular, corto para que el botón entre en una línea (la tarjeta ya dice «con sesiones»). */}
-                <span className="md:hidden whitespace-nowrap">Consultar mi programa</span>
-                <span className="hidden md:inline">Consultar mi programa con sesiones</span>
+                <span className="lg:hidden whitespace-nowrap">Consultar mi programa</span>
+                <span className="hidden lg:inline">Consultar mi programa con sesiones</span>
               </BotonWhatsApp>
+              </div>
             </article>
           </CarruselMovil>
         </Reveal>
