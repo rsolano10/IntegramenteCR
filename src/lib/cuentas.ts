@@ -69,7 +69,7 @@ export function detalleCuenta(f: FilaCuenta): string | null {
   }
   if (f.estado === "activa" || f.estado === "inactiva") {
     const d = diasDesde(f.ultima_actividad);
-    return d === null ? "Sin actividad registrada" : d === 0 ? "Activo hoy" : `Última actividad hace ${d} ${d === 1 ? "día" : "días"}`;
+    return d === null ? "Sin actividad registrada" : d === 0 ? "Último acceso: hoy" : `Último acceso hace ${d} ${d === 1 ? "día" : "días"}`;
   }
   if (f.estado === "pendiente_aprobacion" && f.requiere_contacto) return `Requiere contacto${f.requiere_contacto_nota ? `: ${f.requiere_contacto_nota}` : ""}`;
   if (f.estado === "rechazada" && f.rechazo_motivo) return `Motivo: ${f.rechazo_motivo}`;

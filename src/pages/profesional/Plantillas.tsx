@@ -129,7 +129,7 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
                   key={t.key}
                   type="button"
                   onClick={() => setEditandoTarea(t)}
-                  className="text-left rounded-lg bg-verde-serenidad text-white px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none hover:bg-verde-profundo font-sans"
+                  className="text-left rounded-lg bg-verde-profundo text-white px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none hover:bg-tinta font-sans"
                 >
                   {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
                   <span className="font-semibold">{t.titulo}</span>

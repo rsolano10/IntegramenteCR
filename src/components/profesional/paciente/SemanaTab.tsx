@@ -2,7 +2,7 @@ import { dificultadLabel } from "../../../lib/actividades/nivelSugerido";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
-import { DIAS, formatHora, weekDays } from "../../../lib/planWeek";
+import { DIAS, formatHora, semanaTerminada, weekDays } from "../../../lib/planWeek";
 import { Button } from "../../ui/Button";
 import { estadoMeta, moodMeta, weekStats, type PlanSummary, type TaskRow } from "../../../lib/seguimiento";
 
@@ -99,9 +99,13 @@ export function EvaluacionFamilia({ plan, stats }: { plan: PlanSummary; stats: R
         </div>
       ) : (
         <p className="m-0 text-[13.5px] leading-relaxed text-tinta-suave">
+          {/* Misma regla que la familia: puede evaluar cuando registró todo o
+              cuando la semana terminó. */}
           {stats.total > 0 && stats.abiertas === 0
             ? "Ya registraron todo; tienen la evaluación disponible pero todavía no la enviaron."
-            : `Se habilita cuando registren ${stats.abiertas === 1 ? "la actividad que falta" : `las ${stats.abiertas} actividades que faltan`}.`}
+            : semanaTerminada(plan.publish_at)
+              ? "La semana terminó y la familia todavía no la evaluó (ya la tiene disponible)."
+              : `La familia la puede evaluar cuando registre ${stats.abiertas === 1 ? "la actividad que falta" : `las ${stats.abiertas} actividades que faltan`} o cuando termine la semana.`}
         </p>
       )}
     </section>
@@ -137,10 +141,15 @@ function RevisionClinica({
 
   const sugerido = useMemo(() => {
     const nombre = patientNombre.split(" ")[0];
+    // Según lo que realmente pasó: nunca agradecer registros que no hubo.
+    const hechas = stats.realizado + stats.parcial;
+    const registradas = stats.total - stats.abiertas;
     const base =
-      stats.total > 0 && stats.realizado + stats.parcial >= Math.ceil(stats.total * 0.7)
-        ? `¡Qué buena semana! ${nombre} hizo ${stats.realizado + stats.parcial} de ${stats.total} actividades.`
-        : `Gracias por registrar la semana de ${nombre}.`;
+      stats.total > 0 && hechas >= Math.ceil(stats.total * 0.7)
+        ? `¡Qué buena semana! ${nombre} hizo ${hechas} de ${stats.total} ${stats.total === 1 ? "actividad" : "actividades"}.`
+        : registradas === 0
+          ? `Vimos que esta semana no quedaron registros de ${nombre}. Si algo les dificultó hacer las actividades, contanos por WhatsApp y lo ajustamos.`
+          : `Gracias por contarnos cómo fue la semana de ${nombre}. Para la próxima vamos a ajustar las actividades para que sea más fácil hacerlas.`;
     return `${base}${plan.review_preocupacion ? " Leímos lo que nos contaste y lo tomamos en cuenta para la próxima semana." : ""} `;
   }, [stats, plan.review_preocupacion, patientNombre]);
 

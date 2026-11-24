@@ -37,3 +37,18 @@ test("vistas", () => {
   assert.ok(!enVista("accion", null, undefined));
   assert.ok(enVista("inactivas", null, f({ estado: "inactiva" })));
 });
+
+test("una familia sin semana en curso no está al día: hay que armarle la semana", () => {
+  const paso = siguientePaso(p({ sin_semana: true, semana_fin: "2026-11-21", needs_review: true }), f({}), AHORA);
+  assert.equal(paso?.tipo, "sin_semana");
+  assert.equal(paso?.label, "Armar semana");
+  assert.match(paso?.porque ?? "", /Sin actividades desde el 22/);
+  // Aprobar sigue primero.
+  assert.equal(siguientePaso(p({ sin_semana: true }), f({ estado: "pendiente_aprobacion" }), AHORA)?.tipo, "aprobar");
+});
+
+test("una semana que termina pronto sin la siguiente pide asignarla", () => {
+  const paso = siguientePaso(p({ needs_assignment: true, termina_pronto: true }), f({}), AHORA);
+  assert.equal(paso?.tipo, "asignar");
+  assert.equal(paso?.porque, "La semana termina pronto y falta la siguiente");
+});

@@ -31,7 +31,10 @@ export function ResourceCard({
   onClick?: () => void;
 }) {
   const url = resourceUrl(r);
-  const hasImage = r.media_kind === "imagen" && !!url;
+  // Los videos muestran su miniatura real (el póster), no solo el color del módulo.
+  const poster = r.poster_path ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media-resources/${r.poster_path}` : null;
+  const imagen = r.media_kind === "imagen" && url ? url : poster;
+  const hasImage = !!imagen;
   const theme = moduloTheme[r.modulo];
 
   return (
@@ -60,8 +63,9 @@ export function ResourceCard({
       >
         {hasImage ? (
           <img
-            src={url}
+            src={imagen!}
             alt={r.titulo}
+            loading="lazy"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (

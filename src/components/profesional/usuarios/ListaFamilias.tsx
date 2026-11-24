@@ -9,7 +9,7 @@ import { useCuentaPorPaciente } from "../../../lib/usePanelCuentas";
 import { ORDEN_PASOS, enVista, siguientePaso, type Paso, type Vista } from "../../../lib/siguientePaso";
 import { Pagination } from "../../ui/Pagination";
 import { RowMenu } from "../../ui/RowMenu";
-import { AlDia, Avatar, BotonPaso, CuentaCelda, EjesChips, FamiliaAvatares } from "./piezas";
+import { AlDia, Avatar, BotonPaso, CuentaCelda, EjesChips, FamiliaAvatares, SemanaCelda } from "./piezas";
 import { useFamiliaAcciones } from "./useFamiliaAcciones";
 
 // Familias de la clínica: vistas rápidas con conteo (lo urgente primero),
@@ -21,6 +21,7 @@ const modalidad = Object.fromEntries(planTiers.map((t) => [t.id, t.nombre]));
 const VISTAS: { id: Vista; label: string; aviso?: boolean }[] = [
   { id: "accion", label: "Necesitan acción" },
   { id: "aprobar", label: "Por aprobar", aviso: true },
+  { id: "sin_semana", label: "Sin semana", aviso: true },
   { id: "evaluar", label: "Por evaluar", aviso: true },
   { id: "revisar", label: "Revisar semana", aviso: true },
   { id: "asignar", label: "Asignar semana", aviso: true },
@@ -137,11 +138,12 @@ export function ListaFamilias({
       {!isLoading && visibles.length > 0 && (
         <section aria-label="Familias" className="bg-white border border-borde rounded-[20px] overflow-hidden">
           {/* Encabezado de la tabla (escritorio) */}
-          <div className="hidden lg:grid grid-cols-[minmax(0,2.2fr)_minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,1.15fr)_minmax(0,1.5fr)_40px] gap-4 px-5 py-3 bg-[#fbf9f1] border-b border-borde-suave text-[12.5px] font-bold text-tinta-suave">
+          <div className="hidden lg:grid grid-cols-[minmax(0,2.1fr)_minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1.4fr)_40px] gap-4 px-5 py-3 bg-[#fbf9f1] border-b border-borde-suave text-[12.5px] font-bold text-tinta-suave">
             <span>Paciente</span>
             <span>Siguiente paso</span>
+            <span>Última semana</span>
             <span>Cuenta</span>
-            <span>Evaluación</span>
+            <span>Evaluación clínica</span>
             <span>Familia</span>
             <span />
           </div>
@@ -149,7 +151,7 @@ export function ListaFamilias({
             {visibles.map(({ p, f, paso }) => (
               <li key={p.id} className="border-b border-borde-suave last:border-b-0">
                 {/* Escritorio: una fila */}
-                <div className="hidden lg:grid grid-cols-[minmax(0,2.2fr)_minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,1.15fr)_minmax(0,1.5fr)_40px] gap-4 items-center px-5 py-3.5 hover:bg-[#fcfbf6]">
+                <div className="hidden lg:grid grid-cols-[minmax(0,2.1fr)_minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.15fr)_minmax(0,1.4fr)_40px] gap-4 items-center px-5 py-3.5 hover:bg-[#fcfbf6]">
                   <button type="button" onClick={() => fam.abrir(p.id)} className="flex items-center gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer font-sans group">
                     <Avatar id={p.id} nombre={p.nombre} />
                     <span className="min-w-0">
@@ -167,6 +169,7 @@ export function ListaFamilias({
                       <AlDia />
                     )}
                   </div>
+                  <SemanaCelda p={p} />
                   <CuentaCelda f={f} />
                   <EjesChips p={p} />
                   <FamiliaAvatares p={p} cuentas={cuentasPorId} />
@@ -186,6 +189,7 @@ export function ListaFamilias({
                     <RowMenu items={menuDe(p, f)} />
                   </div>
                   <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                    <SemanaCelda p={p} />
                     <CuentaCelda f={f} />
                     <EjesChips p={p} />
                   </div>

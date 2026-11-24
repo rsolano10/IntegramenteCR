@@ -246,7 +246,7 @@ function determinista(d: Datos): Panorama {
       ...w.actividades.filter((a) => a.ayuda_que_necesito).map((a) => ({ semana: w.semana, texto: `${a.titulo}: ${a.ayuda_que_necesito}` })),
     ])
     .slice(-4);
-  const riesgo = d.avisos_riesgo.length ? ` Hubo ${d.avisos_riesgo.length} aviso(s) de riesgo en los últimos 60 días (${d.avisos_riesgo.map((a) => a.tipo).join(", ")}).` : "";
+  const riesgo = d.avisos_riesgo.length ? ` Hubo ${d.avisos_riesgo.length} ${d.avisos_riesgo.length === 1 ? "aviso" : "avisos"} de riesgo en los últimos 60 días (${d.avisos_riesgo.map((a) => a.tipo).join(", ")}).` : "";
   return {
     resumen: `${nombre} lleva ${s.length} ${s.length === 1 ? "semana" : "semanas"} en el programa. En la ${ult.semana} hizo ${ult.hechas} de ${ult.total} actividades${ult.en_parte ? ` y ${ult.en_parte} en parte` : ""}${ult.sin_registrar ? `; ${ult.sin_registrar} quedaron sin registrar` : ""}.${ult.evaluacion_familia?.animo ? ` La familia describe el ánimo como ${ult.evaluacion_familia.animo} que la semana anterior.` : ""}${riesgo}`,
     tendencias,

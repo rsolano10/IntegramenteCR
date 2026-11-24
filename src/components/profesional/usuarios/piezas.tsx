@@ -105,6 +105,22 @@ export function FamiliaAvatares({ p, cuentas }: { p: PatientRow; cuentas: Map<st
   );
 }
 
+// La última semana publicada: avance y si la familia la evaluó (o que no
+// tiene semana).
+export function SemanaCelda({ p }: { p: PatientRow }) {
+  if (p.sin_semana)
+    return <span className="text-[13px] font-semibold text-alerta-texto leading-snug">{p.semana_total ? "Sin semana en curso" : "Todavía sin semana"}</span>;
+  if (!p.semana_total) return <span className="text-[13px] text-tinta-suave">Sin actividades</span>;
+  return (
+    <span className="grid gap-0.5 min-w-0">
+      <span className="text-[13.5px] font-semibold text-tinta">
+        {p.semana_hechas ?? 0} de {p.semana_total} {p.semana_total === 1 ? "hecha" : "hechas"}
+      </span>
+      <span className="text-[12.5px] text-tinta-suave">{p.semana_evaluada ? "Evaluada por la familia" : "Sin evaluar por la familia"}</span>
+    </span>
+  );
+}
+
 // Estado de la cuenta (chip) y su detalle («Quedan 2 días»…).
 export function CuentaCelda({ f }: { f: FilaCuenta | undefined }) {
   if (!f?.estado) return <span className="text-[13px] text-tinta-suave">Sin cuenta</span>;

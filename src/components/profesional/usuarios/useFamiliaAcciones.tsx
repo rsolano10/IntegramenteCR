@@ -53,6 +53,7 @@ export function useFamiliaAcciones({
       case "revisar":
         return navigate(patientPath(p.id, "semana"));
       case "asignar":
+      case "sin_semana":
         return navigate(patientPath(p.id, "planificar"));
       case "duplicado":
         return navigate(patientPath(p.id));

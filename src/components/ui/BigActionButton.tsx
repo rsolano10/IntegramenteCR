@@ -22,7 +22,7 @@ const variants: Record<Variant, string> = {
   ink: "bg-tinta text-white hover:bg-verde-profundo",
   // La acción principal: el mismo verde que el resto de la app de la familia.
   principal: "bg-verde-profundo text-white hover:bg-tinta",
-  primary: "bg-verde-serenidad text-white hover:bg-verde-profundo",
+  primary: "bg-verde-profundo text-white hover:bg-tinta",
   secondary: "border-2 border-borde bg-white text-tinta",
   soft: "border-2 border-verde-serenidad bg-verde-tenue text-verde-profundo",
   caution: "border-2 border-mostaza-vital bg-aviso text-semaforo-amarillo-texto hover:bg-mostaza-vital",

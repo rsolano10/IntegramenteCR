@@ -104,10 +104,10 @@ export function buildFinalSummary(a: Answers): string {
       : `Iremos conociendo mejor los gustos de ${nombre} en las próximas semanas.`;
   const s3 = `Actualmente ${fortaleza}, aunque ${necesidad}.`;
   const s4 = seguridad ? `También tomaremos en cuenta que ${seguridad}.` : null;
-  const s5 = `Como ${acompanamiento}, combinaremos actividades que pueda realizar por sí mismo con otras para compartir.`;
+  const s5 = `Como ${acompanamiento}, combinaremos actividades que pueda realizar sin ayuda con otras para compartir.`;
   const s6 = esPropia
     ? "Prepararemos tu Plan de Salud Cerebral a partir de tus capacidades actuales, tus necesidades de apoyo y las experiencias que han sido significativas para vos."
-    : `Prepararemos el Plan de Salud Cerebral de ${nombre} a partir de sus capacidades actuales, sus necesidades de apoyo y las experiencias que han sido significativas para él o ella.`;
+    : `Prepararemos el Plan de Salud Cerebral de ${nombre} a partir de sus capacidades actuales, sus necesidades de apoyo y las experiencias que han sido significativas en su vida.`;
 
   return [s1, s2, s3, s4, s5, s6].filter((x): x is string => !!x).join(" ");
 }

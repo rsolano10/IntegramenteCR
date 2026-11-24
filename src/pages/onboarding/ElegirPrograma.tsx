@@ -105,7 +105,7 @@ export function ElegirPrograma() {
                 <span
                   aria-hidden="true"
                   className={`w-7 h-7 rounded-full border-2 shrink-0 flex items-center justify-center mt-1 ${
-                    activo ? "border-verde-serenidad bg-verde-serenidad text-white" : "border-borde-campo bg-white"
+                    activo ? "border-verde-profundo bg-verde-profundo text-white" : "border-borde-campo bg-white"
                   }`}
                 >
                   {activo && <span className="text-[13px] leading-none">✓</span>}

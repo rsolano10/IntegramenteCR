@@ -77,7 +77,7 @@ const pasosReferir: { icono: string; t: string; d: string }[] = [
 ];
 
 const botonPrimario =
-  "inline-flex items-center justify-center gap-2.5 min-h-[56px] px-8 rounded-full font-sans font-semibold text-[17px] no-underline bg-verde-serenidad text-white hover:bg-verde-profundo transition-colors";
+  "inline-flex items-center justify-center gap-2.5 min-h-[56px] px-8 rounded-full font-sans font-semibold text-[17px] no-underline bg-verde-profundo text-white hover:bg-tinta transition-colors";
 const botonSecundario =
   "inline-flex items-center justify-center gap-2.5 min-h-[56px] px-7 rounded-full font-sans font-semibold text-[17px] no-underline bg-white border-[1.5px] border-verde-serenidad text-verde-profundo hover:bg-verde-tenue transition-colors";
 
@@ -208,7 +208,7 @@ export function Medicos() {
     <div className="font-sans text-tinta bg-fondo-papel min-h-full">
       <Encabezado
         accion={
-          <a href="#formulario" className="inline-flex items-center min-h-10 px-4 sm:px-5 rounded-full bg-verde-serenidad text-white text-[15px] font-semibold no-underline hover:bg-verde-profundo whitespace-nowrap">
+          <a href="#formulario" className="inline-flex items-center min-h-10 px-4 sm:px-5 rounded-full bg-verde-profundo text-white text-[15px] font-semibold no-underline hover:bg-tinta whitespace-nowrap">
             {/* En celular, corto para que entre junto al logo. */}
             <span className="sm:hidden">Referir</span>
             <span className="hidden sm:inline">Referir un paciente</span>

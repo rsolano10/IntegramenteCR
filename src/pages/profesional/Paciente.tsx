@@ -1,3 +1,4 @@
+import { BotonVolver } from "../../components/ui/BotonVolver";
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -139,9 +140,8 @@ export function Paciente() {
 
   return (
     <Pagina ancho="max-w-[1240px]">
-      <Link to="/app/profesional/panel" className="justify-self-start -mb-2 text-[14.5px] font-semibold text-verde-profundo no-underline hover:underline">
-        ‹ Panel
-      </Link>
+      {/* Vuelve a donde se vino (Panel o Usuarios); si se entró directo, a Usuarios. */}
+      <BotonVolver respaldo="/app/profesional/usuarios" className="justify-self-start -mb-2" />
 
       {patient.posible_duplicado_de && (
         <div className="border-[1.5px] border-riesgo-borde bg-riesgo rounded-2xl px-5 py-3.5">

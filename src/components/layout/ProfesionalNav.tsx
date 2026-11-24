@@ -1,10 +1,35 @@
 import { Link, useLocation } from "react-router-dom";
+import { useMemo } from "react";
+import { usePatients } from "../../lib/patients";
+import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
+import { siguientePaso } from "../../lib/siguientePaso";
+
+// Cuántas familias necesitan algo (el mismo «siguiente paso» del Panel y
+// Usuarios): se muestra junto a esos dos ítems del menú.
+function usePendientes(): number {
+  const { data: patients } = usePatients();
+  const { porPaciente } = useCuentaPorPaciente();
+  return useMemo(() => (patients ?? []).filter((p) => siguientePaso(p, porPaciente.get(p.id)) !== null).length, [patients, porPaciente]);
+}
+
+function Contador({ n, activo }: { n: number; activo: boolean }) {
+  if (n <= 0) return null;
+  return (
+    <span
+      aria-label={`${n} pendientes`}
+      className={`ml-auto min-w-[22px] h-[22px] px-1.5 rounded-full inline-flex items-center justify-center text-[12px] font-bold ${activo ? "bg-tinta text-white" : "bg-mostaza-vital text-tinta"}`}
+    >
+      {n}
+    </span>
+  );
+}
 
 interface NavItem {
   label: string;
   to: string;
   match: (pathname: string) => boolean;
   icon: (active: boolean) => React.ReactNode;
+  conPendientes?: boolean;
 }
 
 const iconProps = { width: 20, height: 20, viewBox: "0 0 20 20", fill: "none" as const, "aria-hidden": true };
@@ -12,6 +37,7 @@ const iconProps = { width: 20, height: 20, viewBox: "0 0 20 20", fill: "none" as
 const items: NavItem[] = [
   {
     label: "Panel",
+    conPendientes: true,
     to: "/app/profesional/panel",
     match: (p) => p === "/app/profesional/panel",
     icon: (active) => (
@@ -25,6 +51,7 @@ const items: NavItem[] = [
   },
   {
     label: "Usuarios",
+    conPendientes: true,
     to: "/app/profesional/usuarios",
     match: (p) => p.startsWith("/app/profesional/usuarios"),
     icon: (active) => (
@@ -62,6 +89,7 @@ const items: NavItem[] = [
 
 export function ProfesionalNav() {
   const { pathname } = useLocation();
+  const pendientes = usePendientes();
 
   return (
     <>
@@ -79,6 +107,7 @@ export function ProfesionalNav() {
             >
               {item.icon(active)}
               {item.label}
+              {item.conPendientes && <Contador n={pendientes} activo={active} />}
             </Link>
           );
         })}
@@ -98,6 +127,9 @@ export function ProfesionalNav() {
             >
               {item.icon(active)}
               {item.label}
+              {item.conPendientes && pendientes > 0 && (
+                <span className={`min-w-[20px] h-5 px-1 rounded-full inline-flex items-center justify-center text-[11.5px] font-bold ${active ? "bg-white text-tinta" : "bg-mostaza-vital text-tinta"}`}>{pendientes}</span>
+              )}
             </Link>
           );
         })}

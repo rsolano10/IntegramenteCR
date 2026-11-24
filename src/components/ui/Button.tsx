@@ -19,7 +19,9 @@ const sizes = {
 };
 
 const variants: Record<Variant, string> = {
-  primary: "bg-verde-serenidad text-white hover:bg-verde-profundo",
+  // Verde profundo: el verde serenidad con texto blanco no llega al contraste
+  // mínimo (3.2:1); el profundo da 5.9:1.
+  primary: "bg-verde-profundo text-white hover:bg-tinta",
   ink: "bg-tinta text-white hover:bg-verde-profundo",
   // La acción principal en las pantallas de la familia y del participante.
   principal: "bg-verde-profundo text-white hover:bg-tinta",

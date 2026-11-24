@@ -22,7 +22,7 @@ export function OptionGroup<T extends string>({ options, value, onChange, column
             onClick={() => onChange(opt.value)}
             className={`min-h-14 rounded-2xl border-[1.5px] font-sans text-[15px] font-semibold leading-snug px-2 cursor-pointer transition-colors ${
               active
-                ? "border-verde-serenidad bg-verde-serenidad text-white"
+                ? "border-verde-profundo bg-verde-profundo text-white"
                 : "border-borde bg-white text-tinta hover:border-verde-serenidad"
             }`}
           >

@@ -87,7 +87,14 @@ export function PlanificadorTab({
     [plans],
   );
   const latest = plans[0]?.publish_at ?? null;
-  const nuevaDefault = defaultPublishDate(isFirstAssignment ? null : latest);
+  const hoy0 = fromDateInputValue(toDateInputValue(new Date()));
+  // ¿Hay una semana que ya empezó y sigue vigente? Si no, la familia está sin
+  // actividades hoy: lo primero que se propone es «esta semana, desde hoy»
+  // (antes se proponía el domingo siguiente y quedaban días vacíos).
+  const haySemanaEnCurso = vigentes.some((p) => new Date(p.publish_at).getTime() <= now);
+  const proximoDomingo = defaultPublishDate(isFirstAssignment ? null : latest);
+  const sinSemanaHoy = !isFirstAssignment && !haySemanaEnCurso;
+  const nuevaDefault = sinSemanaHoy ? hoy0 : proximoDomingo;
   const [target, setTarget] = useState<Target>(() => {
     if (isFirstAssignment) return { kind: "nueva", date: nuevaDefault };
     // Lo último que se asignó a futuro — así, al volver, se ve lo publicado.
@@ -101,7 +108,7 @@ export function PlanificadorTab({
   const [mensaje, setMensaje] = useState(
     isFirstAssignment
       ? `¡Hola! Ya revisamos con cuidado el perfil de ${nombre} y armamos su programa personalizado. Esta semana empezamos suave, con actividades pensadas para sus gustos. Cualquier duda, escribinos por WhatsApp. Estamos para acompañarles.`
-      : `¡Hola! Ya está lista la próxima semana de ${nombre}. Tomamos en cuenta cómo les fue para ajustar las actividades. ¡Adelante!`,
+      : `¡Hola! Ya está lista la semana de ${nombre}, con actividades pensadas para sus gustos. Cualquier duda, escribinos por WhatsApp.`,
   );
   const [avisar, setAvisar] = useState(true);
   const [vistaCompleta, setVistaCompleta] = useState(false);
@@ -182,7 +189,7 @@ export function PlanificadorTab({
         ? `¡Hola! Agregamos actividades a la semana de ${nombre}. Ya las pueden ver en la app.`
         : isFirstAssignment
           ? mensaje
-          : `¡Hola! Ya está lista la próxima semana de ${nombre}. Tomamos en cuenta cómo les fue para ajustar las actividades. ¡Adelante!`,
+          : `¡Hola! Ya está lista la semana de ${nombre}, con actividades pensadas para sus gustos. Cualquier duda, escribinos por WhatsApp.`,
     );
   }
 
@@ -345,9 +352,17 @@ export function PlanificadorTab({
       const enCurso = new Date(p.publish_at).getTime() <= now;
       return { key: p.id, label: enCurso ? "Esta semana" : "Próxima", detalle: formatWeekRange(weekDays(new Date(p.publish_at))), target: { kind: "plan", plan: p } as Target };
     }),
-    ...(isFirstAssignment ? [] : [{ key: "nueva", label: "+ Nueva semana", detalle: formatWeekRange(weekDays(nuevaDefault)), target: { kind: "nueva", date: nuevaDefault } as Target }]),
+    ...(isFirstAssignment
+      ? []
+      : [
+          ...(sinSemanaHoy
+            ? [{ key: "hoy", label: "Esta semana, desde hoy", detalle: formatWeekRange(weekDays(hoy0)), target: { kind: "nueva", date: hoy0 } as Target }]
+            : []),
+          { key: "nueva", label: "+ Próxima semana", detalle: formatWeekRange(weekDays(proximoDomingo)), target: { kind: "nueva", date: proximoDomingo } as Target },
+        ]),
   ];
-  const activa = target.kind === "plan" ? target.plan.id : "nueva";
+  const activa =
+    target.kind === "plan" ? target.plan.id : sinSemanaHoy && toDateInputValue(target.date) === toDateInputValue(hoy0) ? "hoy" : "nueva";
 
   // Las plantillas van de domingo (0) a sábado (6).
   const nombreDia = (i: number) => DIAS[i] ?? `Día ${i + 1}`;
@@ -415,6 +430,11 @@ export function PlanificadorTab({
 
       {/* Semana */}
       <section className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-4">
+        {sinSemanaHoy && (
+          <p className="m-0 rounded-2xl bg-alerta border border-alerta-borde px-4 py-3 text-[14px] leading-relaxed text-alerta-texto">
+            <strong>{patientNombre.split(" ")[0]} no tiene semana en curso:</strong> hoy no tiene actividades. Conviene publicar desde hoy.
+          </p>
+        )}
         {opciones.length > 1 && (
           <div role="tablist" aria-label="Semana" className="flex flex-wrap gap-2">
             {opciones.map((o) => (
@@ -472,7 +492,19 @@ export function PlanificadorTab({
             <strong className="text-tinta">{draftsInWeek.length}</strong> nuevas ·{" "}
             <strong className="text-tinta">{days.length - diasVacios.length}</strong> de {days.length} días con actividades
           </p>
-          <div className="flex items-center gap-4 text-[12.5px] text-tinta-tenue">
+          <div className="flex flex-wrap items-center gap-4 text-[12.5px] text-tinta-tenue">
+            {/* Agregar, visible (en el calendario el «+» aparece al pasar el
+                mouse por una celda, y en tablet no hay mouse). */}
+            <button
+              type="button"
+              onClick={() => {
+                const hoyDia = days.find((d) => toDateInputValue(d.date) === toDateInputValue(new Date()))?.dia;
+                setEditor({ mode: "new", dia: hoyDia ?? days[0].dia, hora: "" });
+              }}
+              className="inline-flex items-center gap-1.5 min-h-10 px-4 rounded-full border-0 bg-verde-profundo text-white text-[14px] font-semibold cursor-pointer hover:bg-tinta"
+            >
+              + Agregar actividad
+            </button>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-verde-serenidad" /> En este plan
             </span>
@@ -482,6 +514,11 @@ export function PlanificadorTab({
           </div>
         </div>
 
+        {existentes.length === 0 && draftsInWeek.length === 0 && (
+          <p className="m-0 px-5 sm:px-6 py-3 bg-fila-fria border-b border-borde-suave text-[14px] text-tinta">
+            Semana vacía: elegí una plantilla arriba, usá <strong>+ Agregar actividad</strong> o tocá una celda del calendario.
+          </p>
+        )}
         <CalendarioSemana
           columnas={days.map((d) => {
             const hoy = toDateInputValue(d.date) === toDateInputValue(new Date());
@@ -526,7 +563,7 @@ export function PlanificadorTab({
                   {items.drafts.map((t) => {
                     const juego = !!t.mediaResourceId && interactivos.has(t.mediaResourceId);
                     return (
-                      <div key={t.key} className="rounded-lg bg-verde-serenidad text-white overflow-hidden">
+                      <div key={t.key} className="rounded-lg bg-verde-profundo text-white overflow-hidden">
                         <button
                           type="button"
                           onClick={() => setEditor({ mode: "edit", task: t })}
@@ -616,7 +653,7 @@ export function PlanificadorTab({
         </div>
         <div className="grid gap-2.5">
           {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
-          <Button variant="ink" fullWidth onClick={publish} disabled={saving || !aprobada}>
+          <Button variant="ink" fullWidth onClick={publish} disabled={saving || !aprobada || draftsInWeek.length === 0}>
             {saving ? "Publicando…" : isFirstAssignment ? "Aprobar y publicar plan" : target.kind === "plan" ? "Agregar a esta semana" : "Publicar semana"}
           </Button>
           <p className="m-0 text-[12.5px] leading-relaxed text-tinta-tenue text-center">

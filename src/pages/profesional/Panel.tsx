@@ -52,6 +52,19 @@ const GRUPOS: Record<GrupoId, { titulo: string; corto: string; desc: string; vis
       </>
     ),
   },
+  sin_semana: {
+    titulo: "Familias sin semana",
+    corto: "Sin semana",
+    desc: "Su última semana terminó y no tienen otra publicada: hoy no tienen actividades.",
+    vista: "sin_semana",
+    tinta: "bg-alerta text-alerta-texto border border-alerta-borde",
+    icono: (
+      <>
+        <rect x="4" y="5" width="16" height="15" rx="2" />
+        <path d="M4 10h16M9 3v4M15 3v4M10 14l4 4M14 14l-4 4" />
+      </>
+    ),
+  },
   pagar: {
     titulo: "Semana gratis por terminar",
     corto: "Cobros",
@@ -101,7 +114,7 @@ const GRUPOS: Record<GrupoId, { titulo: string; corto: string; desc: string; vis
   asignar: {
     titulo: "Semanas por asignar",
     corto: "Asignar semana",
-    desc: "Terminaron la semana y todavía no tienen la próxima.",
+    desc: "Su semana termina pronto o ya la registraron, y todavía no tienen la próxima.",
     vista: "asignar",
     tinta: "bg-[#e6eeef] text-verde-profundo",
     icono: (

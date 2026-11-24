@@ -10,6 +10,8 @@ import { RowMenu } from "../../components/ui/RowMenu";
 import { FilterDropdown } from "../../components/ui/FilterDropdown";
 import { ResourceDetailView } from "../../components/ui/ResourceDetailView";
 import { ResourceCard } from "../../components/ui/ResourceCard";
+import { PillToggle } from "../../components/ui/PillToggle";
+import { ListaRecursos } from "../../components/profesional/ListaRecursos";
 import {
   moduloLabel,
   nivelCognitivoLabel,
@@ -56,6 +58,23 @@ export function Biblioteca() {
   });
 
   const [search, setSearch] = useState("");
+  // Lista compacta por defecto (con 120+ recursos, las tarjetas mostraban 6
+  // por pantalla); se recuerda la elección en este navegador.
+  const [vista, setVista] = useState<"lista" | "tarjetas">(() => {
+    try {
+      return localStorage.getItem("biblioteca-vista") === "tarjetas" ? "tarjetas" : "lista";
+    } catch {
+      return "lista";
+    }
+  });
+  const cambiarVista = (v: "lista" | "tarjetas") => {
+    setVista(v);
+    try {
+      localStorage.setItem("biblioteca-vista", v);
+    } catch {
+      /* sin almacenamiento: queda para esta visita */
+    }
+  };
   const [moduloFilter, setModuloFilter] = useState<ResourceModulo | "">("");
   const [nivelFilter, setNivelFilter] = useState<NivelCognitivo | "">("");
   const [duracionFilter, setDuracionFilter] = useState<DuracionBucket | "">("");
@@ -187,11 +206,27 @@ export function Biblioteca() {
           ) : (
             <>
               {filtered.length === 0 && !isLoading && <p className="m-0 text-sm text-tinta-tenue">Ningún recurso coincide con estos filtros.</p>}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {filtered.map((r) => (
-                  <ResourceCard key={r.id} resource={r} onClick={() => setPreviewing(r)} actions={<RowMenu items={menuDe(r)} />} />
-                ))}
-              </div>
+              {filtered.length > 0 && (
+                <div className="mb-4 flex justify-end">
+                  <PillToggle
+                    value={vista}
+                    onChange={cambiarVista}
+                    options={[
+                      { value: "lista", label: "Lista" },
+                      { value: "tarjetas", label: "Tarjetas" },
+                    ]}
+                  />
+                </div>
+              )}
+              {vista === "lista" ? (
+                <ListaRecursos recursos={filtered} onAbrir={setPreviewing} menuDe={menuDe} />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {filtered.map((r) => (
+                    <ResourceCard key={r.id} resource={r} onClick={() => setPreviewing(r)} actions={<RowMenu items={menuDe(r)} />} />
+                  ))}
+                </div>
+              )}
             </>
           )}
         </CajaCuerpo>

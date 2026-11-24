@@ -79,7 +79,7 @@ function PendienteRevision({ nombre, desdeAyuda, programaElegido }: { nombre: st
               <span
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-[14px] font-semibold shrink-0 ${
                   paso.estado === "hecho"
-                    ? "bg-verde-serenidad text-white"
+                    ? "bg-verde-profundo text-white"
                     : paso.estado === "actual"
                       ? "bg-mostaza-vital text-tinta ring-4 ring-aviso"
                       : "bg-pastilla-fondo text-pastilla-texto"

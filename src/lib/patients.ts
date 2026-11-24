@@ -25,6 +25,14 @@ export interface PatientRow {
   needs_assignment: boolean;
   posible_duplicado_de: string | null;
   posible_duplicado_nombre: string | null;
+  // Por fecha real (list_patients): la última semana terminó sin otra
+  // publicada / termina en 0 a 2 días sin la siguiente.
+  sin_semana?: boolean;
+  termina_pronto?: boolean;
+  semana_fin?: string | null;
+  semana_hechas?: number;
+  semana_total?: number;
+  semana_evaluada?: boolean;
 }
 
 // Shared roster query (list_patients RPC) — Panel, Usuarios and the patient
