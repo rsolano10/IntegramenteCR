@@ -1,4 +1,6 @@
 import { Suspense, lazy, useState } from "react";
+import { usePermiso } from "../../lib/consentimientos";
+import { ActivarClara } from "./ActivarClara";
 import { Link } from "react-router-dom";
 import type { MediaResource } from "../../lib/mediaResources";
 import { useMyPatient } from "../../lib/useMyPatient";
@@ -18,7 +20,7 @@ import { ClaraAvatar } from "./ClaraAvatar";
 
 const Chat = lazy(() => import("./ChatClaraActividad"));
 
-export function ClaraElige({ recursos }: { recursos: MediaResource[] }) {
+function ClaraEligeConPermiso({ recursos }: { recursos: MediaResource[] }) {
   const { data: myPatient } = useMyPatient();
   const [primera, setPrimera] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -110,4 +112,11 @@ export function ClaraElige({ recursos }: { recursos: MediaResource[] }) {
       </div>
     </section>
   );
+}
+
+// Sin el permiso «ia_clara», en lugar del chat se ofrece activarla.
+export function ClaraElige(props: Parameters<typeof ClaraEligeConPermiso>[0]) {
+  const { permitido, cargando } = usePermiso("ia_clara");
+  if (cargando) return null;
+  return permitido ? <ClaraEligeConPermiso {...props} /> : <ActivarClara compacto />;
 }

@@ -42,6 +42,9 @@ import { Ficha } from "./pages/profesional/Ficha";
 import { Editor } from "./pages/profesional/Editor";
 import { ProfesionalAlerta } from "./pages/profesional/Alerta";
 import { Usuarios } from "./pages/profesional/Usuarios";
+import { Consentimiento } from "./pages/Consentimiento";
+import { MisDatos } from "./pages/MisDatos";
+import { faltaAceptar, useMisConsentimientos } from "./lib/consentimientos";
 import { Biblioteca } from "./pages/profesional/Biblioteca";
 import { Paciente } from "./pages/profesional/Paciente";
 import { Plantillas } from "./pages/profesional/Plantillas";
@@ -91,6 +94,9 @@ function RouteGuard({ children }: { children: ReactNode }) {
   // cold navigation. isPending stays true until data or an error actually
   // arrives, regardless of whether a fetch is in flight yet.
   const { data: myPatient, isPending: patientLoading } = useMyPatient();
+  // Consentimientos de la versión vigente (Ley 8968): sin ellos no se entra
+  // a nada más. Ver src/lib/consentimientos.ts.
+  const { data: consentimientos, isPending: consentLoading } = useMisConsentimientos(session.status === "authed");
   const currentUserId = session.status === "authed" ? session.session.user.id : null;
   const lastUserId = useAppStore((s) => s.lastUserId);
   const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
@@ -141,6 +147,25 @@ function RouteGuard({ children }: { children: ReactNode }) {
   // /app/consent, ping-ponging against the redirect above forever.
   if (pathname === "/app/cambiar-password") {
     return <>{children}</>;
+  }
+
+  // Aceptación de las condiciones y consentimientos por separado. Va antes
+  // que todo lo demás (también antes del cuestionario) y aplica a todos los
+  // roles: al subir VERSION_LEGAL, cada cuenta vuelve a pasar por acá.
+  if (role === "familiar" || role === "paciente" || role === "profesional") {
+    if (consentLoading) return <div className="min-h-[40vh]" />;
+    const falta = faltaAceptar(role, consentimientos ?? []);
+    const enConsentimiento = pathname === "/app/consentimiento";
+    if (falta && !enConsentimiento) {
+      const destino = pathname === "/app/login" ? new URLSearchParams(search).get("next") : pathname + search;
+      const sufijo = destino && destino.startsWith("/app/") && destino !== "/app/login" ? `?next=${encodeURIComponent(destino)}` : "";
+      return <Navigate to={`/app/consentimiento${sufijo}`} replace />;
+    }
+    if (enConsentimiento) {
+      if (falta) return <>{children}</>;
+      const next = new URLSearchParams(search).get("next");
+      return <Navigate to={next && next.startsWith("/app/") ? next : "/app/login"} replace />;
+    }
   }
 
   if ((role === "familiar" || role === "paciente") && patientLoading) {
@@ -216,6 +241,8 @@ export default function AppLayout() {
         <Route path="login" element={<Login />} />
         <Route path="cambiar-password" element={<CambiarPassword />} />
         <Route path="consent" element={<Consent />} />
+        <Route path="consentimiento" element={<Consentimiento />} />
+        <Route path="mis-datos" element={<MisDatos />} />
         <Route path="perfil/resumen" element={<PerfilResumen />} />
         <Route path="perfil/final" element={<ResumenFinal />} />
         <Route path="perfil/invitar" element={<InvitarContraparte />} />

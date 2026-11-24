@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { usePermiso } from "../../lib/consentimientos";
+import { ActivarClara } from "../../components/clara/ActivarClara";
+import { BotonWhatsApp } from "../../components/ui/BotonWhatsApp";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
@@ -96,7 +99,31 @@ interface Manejadores {
   onError: (m: string) => void;
 }
 
+// Clara solo con el permiso «ia_clara» (Mis datos y permisos); sin él se
+// explica qué es y se ofrece activarla, y los accesos directos siguen.
 export function Asistente({ extras }: { extras?: ReactNode }) {
+  const { permitido, cargando } = usePermiso("ia_clara");
+  if (cargando) return null;
+  if (!permitido)
+    return (
+      <div className="max-w-[720px] w-full mx-auto px-5 py-8 sm:px-8 grid gap-5">
+        <ActivarClara />
+        <section className="rounded-3xl border border-borde bg-white p-5 sm:p-6 grid gap-3">
+          <p className="m-0 text-[16px] font-semibold text-tinta">Para hablar con el equipo</p>
+          <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">
+            Escribinos por WhatsApp. Ante una urgencia, llamá al <strong className="text-tinta">9-1-1</strong>.
+          </p>
+          <BotonWhatsApp href={waEquipo()} className="justify-self-start">
+            Escribir al equipo
+          </BotonWhatsApp>
+        </section>
+        {extras}
+      </div>
+    );
+  return <AsistenteConPermiso extras={extras} />;
+}
+
+function AsistenteConPermiso({ extras }: { extras?: ReactNode }) {
   const manejadores = useRef<Manejadores | null>(null);
   return (
     <ConversationProvider

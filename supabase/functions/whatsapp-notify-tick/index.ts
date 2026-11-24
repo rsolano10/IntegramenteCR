@@ -171,6 +171,12 @@ Deno.serve(async (req) => {
     const patientId = link.patient_id as string;
     const profileId = link.profile_id as string;
     const phone = profile.whatsapp_phone as string;
+    // Solo con el permiso «whatsapp» vigente (Ley 8968; ver consentimientos).
+    const { data: conWhatsapp } = await admin.rpc("consentimiento_vigente", { p_profile: profileId, p_tipo: "whatsapp" });
+    if (conWhatsapp !== true) {
+      summary.skipped++;
+      continue;
+    }
 
     const { data: plan } = await admin
       .from("plans")

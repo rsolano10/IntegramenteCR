@@ -22,6 +22,7 @@ import { Avatar } from "../../components/profesional/usuarios/piezas";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 import { PedidosAyudaPaciente } from "../../components/profesional/PedidosAyudaPaciente";
 import { PerfilRecursosCard } from "../../components/profesional/paciente/PerfilRecursosCard";
+import { PermisosPaciente } from "../../components/profesional/paciente/PermisosPaciente";
 
 type Tab = "evaluacion" | "semana" | "planificar" | "asistente" | "cuentas";
 
@@ -252,7 +253,12 @@ export function Paciente() {
         ))}
 
       {tab === "asistente" && <AsistenteTab patientId={patient.id} />}
-      {tab === "cuentas" && <VinculosTab patient={patient} onChanged={changed} />}
+      {tab === "cuentas" && (
+        <>
+          <VinculosTab patient={patient} onChanged={changed} />
+          <PermisosPaciente patientId={patient.id} />
+        </>
+      )}
       </div>
     </Pagina>
   );

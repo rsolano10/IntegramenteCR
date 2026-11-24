@@ -127,6 +127,7 @@ export function AppHeader() {
             ...(myPatient && myPatient.plan_status !== "pendiente"
               ? [{ label: "Avisos en tu teléfono", onClick: () => setModal("calendario") }]
               : []),
+            { label: "Mis datos y permisos", onClick: () => navigate("/app/mis-datos") },
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
@@ -244,6 +245,7 @@ export function AppHeader() {
           items={[
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
             { label: "Historial de auditoría", onClick: () => setModal("auditoria") },
+            { label: "Condiciones y privacidad", onClick: () => window.open("/legal/privacidad", "_blank") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
         />

@@ -33,6 +33,10 @@ Deno.serve(async (req) => {
   if (!user) return json({ error: "No autenticado." }, 401);
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+  // Clara solo con el permiso «ia_clara» (Ley 8968, consentimiento).
+  const { data: conClara } = await admin.rpc("consentimiento_vigente", { p_profile: user.id, p_tipo: "ia_clara" });
+  if (conClara !== true) return json({ error: "sin_permiso" }, 403);
+
   if (req.method === "GET") {
     const { data, error } = await admin.from("agent_memory").select("nombre, resumen_previo").eq("user_id", user.id).maybeSingle();
     if (error) return json({ error: "No pudimos leer la memoria." }, 500);

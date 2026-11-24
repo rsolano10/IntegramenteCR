@@ -91,6 +91,13 @@ async function sendWhatsappTemplate(to: string, templateName: string, bodyParams
   return { ok: true, messageId: data?.messages?.[0]?.id };
 }
 
+// Solo con el permiso «whatsapp» vigente (Ley 8968; ver consentimientos).
+// deno-lint-ignore no-explicit-any
+async function conWhatsapp(admin: any, profileId: string): Promise<boolean> {
+  const { data } = await admin.rpc("consentimiento_vigente", { p_profile: profileId, p_tipo: "whatsapp" });
+  return data === true;
+}
+
 // WhatsApp template variables can't contain newlines or runs of spaces.
 function waParam(text: string): string {
   return text.replace(/\s+/g, " ").trim().slice(0, 900);
@@ -495,7 +502,7 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
     ]);
     contacts.push({
       email: found?.user?.email ?? null,
-      phone: prof?.whatsapp_notifications_enabled ? (prof?.whatsapp_phone ?? null) : null,
+      phone: prof?.whatsapp_notifications_enabled && (await conWhatsapp(admin, profileId)) ? (prof?.whatsapp_phone ?? null) : null,
       nombre: (prof?.nombre ?? "").split(" ")[0],
     });
   }
@@ -601,7 +608,7 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
       if (mailError) failures.push(mailError);
       else canales.add("correo");
     }
-    const phone = prof?.whatsapp_notifications_enabled ? prof?.whatsapp_phone : null;
+    const phone = prof?.whatsapp_notifications_enabled && (await conWhatsapp(admin, profileId)) ? prof?.whatsapp_phone : null;
     if (phone) {
       const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "Hola"), waParam(patientNombre), waParam(mensaje || "Ya podés ver las actividades en la app.")]);
       if (wa.ok) canales.add("WhatsApp");

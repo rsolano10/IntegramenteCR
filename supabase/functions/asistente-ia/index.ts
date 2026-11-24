@@ -283,6 +283,11 @@ Deno.serve(async (req) => {
   } = await userClient.auth.getUser();
   if (!user) return json({ error: "No autenticado." }, 401);
 
+  // Retirado: el chat de la familia es Clara (ElevenLabs) desde 2026-11-07
+  // y la app ya no llama a esta función. No hay un consentimiento que cubra
+  // enviar las conversaciones de la familia a Gemini, así que responde 410.
+  if (Deno.env.get("ASISTENTE_IA_HABILITADO") !== "1") return json({ error: "retirado" }, 410);
+
   let payload: Record<string, unknown>;
   try {
     payload = await req.json();

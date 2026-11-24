@@ -145,6 +145,11 @@ function valido(p: unknown): p is Panorama {
   return true;
 }
 
+// Minimización (Ley 8968): al modelo no le hace falta el nombre.
+function paraModelo(d: Datos) {
+  return { ...d, paciente: { ...d.paciente, nombre: "la persona participante" } };
+}
+
 async function conGemini(d: Datos): Promise<Panorama | null> {
   if (!GEMINI_API_KEY) return null;
   const prompt = `Sos un asistente para el equipo clínico de IntegraMente (estimulación cognitiva y funcional en casa para personas mayores, Costa Rica). Una profesional va a leer esto en 30 segundos antes de armar la próxima semana de actividades del paciente.
@@ -167,7 +172,7 @@ Reglas:
 - Español neutro profesional, conciso. Devolvé solo el JSON.
 
 DATOS:
-${JSON.stringify(d)}`;
+${JSON.stringify(paraModelo(d))}`;
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
@@ -295,7 +300,10 @@ Deno.serve(async (req) => {
     return json(esClinica ? { ok: true, resumen: previo, actualizado: false } : { ok: true });
   }
 
-  const llm = await conGemini(datos);
+  // Solo con la autorización «ia_equipo» de la familia o del participante;
+  // sin ella, el panorama se arma sin IA (determinista).
+  const { data: conIA } = await admin.rpc("consentimiento_paciente", { p_patient: patientId, p_tipo: "ia_equipo" });
+  const llm = conIA === true ? await conGemini(datos) : null;
   const fila = {
     patient_id: patientId,
     contenido: llm ?? determinista(datos),

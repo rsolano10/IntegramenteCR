@@ -13,6 +13,7 @@ import { ListaFamilias } from "../../components/profesional/usuarios/ListaFamili
 import { NewPatientModal } from "../../components/profesional/usuarios/NuevoPacienteModal";
 import { RowMenu } from "../../components/ui/RowMenu";
 import { Button } from "../../components/ui/Button";
+import { SolicitudesDatos } from "../../components/profesional/SolicitudesDatos";
 import { Caja, CajaAviso, CajaBarra, CajaCuerpo, CajaPestanas, Pagina, type PestanaCaja } from "../../components/profesional/Caja";
 
 type Pestana = "familias" | "sin_paciente" | "equipo";
@@ -137,6 +138,7 @@ export function Usuarios() {
         </CajaCuerpo>
       </Caja>
 
+      <SolicitudesDatos />
       {crear && <NewPatientModal onClose={() => setCrear(false)} onCreated={() => handleChanged("Paciente creado.")} onError={(msg) => handleChanged(msg, true)} />}
       {ajustes && <AjustesCuentasModal onClose={() => setAjustes(false)} />}
       {openAccount && (

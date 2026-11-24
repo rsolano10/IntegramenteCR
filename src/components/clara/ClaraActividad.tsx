@@ -1,4 +1,6 @@
 import { Suspense, lazy, useState } from "react";
+import { usePermiso } from "../../lib/consentimientos";
+import { ActivarClara } from "./ActivarClara";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { contextoParaClara, type ContextoActividad } from "../../lib/claraActividad";
 import { ClaraAvatar } from "./ClaraAvatar";
@@ -9,7 +11,7 @@ import { ClaraAvatar } from "./ClaraAvatar";
 
 const Chat = lazy(() => import("./ChatClaraActividad"));
 
-export function ClaraActividad({
+function ClaraActividadConPermiso({
   contexto,
   quien,
   large = false,
@@ -68,4 +70,11 @@ export function ClaraActividad({
       <p className="m-0 text-[12.5px] leading-snug text-tinta-suave">Clara es una IA y puede equivocarse. Ante una urgencia, llamá al 9-1-1.</p>
     </section>
   );
+}
+
+// Sin el permiso «ia_clara», en lugar del chat se ofrece activarla.
+export function ClaraActividad(props: Parameters<typeof ClaraActividadConPermiso>[0]) {
+  const { permitido, cargando } = usePermiso("ia_clara");
+  if (cargando) return null;
+  return permitido ? <ClaraActividadConPermiso {...props} /> : <ActivarClara compacto large={props.large} />;
 }

@@ -69,6 +69,13 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   if (!API_KEY) return json({ error: "sin_clave" }, 503);
+  // Familia y participante: solo con el permiso «voz»; sin él, la app usa
+  // la voz del dispositivo (mismo camino que sin clave).
+  const { data: perfil } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (perfil?.role !== "profesional") {
+    const { data: conVoz } = await admin.rpc("consentimiento_vigente", { p_profile: user.id, p_tipo: "voz" });
+    if (conVoz !== true) return json({ error: "sin_permiso" }, 503);
+  }
 
   const voz = await vozId();
   const ruta = `${await sha256(`${voz}|${MODELO}|${texto}`)}.mp3`;

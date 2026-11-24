@@ -62,7 +62,9 @@ Deno.serve(async (req) => {
   const delPayload = d.user_id ?? d.conversation_initiation_client_data?.user_id ?? null;
   if (delPayload && delPayload !== conv.user_id) return json({ ok: true, ignorado: "user_id no coincide" });
 
-  if (resumen) {
+  // Si revocó el permiso de Clara, no se guarda memoria nueva.
+  const { data: conClara } = await admin.rpc("consentimiento_vigente", { p_profile: conv.user_id, p_tipo: "ia_clara" });
+  if (resumen && conClara === true) {
     const [{ data: mem }, { data: perfil }] = await Promise.all([
       admin.from("agent_memory").select("nombre, resumen_previo").eq("user_id", conv.user_id).maybeSingle(),
       admin.from("profiles").select("nombre").eq("id", conv.user_id).maybeSingle(),

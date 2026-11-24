@@ -107,6 +107,12 @@ Deno.serve(async (req) => {
   }
   if (!entrada?.patientId || !Array.isArray(entrada.tareas) || entrada.tareas.length === 0) return json({ error: "Faltan datos." }, 400);
 
+  // Sin la autorización «ia_equipo» no se envía nada al modelo.
+  const { data: conIA } = await admin.rpc("consentimiento_paciente", { p_patient: entrada.patientId, p_tipo: "ia_equipo" });
+  if (conIA !== true) {
+    return json({ estado: "sin_consentimiento", cambios: [], aviso: "La familia no autorizó el uso de IA, así que la semana quedó igual a la plantilla. Podés ajustarla a mano.", ia_id: null });
+  }
+
   const { data: cfg } = await admin.from("config_clinica").select("max_cambios_ia_pct").eq("id", 1).single();
   const pct = cfg?.max_cambios_ia_pct ?? 30;
   const max = maxCambiosPermitidos(entrada.tareas.length, pct);

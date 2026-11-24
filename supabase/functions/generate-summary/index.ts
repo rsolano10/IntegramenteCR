@@ -208,6 +208,12 @@ Deno.serve(async (req) => {
     acompanamiento: pickAcompanamiento(answers),
   };
 
+  // Solo con la autorización «ia_equipo»; sin ella, el cliente arma el
+  // resumen con el generador local (mismo camino que si Gemini falla).
+  const { data: permisos } = await userClient.rpc("mis_consentimientos");
+  const conIA = Array.isArray(permisos) && permisos.some((c: { tipo: string; otorgado: boolean }) => c.tipo === "ia_equipo" && c.otorgado);
+  if (!conIA) return json({ summary: null, source: "fallback" });
+
   const llmText = await callGemini(facts, esPropia);
   if (llmText && validateFinalSummary(llmText)) {
     return json({ summary: llmText, source: "llm" });

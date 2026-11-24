@@ -8,7 +8,6 @@ import { useMyPatient } from "../../lib/useMyPatient";
 import { applicableQuestions, questions, resolveOptions, resolveText } from "../../lib/onboardingSchema";
 import { normalizeCrPhone } from "../../lib/phone";
 import { Button } from "../../components/ui/Button";
-import { CheckRow } from "../../components/ui/CheckRow";
 import { IconoCategoria } from "../../components/onboarding/IconoCategoria";
 import { categoriaDe, mensajeDeAnimo } from "../../lib/categoriasCuestionario";
 
@@ -165,25 +164,20 @@ function IntroCategoria({ modulo, idxModulo, total, onSeguir }: { modulo: string
   );
 }
 
-// Consentimiento (antes era una pantalla aparte, /app/consent): ahora va en
-// la bienvenida del cuestionario, para que el enlace del correo lleve
-// directo al cuestionario sin pasos intermedios (Fase 1.6).
+// Alcance del programa en la bienvenida del cuestionario. Los
+// consentimientos (cada uno por separado y con prueba guardada) ya se
+// dieron antes de llegar acá: RouteGuard → /app/consentimiento.
 function ConsentimientoInicial({ onListo }: { onListo: (ok: boolean) => void }) {
-  const [c1, setC1] = useState(false);
-  const [c2, setC2] = useState(false);
-  useEffect(() => onListo(c1 && c2), [c1, c2, onListo]);
+  useEffect(() => onListo(true), [onListo]);
   return (
-    <div className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-4 text-left mb-8">
+    <div className="bg-white border border-borde rounded-3xl p-5 sm:p-6 grid gap-2 text-left mb-8">
       <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
         Es un programa de estimulación con acompañamiento profesional. No es un diagnóstico ni reemplaza la atención médica. Ante una
         urgencia, llamá al <strong className="text-tinta">9-1-1</strong>.
       </p>
-      <CheckRow checked={c1} onToggle={() => setC1((v) => !v)}>
-        Entiendo el alcance del programa y que no sustituye la atención médica.
-      </CheckRow>
-      <CheckRow checked={c2} onToggle={() => setC2((v) => !v)}>
-        Autorizo el uso de los datos ingresados para generar el plan y compartirlo con el equipo tratante.
-      </CheckRow>
+      <p className="m-0 text-[14.5px] leading-relaxed text-tinta-tenue">
+        Lo que contestes se usa según las autorizaciones que diste. Podés cambiarlas en <strong className="text-tinta-suave">Mis datos y permisos</strong>.
+      </p>
     </div>
   );
 }
