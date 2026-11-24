@@ -840,7 +840,7 @@ export function Landing() {
               tablet: dos columnas; en pantallas grandes, las cuatro. */}
           <ul
             aria-label="Áreas del programa"
-            className="list-none m-0 flex md:grid md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="list-none m-0 flex md:grid md:grid-cols-2 md:auto-rows-fr xl:grid-cols-4 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{ scrollPaddingInline: "1.25rem" }}
           >
             {areas.map((a, i) => {
@@ -893,8 +893,10 @@ export function Landing() {
                         Ver una actividad de ejemplo
                       </button>
                     </div>
-                    {/* Respaldo profesional, sutil. */}
-                    <div className="flex items-center gap-2.5 px-5 sm:px-6 py-3 bg-campo border-t border-borde-suave">
+                    {/* Respaldo profesional, sutil. Alto fijo (hasta tres líneas)
+                        para que el enlace de ejemplo y este pie queden a la
+                        misma altura en todas las tarjetas. */}
+                    <div className="flex items-center gap-2.5 min-h-[80px] px-5 sm:px-6 py-3 bg-campo border-t border-borde-suave">
                       {persona?.foto && (
                         <img src={persona.foto.jpg} alt={persona.nombre} className="w-8 h-8 rounded-full object-cover object-[center_25%] shrink-0" loading="lazy" />
                       )}
