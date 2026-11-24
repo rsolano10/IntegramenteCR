@@ -155,12 +155,23 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt(entradaLimpia, max) }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2000, responseMimeType: "application/json", responseSchema: ESQUEMA },
+        // En Gemini 3.x el razonamiento interno cuenta dentro de
+        // maxOutputTokens: con 2000 la respuesta llegaba cortada («No es
+        // JSON»). Razonamiento bajo y margen amplio.
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 8192,
+          thinkingConfig: { thinkingLevel: "low" },
+          responseMimeType: "application/json",
+          responseSchema: ESQUEMA,
+        },
       }),
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const data = await res.json();
     raw = (data?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
+    const fin = data?.candidates?.[0]?.finishReason;
+    if (fin && fin !== "STOP") throw new Error(`Respuesta incompleta de Gemini (${fin}).`);
   } catch (e) {
     const iaId = await registrar("error", raw || null, null, String(e));
     return json({ estado: "error", cambios: [], aviso: "La IA no respondió. La semana quedó igual a la plantilla.", ia_id: iaId, max, pct });

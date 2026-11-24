@@ -165,7 +165,8 @@ Reglas estrictas, no negociables:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.6, maxOutputTokens: 500 },
+        // El razonamiento interno de Gemini 3.x cuenta dentro del límite.
+        generationConfig: { temperature: 0.6, maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "low" } },
       }),
     });
     if (!res.ok) return null;

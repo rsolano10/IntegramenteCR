@@ -180,7 +180,8 @@ ${JSON.stringify(paraModelo(d))}`;
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1500, responseMimeType: "application/json" },
+        // El razonamiento interno de Gemini 3.x cuenta dentro del límite.
+        generationConfig: { temperature: 0.3, maxOutputTokens: 8192, thinkingConfig: { thinkingLevel: "low" }, responseMimeType: "application/json" },
       }),
     });
     if (!res.ok) return null;
@@ -189,13 +190,19 @@ ${JSON.stringify(paraModelo(d))}`;
     const parsed = JSON.parse(text);
     if (!valido(parsed)) return null;
     const limpiar = (xs: unknown[], n: number) => xs.filter((x) => typeof x === "string" && x.trim()).slice(0, n) as string[];
+    // El modelo no recibe el nombre (minimización): se repone acá, en el
+    // servidor, para que la clínica lea «Esteban» y no «la persona participante».
+    const primerNombre = (d.paciente.nombre || "").trim().split(/\s+/)[0];
+    const conNombre = (t: string) =>
+      primerNombre ? t.replace(/\b(la persona participante)\b/gi, primerNombre).replace(/\b(el|del) paciente\b/gi, (m) => (m.toLowerCase().startsWith("del") ? `de ${primerNombre}` : primerNombre)) : t;
     return {
-      resumen: parsed.resumen.trim(),
+      resumen: conNombre(parsed.resumen.trim()),
       tendencias: (parsed.tendencias as Tendencia[])
         .filter((t) => t && (t.tipo === "positivo" || t.tipo === "atencion") && typeof t.texto === "string")
-        .slice(0, 5),
+        .slice(0, 5)
+        .map((t) => ({ ...t, texto: conNombre(t.texto) })),
       voz_familia: (parsed.voz_familia as { semana: string; texto: string }[]).filter((v) => v && typeof v.texto === "string").slice(0, 4),
-      sugerencias: limpiar(parsed.sugerencias, 4),
+      sugerencias: limpiar(parsed.sugerencias, 4).map(conNombre),
       datos_faltantes: limpiar(parsed.datos_faltantes ?? [], 3),
     };
   } catch {
