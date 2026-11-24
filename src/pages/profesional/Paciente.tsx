@@ -1,5 +1,6 @@
 import { BotonVolver } from "../../components/ui/BotonVolver";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
@@ -281,6 +282,29 @@ function ProgramaSelector({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const opciones = planTiers.filter((t) => t.id === "autoguiado" || t.id === "orientado");
+  // El menú se dibuja fuera de la caja del paciente (que recorta lo que
+  // sobresale), en el body y con posición fija bajo el botón.
+  const boton = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const ubicar = () => {
+      const r = boton.current?.getBoundingClientRect();
+      if (!r) return;
+      const ancho = 256;
+      setPos({ top: r.bottom + 8, left: Math.max(12, Math.min(r.left, window.innerWidth - ancho - 12)) });
+    };
+    ubicar();
+    const cerrar = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("resize", ubicar);
+    window.addEventListener("scroll", ubicar, true);
+    window.addEventListener("keydown", cerrar);
+    return () => {
+      window.removeEventListener("resize", ubicar);
+      window.removeEventListener("scroll", ubicar, true);
+      window.removeEventListener("keydown", cerrar);
+    };
+  }, [open]);
 
   async function elegir(id: string) {
     if (id === modalidad) {
@@ -302,17 +326,23 @@ function ProgramaSelector({
   return (
     <div className="relative">
       <button
+        ref={boton}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-haspopup="menu"
         disabled={saving}
         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold bg-fila-fria text-verde-profundo border border-borde-suave cursor-pointer hover:border-verde-serenidad disabled:opacity-60"
       >
         {saving ? "Guardando…" : label}
         <span aria-hidden="true">⌄</span>
       </button>
-      {open && (
-        <div role="menu" className="absolute right-0 mt-2 z-10 w-64 bg-white border border-borde rounded-2xl shadow-elevada p-1.5">
+      {open &&
+        pos &&
+        createPortal(
+          <>
+          <button type="button" aria-label="Cerrar" tabIndex={-1} onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default bg-transparent border-0" />
+        <div role="menu" className="fixed z-50 w-64 bg-white border border-borde rounded-2xl shadow-elevada p-1.5" style={{ top: pos.top, left: pos.left }}>
           <p className="m-0 px-3 pt-2 pb-1.5 text-[11.5px] tracking-[0.1em] uppercase text-tinta-tenue font-semibold">Cambiar programa</p>
           {opciones.map((o) => (
             <button
@@ -332,7 +362,9 @@ function ProgramaSelector({
             </button>
           ))}
         </div>
-      )}
+          </>,
+          document.body,
+        )}
     </div>
   );
 }
