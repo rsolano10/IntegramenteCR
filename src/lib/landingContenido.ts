@@ -199,6 +199,8 @@ export interface EjemploArea {
   tipo: "video" | "ficha" | "juego";
 }
 
+// Las cuatro frases miden lo mismo: 7 líneas en computadora, 5 en tablet y
+// 6 en celular (medidas en la tarjeta). Si se cambia una, volver a medir.
 export const areas: {
   icono: string;
   t: string;
@@ -213,7 +215,7 @@ export const areas: {
   {
     icono: "cerebro",
     t: "Estimulación cognitiva",
-    frase: "Actividades para trabajar distintas capacidades cognitivas y conectarlas con la vida cotidiana.",
+    frase: "Actividades y juegos en pantalla para trabajar la atención, la memoria, el lenguaje y otras capacidades cognitivas, conectándolas con la vida cotidiana de cada persona.",
     fondo: "#3f6a70",
     tinta: "#ffffff",
     foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
@@ -223,7 +225,7 @@ export const areas: {
   {
     icono: "equilibrio",
     t: "Gerontogimnasia",
-    frase: "Ejercicios que combinan movimiento y retos cognitivos, según las capacidades de cada persona.",
+    frase: "Ejercicios con video que combinan movimiento y retos cognitivos para cuidar la fuerza, el equilibrio y la seguridad al moverse, según las capacidades de cada persona.",
     fondo: "#f4d096",
     tinta: "#1f3338",
     foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora sentada en una silla estira el brazo en la sala de su casa, con mancuernas a sus pies." },
@@ -233,7 +235,7 @@ export const areas: {
   {
     icono: "manzana",
     t: "Nutrición",
-    frase: "Orientación especializada en alimentación e hidratación para cuidar la salud cerebral durante el envejecimiento y atender las necesidades nutricionales de personas con deterioro cognitivo leve, Alzheimer u otras demencias.",
+    frase: "Orientación especializada en alimentación e hidratación, para cuidar la salud cerebral y las necesidades de cada persona con deterioro cognitivo leve, Alzheimer u otras demencias.",
     fondo: "#a9c49f",
     tinta: "#1f3338",
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
