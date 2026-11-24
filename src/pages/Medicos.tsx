@@ -7,7 +7,7 @@ import { SitioFooter } from "../components/layout/SitioFooter";
 import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
 import { CarruselMovil } from "../components/landing/CarruselMovil";
 import { useScrolled } from "../lib/useScrollFx";
-import { areas, contacto, equipo } from "../lib/landingContenido";
+import { areas, contacto, equipo, videosSitio } from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsapp";
 
 // Página para médicos y geriatras (/medicos). Prioridad del negocio: que
@@ -204,7 +204,6 @@ function FormularioReferencia() {
 }
 
 export function Medicos() {
-  const directora = equipo[0];
   const clinicos = equipo.filter((m) => m.foto);
 
   return (
@@ -240,37 +239,36 @@ export function Medicos() {
             </div>
           </div>
 
-          {/* Foto real de la directora clínica con datos flotantes. Solo en
-              computadora: en el celular ocupaba media pantalla sin aportar. */}
-          <div className="hidden lg:block relative mx-auto w-full max-w-[520px]">
-            <div aria-hidden="true" className="absolute -inset-2 sm:-inset-6 rounded-[44px] bg-seccion-arena rotate-[-2deg] sm:rotate-[-3deg]" />
-            {directora.foto && (
-              <picture>
-                <source srcSet={directora.foto.webp} type="image/webp" />
-                <img
-                  src={directora.foto.jpg}
-                  alt={`${directora.nombre}, ${directora.area}`}
-                  className="relative block w-full aspect-[4/5] object-cover object-[center_25%] rounded-[36px] shadow-elevada"
-                />
-              </picture>
-            )}
-            <div className="absolute left-2 sm:-left-8 bottom-10 rounded-2xl bg-white border border-borde shadow-elevada px-4 py-3 max-w-[220px]">
-              <p className="m-0 font-serif text-[30px] leading-none text-verde-profundo">100%</p>
-              <p className="m-0 mt-1 text-[13.5px] leading-snug text-tinta">de los planes revisados por profesionales</p>
-            </div>
-            <div className="absolute right-2 sm:-right-6 top-8 rounded-2xl bg-white border border-borde shadow-elevada px-4 py-3">
-              <p className="m-0 text-[12px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">3 áreas</p>
-              <div className="mt-2 flex gap-1.5">
-                {areas.map((a) => (
-                  <span key={a.t} title={a.t} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: a.fondo, color: a.tinta }}>
-                    <Icono name={a.icono} className="w-5 h-5" />
-                  </span>
-                ))}
+          {/* El video de presentación para médicos (en lugar de la foto de la
+              directora) y, debajo, los datos clave: sobre el video taparían
+              los controles. */}
+          <div className="relative mx-auto w-full max-w-[600px]">
+            <div aria-hidden="true" className="absolute -inset-2 sm:-inset-5 rounded-[40px] bg-seccion-arena rotate-[-2deg]" />
+            <video
+              src={videosSitio.medicos.src}
+              poster={videosSitio.medicos.poster}
+              title={videosSitio.medicos.titulo}
+              controls
+              playsInline
+              preload="none"
+              className="relative block w-full aspect-video rounded-[28px] bg-black object-cover shadow-elevada"
+            />
+            <div className="relative mt-6 sm:mt-8 flex flex-wrap items-stretch justify-center gap-3">
+              <div className="rounded-2xl bg-white border border-borde shadow-elevada px-4 py-3 max-w-[230px]">
+                <p className="m-0 font-serif text-[28px] leading-none text-verde-profundo">100%</p>
+                <p className="m-0 mt-1 text-[13.5px] leading-snug text-tinta">de los planes revisados por profesionales</p>
+              </div>
+              <div className="rounded-2xl bg-white border border-borde shadow-elevada px-4 py-3">
+                <p className="m-0 text-[12px] tracking-[0.12em] uppercase font-semibold text-tinta-suave">{areas.length} áreas</p>
+                <div className="mt-2 flex gap-1.5">
+                  {areas.map((a) => (
+                    <span key={a.t} title={a.t} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: a.fondo, color: a.tinta }}>
+                      <Icono name={a.icono} className="w-5 h-5" />
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
-            <p className="absolute right-4 bottom-4 m-0 rounded-full bg-white/90 backdrop-blur px-3.5 py-1.5 text-[13px] font-semibold text-tinta">
-              {directora.nombre} · {directora.area}
-            </p>
           </div>
         </section>
 

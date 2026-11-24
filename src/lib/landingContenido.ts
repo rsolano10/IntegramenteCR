@@ -23,6 +23,27 @@ export const guiaProfesionales = "/medicos";
 // está grabado: se muestra la miniatura y, al tocarla, "muy pronto".
 // TODO(IntegraMente): cargar el id de YouTube de cada video cuando esté listo
 // (lo que va después de "watch?v=" en el enlace).
+// Videos propios del sitio, en el almacenamiento público de la app
+// (media-resources/home/, comprimidos a 720p con su póster). Los de la app
+// y las áreas son verticales (grabados con el celular).
+export interface VideoSitio {
+  src: string;
+  poster: string;
+  titulo: string;
+  vertical: boolean;
+}
+const enAlmacen = (ruta: string) => `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media-resources/${ruta}`;
+const videoSitio = (ruta: string, titulo: string, vertical = true): VideoSitio => ({
+  src: enAlmacen(`${ruta}.mp4`),
+  poster: enAlmacen(`${ruta}-poster.jpg`),
+  titulo,
+  vertical,
+});
+export const videosSitio = {
+  app: videoSitio("home/intro-app", "Conocé IntegraMente en Casa"),
+  medicos: videoSitio("home/promocion-medicos", "IntegraMente para médicos y geriatras", false),
+};
+
 export const videos = {
   introduccion: { youtubeId: null as string | null, titulo: "Conocé IntegraMente en Casa" },
   asiDeFacil: { youtubeId: null as string | null, titulo: "Así de fácil se usa" },
@@ -209,6 +230,8 @@ export const areas: {
   tinta: string;
   // Sin foto todavía: la tarjeta muestra el ícono sobre el color del área.
   foto: FotoArea | null;
+  // La presentación del área, en video.
+  video: VideoSitio;
   ejemplo: EjemploArea;
   responsable: { area: string; miembro: number };
 }[] = [
@@ -219,6 +242,7 @@ export const areas: {
     fondo: "#3f6a70",
     tinta: "#ffffff",
     foto: { webp: "/areas/estimulacion-cognitiva.webp", jpg: "/areas/estimulacion-cognitiva.jpg", alt: "Una señora sonriente arma un rompecabezas de madera sobre la mesa de su sala." },
+    video: videoSitio("home/intro-estimulacion", "Estimulación cognitiva"),
     ejemplo: { codigo: "COG-037", tipo: "juego" },
     responsable: { area: "estimulación cognitiva", miembro: 2 },
   },
@@ -229,6 +253,8 @@ export const areas: {
     fondo: "#f4d096",
     tinta: "#1f3338",
     foto: { webp: "/areas/gerontogimnasia.webp", jpg: "/areas/gerontogimnasia.jpg", alt: "Una señora sentada en una silla estira el brazo en la sala de su casa, con mancuernas a sus pies." },
+    // La introducción de la gerontogimnasia (el recurso GER-010).
+    video: videoSitio("gerontogimnasia/ger-010", "Gerontogimnasia"),
     ejemplo: { codigo: "GER-003", tipo: "video" },
     responsable: { area: "gerontogimnasia", miembro: 3 },
   },
@@ -239,6 +265,7 @@ export const areas: {
     fondo: "#a9c49f",
     tinta: "#1f3338",
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
+    video: videoSitio("home/intro-nutricion", "Nutrición"),
     ejemplo: { codigo: "PRE-005", tipo: "ficha" },
     responsable: { area: "nutrición", miembro: 4 },
   },
@@ -251,6 +278,7 @@ export const areas: {
     foto: { webp: "/areas/terapia-ocupacional.webp", jpg: "/areas/terapia-ocupacional.jpg", alt: "Una señora sonriente ordena piezas de madera sobre la mesa de su sala." },
     // Mientras no haya recursos propios del área: organizar una salida
     // real (elegirla y ordenar los pasos para prepararse).
+    video: videoSitio("home/intro-terapia-ocupacional", "Terapia Ocupacional"),
     ejemplo: { codigo: "COG-005", tipo: "ficha" },
     responsable: { area: "terapia ocupacional", miembro: 5 },
   },

@@ -10,7 +10,7 @@ import { programas } from "../lib/programasData";
 import { WhatsAppIcon } from "../components/ui/WhatsAppIcon";
 import { VideoYouTube } from "../components/ui/VideoYouTube";
 import { reproducirVideo } from "../lib/video";
-import { useBodyScrollLock } from "../lib/useBodyScrollLock";
+import { VideoModal } from "../components/landing/VideoModal";
 import {
   areas,
   contacto,
@@ -24,6 +24,8 @@ import {
   pruebaSocial,
   testimonios,
   videos,
+  videosSitio,
+  type VideoSitio,
   whatsappHome,
 } from "../lib/landingContenido";
 import { Logo } from "../components/ui/Logo";
@@ -446,62 +448,6 @@ function FaqCarousel() {
   );
 }
 
-// Miniatura del video de presentación: foto real de la directora del
-// programa, con la marca encima.
-function PosterIntro() {
-  const f = equipo[0].foto;
-  return (
-    <span className="absolute inset-0 block">
-      {f && (
-        <picture>
-          <source srcSet={f.webp} type="image/webp" />
-          <img src={f.jpg} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_30%]" />
-        </picture>
-      )}
-      <span className="absolute inset-0 bg-gradient-to-r from-verde-profundo/85 via-verde-profundo/35 to-transparent" />
-      <span className="absolute left-5 top-5 sm:left-8 sm:top-8 flex items-center gap-2 text-white">
-        <img src="/marca/isotipo.png" alt="" className="h-7 w-auto brightness-0 invert" />
-        <span className="text-[12px] font-semibold uppercase tracking-[0.16em]">Presentación del programa</span>
-      </span>
-    </span>
-  );
-}
-
-// Modal con el video de presentación: arranca solo al abrirse. Se cierra con
-// la ×, tocando afuera o con Escape.
-function ModalVideo({ onClose }: { onClose: () => void }) {
-  useBodyScrollLock();
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={videos.introduccion.titulo}
-      onClick={onClose}
-      className="im-in fixed inset-0 z-50 bg-tinta/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8"
-    >
-      <div className="relative w-full max-w-[1040px]" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Cerrar el video"
-          autoFocus
-          className="absolute -top-12 right-0 w-10 h-10 rounded-full bg-white/95 border-0 text-tinta text-[22px] leading-none cursor-pointer hover:bg-white"
-        >
-          ×
-        </button>
-        <VideoYouTube id="video-introduccion" youtubeId={videos.introduccion.youtubeId} titulo={videos.introduccion.titulo} autoIniciar>
-          <PosterIntro />
-        </VideoYouTube>
-      </div>
-    </div>
-  );
-}
-
 // Miniatura de "Así de fácil se usa": la pantalla real del paso a paso.
 function PosterAsiDeFacil() {
   return (
@@ -672,7 +618,8 @@ export function Landing() {
   const scrolled = useScrolled(24);
   // El video de presentación no está en la página: se abre en un modal
   // desde «Ver el video» (y desde el enlace del correo de bienvenida).
-  const [videoAbierto, setVideoAbierto] = useState(false);
+  // El video abierto: la presentación de la app o el de un área.
+  const [video, setVideo] = useState<VideoSitio | null>(null);
   const [ejemplo, setEjemplo] = useState<EjemploArea | null>(null);
   const [areaAbierta, setAreaAbierta] = useState<number | null>(null);
   // El correo de bienvenida enlaza a /#video-introduccion: al llegar, el
@@ -680,7 +627,7 @@ export function Landing() {
   useEffect(() => {
     const id = window.location.hash.slice(1);
     if (id === "video-introduccion") {
-      setVideoAbierto(true);
+      setVideo(videosSitio.app);
       return;
     }
     if (id === "video-asi-de-facil") {
@@ -731,7 +678,7 @@ export function Landing() {
           <p className="m-0 mb-8 font-serif italic text-[19px] lg:text-[22px] text-verde-profundo">Preservá lo que te hace ser vos.</p>
           <div className="flex flex-wrap gap-3">
             <Button to={registro}>Crear mi cuenta gratis</Button>
-            <Button variant="secondary" onClick={() => setVideoAbierto(true)}>
+            <Button variant="secondary" onClick={() => setVideo(videosSitio.app)}>
               Ver el video
             </Button>
           </div>
@@ -859,8 +806,25 @@ export function Landing() {
                           <Icono name={a.icono} className="w-20 h-20 opacity-70" />
                         </div>
                       )}
+                      {/* La presentación del área, en video. */}
+                      <button
+                        type="button"
+                        onClick={() => setVideo(a.video)}
+                        aria-label={`Ver el video de ${a.t}`}
+                        className="group/video absolute inset-0 w-full h-full p-0 border-0 bg-transparent cursor-pointer"
+                      >
+                        <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent transition-opacity group-hover/video:opacity-80" />
+                        <span className="absolute left-3.5 bottom-3.5 inline-flex items-center gap-2 min-h-10 pl-1.5 pr-4 rounded-full bg-white/95 text-tinta text-[14.5px] font-semibold shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] transition-transform group-hover/video:scale-[1.04]">
+                          <span aria-hidden="true" className="w-7 h-7 rounded-full bg-verde-profundo text-white flex items-center justify-center">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5">
+                              <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" />
+                            </svg>
+                          </span>
+                          Ver el video
+                        </span>
+                      </button>
                       <span
-                        className="absolute right-3.5 top-3.5 w-11 h-11 rounded-full flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] ring-2 ring-white/70"
+                        className="pointer-events-none absolute right-3.5 top-3.5 w-11 h-11 rounded-full flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] ring-2 ring-white/70"
                         style={{ background: a.fondo, color: a.tinta }}
                       >
                         <Icono name={a.icono} className="w-6 h-6" />
@@ -1145,7 +1109,7 @@ export function Landing() {
 
       <SitioFooter />
 
-      {videoAbierto && <ModalVideo onClose={() => setVideoAbierto(false)} />}
+      {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
       {areaAbierta !== null && (
         <Modal onClose={() => setAreaAbierta(null)}>
           <h3 className="m-0 mb-4 pr-10 font-serif font-normal text-[26px] leading-[1.15] text-tinta">{areas[areaAbierta].t}</h3>
