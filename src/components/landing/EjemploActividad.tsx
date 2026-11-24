@@ -26,10 +26,10 @@ export default function EjemploActividad({ codigo, onClose }: { codigo: string; 
   const [fase, setFase] = useState<"tablero" | "sesion" | "fin">("tablero");
   const caja = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && fase !== "sesion" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, fase]);
+  }, [onClose]);
   useEffect(() => () => detenerVoz(), []);
   useEffect(() => {
     caja.current?.scrollTo(0, 0);
@@ -49,33 +49,24 @@ export default function EjemploActividad({ codigo, onClose }: { codigo: string; 
   const esJuego = !!task && esInteractivo(task.extras) && task.extras?.modo === "interactiva";
   const guion = task ? (guionDe(task.codigo) ?? (esJuego ? guionDeJuego(task) : null)) : null;
 
-  const cerrar = (
-    <button
-      type="button"
-      onClick={onClose}
-      aria-label="Cerrar el ejemplo"
-      className="shrink-0 w-10 h-10 rounded-full border-0 bg-white/15 text-white text-[22px] leading-none cursor-pointer hover:bg-white/25"
-    >
-      ×
-    </button>
-  );
-
   return (
-    <div
-      ref={caja}
-      data-sesion-scroll=""
-      role="dialog"
-      aria-modal="true"
-      aria-label={recurso?.titulo ?? "Actividad de ejemplo"}
-      className="im-in fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-fondo-papel"
-    >
-      {/* Arriba: qué es esto y cómo salir. En la sesión no queda fija: la
-          barra de la propia sesión (avance y ×) es la que acompaña. */}
-      <div className={`${fase === "sesion" ? "" : "sticky top-0 z-30"} flex items-center justify-between gap-3 px-4 sm:px-6 py-2 bg-verde-profundo text-white`}>
-        <span className="text-[12.5px] font-semibold tracking-[0.12em] uppercase text-[#c4dbdb]">Así se ve en la app · ejemplo</span>
-        {cerrar}
+    <div role="dialog" aria-modal="true" aria-label={recurso?.titulo ?? "Actividad de ejemplo"} className="im-in fixed inset-0 z-50 flex flex-col bg-fondo-papel">
+      {/* Siempre a la vista (fuera del scroll): volver al home, a las áreas. */}
+      <div className="shrink-0 flex items-center justify-between gap-3 px-3 sm:px-6 py-2 bg-verde-profundo text-white">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-1.5 min-h-11 pl-2 pr-4 rounded-full border-0 bg-white/15 text-white text-[15px] font-semibold cursor-pointer hover:bg-white/25"
+        >
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M12.5 4.5L7 10l5.5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Volver al inicio
+        </button>
+        <span className="hidden sm:inline text-[12.5px] font-semibold tracking-[0.12em] uppercase text-[#c4dbdb]">Así se ve en la app · ejemplo</span>
+        <span className="sm:hidden text-[12px] font-semibold tracking-[0.12em] uppercase text-[#c4dbdb]">Ejemplo</span>
       </div>
-
+      <div ref={caja} data-sesion-scroll="" className="flex-1 min-h-0 overflow-y-auto overscroll-contain [&>div]:min-h-full">
       {isLoading ? (
         <div className="min-h-[70vh] flex items-center justify-center">
           <span className="w-8 h-8 rounded-full border-[3px] border-beige-serenidad border-t-verde-serenidad animate-spin" />
@@ -115,13 +106,14 @@ export default function EjemploActividad({ codigo, onClose }: { codigo: string; 
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
 
 function Final({ titulo, onOtraVez, onClose }: { titulo: string; onOtraVez: () => void; onClose: () => void }) {
   return (
-    <div className="min-h-[calc(100dvh-56px)] flex items-center justify-center px-5 py-10">
+    <div className="min-h-full flex items-center justify-center px-5 py-10">
       <section className="w-full max-w-md rounded-[28px] bg-white border border-borde px-6 py-8 text-center shadow-[0_18px_40px_-30px_rgba(31,51,56,0.55)]">
         <span aria-hidden="true" className="mx-auto mb-4 w-16 h-16 rounded-full bg-verde-tenue text-verde-profundo flex items-center justify-center">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none">

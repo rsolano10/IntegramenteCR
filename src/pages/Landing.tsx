@@ -830,7 +830,7 @@ export function Landing() {
       </div>
 
       {/* ─── Las áreas del programa ─── */}
-      <section className="bg-seccion-fria">
+      <section id="areas" className="bg-seccion-fria scroll-mt-20">
         <div className="max-w-[1280px] mx-auto py-16 lg:py-24">
           <Reveal className="px-5 sm:px-8 lg:px-12">
             <Eyebrow>Las áreas del programa</Eyebrow>
@@ -1154,7 +1154,14 @@ export function Landing() {
       )}
       {ejemplo && (
         <Suspense fallback={null}>
-          <EjemploActividad codigo={ejemplo.codigo} onClose={() => setEjemplo(null)} />
+          <EjemploActividad
+            codigo={ejemplo.codigo}
+            onClose={() => {
+              setEjemplo(null);
+              // De vuelta en el home, en las áreas del programa.
+              requestAnimationFrame(() => document.getElementById("areas")?.scrollIntoView({ block: "start" }));
+            }}
+          />
         </Suspense>
       )}
       <RedesFlotantes />
