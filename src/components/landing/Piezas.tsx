@@ -97,6 +97,12 @@ export function Icono({ name, className = "w-7 h-7" }: { name: string; className
         <path {...p} d="M12 7v7M12 14l-3 6.5M12 14h4.5M5.5 9.5l6.5-1 6.5 1" />
       </>
     ),
+    hogar: (
+      <>
+        <path {...p} d="M4 11l8-6.5 8 6.5M6 9.5V19.5h12V9.5" />
+        <path {...p} d="M12 17.5s-3-1.8-3-3.9a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2.1-3 3.9-3 3.9z" />
+      </>
+    ),
     estrella: <path {...p} d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.4l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" />,
     escudo: (
       <>

@@ -92,7 +92,7 @@ const foto = (archivo: string): FotoEquipo => ({
 
 // Nombres, grados y áreas tal como los indicó IntegraMente. El orden es el
 // orden en que aparecen: en computadora, Guiselle, Nancy y María Laura en la
-// primera fila y Pablo y Silvia en la segunda.
+// primera fila y Pablo, Silvia y Sofía en la segunda.
 export const equipo: MiembroEquipo[] = [
   {
     nombre: "Guiselle Solano Asenjo",
@@ -123,6 +123,12 @@ export const equipo: MiembroEquipo[] = [
     area: "Nutrición",
     descripcion: "Desarrolla orientaciones de alimentación e hidratación para personas mayores.",
     foto: foto("silvia-obregon"),
+  },
+  {
+    nombre: "Sofía Camareno",
+    area: "Terapia Ocupacional",
+    descripcion: "Desarrolla actividades para favorecer la autonomía y mantener las habilidades necesarias para la vida cotidiana, adaptadas a las capacidades de cada persona.",
+    foto: foto("sofia-camareno"),
   },
 ];
 
@@ -172,7 +178,7 @@ export const programasHome = {
 // Las áreas del programa (sección "Cuidamos la mente…" del home). Colores
 // de la paleta oficial; `tinta` es el color del texto sobre ese fondo (nunca
 // blanco sobre mostaza o beige).
-// Las tres áreas del home. Cada tarjeta: imagen de IntegraMente
+// Las cuatro áreas del home. Cada tarjeta: imagen de IntegraMente
 // (assets/img-home/), franja sólida con el título (contraste ≥ 7:1), una
 // actividad de ejemplo real y el área profesional que la diseña (con la
 // foto de quien la representa en `equipo`).
@@ -196,7 +202,8 @@ export const areas: {
   frase: string;
   fondo: string;
   tinta: string;
-  foto: FotoArea;
+  // Sin foto todavía: la tarjeta muestra el ícono sobre el color del área.
+  foto: FotoArea | null;
   ejemplo: EjemploArea;
   responsable: { area: string; miembro: number };
 }[] = [
@@ -229,6 +236,18 @@ export const areas: {
     foto: { webp: "/areas/nutricion.webp", jpg: "/areas/nutricion.jpg", alt: "Una señora con delantal corta verduras frescas en su cocina, junto a una ensalada." },
     ejemplo: { codigo: "PRE-002", tipo: "ficha" },
     responsable: { area: "nutrición", miembro: 4 },
+  },
+  {
+    icono: "hogar",
+    t: "Terapia Ocupacional",
+    frase: "Actividades adaptadas para mantener habilidades cotidianas, favorecer la autonomía y promover la participación en tareas significativas, según las capacidades de cada persona.",
+    fondo: "#e8b5a1",
+    tinta: "#1f3338",
+    // Pendiente: foto de una persona mayor en una actividad cotidiana en casa.
+    foto: null,
+    // Mientras no haya recursos propios del área: una tarea cotidiana real.
+    ejemplo: { codigo: "COG-021", tipo: "ficha" },
+    responsable: { area: "terapia ocupacional", miembro: 5 },
   },
 ];
 

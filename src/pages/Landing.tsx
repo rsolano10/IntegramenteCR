@@ -834,13 +834,13 @@ export function Landing() {
         <div className="max-w-[1280px] mx-auto py-16 lg:py-24">
           <Reveal className="px-5 sm:px-8 lg:px-12">
             <Eyebrow>Las áreas del programa</Eyebrow>
-            <SectionTitle className="max-w-[16em] mb-10 lg:mb-14">Cuidamos la mente, el movimiento y la alimentación.</SectionTitle>
+            <SectionTitle className="max-w-[18em] mb-10 lg:mb-14">Cuidamos la mente, el movimiento, la autonomía y la alimentación.</SectionTitle>
           </Reveal>
           {/* Celular: carrusel horizontal (no una pared de tarjetas). Desde
-              tablet: tres columnas. */}
+              tablet: dos columnas; en pantallas grandes, las cuatro. */}
           <ul
             aria-label="Áreas del programa"
-            className="list-none m-0 flex md:grid md:grid-cols-3 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="list-none m-0 flex md:grid md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory px-5 sm:px-8 lg:px-12 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{ scrollPaddingInline: "1.25rem" }}
           >
             {areas.map((a, i) => {
@@ -849,10 +849,16 @@ export function Landing() {
                 <li key={a.t} className="snap-start shrink-0 w-[84%] sm:w-[62%] md:w-auto">
                   <article className="h-full rounded-[26px] overflow-hidden border border-borde bg-white flex flex-col transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-elevada">
                     <div className="relative aspect-video">
-                      <picture>
-                        <source srcSet={a.foto.webp} type="image/webp" />
-                        <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
-                      </picture>
+                      {a.foto ? (
+                        <picture>
+                          <source srcSet={a.foto.webp} type="image/webp" />
+                          <img src={a.foto.jpg} alt={a.foto.alt} loading="lazy" decoding="async" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />
+                        </picture>
+                      ) : (
+                        <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${a.fondo}66, ${a.fondo})`, color: a.tinta }}>
+                          <Icono name={a.icono} className="w-20 h-20 opacity-70" />
+                        </div>
+                      )}
                       <span
                         className="absolute right-3.5 top-3.5 w-11 h-11 rounded-full flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(0,0,0,.45)] ring-2 ring-white/70"
                         style={{ background: a.fondo, color: a.tinta }}
@@ -871,7 +877,7 @@ export function Landing() {
                       <button
                         type="button"
                         onClick={() => setEjemplo(a.ejemplo)}
-                        className="mt-auto self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer font-sans text-[15px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad"
+                        className="mt-auto self-start inline-flex items-center gap-2 min-h-11 px-0 bg-transparent border-0 cursor-pointer text-left whitespace-nowrap font-sans text-[15px] xl:text-[14.5px] font-semibold text-verde-profundo underline decoration-borde-campo decoration-2 underline-offset-4 hover:decoration-verde-serenidad"
                       >
                         <span aria-hidden="true" className="w-7 h-7 rounded-full bg-verde-tenue flex items-center justify-center no-underline">
                           {a.ejemplo.tipo === "video" ? (
@@ -974,7 +980,7 @@ export function Landing() {
             <Eyebrow>Conocé al equipo</Eyebrow>
             <SectionTitle className="max-w-[17em] mx-auto mb-3">Profesionales detrás de cada plan.</SectionTitle>
             <p className="m-0 mb-10 lg:mb-12 mx-auto text-[17px] leading-relaxed text-tinta-suave max-w-[38em]">
-              Neuropsicología, gerontogimnasia y nutrición. Este equipo revisa cada plan antes de que llegue a tu casa.
+              Un equipo especializado en neuropsicología, terapia física y gerontogimnasia, nutrición y terapia ocupacional que trabaja para adaptar las actividades a las necesidades de cada persona.
             </p>
           </Reveal>
           <Reveal>
