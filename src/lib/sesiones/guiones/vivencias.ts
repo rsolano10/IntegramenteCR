@@ -30,15 +30,50 @@ const salidaEjercicio: Escena[] = [
 
 export const bie001 = guion({
   codigo: "BIE-001",
-  frase: "Un saludo del equipo y lo que vas a encontrar en estas semanas.",
+  frase: "Un video corto para conocer IntegraMente en Casa y cómo te acompaña cada semana.",
   icono: "corazon",
-  etiquetas: ["3 minutos", "Un video"],
+  etiquetas: ["1 minuto", "Un video"],
   escenas: [
     consigna("Un momento tranquilo", "Buscá un momento tranquilo para verlo.", "silla"),
-    { tipo: "video", titulo: "El saludo del equipo" },
+    { tipo: "video", titulo: "Conocé IntegraMente en Casa", nota: "Podés pausarlo cuando quieras." },
     { tipo: "cierre", texto: "Conocer el programa ayuda a empezar con confianza." },
   ],
 });
+
+// Las presentaciones de cada área, en video (la de gerontogimnasia es GER-010).
+const presentacionArea = (codigo: string, area: string, frase: string, icono: NombreIcono, importante: { icono: NombreIcono; texto: string }[]) =>
+  guion({
+    codigo,
+    frase,
+    icono,
+    etiquetas: ["1 minuto", "Un video", "Para ver juntos"],
+    ayuda: ["Pausá el video y conversen una idea a la vez.", "Podés verlo vos primero y contarle lo principal."],
+    escenas: [
+      { tipo: "video", titulo: `Conozcan ${area}`, nota: "Pueden pausarlo cuando quieran." },
+      { tipo: "cuidados", titulo: "Lo importante", items: importante },
+      { tipo: "cierre", texto: "Conocer cada área ayuda a aprovechar mejor las actividades de la semana." },
+    ],
+  });
+
+const conDuracion = (d: string, g: Guion): Guion => ({ ...g, etiquetas: [d, ...g.etiquetas.slice(1)] });
+
+export const bie004 = presentacionArea("BIE-004", "la estimulación cognitiva", "Qué es la estimulación cognitiva y cómo la van a practicar en casa.", "estrella", [
+  { icono: "estrella", texto: "Actividades y juegos para la atención, la memoria y el lenguaje." },
+  { icono: "casa", texto: "Conectadas con la vida de todos los días." },
+  { icono: "reloj", texto: "Mejor un rato corto y seguido que mucho de una vez." },
+]);
+
+export const bie005 = presentacionArea("BIE-005", "la nutrición", "Cómo la alimentación y la hidratación cuidan la salud del cerebro.", "fruta", [
+  { icono: "fruta", texto: "Pequeños cambios en las comidas de siempre." },
+  { icono: "vaso", texto: "Tomar agua durante el día también cuenta." },
+  { icono: "plato", texto: "Cada sugerencia se adapta a lo que necesita cada persona." },
+]);
+
+export const bie006 = conDuracion("2 minutos", presentacionArea("BIE-006", "la terapia ocupacional", "Cómo las tareas de todos los días ayudan a mantener la autonomía.", "casa", [
+  { icono: "casa", texto: "Las tareas de la casa también son actividades." },
+  { icono: "apoyo", texto: "Hacer con la persona, no por ella." },
+  { icono: "estrella", texto: "Cada actividad se adapta a sus capacidades." },
+]));
 
 export const bie002 = guion({
   codigo: "BIE-002",
@@ -1102,6 +1137,9 @@ export const VIVENCIAS: Guion[] = [
   bie001,
   bie002,
   bie003,
+  bie004,
+  bie005,
+  bie006,
   cog001,
   cog002,
   cog003,
