@@ -25,7 +25,7 @@ export const RESPONSABLE = {
   servicio: "IntegraMente en Casa",
   cedulaJuridica: null as string | null,
   domicilio: null as string | null,
-  correo: "info@integramente.com",
+  correo: "programas.integramente@gmail.com",
   whatsapp: "+506 8346 4703",
 };
 

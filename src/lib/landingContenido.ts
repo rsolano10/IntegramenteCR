@@ -12,7 +12,7 @@ export const contacto = {
   instagram: "https://instagram.com/integramentecr",
   // Pendiente de confirmar con IntegraMente: no había URL de Facebook en el repo.
   facebook: "https://www.facebook.com/integramentecr",
-  correo: "info@integramente.com",
+  correo: "programas.integramente@gmail.com",
 };
 
 // Guía para profesionales de la salud (GuiaProfesionales.tsx). Se abre en

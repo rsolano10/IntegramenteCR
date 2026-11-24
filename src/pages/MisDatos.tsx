@@ -172,8 +172,8 @@ export function MisDatos() {
         <h2 className="m-0 mb-1.5 font-serif font-normal text-[23px]">Tus derechos</h2>
         <p className="m-0 mb-3 text-[15px] leading-relaxed text-tinta-suave">
           Respondemos en un máximo de 5 días hábiles. También podés escribir a{" "}
-          <a href="mailto:info@integramente.com" className="text-verde-profundo font-semibold">
-            info@integramente.com
+          <a href="mailto:programas.integramente@gmail.com" className="text-verde-profundo font-semibold">
+            programas.integramente@gmail.com
           </a>
           .
         </p>

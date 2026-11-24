@@ -167,8 +167,8 @@ export function LoginSignupCard({ defaultMode = "login", defaultPara }: { defaul
           <div className="pt-4 border-t border-borde-suave">
             <p className="m-0 text-sm leading-relaxed text-pastilla-texto">
               ¿No te llega? Escribinos a{" "}
-              <a href="mailto:info@integramente.com" className="text-verde-profundo">
-                info@integramente.com
+              <a href="mailto:programas.integramente@gmail.com" className="text-verde-profundo">
+                programas.integramente@gmail.com
               </a>{" "}
               o llamanos al{" "}
               <a href="tel:+50683435772" className="text-verde-profundo">
@@ -263,8 +263,8 @@ export function LoginSignupCard({ defaultMode = "login", defaultPara }: { defaul
                 </div>
                 <p className="m-0 text-[13px] leading-relaxed text-pastilla-texto">
                   ¿No te llega? Escribinos a{" "}
-                  <a href="mailto:info@integramente.com" className="text-verde-profundo">
-                    info@integramente.com
+                  <a href="mailto:programas.integramente@gmail.com" className="text-verde-profundo">
+                    programas.integramente@gmail.com
                   </a>{" "}
                   o llamanos al{" "}
                   <a href="tel:+50683435772" className="text-verde-profundo">

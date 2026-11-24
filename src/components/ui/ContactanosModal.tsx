@@ -3,7 +3,7 @@ import { BotonWhatsApp } from "./BotonWhatsApp";
 import { waEquipo } from "../../lib/whatsapp";
 
 const canales: { titulo: string; valor: string }[] = [
-  { titulo: "Correo", valor: "info@integramente.com" },
+  { titulo: "Correo", valor: "programas.integramente@gmail.com" },
   { titulo: "Teléfono", valor: "+506 8343 5772" },
   { titulo: "WhatsApp", valor: "+506 8346 4703" },
 ];

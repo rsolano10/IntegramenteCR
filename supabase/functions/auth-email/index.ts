@@ -22,7 +22,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const HOOK_SECRET = (Deno.env.get("SEND_EMAIL_HOOK_SECRET") ?? "").replace("v1,whsec_", "");
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "https://test.integramentecr.com").replace(/\/$/, "");
 const REMITENTE = "IntegraMente en Casa <no-responder@integramentecr.com>";
-const RESPONDER_A = "info@integramente.com";
+const RESPONDER_A = "programas.integramente@gmail.com";
 
 interface HookPayload {
   user: { email: string; new_email?: string; user_metadata?: Record<string, unknown> };
@@ -62,7 +62,7 @@ function textoConfirmacion(nombre: string, enlace: string): string {
     "",
     "El enlace funciona una vez y vence en una hora. Si no creaste una cuenta en IntegraMente en Casa, podés ignorar este correo.",
     "",
-    "IntegraMente en Casa · Costa Rica · info@integramente.com · +506 8343 5772",
+    "IntegraMente en Casa · Costa Rica · programas.integramente@gmail.com · +506 8343 5772",
   ].join("\n");
 }
 

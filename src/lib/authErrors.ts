@@ -41,7 +41,7 @@ export function authErrorMessage(error: { message?: string; code?: string; statu
     return "Hiciste varios intentos seguidos. Esperá un minuto y probá de nuevo.";
   if (code === "invalid_credentials" || msg.includes("invalid login credentials")) return "El correo o la contraseña no coinciden. Revisalos e intentá de nuevo.";
   if (code === "same_password" || msg.includes("should be different")) return "La nueva contraseña tiene que ser distinta a la anterior.";
-  if (code === "signup_disabled") return "Por ahora no estamos aceptando cuentas nuevas. Escribinos a info@integramente.com.";
+  if (code === "signup_disabled") return "Por ahora no estamos aceptando cuentas nuevas. Escribinos a programas.integramente@gmail.com.";
   if (msg.includes("failed to fetch") || msg.includes("network")) return "No pudimos conectarnos. Revisá tu conexión a internet e intentá de nuevo.";
   return fallback;
 }

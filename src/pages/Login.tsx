@@ -100,8 +100,8 @@ export function Login() {
               </div>
               <p className="m-0 text-[13px] leading-relaxed text-tinta-tenue">
                 ¿No te llega? Escribinos a{" "}
-                <a href="mailto:info@integramente.com" className="text-verde-profundo">
-                  info@integramente.com
+                <a href="mailto:programas.integramente@gmail.com" className="text-verde-profundo">
+                  programas.integramente@gmail.com
                 </a>{" "}
                 o llamanos al{" "}
                 <a href="tel:+50683435772" className="text-verde-profundo">

@@ -52,7 +52,7 @@ function brandedEmail(title: string, bodyHtml: string, cta?: { label: string; ur
 ${button}
 <tr><td style="height:28px;line-height:28px;font-size:0;">&nbsp;</td></tr>
 </table></td></tr>
-<tr><td style="padding:24px 16px 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#7a8b8e;text-align:center;">¿Dudas? Escribinos a <a href="mailto:info@integramente.com" style="color:#3f6a70;">info@integramente.com</a> o llamanos al +506 8343 5772.<br>IntegraMente en Casa · Costa Rica</td></tr>
+<tr><td style="padding:24px 16px 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#7a8b8e;text-align:center;">¿Dudas? Escribinos a <a href="mailto:programas.integramente@gmail.com" style="color:#3f6a70;">programas.integramente@gmail.com</a> o llamanos al +506 8343 5772.<br>IntegraMente en Casa · Costa Rica</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
