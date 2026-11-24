@@ -127,9 +127,9 @@ function EstaSemana({ plan, publishAt }: { plan: PlanDay[]; publishAt: string | 
   );
 }
 
-// Historial corto: las últimas 5 semanas ya terminadas. Si hay más, «Ver
+// Historial corto: las últimas 4 semanas ya terminadas. Si hay más, «Ver
 // historial completo» lleva a su pantalla (/app/historial).
-const SEMANAS_VISIBLES = 5;
+const SEMANAS_VISIBLES = 4;
 function SemanasAnteriores({ patientId }: { patientId: string }) {
   const navigate = useNavigate();
   const { data } = useSemanasAnteriores(patientId, SEMANAS_VISIBLES);
