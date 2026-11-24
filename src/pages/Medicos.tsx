@@ -7,14 +7,14 @@ import { SitioFooter } from "../components/layout/SitioFooter";
 import { AyudaWhatsApp, Eyebrow, Icono, SectionTitle } from "../components/landing/Piezas";
 import { CarruselMovil } from "../components/landing/CarruselMovil";
 import { useScrolled } from "../lib/useScrollFx";
-import { areas, contacto, equipo, videosSitio } from "../lib/landingContenido";
+import { areas, contacto, videosSitio } from "../lib/landingContenido";
 import { WHATSAPP_EQUIPO, WHATSAPP_EQUIPO_VISIBLE, waLink } from "../lib/whatsapp";
 
 // Página para médicos y geriatras (/medicos). Prioridad del negocio: que
 // refieran pacientes. Mismo lenguaje visual que el home (encabezado fijo,
 // secciones con fondos alternados, tarjetas, fotos reales, animaciones de
 // entrada), con un tono más técnico e igual de breve. No repite secciones
-// del home salvo el equipo clínico. El formulario va al final de la
+// del home. El formulario va al final de la
 // página (y también en /medicos/referir, para los enlaces del home).
 //
 // "Referir un paciente" no guarda nada en la base: arma el mensaje con los
@@ -204,8 +204,6 @@ function FormularioReferencia() {
 }
 
 export function Medicos() {
-  const clinicos = equipo.filter((m) => m.foto);
-
   return (
     <div className="font-sans text-tinta bg-fondo-papel min-h-full">
       <Encabezado
@@ -321,35 +319,6 @@ export function Medicos() {
                 </Reveal>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* ─── Equipo ─── */}
-        <section className="bg-seccion-arena">
-          <div className="max-w-[1280px] mx-auto px-5 py-16 sm:px-8 lg:px-12 lg:py-22">
-            <Reveal className="text-center">
-              <Eyebrow>Equipo clínico</Eyebrow>
-              <SectionTitle className="max-w-[17em] mx-auto mb-10 lg:mb-12">Quiénes revisan cada plan.</SectionTitle>
-            </Reveal>
-            <Reveal>
-            <CarruselMovil etiqueta="Equipo clínico" escritorio="md:flex-wrap md:justify-center md:gap-5" item="md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)]">
-              {clinicos.map((m) => (
-                  <figure key={m.nombre} className="m-0 h-full rounded-[26px] bg-white border border-borde overflow-hidden flex flex-col">
-                    <div className="relative aspect-[16/10] bg-campo">
-                      <picture>
-                        <source srcSet={m.foto!.webp} type="image/webp" />
-                        <img src={m.foto!.jpg} alt={m.nombre} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-[center_25%]" />
-                      </picture>
-                    </div>
-                    <figcaption className="px-5 py-4 grid gap-1">
-                      <p className="m-0 text-[12px] font-bold uppercase tracking-[0.12em] text-verde-profundo">{m.area}</p>
-                      <p className="m-0 font-serif text-[21px] leading-tight text-tinta">{m.nombre}</p>
-                      <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta">{m.descripcion}</p>
-                    </figcaption>
-                  </figure>
-              ))}
-            </CarruselMovil>
-            </Reveal>
           </div>
         </section>
 

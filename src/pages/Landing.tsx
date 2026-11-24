@@ -289,7 +289,7 @@ function TextoConVerMas({ texto, clase, onVerMas }: { texto: string; clase: stri
 // funcionan con teclado y lector de pantalla sin código extra, y el texto
 // queda en la página para los buscadores. Se muestran las primeras; el
 // resto, con «Ver todas».
-const PREGUNTAS_VISIBLES = 6;
+const PREGUNTAS_VISIBLES = 4;
 
 function FaqAcordeon() {
   const [todas, setTodas] = useState(false);
@@ -395,10 +395,8 @@ function GaleriaSesiones() {
 // (para mí / para un ser querido) se elige en la primera pregunta del
 // cuestionario.
 const registro = "/ingresar?mode=register";
-// El botón de registro dice qué se obtiene: la semana de prueba. Al lado,
-// siempre, que no hay cobros automáticos (antes solo estaba en las preguntas).
+// El botón de registro dice qué se obtiene: la semana de prueba.
 const CTA = "Probar una semana gratis";
-const PRUEBA = "La semana gratis empieza cuando aprobamos tu cuenta. Sin cobros automáticos.";
 
 // Atajos del encabezado (escritorio).
 const secciones = [
@@ -561,15 +559,6 @@ export function Landing() {
               Ver el video
             </Button>
           </div>
-          <p className="m-0 mt-4 text-[15px] leading-relaxed text-tinta-suave">{PRUEBA}</p>
-          <p className="m-0 mt-5 flex items-center gap-2.5 text-[15px] font-semibold text-tinta">
-            <span aria-hidden="true" className="flex -space-x-2 shrink-0">
-              {equipo.slice(0, 3).map((m) =>
-                m.foto ? <img key={m.nombre} src={m.foto.jpg} alt="" className="w-8 h-8 rounded-full object-cover object-[center_25%] ring-2 ring-fondo-papel" /> : null,
-              )}
-            </span>
-            Diseñado por el equipo clínico de IntegraMente · Costa Rica
-          </p>
         </div>
         {/* En celular el video de presentación va justo después del texto:
             la maqueta del teléfono se muestra desde escritorio. */}
@@ -843,7 +832,6 @@ export function Landing() {
             </article>
             <article className="h-full rounded-[28px] p-5 sm:p-8 flex flex-col gap-4 sm:gap-5 border-[1.5px] border-verde-serenidad bg-verde-tenue">
               <div>
-                <span className="inline-block mb-2 text-[11px] tracking-[0.12em] uppercase bg-mostaza-vital text-tinta px-3 py-1.5 rounded-full font-bold">{ses.etiqueta}</span>
                 <h3 className="m-0 font-serif font-normal text-[26px] sm:text-[30px] leading-tight">{ses.nombre}</h3>
                 <p className="m-0 mt-1 text-[15.5px] italic text-verde-profundo">{ses.subtitulo}</p>
               </div>
@@ -909,7 +897,7 @@ export function Landing() {
             <h2 className="font-serif font-normal text-[30px] sm:text-[36px] lg:text-[46px] leading-[1.12] m-0 mb-3 text-white">Cuidar la mente es cuidar la vida.</h2>
             <p className="m-0 mb-2 font-serif italic text-[20px] lg:text-[22px] text-mostaza-vital">Preservá lo que te hace ser vos.</p>
             <p className="m-0 text-[17px] lg:text-lg leading-relaxed text-[#dce9e9] max-w-[34em] mx-auto lg:mx-0">
-              Empezá con un cuestionario de unos 10 minutos. {PRUEBA}
+              Empezá con un cuestionario de unos 10 minutos.
             </p>
           </div>
           <Link
