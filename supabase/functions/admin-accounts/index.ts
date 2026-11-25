@@ -98,6 +98,13 @@ async function conWhatsapp(admin: any, profileId: string): Promise<boolean> {
   return data === true;
 }
 
+// La plantilla im_programa_listo ya saluda («Hola {{1}}, …»): se quita el
+// saludo con que suele empezar el mensaje de la clínica o de la IA.
+function sinSaludo(texto: string | null | undefined): string {
+  // Solo un saludo corto al principio («¡Hola!», «Hola, Marcela.»), nunca una oración entera.
+  return (texto ?? "").replace(/^\s*¡?\s*hola\b(?:[,\s]+[^.!?,]{0,25})?[.!,]\s*/i, "").trim().replace(/^./, (c) => c.toUpperCase());
+}
+
 // WhatsApp template variables can't contain newlines or runs of spaces.
 function waParam(text: string): string {
   return text.replace(/\s+/g, " ").trim().slice(0, 900);
@@ -610,7 +617,7 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
     }
     const phone = prof?.whatsapp_notifications_enabled && (await conWhatsapp(admin, profileId)) ? prof?.whatsapp_phone : null;
     if (phone) {
-      const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "Hola"), waParam(patientNombre), waParam(mensaje || "Ya podés ver las actividades en la app.")]);
+      const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "familia"), waParam(patientNombre), waParam(sinSaludo(mensaje) || "Ya podés ver las actividades en la app.")]);
       if (wa.ok) canales.add("WhatsApp");
       await admin.from("notifications_log").insert({
         patient_id: patientId,
