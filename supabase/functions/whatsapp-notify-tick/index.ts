@@ -19,7 +19,10 @@ const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 // El dominio base va en la plantilla de Meta (botón URL con {{1}} de
 // sufijo) — acá solo se manda la ruta, ver sendWhatsappTemplate().
 const TEMPLATE_PREP = Deno.env.get("WHATSAPP_TEMPLATE_PREP") ?? "im_prep_actividad";
-const TEMPLATE_START = Deno.env.get("WHATSAPP_TEMPLATE_START") ?? "im_inicio_actividad";
+// im_recordatorio_actividad (Utilidad): «hoy a las {{1}} está programada la
+// actividad «{{2}}» con {{3}}». Sin la frase de la ciencia: con ella Meta
+// clasificó la versión anterior (im_inicio_actividad) como Marketing.
+const TEMPLATE_START = Deno.env.get("WHATSAPP_TEMPLATE_START") ?? "im_recordatorio_actividad";
 const TEMPLATE_CLOSE = Deno.env.get("WHATSAPP_TEMPLATE_CLOSE") ?? "im_cierre_actividad";
 const TEMPLATE_LANG = Deno.env.get("WHATSAPP_TEMPLATE_LANG") ?? "es";
 
@@ -278,16 +281,14 @@ Deno.serve(async (req) => {
     if (primary) {
       const eventUtc = taskEventUtc(publishDate, primary.dia, primary.hora!);
       if (eventUtc) {
-        const res = Array.isArray(primary.media_resources) ? primary.media_resources[0] : primary.media_resources;
-        const ciencia = res?.ciencia as { gancho?: string } | null;
-        const gancho = ciencia?.gancho ?? `Hoy toca «${primary.titulo}»: un paso a la vez, sin apuro.`;
+        // «8:00 a.m.»
+        const [hh, mm] = primary.hora!.split(":").map(Number);
+        const horaLegible = `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "a.m." : "p.m."}`;
 
         if (nowUtc >= eventUtc && remainingCap > 0 && !(await alreadyLogged("start", primary.id, eventUtc))) {
-          // Sin emoji: Meta no acepta emojis en los encabezados de texto.
-          const header = `${primary.titulo} con ${tratamiento}`;
           // Sufijo del botón: la plantilla tiene "https://<dominio>/{{1}}".
           const startUrl = `app/hoy/actividad/${primary.id}/pasos`;
-          const result = await sendWhatsappTemplate(phone, TEMPLATE_START, header, [gancho], startUrl);
+          const result = await sendWhatsappTemplate(phone, TEMPLATE_START, null, [horaLegible, primary.titulo, tratamiento], startUrl);
           await logResult("start", primary.id, eventUtc, result);
         }
 

@@ -67,7 +67,11 @@ function quoteBlock(text: string): string {
 const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const WHATSAPP_TEMPLATE_LANG = Deno.env.get("WHATSAPP_TEMPLATE_LANG") ?? "es";
-const TEMPLATE_PROGRAMA_LISTO = Deno.env.get("WHATSAPP_TEMPLATE_PROGRAMA_LISTO") ?? "im_programa_listo";
+// im_semana_publicada (Utilidad): «Hola {{1}}, ya está disponible en la app el
+// plan de actividades de {{2}} para la semana del {{3}}.» Sin texto libre: el
+// mensaje personalizado de la clínica va por correo (la versión con texto
+// libre, im_programa_listo, Meta la clasificó como Marketing).
+const TEMPLATE_PROGRAMA_LISTO = Deno.env.get("WHATSAPP_TEMPLATE_PROGRAMA_LISTO") ?? "im_semana_publicada";
 const TEMPLATE_SOLICITUD_REVISADA = Deno.env.get("WHATSAPP_TEMPLATE_SOLICITUD_REVISADA") ?? "im_solicitud_revisada";
 
 async function sendWhatsappTemplate(to: string, templateName: string, bodyParams: string[]): Promise<{ ok: boolean; messageId?: string; error?: string }> {
@@ -98,11 +102,25 @@ async function conWhatsapp(admin: any, profileId: string): Promise<boolean> {
   return data === true;
 }
 
-// La plantilla im_programa_listo ya saluda («Hola {{1}}, …»): se quita el
-// saludo con que suele empezar el mensaje de la clínica o de la IA.
-function sinSaludo(texto: string | null | undefined): string {
-  // Solo un saludo corto al principio («¡Hola!», «Hola, Marcela.»), nunca una oración entera.
-  return (texto ?? "").replace(/^\s*¡?\s*hola\b(?:[,\s]+[^.!?,]{0,25})?[.!,]\s*/i, "").trim().replace(/^./, (c) => c.toUpperCase());
+// «doña Rosa» si la familia eligió ese trato; si no, el nombre (igual que
+// whatsapp-notify-tick).
+function personaConTratamiento(a: Record<string, unknown> | null, fallback: string): string {
+  const nombre = typeof a?.nombre_participante === "string" ? a.nombre_participante.trim().split(/\s+/)[0] : "";
+  const base = nombre || fallback;
+  if (a?.tratamiento_preferido === "don_dona" && base) return `${a.tratamiento_genero === "dona" ? "doña" : "don"} ${base}`;
+  return base;
+}
+
+// «24 al 29 de noviembre»: los días que cubre un plan (de domingo a sábado,
+// o desde el día de inicio hasta el domingo siguiente), en hora de Costa Rica.
+function rangoDeSemana(publishAt: string): string {
+  const inicio = new Date(new Date(publishAt).getTime() - 6 * 3600 * 1000);
+  const dow = inicio.getUTCDay();
+  const fin = new Date(inicio.getTime() + (dow === 0 ? 6 : 7 - dow) * 86400 * 1000);
+  const mes = (d: Date) => d.toLocaleDateString("es-CR", { month: "long", timeZone: "UTC" });
+  const a = inicio.getUTCDate();
+  const b = fin.getUTCDate();
+  return mes(inicio) === mes(fin) ? `${a} al ${b} de ${mes(fin)}` : `${a} de ${mes(inicio)} al ${b} de ${mes(fin)}`;
 }
 
 // WhatsApp template variables can't contain newlines or runs of spaces.
@@ -571,6 +589,13 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
 
   const { data: patient } = await admin.from("patients").select("nombre").eq("id", patientId).maybeSingle();
   const patientNombre = patient?.nombre ?? "tu familiar";
+  // Para WhatsApp: cómo llamar a la persona y qué semana se publicó.
+  const [{ data: onb }, { data: ultimoPlan }] = await Promise.all([
+    admin.from("onboarding_answers").select("answers").eq("patient_id", patientId).maybeSingle(),
+    admin.from("plans").select("publish_at").eq("patient_id", patientId).eq("status", "published").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  const personaWa = personaConTratamiento((onb?.answers ?? null) as Record<string, unknown> | null, patientNombre.split(" ")[0]);
+  const semanaWa = ultimoPlan?.publish_at ? rangoDeSemana(ultimoPlan.publish_at as string) : "esta semana";
 
   const { data: links } = await admin
     .from("patient_links")
@@ -617,7 +642,7 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
     }
     const phone = prof?.whatsapp_notifications_enabled && (await conWhatsapp(admin, profileId)) ? prof?.whatsapp_phone : null;
     if (phone) {
-      const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "familia"), waParam(patientNombre), waParam(sinSaludo(mensaje) || "Ya podés ver las actividades en la app.")]);
+      const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "familia"), waParam(personaWa), waParam(semanaWa)]);
       if (wa.ok) canales.add("WhatsApp");
       await admin.from("notifications_log").insert({
         patient_id: patientId,
