@@ -1,7 +1,9 @@
-// Envía los 3 recordatorios de WhatsApp por actividad (preparación la noche
-// anterior, inicio, cierre) — ver el plan de la sesión. Invocado por
-// pg_cron cada 10 minutos vía pg_net (no por un usuario), autenticado con
-// un secreto compartido en vez de un JWT.
+// Recordatorios de WhatsApp, invocado por pg_cron cada 10 minutos vía
+// pg_net (no por un usuario), autenticado con un secreto compartido.
+// Por persona y por día (máximo 3 mensajes):
+//   - la noche anterior (7 p.m.): qué preparar para mañana;
+//   - 8:00 a.m. y 2:45 p.m.: la siguiente actividad pendiente de hoy;
+//   - el día en que empieza una semana: que ya está disponible.
 //
 // Si WHATSAPP_ACCESS_TOKEN/WHATSAPP_PHONE_NUMBER_ID no están configurados
 // todavía (falta terminar el alta en Meta Business), esta función sigue
@@ -23,7 +25,6 @@ const TEMPLATE_PREP = Deno.env.get("WHATSAPP_TEMPLATE_PREP") ?? "im_prep_activid
 // actividad «{{2}}» con {{3}}». Sin la frase de la ciencia: con ella Meta
 // clasificó la versión anterior (im_inicio_actividad) como Marketing.
 const TEMPLATE_START = Deno.env.get("WHATSAPP_TEMPLATE_START") ?? "im_recordatorio_actividad";
-const TEMPLATE_CLOSE = Deno.env.get("WHATSAPP_TEMPLATE_CLOSE") ?? "im_cierre_actividad";
 const TEMPLATE_LANG = Deno.env.get("WHATSAPP_TEMPLATE_LANG") ?? "es";
 
 const DIAS_BY_WEEKDAY = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -32,17 +33,19 @@ const QUIET_HOUR_START = 7;
 // Hasta las 9 p.m. (antes 8): el planificador permite actividades a las
 // 8 p.m. y también deben tener su recordatorio.
 const QUIET_HOUR_END = 21;
-// El recordatorio de inicio solo sale cerca de la hora: si la semana se
-// publica tarde o el envío se atrasa, nunca «hoy a las 8:00» a las 5 p.m.
-const VENTANA_INICIO_MIN = 60;
+// Recordatorios en DOS momentos fijos del día (no uno por actividad): en la
+// mañana, para arrancar, y antes del café de la tarde, para retomar. Cada uno
+// avisa la SIGUIENTE actividad pendiente de hoy. Hora de Costa Rica.
+const MOMENTOS = [
+  { id: "manana", hora: 8, minuto: 0 },
+  { id: "tarde", hora: 14, minuto: 45 },
+];
+// Si el envío se atrasa (o la semana se publica después), el momento se
+// salta en vez de llegar a destiempo.
+const VENTANA_MOMENTO_MIN = 60;
 // Aviso de semana publicada (sale el día en que empieza la semana).
 const TEMPLATE_SEMANA = Deno.env.get("WHATSAPP_TEMPLATE_PROGRAMA_LISTO") ?? "im_semana_publicada";
 const DAILY_CAP = 3;
-const CLOSE_BUFFER_MINUTES = 30;
-// El mensaje de cierre («¿Cómo les fue hoy…?») está apagado desde 2026-11-25
-// para bajar costos (cada plantilla entregada se cobra). Se reactiva con el
-// secreto WHATSAPP_ENVIAR_CIERRE=1, sin cambiar código.
-const ENVIAR_CIERRE = Deno.env.get("WHATSAPP_ENVIAR_CIERRE") === "1";
 
 // Duplicado a propósito de src/lib/respondentVoice.ts / generate-summary —
 // este runtime Deno no puede importar del bundle de la app (mismo patrón
@@ -95,15 +98,6 @@ function materialesSimples(lista: string[]): string {
   ].slice(0, 3);
   if (cortos.length <= 1) return cortos[0] ?? "";
   return `${cortos.slice(0, -1).join(", ")} y ${cortos[cortos.length - 1]}`;
-}
-
-function parseDurationMinutes(duracion: string | null): number {
-  if (!duracion) return 30;
-  const match = /(\d+)\s*(min|m\b)/i.exec(duracion);
-  if (match) return parseInt(match[1], 10);
-  const hourMatch = /(\d+)\s*(h|hora)/i.exec(duracion);
-  if (hourMatch) return parseInt(hourMatch[1], 10) * 60;
-  return 30;
 }
 
 // Meta rechaza parámetros con saltos de línea, tabulaciones, más de 4
@@ -242,7 +236,7 @@ Deno.serve(async (req) => {
     const publishPorPlan = new Map(plans.map((pl) => [pl.id as string, pl.publish_at as string]));
     const { data: tasksRaw } = await admin
       .from("plan_tasks")
-      .select("id, plan_id, dia, hora, titulo, duracion, media_resources(modulo, materiales)")
+      .select("id, plan_id, dia, hora, titulo, estado, duracion, media_resources(modulo, materiales)")
       .in("plan_id", [...publishPorPlan.keys()])
       .order("sort_order", { ascending: true });
     const tasks = (tasksRaw ?? []).map((t) => ({ ...t, fecha: fechaDeTarea(publishPorPlan.get(t.plan_id as string)!, t.dia as string) }));
@@ -264,7 +258,7 @@ Deno.serve(async (req) => {
     }
 
     async function logResult(
-      tipo: "prep" | "start" | "close" | "programa_listo",
+      tipo: "prep" | "start" | "programa_listo",
       planTaskId: string | null,
       scheduledFor: Date,
       result: { ok: boolean; messageId?: string; error?: string },
@@ -316,27 +310,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- INICIO (y CIERRE, si está activo): cada actividad de hoy con hora,
-    // dentro del tope diario, solo en la hora siguiente a su inicio ---
-    const deHoy = tasks.filter((t) => t.fecha === hoyStr && /^\d{2}:\d{2}$/.test((t.hora as string) ?? "")).sort((x, y) => ((x.hora as string) < (y.hora as string) ? -1 : 1));
-    for (const t of deHoy) {
+    // --- MOMENTOS (mañana y antes del café): la siguiente actividad pendiente
+    // de hoy. Primero la próxima por hora; si ya no queda ninguna por venir,
+    // la más reciente que quedó sin hacer. Sin pendientes, no se envía nada.
+    const pendientesHoy = tasks
+      .filter((t) => t.fecha === hoyStr && /^\d{2}:\d{2}$/.test((t.hora as string) ?? "") && (t.estado === "pendiente" || t.estado === "futuro"))
+      .sort((x, y) => ((x.hora as string) < (y.hora as string) ? -1 : 1));
+    for (const m of MOMENTOS) {
+      const momentoUtc = new Date(Date.UTC(crToday.getUTCFullYear(), crToday.getUTCMonth(), crToday.getUTCDate(), m.hora + CR_OFFSET_HOURS, m.minuto));
+      const enVentana = nowUtc >= momentoUtc && nowUtc.getTime() < momentoUtc.getTime() + VENTANA_MOMENTO_MIN * 60 * 1000;
+      if (!enVentana || remainingCap <= 0 || pendientesHoy.length === 0) continue;
+      if (await alreadyLogged("start", null, momentoUtc)) continue;
+      const ahoraHHMM = `${String(m.hora).padStart(2, "0")}:${String(m.minuto).padStart(2, "0")}`;
+      const t = pendientesHoy.find((x) => (x.hora as string) >= ahoraHHMM) ?? pendientesHoy[pendientesHoy.length - 1];
       const [hh, mm] = (t.hora as string).split(":").map(Number);
-      const eventUtc = new Date(Date.UTC(crToday.getUTCFullYear(), crToday.getUTCMonth(), crToday.getUTCDate(), hh + CR_OFFSET_HOURS, mm));
       const horaLegible = `${hh % 12 === 0 ? 12 : hh % 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "a.m." : "p.m."}`;
-      const enVentana = nowUtc >= eventUtc && nowUtc.getTime() < eventUtc.getTime() + VENTANA_INICIO_MIN * 60 * 1000;
-      if (enVentana && remainingCap > 0 && !(await alreadyLogged("start", t.id as string, eventUtc))) {
-        // Sufijo del botón: la plantilla tiene "https://<dominio>/{{1}}".
-        const ruta = esPropia ? `app/participante/actividad/${t.id}/pasos` : `app/hoy/actividad/${t.id}/pasos`;
-        const result = await sendWhatsappTemplate(phone, TEMPLATE_START, null, [horaLegible, t.titulo as string, tratamiento], ruta);
-        await logResult("start", t.id as string, eventUtc, result);
-      }
-      const closeUtc = new Date(eventUtc.getTime() + (parseDurationMinutes(t.duracion as string | null) + CLOSE_BUFFER_MINUTES) * 60 * 1000);
-      const cierreEnVentana = nowUtc >= closeUtc && nowUtc.getTime() < closeUtc.getTime() + VENTANA_INICIO_MIN * 60 * 1000;
-      if (ENVIAR_CIERRE && cierreEnVentana && remainingCap > 0 && !(await alreadyLogged("close", t.id as string, closeUtc))) {
-        const result = await sendWhatsappTemplate(phone, TEMPLATE_CLOSE, null, [tratamiento], esPropia ? `app/participante/actividad/${t.id}` : `app/hoy/actividad/${t.id}`);
-        await logResult("close", t.id as string, closeUtc, result);
-      }
+      // Sufijo del botón: la plantilla tiene "https://<dominio>/{{1}}".
+      const ruta = esPropia ? `app/participante/actividad/${t.id}/pasos` : `app/hoy/actividad/${t.id}/pasos`;
+      const result = await sendWhatsappTemplate(phone, TEMPLATE_START, null, [horaLegible, t.titulo as string, tratamiento], ruta);
+      // scheduled_for = el momento (no la actividad): así cada momento sale una vez al día.
+      await logResult("start", null, momentoUtc, result);
     }
+
   }
 
   return new Response(JSON.stringify(summary), { status: 200, headers: { "Content-Type": "application/json" } });

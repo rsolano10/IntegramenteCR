@@ -197,7 +197,7 @@ export const questions: Question[] = [
   },
   {
     // No es parte del cuestionario clínico — es el canal de recordatorios
-    // de WhatsApp (preparación e inicio de cada actividad). Se pide
+    // de WhatsApp (preparación la noche anterior y la próxima actividad en la mañana y en la tarde). Se pide
     // acá, no antes, porque recién en este punto ya se puede nombrar a la
     // persona por su nombre/tratamiento en el título. No se pide cuando
     // responde un profesional (alta asistida): ese flujo captura el
@@ -209,7 +209,7 @@ export const questions: Question[] = [
       participanteEsRespondente(a)
         ? "¿A qué número de WhatsApp te enviamos recordatorios de tus actividades?"
         : `¿A qué número de WhatsApp te enviamos recordatorios sobre las actividades de ${nombreConTratamiento(a)}?`,
-    example: "Escribí los 8 dígitos, por ejemplo 8888 8888. Ahí llegarán los recordatorios antes y durante cada actividad.",
+    example: "Escribí los 8 dígitos, por ejemplo 8888 8888. Ahí llegarán los recordatorios de las actividades, en la mañana y en la tarde.",
     inputMode: "tel",
     applicable: (a) => a.rol_respondente !== "profesional",
   },

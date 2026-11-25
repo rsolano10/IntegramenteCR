@@ -534,7 +534,7 @@ function AvisosTab({
     <div className="grid gap-4">
       <SwitchRow
         title="Recordatorios por WhatsApp"
-        detail={hasPhone ? "La noche anterior, con lo que hay que preparar, y a la hora de la actividad." : "Agregá tu número en Mi perfil para activarlos."}
+        detail={hasPhone ? "En la mañana y antes del café de la tarde, con la próxima actividad; y la noche anterior, lo que hay que preparar." : "Agregá tu número en Mi perfil para activarlos."}
         checked={conPermisoWa && prefs.whatsapp_notifications_enabled && hasPhone}
         disabled={!hasPhone || saving || registrar.isPending}
         onChange={(v) => {
