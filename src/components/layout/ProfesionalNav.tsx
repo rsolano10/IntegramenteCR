@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { usePatients } from "../../lib/patients";
 import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
 import { siguientePaso } from "../../lib/siguientePaso";
+import { useEsAdmin } from "../../lib/useEsAdmin";
 
 // Cuántas familias necesitan algo (el mismo «siguiente paso» del Panel y
 // Usuarios): se muestra junto a esos dos ítems del menú.
@@ -33,6 +34,18 @@ interface NavItem {
 }
 
 const iconProps = { width: 20, height: 20, viewBox: "0 0 20 20", fill: "none" as const, "aria-hidden": true };
+
+// Solo para la administración: primero en el menú (es su inicio).
+const itemAdministracion: NavItem = {
+  label: "Administración",
+  to: "/app/profesional/admin",
+  match: (p) => p.startsWith("/app/profesional/admin"),
+  icon: (active) => (
+    <svg {...iconProps}>
+      <path d="M3 16.5h14M5 13.5V9M9 13.5V6M13 13.5v-4.5M17 13.5V4" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" />
+    </svg>
+  ),
+};
 
 const items: NavItem[] = [
   {
@@ -90,12 +103,14 @@ const items: NavItem[] = [
 export function ProfesionalNav() {
   const { pathname } = useLocation();
   const pendientes = usePendientes();
+  const esAdmin = useEsAdmin();
+  const menu = esAdmin ? [itemAdministracion, ...items] : items;
 
   return (
     <>
       {/* Desktop / large tablet: fixed left rail */}
       <nav className="hidden lg:flex flex-col gap-1 w-[220px] shrink-0 px-3 py-6 border-r border-borde bg-white">
-        {items.map((item) => {
+        {menu.map((item) => {
           const active = item.match(pathname);
           return (
             <Link
@@ -115,7 +130,7 @@ export function ProfesionalNav() {
 
       {/* Phone / small tablet: horizontal pill row under the header */}
       <nav className="lg:hidden flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-borde bg-white overflow-x-auto">
-        {items.map((item) => {
+        {menu.map((item) => {
           const active = item.match(pathname);
           return (
             <Link

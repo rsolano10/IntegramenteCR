@@ -25,7 +25,7 @@ export function Usuarios() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [pestana, setPestana] = useState<Pestana>("familias");
+  const [pestana, setPestana] = useState<Pestana>(() => (searchParams.get("tab") === "equipo" ? "equipo" : "familias"));
   const [crear, setCrear] = useState(false);
   const [ajustes, setAjustes] = useState(false);
   const [openAccount, setOpenAccount] = useState<ManagedAccount | null>(null);

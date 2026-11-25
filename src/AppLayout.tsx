@@ -42,6 +42,7 @@ import { Ficha } from "./pages/profesional/Ficha";
 import { Editor } from "./pages/profesional/Editor";
 import { ProfesionalAlerta } from "./pages/profesional/Alerta";
 import { Usuarios } from "./pages/profesional/Usuarios";
+import { Administracion } from "./pages/profesional/Administracion";
 import { Consentimiento } from "./pages/Consentimiento";
 import { MisDatos } from "./pages/MisDatos";
 import { faltaAceptar, useMisConsentimientos } from "./lib/consentimientos";
@@ -195,7 +196,9 @@ function RouteGuard({ children }: { children: ReactNode }) {
             ? next
             : role === "paciente" && myPatient?.vista_completa
               ? "/app/hoy"
-              : roleHome(role);
+              : role === "profesional" && session.profile.es_admin
+                ? "/app/profesional/admin"
+                : roleHome(role);
     return <Navigate to={home} replace />;
   }
   const onOnboardingPath = pathname === "/app/consent" || pathname.startsWith("/app/perfil");
@@ -287,6 +290,7 @@ export default function AppLayout() {
           <Route path="seguimiento" element={<Navigate to="/app/profesional/usuarios" replace />} />
           <Route path="plantillas" element={<Plantillas />} />
           <Route path="usuarios" element={<Usuarios />} />
+          <Route path="admin" element={<Administracion />} />
           <Route path="biblioteca" element={<Biblioteca />} />
           <Route path="paciente/:id" element={<Paciente />} />
           <Route path="ficha" element={<Ficha />} />

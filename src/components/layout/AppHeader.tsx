@@ -35,6 +35,7 @@ const crumbs: [string, string][] = [
   ["/app/profesional/usuarios", "Usuarios"],
   ["/app/profesional/biblioteca", "Biblioteca"],
   ["/app/profesional/plantillas", "Plantillas"],
+  ["/app/profesional/admin", "Administración"],
   ["/app/profesional/paciente", "Ficha del paciente"],
   ["/app/profesional/ficha", "Ficha"],
   ["/app/profesional/editor", "Editor"],

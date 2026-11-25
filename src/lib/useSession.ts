@@ -15,6 +15,8 @@ export interface SessionProfile {
   onboarding_tour_seen: boolean;
   is_active: boolean;
   avisar_riesgo_auto: boolean;
+  // Administración del programa (negocio): su inicio es /app/profesional/admin.
+  es_admin?: boolean;
 }
 
 export type SessionState =
@@ -43,7 +45,7 @@ export function useSession(): SessionState {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "role, nombre, especialidad, foto_url, whatsapp_phone, whatsapp_notifications_enabled, must_change_password, onboarding_tour_seen, is_active, avisar_riesgo_auto",
+          "role, nombre, especialidad, foto_url, whatsapp_phone, whatsapp_notifications_enabled, must_change_password, onboarding_tour_seen, is_active, avisar_riesgo_auto, es_admin",
         )
         .eq("id", session.user.id)
         .single();
