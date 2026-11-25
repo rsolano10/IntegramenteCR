@@ -596,6 +596,12 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
   ]);
   const personaWa = personaConTratamiento((onb?.answers ?? null) as Record<string, unknown> | null, patientNombre.split(" ")[0]);
   const semanaWa = ultimoPlan?.publish_at ? rangoDeSemana(ultimoPlan.publish_at as string) : "esta semana";
+  // ¿La semana empieza después? Entonces el correo dice desde cuándo, y el
+  // WhatsApp lo manda whatsapp-notify-tick ESE día (si no, avisaría de algo
+  // que la familia todavía no puede ver).
+  const inicioPlan = ultimoPlan?.publish_at ? new Date(ultimoPlan.publish_at as string) : new Date();
+  const empiezaDespues = inicioPlan.getTime() > Date.now();
+  const desdeCuando = inicioPlan.toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Costa_Rica" });
 
   const { data: links } = await admin
     .from("patient_links")
@@ -625,8 +631,8 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
         `<p style="margin:0 0 14px 0;">Hola${nombre ? `, ${escapeHtml(nombre)}` : ""}.</p>
          <p style="margin:0;">${
            primeraVez
-             ? `Nuestro equipo clínico revisó el perfil de <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong> y armó su programa personalizado. Desde hoy vas a ver las actividades de cada día en la app.`
-             : `Ya preparamos las actividades de la próxima semana para <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong>, tomando en cuenta cómo les fue.`
+             ? `Nuestro equipo clínico revisó el perfil de <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong> y armó su programa personalizado. ${empiezaDespues ? `A partir del ${desdeCuando}` : "Desde hoy"} vas a ver las actividades de cada día en la app.`
+             : `Ya preparamos las actividades de la próxima semana para <strong style="color:#1f3338;">${escapeHtml(patientNombre)}</strong>.${empiezaDespues ? ` Las vas a ver en la app a partir del ${desdeCuando}.` : " Ya las podés ver en la app."}`
          }</p>
          ${mensaje ? `<p style="margin:18px 0 0 0;">Un mensaje de nuestro equipo:</p>${quoteBlock(mensaje)}` : ""}
          <p style="margin:18px 0 0 0;">¿Tenés alguna duda? Escribinos por WhatsApp al +506 8346 4703.</p>`,
@@ -640,7 +646,7 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
       if (mailError) failures.push(mailError);
       else canales.add("correo");
     }
-    const phone = prof?.whatsapp_notifications_enabled && (await conWhatsapp(admin, profileId)) ? prof?.whatsapp_phone : null;
+    const phone = !empiezaDespues && prof?.whatsapp_notifications_enabled && (await conWhatsapp(admin, profileId)) ? prof?.whatsapp_phone : null;
     if (phone) {
       const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "familia"), waParam(personaWa), waParam(semanaWa)]);
       if (wa.ok) canales.add("WhatsApp");
@@ -648,7 +654,8 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
         patient_id: patientId,
         profile_id: profileId,
         tipo: "programa_listo",
-        scheduled_for: new Date().toISOString(),
+        // Mismo valor que usa whatsapp-notify-tick: así no lo repite ese día.
+        scheduled_for: inicioPlan.toISOString(),
         sent_at: wa.ok ? new Date().toISOString() : null,
         whatsapp_message_id: wa.messageId ?? null,
         status: wa.ok ? "sent" : wa.error === "not_configured" ? "skipped_not_configured" : "failed",

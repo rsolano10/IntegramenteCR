@@ -4,6 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "../../lib/store";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
+import { CONSENTIMIENTOS, usePermiso, useRegistrarConsentimientos, type RolCuenta } from "../../lib/consentimientos";
+import { CheckRow } from "../../components/ui/CheckRow";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { applicableQuestions, questions, resolveOptions, resolveText } from "../../lib/onboardingSchema";
 import { normalizeCrPhone } from "../../lib/phone";
@@ -183,6 +185,12 @@ function ConsentimientoInicial({ onListo }: { onListo: (ok: boolean) => void }) 
 }
 
 export function OnboardingStep() {
+  const sesionWa = useSession();
+  const rolCuenta = (sesionWa.status === "authed" ? sesionWa.profile.role : "familiar") as RolCuenta;
+  const { permitido: conPermisoWa } = usePermiso("whatsapp");
+  const registrarPermiso = useRegistrarConsentimientos();
+  const [quiereWaMarcado, setQuiereWa] = useState<boolean | null>(null);
+  const quiereWa = quiereWaMarcado ?? conPermisoWa;
   const navigate = useNavigate();
   const { step: stepId } = useParams();
   // Assisted onboarding: the clinic fills this out in person on an existing
@@ -351,6 +359,15 @@ export function OnboardingStep() {
   }
 
   async function goNext() {
+    // El permiso de WhatsApp se pide junto al número (antes solo en la
+    // pantalla de aceptación, y quien daba el número no recibía nada).
+    if (question?.id === "whatsapp_telefono" && !assistedPatientId && quiereWa && text.trim() && !conPermisoWa) {
+      try {
+        await registrarPermiso.mutateAsync({ rol: rolCuenta, decisiones: { whatsapp: true } });
+      } catch {
+        // Si falla, sigue el cuestionario: se puede activar en Mi cuenta.
+      }
+    }
     if (perfilEditQuestionId) {
       await saveAndReturnToResumen(endQuestionEdit);
       return;
@@ -617,6 +634,17 @@ export function OnboardingStep() {
           }}
           className="w-full min-h-14 px-5 rounded-[18px] border-2 border-borde-campo bg-white font-sans text-[18px] text-tinta mb-2 focus:outline-none focus:border-verde-serenidad"
         />
+      )}
+
+      {/* El permiso de WhatsApp, junto al número: sin marcarlo no se envía nada. */}
+      {question.id === "whatsapp_telefono" && !assistedPatientId && (
+        <div className="mt-2 grid gap-1.5">
+          <CheckRow checked={quiereWa} onToggle={() => setQuiereWa(!quiereWa)}>
+            <strong className="block mb-1 text-tinta">Quiero recibir recordatorios por WhatsApp</strong>
+            <span className="text-[14.5px] text-tinta-suave">{CONSENTIMIENTOS.find((c) => c.tipo === "whatsapp")!.texto(rolCuenta)}</span>
+          </CheckRow>
+          {text.trim() && !quiereWa && <p className="m-0 text-[14px] text-tinta-tenue">Sin marcarlo, no te enviamos recordatorios. Lo podés activar después en Mi cuenta.</p>}
+        </div>
       )}
 
       {warningActive && (

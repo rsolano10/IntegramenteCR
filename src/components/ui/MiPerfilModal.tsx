@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { useSession, type SessionState } from "../../lib/useSession";
+import { CONSENTIMIENTOS, usePermiso, useRegistrarConsentimientos, type RolCuenta } from "../../lib/consentimientos";
 import { useMyPatient, type MyPatient } from "../../lib/useMyPatient";
 import { uploadAvatar } from "../../lib/avatar";
 import { normalizeCrPhone } from "../../lib/phone";
@@ -506,6 +507,14 @@ function AvisosTab({
   const [prefs, setPrefs] = useState({ whatsapp_notifications_enabled: initialWhatsapp, avisar_riesgo_auto: initialRiesgoAuto });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // Recordatorios por WhatsApp = el permiso «whatsapp» (Mis datos y
+  // permisos): un solo control. Al darlo o retirarlo, el servidor prende o
+  // apaga también el interruptor de la cuenta.
+  const session = useSession();
+  const rol = (session.status === "authed" ? session.profile.role : "familiar") as RolCuenta;
+  const { permitido: conPermisoWa } = usePermiso("whatsapp");
+  const registrar = useRegistrarConsentimientos();
+  const textoWa = CONSENTIMIENTOS.find((c) => c.tipo === "whatsapp")!.texto(rol);
 
   async function save(field: keyof typeof prefs, next: boolean) {
     setError("");
@@ -526,10 +535,24 @@ function AvisosTab({
       <SwitchRow
         title="Recordatorios por WhatsApp"
         detail={hasPhone ? "La noche anterior, con lo que hay que preparar, y a la hora de la actividad." : "Agregá tu número en Mi perfil para activarlos."}
-        checked={prefs.whatsapp_notifications_enabled && hasPhone}
-        disabled={!hasPhone || saving}
-        onChange={(v) => save("whatsapp_notifications_enabled", v)}
+        checked={conPermisoWa && prefs.whatsapp_notifications_enabled && hasPhone}
+        disabled={!hasPhone || saving || registrar.isPending}
+        onChange={(v) => {
+          setError("");
+          setPrefs((p) => ({ ...p, whatsapp_notifications_enabled: v }));
+          registrar.mutate(
+            { rol, decisiones: { whatsapp: v } },
+            {
+              onError: () => {
+                setPrefs((p) => ({ ...p, whatsapp_notifications_enabled: !v }));
+                setError("No pudimos guardar el cambio. Probá de nuevo.");
+              },
+            },
+          );
+        }}
       />
+      {/* El texto exacto del permiso: activar el interruptor es dar el consentimiento. */}
+      {hasPhone && <p className="m-0 -mt-2 text-[12.5px] leading-relaxed text-tinta-tenue">Al activarlos: {textoWa}</p>}
       <SwitchRow
         title="Avisar automáticamente ante una caída, un cambio repentino o un extravío"
         detail="Al abrir esa guía en la app, el equipo recibe el aviso sin que tengas que tocar nada más. Siempre podés avisar a mano con el botón."
