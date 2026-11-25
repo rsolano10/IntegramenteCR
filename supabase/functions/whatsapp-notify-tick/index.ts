@@ -29,6 +29,10 @@ const QUIET_HOUR_START = 7;
 const QUIET_HOUR_END = 20;
 const DAILY_CAP = 3;
 const CLOSE_BUFFER_MINUTES = 30;
+// El mensaje de cierre («¿Cómo les fue hoy…?») está apagado desde 2026-11-25
+// para bajar costos (cada plantilla entregada se cobra). Se reactiva con el
+// secreto WHATSAPP_ENVIAR_CIERRE=1, sin cambiar código.
+const ENVIAR_CIERRE = Deno.env.get("WHATSAPP_ENVIAR_CIERRE") === "1";
 
 // Duplicado a propósito de src/lib/respondentVoice.ts / generate-summary —
 // este runtime Deno no puede importar del bundle de la app (mismo patrón
@@ -288,7 +292,7 @@ Deno.serve(async (req) => {
         }
 
         const closeUtc = new Date(eventUtc.getTime() + (parseDurationMinutes(primary.duracion) + CLOSE_BUFFER_MINUTES) * 60 * 1000);
-        if (nowUtc >= closeUtc && remainingCap > 0 && !(await alreadyLogged("close", primary.id, closeUtc))) {
+        if (ENVIAR_CIERRE && nowUtc >= closeUtc && remainingCap > 0 && !(await alreadyLogged("close", primary.id, closeUtc))) {
           const closeUrl = `app/hoy/actividad/${primary.id}`;
           const result = await sendWhatsappTemplate(phone, TEMPLATE_CLOSE, null, [tratamiento], closeUrl);
           await logResult("close", primary.id, closeUtc, result);

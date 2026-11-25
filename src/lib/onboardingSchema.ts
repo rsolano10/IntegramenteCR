@@ -197,7 +197,7 @@ export const questions: Question[] = [
   },
   {
     // No es parte del cuestionario clínico — es el canal de recordatorios
-    // de WhatsApp (preparación/inicio/cierre de cada actividad). Se pide
+    // de WhatsApp (preparación e inicio de cada actividad). Se pide
     // acá, no antes, porque recién en este punto ya se puede nombrar a la
     // persona por su nombre/tratamiento en el título. No se pide cuando
     // responde un profesional (alta asistida): ese flujo captura el
