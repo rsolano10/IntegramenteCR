@@ -5,6 +5,7 @@
 // API (service role), which must never reach the browser bundle — this
 // function is the one place that key is used.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { registrarUso } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -564,7 +565,11 @@ async function handleRejectPatient(admin: ReturnType<typeof createClient>, paylo
     }
     if (c.phone) {
       const wa = await sendWhatsappTemplate(c.phone, TEMPLATE_SOLICITUD_REVISADA, [waParam(patientNombre), waParam(mensaje)]);
-      if (wa.ok) canales.add("WhatsApp");
+      if (wa.ok) {
+        canales.add("WhatsApp");
+        // La familia ya no tiene paciente (se borró): el envío se cuenta acá.
+        await registrarUso({ servicio: "whatsapp", funcion: "solicitud_revisada", referencia: wa.messageId ?? null });
+      }
     }
   }
 

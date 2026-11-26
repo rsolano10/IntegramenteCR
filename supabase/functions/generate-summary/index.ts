@@ -11,6 +11,7 @@
 // Si Gemini falla, no responde, o el validador rechaza la salida, se
 // devuelve `source: "fallback"` y el cliente usa el generador local.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -171,6 +172,7 @@ Reglas estrictas, no negociables:
     });
     if (!res.ok) return null;
     const data = await res.json();
+    await registrarUso({ servicio: "gemini", funcion: "resumen_final", ...tokensGemini(data), patient_id: null });
     const parts = data?.candidates?.[0]?.content?.parts;
     if (!Array.isArray(parts)) return null;
     const text = parts.map((p: { text?: string }) => p.text ?? "").join("");

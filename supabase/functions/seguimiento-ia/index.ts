@@ -12,6 +12,7 @@
 // Sin GEMINI_API_KEY, o si el modelo falla / devuelve algo inválido, se
 // guarda un panorama determinista armado con los mismos datos.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -186,6 +187,7 @@ ${JSON.stringify(paraModelo(d))}`;
     });
     if (!res.ok) return null;
     const data = await res.json();
+    await registrarUso({ servicio: "gemini", funcion: "seguimiento", ...tokensGemini(data), patient_id: null });
     const text = (data?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
     const parsed = JSON.parse(text);
     if (!valido(parsed)) return null;

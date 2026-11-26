@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
@@ -18,17 +18,20 @@ import { RowMenu } from "../../components/ui/RowMenu";
 import { PillToggle } from "../../components/ui/PillToggle";
 import { AjustesCuentasModal } from "../../components/profesional/CuentaSeguimiento";
 import { SolicitudesDatos } from "../../components/profesional/SolicitudesDatos";
+import { Indicador, Seccion } from "../../components/profesional/admin/Piezas";
+import { Gastos } from "../../components/profesional/admin/Gastos";
 
 // Administración: la vista de negocio del administrador (una persona de
 // administración, no de salud). Ve todo lo de la clínica y además:
 //   Resumen        familias, ingresos, conversión, embudo y bajas
 //   Cobros         SINPE Móvil y transferencia: quién venció, quién vence,
 //                  registrar pagos (cada pago cubre un período)
+//   Gastos         IA, WhatsApp y suscripciones: cuánto cuesta operar
 //   Equipo         profesionales, carga y confidencialidad
 //   Configuración  semana gratis, inactividad, IA, horarios de WhatsApp
 //   Cumplimiento   permisos (Ley 8968) y solicitudes de datos
 
-type Pestana = "resumen" | "cobros" | "equipo" | "configuracion" | "cumplimiento";
+type Pestana = "resumen" | "cobros" | "gastos" | "equipo" | "configuracion" | "cumplimiento";
 
 interface EstadoCobro {
   patient_id: string;
@@ -119,6 +122,7 @@ export function Administracion() {
   const pestanas: PestanaCaja<Pestana>[] = [
     { id: "resumen", label: "Resumen" },
     { id: "cobros", label: "Cobros" },
+    { id: "gastos", label: "Gastos" },
     { id: "equipo", label: "Equipo" },
     { id: "configuracion", label: "Configuración" },
     { id: "cumplimiento", label: "Cumplimiento" },
@@ -133,13 +137,14 @@ export function Administracion() {
           </>
         }
         titulo={`Hola${nombre ? `, ${nombre}` : ""}`}
-        descripcion="Cómo va el programa: familias, cobros, equipo y cumplimiento."
+        descripcion="Cómo va el programa: familias, cobros, gastos, equipo y cumplimiento."
         pie={<CajaPestanas etiqueta="Administración" pestanas={pestanas} activa={pestana} onCambiar={setPestana} />}
       >
         {aviso && <CajaAviso texto={aviso.text} error={aviso.error} onCerrar={() => setAviso(null)} />}
         <CajaCuerpo>
           {pestana === "resumen" && <Resumen onIr={setPestana} />}
           {pestana === "cobros" && <Cobros onAviso={(text, error) => setAviso({ text, error })} />}
+          {pestana === "gastos" && <Gastos onAviso={(text, error) => setAviso({ text, error })} />}
           {pestana === "equipo" && <Equipo />}
           {pestana === "configuracion" && <Configuracion />}
           {pestana === "cumplimiento" && <Cumplimiento />}
@@ -150,37 +155,6 @@ export function Administracion() {
 }
 
 // ── Resumen ────────────────────────────────────────────────────────────
-function Indicador({ valor, etiqueta, detalle, tono = "normal", onClick }: { valor: string; etiqueta: string; detalle?: string; tono?: "normal" | "aviso" | "bien"; onClick?: () => void }) {
-  const color = tono === "aviso" ? "text-alerta-texto" : tono === "bien" ? "text-semaforo-verde-texto" : "text-tinta";
-  const contenido = (
-    <>
-      <span className={`block font-serif text-[30px] leading-none ${color}`}>{valor}</span>
-      <span className="block mt-2 text-[14px] font-semibold text-tinta">{etiqueta}</span>
-      {detalle && <span className="block mt-0.5 text-[12.5px] leading-snug text-tinta-suave">{detalle}</span>}
-    </>
-  );
-  const clase = "text-left rounded-2xl border border-borde bg-white px-4 py-4 font-sans";
-  return onClick ? (
-    <button type="button" onClick={onClick} className={`${clase} cursor-pointer hover:border-verde-serenidad hover:shadow-[0_14px_30px_-24px_rgba(31,51,56,0.6)]`}>
-      {contenido}
-    </button>
-  ) : (
-    <div className={clase}>{contenido}</div>
-  );
-}
-
-function Seccion({ titulo, children, accion }: { titulo: string; children: ReactNode; accion?: ReactNode }) {
-  return (
-    <section className="grid gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="m-0 font-serif font-normal text-[22px] text-tinta">{titulo}</h2>
-        {accion}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 function Resumen({ onIr }: { onIr: (p: Pestana) => void }) {
   const navigate = useNavigate();
   const { porPaciente, isLoading } = useCuentaPorPaciente();

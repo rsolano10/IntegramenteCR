@@ -16,6 +16,7 @@
 // No publica nada: el resultado vuelve al planificador como borrador y la
 // clínica decide.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 import { validarCambiosIA, maxCambiosPermitidos, type TareaIA } from "../_shared/validarCambiosIA.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -169,6 +170,7 @@ Deno.serve(async (req) => {
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const data = await res.json();
+    await registrarUso({ servicio: "gemini", funcion: "personalizar_semana", ...tokensGemini(data), patient_id: entrada.patientId });
     raw = (data?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
     const fin = data?.candidates?.[0]?.finishReason;
     if (fin && fin !== "STOP") throw new Error(`Respuesta incompleta de Gemini (${fin}).`);

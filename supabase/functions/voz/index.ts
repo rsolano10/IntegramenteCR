@@ -9,6 +9,7 @@
 // clave nunca llega al navegador). Sin clave responde 503 y la app usa la
 // voz del dispositivo.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { registrarUso } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -95,6 +96,8 @@ Deno.serve(async (req) => {
     }),
   });
   if (!r.ok) return json({ error: "No pudimos generar la voz." }, 502);
+  // eleven_multilingual_v2: 1 crédito por carácter.
+  await registrarUso({ servicio: "elevenlabs", funcion: "voz", entrada: texto.length, creditos: texto.length });
   const bytes = new Uint8Array(await r.arrayBuffer());
   await admin.storage.from("voz").upload(ruta, bytes, { contentType: "audio/mpeg", upsert: true });
   return audio(bytes);

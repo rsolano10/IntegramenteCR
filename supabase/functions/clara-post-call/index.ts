@@ -12,6 +12,7 @@
 //    reciente primero) y lo guarda en agent_memory.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { fusionarResumen, verificarFirmaElevenLabs } from "../_shared/claraMemoria.ts";
+import { registrarUso } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -27,6 +28,7 @@ interface Payload {
     conversation_id?: string;
     user_id?: string | null;
     analysis?: { transcript_summary?: string | null } | null;
+    metadata?: { call_duration_secs?: number | null; cost?: number | null } | null;
     conversation_initiation_client_data?: { user_id?: string | null; dynamic_variables?: Record<string, unknown> } | null;
   };
 }
@@ -53,6 +55,16 @@ Deno.serve(async (req) => {
   const conversationId = d.conversation_id ?? "";
   const resumen = (d.analysis?.transcript_summary ?? "").trim();
   if (!conversationId) return json({ error: "Falta conversation_id." }, 400);
+
+  // Consumo de la conversación (aunque no se guarde memoria): créditos y
+  // duración que informa ElevenLabs. La referencia evita contarla dos veces.
+  await registrarUso({
+    servicio: "elevenlabs",
+    funcion: "clara",
+    creditos: Number(d.metadata?.cost ?? 0) || 0,
+    segundos: Number(d.metadata?.call_duration_secs ?? 0) || 0,
+    referencia: conversationId,
+  });
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const { data: conv } = await admin.from("clara_conversaciones").select("user_id, procesada_en").eq("conversation_id", conversationId).maybeSingle();

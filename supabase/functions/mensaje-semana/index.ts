@@ -11,6 +11,7 @@
 // Sin autorización, sin clave o si la respuesta no pasa el validador,
 // responde { mensaje: null } y el planificador deja el texto de siempre.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -144,6 +145,7 @@ ${JSON.stringify({ semana: e.semana ?? null, actividades: e.actividades.slice(0,
     });
     if (!res.ok) return json({ mensaje: null, motivo: `gemini_${res.status}` });
     const data = await res.json();
+    await registrarUso({ servicio: "gemini", funcion: "mensaje_semana", ...tokensGemini(data), patient_id: e.patientId });
     if (data?.candidates?.[0]?.finishReason && data.candidates[0].finishReason !== "STOP") return json({ mensaje: null, motivo: "incompleta" });
     const raw = (data?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
     const parsed = JSON.parse(raw) as { mensaje?: unknown };
