@@ -52,8 +52,10 @@ const DAILY_CAP = 3;
 // ya usado en supabase/functions/generate-summary/index.ts).
 type Answers = Record<string, string | string[]>;
 function nombreConTratamiento(a: Answers, fallback: string): string {
-  const nombre = typeof a.nombre_participante === "string" ? a.nombre_participante.trim() : "";
-  if (!nombre) return fallback;
+  // Solo el primer nombre («Esteban», no «Esteban Solano Asenjo»), igual
+  // que admin-accounts y mensaje-semana.
+  const nombre = typeof a.nombre_participante === "string" ? (a.nombre_participante.trim().split(/\s+/)[0] ?? "") : "";
+  if (!nombre) return fallback.trim().split(/\s+/)[0] || fallback;
   if (a.tratamiento_preferido === "don_dona") {
     const genero = a.tratamiento_genero === "dona" ? "doña" : "don";
     return `${genero} ${nombre}`;
@@ -92,6 +94,9 @@ function materialesSimples(lista: string[]): string {
         .flatMap((m) => m.split(/;\s*/))
         .map((m) => m.trim())
         .filter((m) => m.length > 0)
+        // Largo: hasta la primera coma («un objeto cotidiano seguro»), y si
+        // sigue largo, palabra completa.
+        .map((m) => (m.length > 45 ? m.split(",")[0].trim() : m))
         .map((m) => (m.length > 45 ? m.slice(0, 45).replace(/[\s,]+\S*$/, "") : m))
         .map((m) => m.charAt(0).toLowerCase() + m.slice(1)),
     ),
