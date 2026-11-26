@@ -11,6 +11,7 @@
 // Si Gemini falla, no responde, o el validador rechaza la salida, se
 // devuelve `source: "fallback"` y el cliente usa el generador local.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -139,6 +140,8 @@ interface Facts {
 
 async function callGemini(facts: Facts, esPropia: boolean): Promise<string | null> {
   if (!GEMINI_API_KEY) return null;
+  // IA para familias apagada desde Administración: resumen sin IA.
+  if (!(await controlServicios()).ia_familia) return null;
 
   const prompt = `Redactá un resumen cálido y breve (entre 4 y 6 oraciones, un solo párrafo, sin encabezados ni comillas) para el cierre de un cuestionario de una app de acompañamiento cognitivo, en español de Costa Rica.
 

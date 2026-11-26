@@ -16,6 +16,7 @@
 // No publica nada: el resultado vuelve al planificador como borrador y la
 // clínica decide.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 import { validarCambiosIA, maxCambiosPermitidos, type TareaIA } from "../_shared/validarCambiosIA.ts";
 
@@ -107,6 +108,10 @@ Deno.serve(async (req) => {
     return json({ error: "Cuerpo inválido." }, 400);
   }
   if (!entrada?.patientId || !Array.isArray(entrada.tareas) || entrada.tareas.length === 0) return json({ error: "Faltan datos." }, 400);
+
+  if (!(await controlServicios()).ia_clinica) {
+    return json({ estado: "sin_consentimiento", cambios: [], aviso: "La IA de la clínica está apagada desde Administración, así que la semana quedó igual a la plantilla. Podés ajustarla a mano.", ia_id: null });
+  }
 
   // Sin la autorización «ia_equipo» no se envía nada al modelo.
   const { data: conIA } = await admin.rpc("consentimiento_paciente", { p_patient: entrada.patientId, p_tipo: "ia_equipo" });

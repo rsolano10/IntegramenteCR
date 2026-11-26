@@ -11,6 +11,7 @@ import { moduloLabel } from "../../lib/modulos";
 import { codigosEnTexto, contextoParaElegir, sinCodigos } from "../../lib/claraActividad";
 import { IconoActividad } from "../actividad/IconoActividad";
 import { ClaraAvatar } from "./ClaraAvatar";
+import { useServiciosActivos } from "../../lib/servicios";
 
 // En «Actividades extra»: la familia le cuenta a Clara qué tiene ganas de
 // hacer y Clara recomienda de 1 a 3 actividades de su lista. Clara las
@@ -117,6 +118,8 @@ function ClaraEligeConPermiso({ recursos }: { recursos: MediaResource[] }) {
 // Sin el permiso «ia_clara», en lugar del chat se ofrece activarla.
 export function ClaraElige(props: Parameters<typeof ClaraEligeConPermiso>[0]) {
   const { permitido, cargando } = usePermiso("ia_clara");
-  if (cargando) return null;
+  const { servicios, cargando: cargandoServicios } = useServiciosActivos();
+  // Clara apagada desde Administración: no se ofrece.
+  if (cargando || cargandoServicios || !servicios.clara) return null;
   return permitido ? <ClaraEligeConPermiso {...props} /> : <ActivarClara compacto />;
 }

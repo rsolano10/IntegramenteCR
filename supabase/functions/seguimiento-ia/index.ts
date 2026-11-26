@@ -12,6 +12,7 @@
 // Sin GEMINI_API_KEY, o si el modelo falla / devuelve algo inválido, se
 // guarda un panorama determinista armado con los mismos datos.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -312,7 +313,8 @@ Deno.serve(async (req) => {
   // Solo con la autorización «ia_equipo» de la familia o del participante;
   // sin ella, el panorama se arma sin IA (determinista).
   const { data: conIA } = await admin.rpc("consentimiento_paciente", { p_patient: patientId, p_tipo: "ia_equipo" });
-  const llm = conIA === true ? await conGemini(datos) : null;
+  // Con la IA de la clínica apagada (Administración), también sin IA.
+  const llm = conIA === true && (await controlServicios()).ia_clinica ? await conGemini(datos) : null;
   const fila = {
     patient_id: patientId,
     contenido: llm ?? determinista(datos),

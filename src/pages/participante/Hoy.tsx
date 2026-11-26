@@ -24,7 +24,7 @@ export function ParticipanteHoy() {
     return (
       <>
         <DiaLibre size="large" titulo="Estamos preparando la próxima semana" mensaje="El equipo está armando tus actividades. Pronto las vas a ver acá." />
-        {!planMeta.family_reviewed_at && <AvisoEvaluarSemana large completa={weekComplete} to={`/app/participante/revision?plan=${planMeta.id}`} />}
+        {!planMeta.family_reviewed_at && <AvisoEvaluarSemana large completa={weekComplete} publishAt={planMeta.publish_at} to={`/app/participante/revision?plan=${planMeta.id}`} />}
       </>
     );
   }

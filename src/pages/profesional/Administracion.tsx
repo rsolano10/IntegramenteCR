@@ -565,7 +565,7 @@ function Configuracion() {
           {fila("Semana nueva", "El día en que empieza, desde las 7:00 a.m.")}
           {fila("Tope", "3 mensajes por día y por familia, de 7:00 a.m. a 9:00 p.m.")}
         </ul>
-        <p className="m-0 text-[13px] text-tinta-tenue">Solo para familias que dieron el permiso de WhatsApp. Cada mensaje entregado tiene costo (cerca de US$0,01).</p>
+        <p className="m-0 text-[13px] text-tinta-tenue">Solo para familias que dieron el permiso de WhatsApp. Cada mensaje se enciende, se apaga o se limita en Gastos → Servicios.</p>
       </Seccion>
       {ajustes && <AjustesCuentasModal onClose={() => setAjustes(false)} />}
     </div>

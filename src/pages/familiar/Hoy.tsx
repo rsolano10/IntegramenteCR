@@ -37,7 +37,7 @@ export function Hoy() {
           mensaje={`El equipo está armando las actividades${quien ? ` de ${quien}` : ""}. Te avisamos cuando estén listas.`}
           extras={extras}
         />
-        {!planMeta.family_reviewed_at && <AvisoEvaluarSemana completa={weekComplete} to={`/app/revision?plan=${planMeta.id}`} />}
+        {!planMeta.family_reviewed_at && <AvisoEvaluarSemana completa={weekComplete} publishAt={planMeta.publish_at} to={`/app/revision?plan=${planMeta.id}`} />}
       </div>
     );
   }

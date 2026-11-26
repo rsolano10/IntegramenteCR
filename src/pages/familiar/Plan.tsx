@@ -29,13 +29,13 @@ export function Plan() {
   // y está pendiente, es porque se hizo todo.
   const aviso =
     pendientes && pendientes.length > 0 ? (
-      <AvisoEvaluarSemana to={`/app/revision?plan=${pendientes[0].id}`} completa={!semanaTerminada(pendientes[0].publishAt)} />
+      <AvisoEvaluarSemana to={`/app/revision?plan=${pendientes[0].id}`} completa={!semanaTerminada(pendientes[0].publishAt)} publishAt={pendientes[0].publishAt} />
     ) : null;
 
   return (
     <div className="grid gap-8">
-      {/* Con semana en curso, el aviso de evaluar va arriba de todo. */}
-      {!sinSemanaActual && aviso}
+      {/* Primero siempre la semana actual (o el mensaje de que se está
+          preparando); el aviso de evaluar la anterior va después. */}
       {sinSemanaActual ? (
         <p className="m-0 rounded-[22px] border border-borde bg-white px-5 py-4 text-[15.5px] leading-relaxed text-tinta">
           <strong className="font-semibold">Estamos preparando la próxima semana.</strong> El equipo está armando las actividades{nombre ? ` de ${nombre}` : ""}. Te avisamos cuando estén listas.
@@ -48,8 +48,7 @@ export function Plan() {
         <EstaSemana plan={plan} publishAt={planMeta?.publish_at ?? null} />
       )}
 
-      {/* Sin semana en curso, el aviso de evaluar va después del mensaje. */}
-      {sinSemanaActual && aviso}
+      {aviso}
 
       {myPatient?.id && <SemanasAnteriores patientId={myPatient.id} />}
 

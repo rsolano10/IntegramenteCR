@@ -6,8 +6,10 @@ import { Button } from "../../ui/Button";
 import { RowMenu } from "../../ui/RowMenu";
 import { PillToggle } from "../../ui/PillToggle";
 import { Indicador, Seccion } from "./Piezas";
+import { Servicios } from "./Servicios";
 
-// Gastos (Administración): cuánto cuesta operar la app cada mes.
+// Gastos (Administración): cuánto cuesta operar la app cada mes, y los
+// interruptores de cada servicio con costo (Servicios.tsx).
 //   Consumo      Gemini (tokens), ElevenLabs (créditos) y WhatsApp (mensajes),
 //                registrado en cada llamada y valorado con las tarifas.
 //   Registrados  suscripciones y pagos únicos que se anotan a mano
@@ -218,6 +220,8 @@ export function Gastos({ onAviso }: { onAviso: (t: string, error?: boolean) => v
           />
         </div>
       </Seccion>
+
+      <Servicios detalle={r.detalle} tc={tc} etiquetaMes={esMesActual ? "Este mes" : `En ${nombreMes(mes, false)}`} onAviso={onAviso} />
 
       <Seccion titulo="Por servicio">
         {barras.length === 0 ? (

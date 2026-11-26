@@ -4,6 +4,7 @@ import { ActivarClara } from "./ActivarClara";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { contextoParaClara, type ContextoActividad } from "../../lib/claraActividad";
 import { ClaraAvatar } from "./ClaraAvatar";
+import { useServiciosActivos } from "../../lib/servicios";
 
 // Clara en la «Ayuda» de cada paso de la sesión guiada, debajo de los
 // consejos: un chat mínimo, sin preguntas de ejemplo. Esta parte es
@@ -75,6 +76,8 @@ function ClaraActividadConPermiso({
 // Sin el permiso «ia_clara», en lugar del chat se ofrece activarla.
 export function ClaraActividad(props: Parameters<typeof ClaraActividadConPermiso>[0]) {
   const { permitido, cargando } = usePermiso("ia_clara");
-  if (cargando) return null;
+  const { servicios, cargando: cargandoServicios } = useServiciosActivos();
+  // Clara apagada desde Administración: no se ofrece.
+  if (cargando || cargandoServicios || !servicios.clara) return null;
   return permitido ? <ClaraActividadConPermiso {...props} /> : <ActivarClara compacto large={props.large} />;
 }

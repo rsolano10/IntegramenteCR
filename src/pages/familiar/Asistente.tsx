@@ -27,6 +27,7 @@ import { ClaraAvatar } from "../../components/clara/ClaraAvatar";
 import { bloquesDeTexto, destinos as destinosApp, destinosEnTexto, trozosDeLinea, type Destino } from "../../lib/claraTexto";
 import { abrirVentanaCuenta } from "../../lib/abrirCuenta";
 import { iniciarCompra } from "../../lib/pagos";
+import { useServiciosActivos } from "../../lib/servicios";
 
 // Clara: la asistente de la sección Ayuda, un agente de ElevenLabs
 // (Conversational AI). Mismo chat de siempre, con dos formas de hablarle:
@@ -103,11 +104,13 @@ interface Manejadores {
 // explica qué es y se ofrece activarla, y los accesos directos siguen.
 export function Asistente({ extras }: { extras?: ReactNode }) {
   const { permitido, cargando } = usePermiso("ia_clara");
-  if (cargando) return null;
-  if (!permitido)
+  const { servicios, cargando: cargandoServicios } = useServiciosActivos();
+  if (cargando || cargandoServicios) return null;
+  // Clara apagada desde Administración: solo el contacto con el equipo.
+  if (!permitido || !servicios.clara)
     return (
       <div className="max-w-[720px] w-full mx-auto px-5 py-8 sm:px-8 grid gap-5">
-        <ActivarClara />
+        {servicios.clara && <ActivarClara />}
         <section className="rounded-3xl border border-borde bg-white p-5 sm:p-6 grid gap-3">
           <p className="m-0 text-[16px] font-semibold text-tinta">Para hablar con el equipo</p>
           <p className="m-0 text-[15.5px] leading-relaxed text-tinta-suave">

@@ -12,6 +12,7 @@
 // horas de silencio, contenido del mensaje) es verificable sin esperar el
 // token real.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -174,6 +175,13 @@ Deno.serve(async (req) => {
 
   const summary = { evaluated: 0, sent: 0, skipped: 0, errors: 0 };
 
+  // Lo que la administración tiene encendido (Administración → Gastos).
+  const ctl = await controlServicios();
+  if (!ctl.wa_activo) {
+    return new Response(JSON.stringify({ ...summary, note: "WhatsApp apagado desde Administración" }), { status: 200 });
+  }
+  const tope = Math.min(DAILY_CAP, ctl.wa_tope_diario);
+
   if (crHour < QUIET_HOUR_START || crHour >= QUIET_HOUR_END) {
     return new Response(JSON.stringify({ ...summary, note: "fuera de horas de silencio" }), { status: 200 });
   }
@@ -253,7 +261,7 @@ Deno.serve(async (req) => {
       .eq("profile_id", profileId)
       .eq("status", "sent")
       .gte("created_at", crToday.toISOString());
-    let remainingCap = DAILY_CAP - (sentToday ?? 0);
+    let remainingCap = tope - (sentToday ?? 0);
 
     async function alreadyLogged(tipo: string, planTaskId: string | null, scheduledFor: Date): Promise<boolean> {
       let query = admin.from("notifications_log").select("id").eq("patient_id", patientId).eq("tipo", tipo).limit(1);
@@ -292,7 +300,7 @@ Deno.serve(async (req) => {
     for (const pl of plans) {
       const inicio = new Date(pl.publish_at as string);
       const primerDia = new Date(inicio.getTime() - CR_OFFSET_HOURS * 3600 * 1000).toISOString().slice(0, 10);
-      if (primerDia !== hoyStr) continue;
+      if (primerDia !== hoyStr || !ctl.wa_semana) continue;
       if (inicio > nowUtc || remainingCap <= 0 || (await alreadyLogged("programa_listo", null, inicio))) continue;
       const nombreDest = ((profile.nombre as string) ?? "").trim().split(/\s+/)[0] || "familia";
       const result = await sendWhatsappTemplate(phone, TEMPLATE_SEMANA, null, [nombreDest, persona, rangoDeSemana(pl.publish_at as string)], null);
@@ -300,7 +308,7 @@ Deno.serve(async (req) => {
     }
 
     // --- PREP: agrupado, materiales de las actividades de mañana ---
-    if (nowUtc >= prepScheduledUtc && remainingCap > 0 && !(await alreadyLogged("prep", null, crToday))) {
+    if (ctl.wa_noche && nowUtc >= prepScheduledUtc && remainingCap > 0 && !(await alreadyLogged("prep", null, crToday))) {
       const materiales = tasks
         .filter((t) => t.fecha === mananaStr)
         .map((t) => {
@@ -325,6 +333,7 @@ Deno.serve(async (req) => {
       const momentoUtc = new Date(Date.UTC(crToday.getUTCFullYear(), crToday.getUTCMonth(), crToday.getUTCDate(), m.hora + CR_OFFSET_HOURS, m.minuto));
       const enVentana = nowUtc >= momentoUtc && nowUtc.getTime() < momentoUtc.getTime() + VENTANA_MOMENTO_MIN * 60 * 1000;
       if (!enVentana || remainingCap <= 0 || pendientesHoy.length === 0) continue;
+      if ((m.id === "manana" && !ctl.wa_manana) || (m.id === "tarde" && !ctl.wa_tarde)) continue;
       if (await alreadyLogged("start", null, momentoUtc)) continue;
       const ahoraHHMM = `${String(m.hora).padStart(2, "0")}:${String(m.minuto).padStart(2, "0")}`;
       const t = pendientesHoy.find((x) => (x.hora as string) >= ahoraHHMM) ?? pendientesHoy[pendientesHoy.length - 1];

@@ -9,6 +9,7 @@
 // clave nunca llega al navegador). Sin clave responde 503 y la app usa la
 // voz del dispositivo.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { registrarUso } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -70,6 +71,8 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   if (!API_KEY) return json({ error: "sin_clave" }, 503);
+  // Voz del dispositivo elegida en Administración: la app usa la del teléfono.
+  if ((await controlServicios()).voz_proveedor !== "elevenlabs") return json({ error: "voz_dispositivo" }, 503);
   // Familia y participante: solo con el permiso «voz»; sin él, la app usa
   // la voz del dispositivo (mismo camino que sin clave).
   const { data: perfil } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();

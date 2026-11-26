@@ -9,6 +9,7 @@
 //        usuario acá en lugar de confiar en el user_id que viaja desde el
 //        navegador.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { SIN_MEMORIA } from "../_shared/claraMemoria.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -32,6 +33,9 @@ Deno.serve(async (req) => {
   } = await userClient.auth.getUser();
   if (!user) return json({ error: "No autenticado." }, 401);
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  // Clara apagada desde Administración.
+  if (!(await controlServicios()).clara_activa) return json({ error: "desactivada" }, 403);
 
   // Clara solo con el permiso «ia_clara» (Ley 8968, consentimiento).
   const { data: conClara } = await admin.rpc("consentimiento_vigente", { p_profile: user.id, p_tipo: "ia_clara" });

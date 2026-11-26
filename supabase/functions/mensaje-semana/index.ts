@@ -11,6 +11,7 @@
 // Sin autorización, sin clave o si la respuesta no pasa el validador,
 // responde { mensaje: null } y el planificador deja el texto de siempre.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { registrarUso, tokensGemini } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -79,6 +80,7 @@ Deno.serve(async (req) => {
   const { data: conIA } = await admin.rpc("consentimiento_paciente", { p_patient: e.patientId, p_tipo: "ia_equipo" });
   if (conIA !== true) return json({ mensaje: null, motivo: "sin_consentimiento" });
   if (!GEMINI_API_KEY) return json({ mensaje: null, motivo: "sin_clave" });
+  if (!(await controlServicios()).ia_clinica) return json({ mensaje: null, motivo: "apagada" });
 
   const [{ data: patient }, { data: onb }, { data: links }, { data: ultimo }] = await Promise.all([
     admin.from("patients").select("nombre").eq("id", e.patientId).maybeSingle(),

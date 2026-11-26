@@ -5,6 +5,7 @@
 // API (service role), which must never reach the browser bundle — this
 // function is the one place that key is used.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { controlServicios } from "../_shared/control.ts";
 import { registrarUso } from "../_shared/uso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -19,7 +20,9 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 // directly. Returns an error string on failure instead of throwing, since a
 // failed notification email shouldn't undo the (already-committed) decision
 // it's reporting.
-async function sendMail(to: string, subject: string, html: string): Promise<string | null> {
+// `siempre`: avisos que no se apagan desde Administración (riesgo al equipo).
+async function sendMail(to: string, subject: string, html: string, siempre = false): Promise<string | null> {
+  if (!siempre && !(await controlServicios()).correos_activo) return "los correos a las familias están apagados desde Administración";
   if (!RESEND_API_KEY) return "El envío de correos no está configurado.";
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -76,6 +79,8 @@ const TEMPLATE_PROGRAMA_LISTO = Deno.env.get("WHATSAPP_TEMPLATE_PROGRAMA_LISTO")
 const TEMPLATE_SOLICITUD_REVISADA = Deno.env.get("WHATSAPP_TEMPLATE_SOLICITUD_REVISADA") ?? "im_solicitud_revisada";
 
 async function sendWhatsappTemplate(to: string, templateName: string, bodyParams: string[]): Promise<{ ok: boolean; messageId?: string; error?: string }> {
+  const ctl = await controlServicios();
+  if (!ctl.wa_activo || (templateName === TEMPLATE_PROGRAMA_LISTO && !ctl.wa_semana)) return { ok: false, error: "apagado" };
   if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) return { ok: false, error: "not_configured" };
   const res = await fetch(`https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: "POST",
@@ -655,7 +660,8 @@ async function handleNotifyPlanAssigned(admin: ReturnType<typeof createClient>, 
     if (phone) {
       const wa = await sendWhatsappTemplate(phone, TEMPLATE_PROGRAMA_LISTO, [waParam(nombre || "familia"), waParam(personaWa), waParam(semanaWa)]);
       if (wa.ok) canales.add("WhatsApp");
-      await admin.from("notifications_log").insert({
+      // Apagado desde Administración: no se intentó, no se registra.
+      if (wa.error !== "apagado") await admin.from("notifications_log").insert({
         patient_id: patientId,
         profile_id: profileId,
         tipo: "programa_listo",
@@ -740,7 +746,7 @@ async function handleNotifyRiskAlert(admin: ReturnType<typeof createClient>, cal
     const { data: found } = await admin.auth.admin.getUserById(s.id as string);
     const email = found?.user?.email;
     if (!email) continue;
-    const err = await sendMail(email, `⚠ Aviso de riesgo: ${etiqueta} — ${patientNombre}`, html);
+    const err = await sendMail(email, `⚠ Aviso de riesgo: ${etiqueta} — ${patientNombre}`, html, true);
     if (!err) sent++;
   }
   return json({ ok: true, sent });
