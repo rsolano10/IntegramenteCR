@@ -15,8 +15,9 @@ import { ContactanosModal } from "../ui/ContactanosModal";
 import { CalendarModal } from "../ui/CalendarSyncCard";
 import { Logo, LogoEnCasa } from "../ui/Logo";
 import { ROL_ETIQUETA } from "../../lib/areasSalud";
-import { SelectorFamiliar } from "./SelectorFamiliar";
 import { SumarAcompanante } from "../familiar/SumarAcompanante";
+import { PerfilPersonaModal } from "../familiar/PerfilPersonaModal";
+import { elegirPacienteActivo, useMisPacientes } from "../../lib/pacienteActivo";
 import { PestanasFamilia } from "./FamiliarNav";
 
 const crumbs: [string, string][] = [
@@ -65,7 +66,7 @@ function crumbFor(pathname: string): string {
   return hit ? hit[1] : "";
 }
 
-type OpenModal = "mi-perfil" | "mi-programa" | "contacto" | "calendario" | "auditoria" | "acompanante" | null;
+type OpenModal = "mi-perfil" | "mi-programa" | "contacto" | "calendario" | "auditoria" | "acompanante" | "perfil-persona" | null;
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -79,6 +80,7 @@ export function AppHeader() {
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
+  const { data: misPacientes } = useMisPacientes();
   // Otras pantallas (los botones de Clara en Ayuda) pueden pedir abrir una
   // ventana del menú de la cuenta.
   useEffect(() => {
@@ -130,11 +132,26 @@ export function AppHeader() {
           }
           // Agrupado: lo de la cuenta de quien entra, lo de la persona del
           // programa, y al final contacto y salir.
-          // Solo lo de quien entra. Lo de la persona del programa va en su
-          // propio menú (el botón con su nombre, SelectorFamiliar). Para la
-          // cuenta de la propia persona, todo en un solo menú.
+          // Con varias personas, el encabezado del menú cambia entre ellas.
+          cambio={
+            role === "familiar" && myPatient && session.status === "authed"
+              ? {
+                  opciones: (misPacientes ?? []).filter((p) => p.id !== myPatient.id).map((p) => ({ id: p.id, texto: p.nombre })),
+                  onElegir: (id) => {
+                    if (session.status !== "authed") return;
+                    elegirPacienteActivo(session.session.user.id, id);
+                    navigate("/app/hoy");
+                  },
+                }
+              : undefined
+          }
+          // Lo de quien entra, y «Perfil de …» para todo lo de la persona
+          // que acompaña (su ventana con pestañas). Para la cuenta de la
+          // propia persona, sus opciones directo en el menú.
           items={[
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
+            // Todo lo de la persona que acompaña, en su propia ventana.
+            ...(myPatient && role === "familiar" ? [{ label: `Perfil de ${myPatient.nombre.split(" ")[0]}`, onClick: () => setModal("perfil-persona") }] : []),
             { label: "Mis datos y permisos", onClick: () => navigate("/app/mis-datos") },
             ...(myPatient && role === "paciente"
               ? [
@@ -160,6 +177,7 @@ export function AppHeader() {
       {modal === "mi-programa" && <MiProgramaModal onClose={() => setModal(null)} nombreCuenta={nombre} />}
       {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
       {modal === "acompanante" && <SumarAcompanante onClose={() => setModal(null)} />}
+      {modal === "perfil-persona" && <PerfilPersonaModal onClose={() => setModal(null)} onVerProgramas={() => setModal("mi-programa")} />}
       {modal === "calendario" && myPatient && session.status === "authed" && (
         <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />
       )}
@@ -216,10 +234,7 @@ export function AppHeader() {
           )}
           {/* Con varios familiares: a quién acompaña ahora, y cambiar.
               El botón de la cuenta dice quién entró. */}
-          <div className="shrink-0 flex items-center gap-2">
-            <SelectorFamiliar />
-            {menuCuenta(nombre.split(" ")[0] || "Mi cuenta")}
-          </div>
+          <div className="shrink-0">{menuCuenta(nombre.split(" ")[0] || "Mi cuenta")}</div>
         </div>
         {ventanas}
       </header>

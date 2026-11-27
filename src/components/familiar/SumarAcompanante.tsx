@@ -21,7 +21,21 @@ interface Acompanante {
 
 const campo = "w-full min-w-0 min-h-12 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta focus:border-verde-serenidad focus:outline-none";
 
+// En su propia ventana (cuenta del participante).
 export function SumarAcompanante({ onClose }: { onClose: () => void }) {
+  const { data: persona } = useMyPatient();
+  const quien = persona?.nombre.split(" ")[0] ?? "";
+  return (
+    <Modal onClose={onClose}>
+      <h3 className="m-0 mb-1 pr-10 font-serif font-normal text-[25px] leading-tight text-tinta">Quiénes acompañan{quien ? ` a ${quien}` : ""}</h3>
+      <AcompanantesContenido onListo={onClose} />
+    </Modal>
+  );
+}
+
+// Quiénes acompañan a la persona y sumar a alguien (también es una pestaña
+// de «Perfil de …»).
+export function AcompanantesContenido({ onListo }: { onListo?: () => void }) {
   const qc = useQueryClient();
   const { data: persona } = useMyPatient();
   const [nombre, setNombre] = useState("");
@@ -63,8 +77,7 @@ export function SumarAcompanante({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <Modal onClose={onClose}>
-      <h3 className="m-0 mb-1 pr-10 font-serif font-normal text-[25px] leading-tight text-tinta">Sumar a alguien que acompaña{quien ? ` a ${quien}` : ""}</h3>
+    <>
       <p className="m-0 mb-5 text-[15px] leading-relaxed text-tinta-suave">
         Un hijo o hija, la pareja, quien le ayuda en el día a día. Va a ver las actividades de la semana y podrá registrar cómo les fue.
       </p>
@@ -100,9 +113,11 @@ export function SumarAcompanante({ onClose }: { onClose: () => void }) {
             >
               Sumar a otra persona
             </Button>
-            <Button variant="principal" onClick={onClose}>
-              Listo
-            </Button>
+            {onListo && (
+              <Button variant="principal" onClick={onListo}>
+                Listo
+              </Button>
+            )}
           </div>
         </div>
       ) : (
@@ -126,6 +141,6 @@ export function SumarAcompanante({ onClose }: { onClose: () => void }) {
           </Button>
         </div>
       )}
-    </Modal>
+    </>
   );
 }

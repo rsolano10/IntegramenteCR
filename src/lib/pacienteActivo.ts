@@ -1,6 +1,4 @@
 import { useSyncExternalStore } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAppStore } from "./store";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { useSession } from "./useSession";
@@ -94,18 +92,4 @@ export function useMisPacientes() {
       return (data ?? []) as PacienteDeCuenta[];
     },
   });
-}
-
-// «Agregar otro familiar» desde el menú de la cuenta (cuando todavía
-// acompaña a una sola persona, el selector no se muestra).
-export function useAgregarFamiliar() {
-  const session = useSession();
-  const navigate = useNavigate();
-  const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
-  return () => {
-    if (session.status !== "authed") return;
-    empezarNuevoFamiliar();
-    resetOnboardingForNewAccount(session.session.user.id);
-    navigate("/app/perfil/bienvenida");
-  };
 }

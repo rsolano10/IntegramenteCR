@@ -86,7 +86,8 @@ function MiPerfilContent({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "perfil", label: "Mi perfil" },
-    ...(myPatient ? [{ id: "familiar" as const, label: isSelf ? "Mi programa" : "Mi familiar" }] : []),
+    // Los datos de la persona que acompaña la familia están en «Perfil de …».
+    ...(myPatient && isSelf ? [{ id: "familiar" as const, label: "Mi programa" }] : []),
     ...(!isProfesional ? [{ id: "avisos" as const, label: "Avisos" }] : []),
     { id: "seguridad", label: "Seguridad" },
   ];

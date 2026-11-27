@@ -16,6 +16,7 @@ export function AccountMenu({
   badge,
   items,
   etiqueta,
+  cambio,
 }: {
   initials: string;
   name: string;
@@ -25,8 +26,12 @@ export function AccountMenu({
   items: AccountMenuItem[];
   /** Si viene, el botón muestra solo el avatar y esta etiqueta (la familia: el nombre de la persona del programa). */
   etiqueta?: string;
+  /** Cambiar de persona (familiar con varias): el encabezado del menú se vuelve un selector. */
+  cambio?: { opciones: { id: string; texto: string }[]; onElegir: (id: string) => void };
 }) {
   const [open, setOpen] = useState(false);
+  const [cambiando, setCambiando] = useState(false);
+  const puedeCambiar = !!cambio && cambio.opciones.length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -78,15 +83,58 @@ export function AccountMenu({
             role="menu"
             className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 bg-white border border-borde rounded-2xl shadow-elevada overflow-hidden"
           >
-            <div className="px-4 py-3.5 border-b border-borde-suave bg-campo">
-              <p className="m-0 text-[14px] font-semibold text-tinta">{name}</p>
-              <p className="m-0 text-[12px] text-tinta-tenue">{subtitle}</p>
-              {badge && (
-                <p className="m-0 mt-2">
-                  <BadgeRol texto={badge} />
-                </p>
-              )}
-            </div>
+            {puedeCambiar ? (
+              // Con varias personas: el encabezado cambia entre ellas.
+              <div className="border-b border-borde-suave bg-campo">
+                <button
+                  type="button"
+                  onClick={() => setCambiando((v) => !v)}
+                  aria-expanded={cambiando}
+                  className="w-full flex items-center justify-between gap-2 px-4 py-3.5 border-0 bg-transparent text-left cursor-pointer hover:bg-borde-suave/50 font-sans"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[14px] font-semibold text-tinta">{name}</span>
+                    <span className="block text-[12px] text-tinta-tenue">{subtitle}</span>
+                  </span>
+                  <span className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-verde-profundo">
+                    Cambiar
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className={`transition-transform ${cambiando ? "rotate-180" : ""}`}>
+                      <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </button>
+                {cambiando && (
+                  <div className="grid pb-2">
+                    {cambio!.opciones.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setOpen(false);
+                          setCambiando(false);
+                          cambio!.onElegir(o.id);
+                        }}
+                        className="flex items-center gap-2.5 px-4 py-2 border-0 bg-transparent text-left text-[14px] text-tinta cursor-pointer hover:bg-white font-sans"
+                      >
+                        <span className="w-7 h-7 shrink-0 rounded-full bg-beige-serenidad text-[12px] font-bold inline-flex items-center justify-center">{o.texto.charAt(0).toUpperCase()}</span>
+                        <span className="min-w-0 truncate">Familiar de {o.texto}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="px-4 py-3.5 border-b border-borde-suave bg-campo">
+                <p className="m-0 text-[14px] font-semibold text-tinta">{name}</p>
+                <p className="m-0 text-[12px] text-tinta-tenue">{subtitle}</p>
+                {badge && (
+                  <p className="m-0 mt-2">
+                    <BadgeRol texto={badge} />
+                  </p>
+                )}
+              </div>
+            )}
             <div className="grid py-1.5">
               {items.map((item, i) => (
                 <div key={item.label} className="contents">
