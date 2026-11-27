@@ -9,7 +9,7 @@ import { planTiers } from "../../lib/mockData";
 import { describeAnswer, groupAnswerableByModule, resolveText } from "../../lib/onboardingSchema";
 import type { Answers } from "../../lib/onboardingSchema";
 import { useResumen } from "../../lib/resumen";
-import { Modal } from "../ui/Modal";
+import { VentanaMarca, CargandoVentana, EncabezadoMarca, ChipMarca, PestanasMarca, TituloPestana } from "../ui/VentanaMarca";
 import { ContenidoPrograma } from "../ui/MiProgramaModal";
 import { ResumenSeguimiento } from "../resumen/ResumenSeguimiento";
 import { CompartirResumen } from "../resumen/CompartirResumen";
@@ -33,15 +33,9 @@ const ESTADO: Record<string, { texto: string; tono: string }> = {
 export function PerfilPersonaModal({ onClose }: { onClose: () => void }) {
   const { data: persona } = useMyPatient();
   return (
-    <Modal onClose={onClose} bare size="lg">
-      {persona ? (
-        <Contenido persona={persona} onClose={onClose} />
-      ) : (
-        <div className="p-10 flex justify-center">
-          <span className="inline-block w-7 h-7 rounded-full border-[3px] border-beige-serenidad border-t-verde-serenidad animate-spin" />
-        </div>
-      )}
-    </Modal>
+    <VentanaMarca onClose={onClose}>
+      {persona ? <Contenido persona={persona} onClose={onClose} /> : <CargandoVentana />}
+    </VentanaMarca>
   );
 }
 
@@ -63,46 +57,28 @@ function Contenido({ persona, onClose }: { persona: MyPatient; onClose: () => vo
   return (
     <div>
       {/* Encabezado: la persona de un vistazo (mismo estilo que «El programa de …») */}
-      <div className="relative bg-verde-profundo text-white px-6 sm:px-8 pt-7 pb-6 overflow-hidden">
-        <div aria-hidden="true" className="absolute -right-16 -top-20 w-56 h-56 rounded-full bg-verde-serenidad/40" />
-        <div aria-hidden="true" className="absolute right-16 -bottom-28 w-44 h-44 rounded-full bg-mostaza-vital/25" />
-        <div className="relative pr-10">
-          <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-[#c4dbdb]">Perfil de {primer}</p>
-          <h2 className="m-0 mt-1.5 font-serif font-normal text-[30px] sm:text-[34px] leading-tight text-white">{persona.nombre}</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {persona.edad && <span className="inline-flex items-center text-[13px] font-semibold bg-white/15 rounded-full px-3 py-1.5">{persona.edad} años</span>}
-            <span className="inline-flex items-center gap-2 text-[13px] font-semibold bg-white/15 rounded-full px-3 py-1.5">
+      <EncabezadoMarca
+        ceja={`Perfil de ${primer}`}
+        titulo={persona.nombre}
+        chips={
+          <>
+            {persona.edad && <ChipMarca>{persona.edad} años</ChipMarca>}
+            <ChipMarca>
               <span className={`w-2 h-2 rounded-full ${estado.tono}`} />
               {programa} · {estado.texto}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Pestañas */}
-      <div role="tablist" className="sticky top-0 z-[1] flex sm:gap-1 px-2 sm:px-6 border-b border-borde bg-campo">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 sm:flex-none px-1.5 sm:px-3 py-3.5 text-[14px] sm:text-[15px] font-semibold whitespace-nowrap border-b-[2.5px] -mb-px cursor-pointer transition-colors ${
-              tab === t.id ? "border-verde-profundo text-tinta" : "border-transparent text-tinta-tenue hover:text-tinta"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+            </ChipMarca>
+          </>
+        }
+      />
+      <PestanasMarca tabs={tabs} tab={tab} onTab={setTab} />
 
       {tab === "datos" && <TabPerfil persona={persona} onClose={onClose} />}
       {tab === "programa" && <ContenidoPrograma patient={persona} nombreCuenta={nombreCuenta} onClose={onClose} sinEncabezado />}
       {tab === "acompanan" && (
         <div className="px-6 sm:px-8 py-7">
-          <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-verde-serenidad">Su red de apoyo</p>
-          <p className="m-0 mt-0.5 mb-2 font-serif text-[24px] leading-tight text-tinta">Quiénes acompañan a {primer}</p>
+          <div className="mb-3">
+            <TituloPestana ceja="Su red de apoyo">Quiénes acompañan a {primer}</TituloPestana>
+          </div>
           <AcompanantesContenido />
         </div>
       )}
@@ -164,7 +140,7 @@ function TabPerfil({ persona, onClose }: { persona: MyPatient; onClose: () => vo
   return (
     <div className="px-5 sm:px-8 py-7 grid grid-cols-[minmax(0,1fr)] gap-8">
       <section className="grid gap-4">
-        <p className="m-0 font-serif text-[24px] leading-tight text-tinta">Sus datos</p>
+        <TituloPestana ceja="Su perfil">Sus datos</TituloPestana>
         <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
           <label className="grid gap-1.5 text-[14px] font-semibold text-tinta-suave">
             Nombre
@@ -193,10 +169,9 @@ function TabPerfil({ persona, onClose }: { persona: MyPatient; onClose: () => vo
       </section>
 
       <section className="grid gap-4">
-        <div>
-          <p className="m-0 font-serif text-[24px] leading-tight text-tinta">Lo que nos contaron de {primer}</p>
-          <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta-suave">Con esto el equipo arma su plan. Si algo cambió, tocá «Editar» en esa respuesta.</p>
-        </div>
+        <TituloPestana ceja="Al inscribirse" detalle="Con esto el equipo arma su plan. Si algo cambió, tocá «Editar» en esa respuesta.">
+          Lo que nos contaron de {primer}
+        </TituloPestana>
         {isLoading ? (
           <p className="m-0 text-[15px] text-tinta-tenue">Cargando…</p>
         ) : grupos.length === 0 ? (
@@ -234,10 +209,9 @@ function TabResumen({ persona }: { persona: MyPatient }) {
   const primer = persona.nombre.split(" ")[0];
   return (
     <div className="px-5 sm:px-8 py-7 grid grid-cols-[minmax(0,1fr)] gap-6">
-      <div>
-        <p className="m-0 font-serif text-[24px] leading-tight text-tinta">Resumen para el médico</p>
-        <p className="m-0 mt-1 text-[15px] leading-relaxed text-tinta-suave">Lo que hicieron en casa estas semanas, en una página. Así el médico de {primer} entiende rápido cómo va.</p>
-      </div>
+      <TituloPestana ceja="Para la consulta" detalle={`Lo que hicieron en casa estas semanas, en una página. Así el médico de ${primer} entiende rápido cómo va.`}>
+        Resumen para el médico
+      </TituloPestana>
       {isLoading ? (
         <p className="m-0 text-[15px] text-tinta-tenue">Cargando…</p>
       ) : error || !data ? (

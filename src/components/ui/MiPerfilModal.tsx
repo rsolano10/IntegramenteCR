@@ -9,7 +9,7 @@ import { uploadAvatar } from "../../lib/avatar";
 import { normalizeCrPhone } from "../../lib/phone";
 import { useChangePassword } from "../../lib/useChangePassword";
 import { planTiers } from "../../lib/mockData";
-import { Modal } from "./Modal";
+import { VentanaMarca, CargandoVentana, EncabezadoMarca, ChipMarca, PestanasMarca, TituloPestana } from "./VentanaMarca";
 import { Button } from "./Button";
 import { BotonWhatsApp } from "./BotonWhatsApp";
 import { waEquipo } from "../../lib/whatsapp";
@@ -31,15 +31,13 @@ export function MiPerfilModal({ onClose, isSelf = false, onLogoutAll }: { onClos
   const ready = session.status === "authed" && (["profesional", "equipo", "referidor"].includes(session.profile.role) || !isPending);
 
   return (
-    <Modal onClose={onClose} bare>
+    <VentanaMarca onClose={onClose}>
       {ready ? (
         <MiPerfilContent session={session as Authed} myPatient={myPatient ?? null} isSelf={isSelf} onClose={onClose} onLogoutAll={onLogoutAll} />
       ) : (
-        <div className="p-10 flex justify-center">
-          <span className="inline-block w-7 h-7 rounded-full border-[3px] border-beige-serenidad border-t-verde-serenidad animate-spin" />
-        </div>
+        <CargandoVentana />
       )}
-    </Modal>
+    </VentanaMarca>
   );
 }
 
@@ -187,58 +185,41 @@ function MiPerfilContent({
   return (
     <div>
       {/* Encabezado: identidad de la cuenta de un vistazo */}
-      <div className="relative bg-verde-profundo text-white px-6 sm:px-7 pt-7 pb-6 overflow-hidden">
-        <div aria-hidden="true" className="absolute -right-16 -top-20 w-56 h-56 rounded-full bg-verde-serenidad/40" />
-        <div aria-hidden="true" className="absolute right-10 -bottom-24 w-40 h-40 rounded-full bg-mostaza-vital/20" />
-        <div className="relative flex items-center gap-4">
-          <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
+      <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
+      <EncabezadoMarca
+        ceja="Mi cuenta"
+        titulo={nombre.trim() || profile.nombre}
+        inicio={
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
             aria-label="Cambiar foto de perfil"
-            className="group relative w-[72px] h-[72px] rounded-full overflow-hidden ring-4 ring-white/25 shrink-0 cursor-pointer disabled:opacity-60"
+            className="group relative w-[72px] h-[72px] rounded-full overflow-hidden ring-4 ring-white/25 shrink-0 cursor-pointer disabled:opacity-60 border-0 p-0"
           >
             {fotoUrl ? (
               <img src={fotoUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="w-full h-full flex items-center justify-center bg-beige-serenidad text-verde-profundo font-serif text-2xl">
-                {initials || "·"}
-              </span>
+              <span className="w-full h-full flex items-center justify-center bg-beige-serenidad text-verde-profundo font-serif text-2xl">{initials || "·"}</span>
             )}
-            <span className="absolute inset-0 flex items-center justify-center bg-tinta/55 text-[11px] font-semibold opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+            <span className="absolute inset-0 flex items-center justify-center bg-tinta/55 text-[11px] font-semibold text-white opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
               {uploading ? "Subiendo…" : "Cambiar"}
             </span>
           </button>
-          <div className="min-w-0">
-            <h2 className="font-serif font-normal text-[24px] leading-tight m-0 truncate text-white">{nombre.trim() || profile.nombre}</h2>
-            <p className="m-0 mt-0.5 text-[14px] text-[#c4dbdb] truncate">{email}</p>
-            <span className="inline-block mt-2 text-[11px] tracking-[0.1em] uppercase bg-white/15 rounded-full px-2.5 py-1">{roleLabel}</span>
-          </div>
-        </div>
-      </div>
+        }
+        chips={
+          <>
+            <ChipMarca>{roleLabel}</ChipMarca>
+            {email && <ChipMarca>{email}</ChipMarca>}
+          </>
+        }
+      />
+      <PestanasMarca tabs={tabs} tab={tab} onTab={setTab} />
 
-      {/* Pestañas */}
-      <div role="tablist" className="flex gap-1 px-4 sm:px-5 border-b border-borde bg-campo sticky top-0 z-[1]">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-3 py-3.5 text-[14.5px] font-semibold border-b-2 -mb-px cursor-pointer transition-colors ${
-              tab === t.id ? "border-verde-serenidad text-tinta" : "border-transparent text-tinta-tenue hover:text-tinta"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="px-6 sm:px-7 py-6">
+      <div className="px-5 sm:px-8 py-7">
         {tab === "perfil" && (
           <div className="grid gap-4.5">
+            <TituloPestana ceja="Mi perfil">Tus datos</TituloPestana>
             <Field label="Tu nombre">
               <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="name" className={inputClass} />
             </Field>
@@ -288,6 +269,7 @@ function MiPerfilContent({
 
         {tab === "familiar" && myPatient && (
           <div className="grid gap-4.5">
+            <TituloPestana ceja="Mi programa">Tus datos en el programa</TituloPestana>
             <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
               <Field label="Nombre">
                 <input type="text" value={patientNombre} onChange={(e) => setPatientNombre(e.target.value)} className={inputClass} />
@@ -310,6 +292,9 @@ function MiPerfilContent({
 
         {tab === "avisos" && (
           <div className="grid gap-6">
+            <TituloPestana ceja="Avisos" detalle="Cómo y cuándo te avisamos de las actividades.">
+              Recordatorios
+            </TituloPestana>
             <AvisosTab
               userId={user.id}
               hasPhone={!!profile.whatsapp_phone}
@@ -328,7 +313,10 @@ function MiPerfilContent({
         )}
 
         {tab === "seguridad" && (
+          <div className="grid gap-4.5">
+            <TituloPestana ceja="Seguridad">Tu acceso</TituloPestana>
           <SeguridadTab email={email} lastSignIn={user.last_sign_in_at} createdAt={user.created_at} onLogoutAll={onLogoutAll} />
+          </div>
         )}
 
         {tab !== "seguridad" && tab !== "avisos" && (
