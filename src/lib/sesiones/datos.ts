@@ -10,12 +10,14 @@ export function datosDeTarea(t: PlanTask): DatosSesion {
     modulo: t.modulo ?? null,
     videoUrl: t.mediaKind === "video" ? resourceUrl({ storage_path: t.storagePath ?? null, external_url: t.externalUrl ?? null }) : null,
     posterUrl: t.posterPath ? (resourceUrl({ storage_path: t.posterPath, external_url: null }) ?? undefined) : undefined,
-    sabiasQue: t.sabiasQue ?? null,
+    // El dato del cierre: «¿Sabías que…?» o el gancho de la ciencia.
+    sabiasQue: t.sabiasQue ?? t.ciencia?.gancho ?? null,
     indicacionIndividual: t.indicacionIndividual ?? null,
     extras: t.extras ?? null,
     ayuda: t.ayuda ?? null,
     adaptacion: t.adaptacion ?? null,
     adaptacionPorEtapa: t.adaptacionPorEtapa ?? null,
+    dobleTarea: !!t.dobleTarea,
   };
 }
 
@@ -25,11 +27,13 @@ export function datosDeRecurso(r: MediaResource): DatosSesion {
     modulo: r.modulo,
     videoUrl: r.media_kind === "video" ? resourceUrl({ storage_path: r.storage_path, external_url: r.external_url }) : null,
     posterUrl: r.poster_path ? (resourceUrl({ storage_path: r.poster_path, external_url: null }) ?? undefined) : undefined,
-    sabiasQue: r.sabias_que,
+    sabiasQue: r.sabias_que ?? r.ciencia?.gancho ?? null,
     indicacionIndividual: null,
     extras: r.extras,
     ayuda: r.ayuda,
     adaptacion: r.adaptacion,
     adaptacionPorEtapa: r.adaptacion_por_etapa,
+    // La clínica, al probar el recurso, ve todo (también el desafío).
+    dobleTarea: true,
   };
 }

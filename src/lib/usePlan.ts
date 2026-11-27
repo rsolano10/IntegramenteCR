@@ -34,6 +34,7 @@ interface PlanTaskRow {
   nota_clinica: string | null;
   media_resource_id: string | null;
   indicacion_individual: string | null;
+  doble_tarea?: boolean | null;
   progreso: Progreso | null;
   nivel_interactivo?: "suave" | "medio" | "retador" | null;
   // PostgREST embeds a to-one FK as a single object at runtime, but
@@ -118,6 +119,7 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     actividad: resource?.actividad ?? null,
     dosis: resource?.dosis ?? null,
     indicacionIndividual: row.indicacion_individual ?? null,
+    dobleTarea: !!row.doble_tarea,
     progreso: row.progreso ?? null,
     requierePlanIndividual: resource?.requiere_plan_individual ?? null,
     adaptacionPorEtapa: resource?.adaptacion_por_etapa ?? null,
@@ -234,7 +236,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, nivel_interactivo, progreso, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar, reto_cognitivo)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, doble_tarea, nivel_interactivo, progreso, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar, reto_cognitivo)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });

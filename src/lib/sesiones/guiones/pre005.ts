@@ -9,9 +9,20 @@ export const pre005: Guion = {
   frase: "Sumar hojas verdes a tres comidas de esta semana.",
   icono: "hoja",
   etiquetas: ["Toda la semana", "3 comidas", "En la cocina"],
-  cuidado: "Si toma warfarina o le cuesta tragar, mirá los cuidados al final.",
   ayuda: ["Picalas finito y mezclalas con algo que ya le guste.", "Empezá con poquito y vean cómo le cae."],
   escenas: [
+    // Primero los cuidados: deciden qué hoja y cuánta. La sesión muestra
+    // solo los que le aplican a la persona (lib/sesiones/cuidados.ts).
+    {
+      tipo: "cuidados",
+      titulo: "Antes de elegir",
+      nota: "Solo si le aplica a tu familiar.",
+      items: [
+        { icono: "pastillas", texto: "Si toma warfarina, coordiná con su equipo cuánta hoja come. No hace falta quitarla." },
+        { icono: "rinon", texto: "Con restricción de potasio o cálculos, consultá qué hojas y cuánto." },
+        { icono: "cuchara", texto: "Si le cuesta tragar, seguí la textura que le indicaron." },
+      ],
+    },
     {
       tipo: "elegir",
       clave: "hoja",
@@ -53,16 +64,6 @@ export const pre005: Guion = {
       texto: "Hojas verdes en 3 comidas.",
       veces: 3,
       nota: "Marcá cada comida cuando la sirvan. Podés volver a marcarla cualquier día de esta semana.",
-    },
-    {
-      tipo: "cuidados",
-      titulo: "Antes de cocinar",
-      nota: "Solo si le aplica a tu familiar.",
-      items: [
-        { icono: "pastillas", texto: "Si toma warfarina, coordiná con su equipo cuánta hoja come. No hace falta quitarla." },
-        { icono: "rinon", texto: "Con restricción de potasio o cálculos, consultá qué hojas y cuánto." },
-        { icono: "cuchara", texto: "Si le cuesta tragar, seguí la textura que le indicaron." },
-      ],
     },
     { tipo: "cierre", texto: "Un ingrediente conocido puede darle variedad a una comida de siempre.", dato: true },
   ],

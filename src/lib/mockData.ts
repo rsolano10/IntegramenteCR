@@ -130,6 +130,8 @@ export interface PlanTask {
   actividad?: string | null;
   dosis?: string | null;
   indicacionIndividual?: string | null;
+  // La clínica activó la doble tarea (reto cognitivo) para esta actividad.
+  dobleTarea?: boolean;
   requierePlanIndividual?: boolean | null;
   adaptacionPorEtapa?: AdaptacionPorEtapa | null;
   ayuda?: string | null;

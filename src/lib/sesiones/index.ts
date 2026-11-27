@@ -9,8 +9,11 @@ import { pre005 } from "./guiones/pre005";
 import { NUTRICION } from "./guiones/nutricion";
 import { VIVENCIAS } from "./guiones/vivencias";
 import type { Escena, Guion, Opcion, Respuestas } from "./tipos";
+import type { NutricionFlags } from "../reglasRecursos";
+import { cuidadosQueAplican } from "./cuidados";
 
-export type { Escena, Guion, Opcion, Progreso, Respuestas, UsoSesion } from "./tipos";
+export type { Escena, Guion, Opcion, PasoGuia, Progreso, Respuestas, UsoSesion } from "./tipos";
+export { cuidadosQueAplican } from "./cuidados";
 
 // Recursos con sesión guiada propia. Los demás usan el paso a paso
 // automático (lib/pasoAPaso.ts).
@@ -53,9 +56,26 @@ export const valorLista = (r: Respuestas, clave: string): string[] => {
   return Array.isArray(v) ? v : [];
 };
 
-// Escenas que corresponden con lo respondido hasta ahora.
-export const escenasVisibles = (g: Guion, r: Respuestas): Escena[] =>
-  g.escenas.filter((e) => !e.si || e.si.es.includes(valorUno(r, e.si.clave) ?? ""));
+export interface OpcionesVisibles {
+  // La clínica activó la doble tarea para esta actividad.
+  dobleTarea?: boolean;
+  // Perfil de nutrición (null: sin datos, se muestran todos los cuidados).
+  nutricion?: NutricionFlags | null;
+}
+
+// Un desafío opcional (doble tarea): el reto cognitivo o lo marcado `doble`.
+export const esDesafio = (e: Escena) => e.tipo === "reto" || !!e.doble;
+
+// Escenas que corresponden con lo respondido hasta ahora. Los desafíos,
+// solo con la doble tarea activada y si no dijeron «Ahora no» (`_reto`).
+// Los cuidados de nutrición, solo si alguno le aplica a la persona.
+export const escenasVisibles = (g: Guion, r: Respuestas, o: OpcionesVisibles = { dobleTarea: true }): Escena[] =>
+  g.escenas.filter((e) => {
+    if (e.si && !e.si.es.includes(valorUno(r, e.si.clave) ?? "")) return false;
+    if (esDesafio(e) && (!o.dobleTarea || valorUno(r, "_reto") === "no")) return false;
+    if (e.tipo === "cuidados" && o.nutricion && cuidadosQueAplican(e.items, o.nutricion).length === 0) return false;
+    return true;
+  });
 
 // La escena «elegir» de una clave (para buscar sus opciones).
 function eleccion(g: Guion, clave: string) {
@@ -156,6 +176,7 @@ export function textoDeVoz(e: Escena | null, g: Guion, r: Respuestas, titulo?: s
   if (!e) return titulo ? `${titulo}. ${g.frase}` : g.frase;
   if (e.tipo === "seguridad") return cuandoParar;
   if (e.tipo === "elegir") return `${e.titulo} ${e.opciones.map((o) => o.texto).join(", ")}.`;
+  if (e.tipo === "pasos") return plantilla(`${e.titulo}. ${e.pasos.filter((p) => !p.si || p.si.es.includes(valorUno(r, p.si.clave) ?? "")).map((p, i) => `${i + 1}. ${p.texto}`).join(" ")}`, g, r);
   return plantilla(textoPrincipal(e), g, r);
 }
 
@@ -165,6 +186,10 @@ export function textosDeVoz(g: Guion): string[] {
   const out = new Set<string>([textoDeVoz(null, g, {})]);
   for (const e of g.escenas) {
     if (e.tipo === "video") continue;
+    if (e.tipo === "pasos") {
+      out.add(textoDeVoz(e, g, {}));
+      continue;
+    }
     const base = e.tipo === "seguridad" || e.tipo === "elegir" ? null : textoPrincipal(e);
     const clave = base ? /\{(\w+)\}/.exec(base)?.[1] : null;
     const elegir = clave ? g.escenas.find((x) => x.tipo === "elegir" && x.clave === clave) : null;
@@ -195,7 +220,7 @@ export function resumenPasos(g: Guion, conVideo: boolean): PasoResumen[] {
   const tx = (t: string) => plantilla(t, g, r);
   for (let k = 0; k < g.escenas.length; k++) {
     const e = g.escenas[k];
-    if (e.si) continue;
+    if (e.si || esDesafio(e)) continue;
     switch (e.tipo) {
       case "seguridad":
         out.push({ icono: "rechazo", texto: "Repasar cuándo parar", detalle: "Las señales para detenerse, con dibujos." });
@@ -214,6 +239,9 @@ export function resumenPasos(g: Guion, conVideo: boolean): PasoResumen[] {
         k += grupo.length - 1;
         break;
       }
+      case "pasos":
+        out.push({ icono: e.pasos[0]?.icono ?? "estrella", texto: e.titulo, lista: e.pasos.filter((p) => !p.si).map((p) => tx(p.texto)) });
+        break;
       case "decir":
         out.push({ icono: e.icono ?? "conversar", texto: e.titulo, detalle: `«${tx(e.frase)}»${e.nota ? ` ${e.nota}` : ""}` });
         break;

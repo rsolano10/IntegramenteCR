@@ -73,7 +73,23 @@ export function SesionGuiada({
   });
 
   // Sin video cargado, la escena del video no se muestra.
-  const escenas = useMemo(() => escenasVisibles(guion, respuestas).filter((e) => e.tipo !== "video" || !!datos.videoUrl), [guion, respuestas, datos.videoUrl]);
+  // Los desafíos, solo con la doble tarea activada; los cuidados de
+  // nutrición, solo los que le aplican a la persona.
+  const escenas = useMemo(
+    () => escenasVisibles(guion, respuestas, { dobleTarea: !!datos.dobleTarea, nutricion: datos.nutricion ?? null }).filter((e) => e.tipo !== "video" || !!datos.videoUrl),
+    [guion, respuestas, datos.videoUrl, datos.dobleTarea, datos.nutricion],
+  );
+  // ¿Ya la hicieron antes en este dispositivo? Entonces se ofrece ir directo
+  // al ejercicio, sin preparar, video ni consignas.
+  const claveHecha = `sesion-hecha:${guion.codigo}`;
+  const [repetida] = useState(() => {
+    try {
+      return !!localStorage.getItem(claveHecha);
+    } catch {
+      return false;
+    }
+  });
+  const primerTrabajo = escenas.findIndex((e) => ["repeticiones", "tiempo", "colores", "orientacion", "objetos", "reaccion"].includes(e.tipo));
   const escena = idx >= 0 ? escenas[Math.min(idx, escenas.length - 1)] : null;
   const m = datos.modulo ? moduloTheme[datos.modulo] : moduloTheme.bienvenida;
   const tema = { claro: m.from, fuerte: m.to, tinta: m.ink, relleno: `${m.to}80` };
@@ -153,18 +169,26 @@ export function SesionGuiada({
     // Siempre hay ayuda: como mínimo, Clara.
     abrirAyuda: () => setPanel("ayuda"),
     abrirParar: () => setPanel("parar"),
+    repetida,
+    saltarAlTrabajo: repetida && guion.ejercicio && primerTrabajo > idx ? () => setIdx(primerTrabajo) : null,
     irAlCierre: () => {
       setParadaAntes(true);
       setIdx(escenas.length - 1);
     },
-    terminar: async (reg) =>
-      onTerminar(
+    terminar: async (reg) => {
+      try {
+        if (!paradaAntes) localStorage.setItem(claveHecha, new Date().toISOString());
+      } catch {
+        // Sin almacenamiento: la próxima vez se muestra completa.
+      }
+      return onTerminar(
         armarProgreso(respuestas, marcas, {
           terminada: paradaAntes ? `parada:${new Date().toISOString()}` : new Date().toISOString(),
           uso: usoActual(!paradaAntes),
         }),
         reg,
-      ),
+      );
+    },
     registro,
     paradaAntes,
     leerSiempre,

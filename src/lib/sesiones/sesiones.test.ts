@@ -249,3 +249,50 @@ test("ger: escenas nuevas bien armadas", () => {
   // Los 20 recursos nuevos tienen sesión propia.
   for (let n = 11; n <= 30; n++) assert.ok(guionDe(`GER-0${n}`), `GER-0${n}`);
 });
+
+// ─── Experiencia: cuidados y desafíos ───
+import { cuidadoAplica } from "./cuidados.ts";
+
+test("cuidados: solo los que le aplican; sin perfil, todos", () => {
+  const warfarina = "Si toma warfarina, coordiná con su equipo cuánta hoja come.";
+  const tragar = "Si le cuesta tragar, seguí la textura que le indicaron.";
+  const general = "Lavá bien la fruta antes de cortarla.";
+  const pescado = "Con alergia al pescado, no lo ofrezcás.";
+  assert.equal(cuidadoAplica(warfarina, null), true, "sin perfil se muestra");
+  assert.equal(cuidadoAplica(warfarina, {}), false);
+  assert.equal(cuidadoAplica(warfarina, { anticoagulantes: true }), true);
+  assert.equal(cuidadoAplica(tragar, { disfagia: true }), true);
+  assert.equal(cuidadoAplica(tragar, { diabetes: true }), false);
+  assert.equal(cuidadoAplica(general, {}), true, "lo general siempre");
+  assert.equal(cuidadoAplica(pescado, { alergias: { huevo: true } }), false);
+  assert.equal(cuidadoAplica(pescado, { alergias: { pescado: true } }), true);
+  assert.equal(cuidadoAplica("Con alergia, evitalo.", { alergias: { leche: true } }), true);
+  assert.equal(cuidadoAplica("Con gota, enfermedad renal o disfagia, adaptá.", { renal: true }), true);
+});
+
+test("cuidados: sin ninguno que aplique, la escena no se ve", () => {
+  const g = GUIONES["PRE-005"];
+  const con = escenasVisibles(g, {}, { nutricion: { anticoagulantes: true } });
+  const sin = escenasVisibles(g, {}, { nutricion: { diabetes: true } });
+  assert.ok(con.some((e) => e.tipo === "cuidados"));
+  assert.ok(!sin.some((e) => e.tipo === "cuidados"));
+  assert.ok(escenasVisibles(g, {}, { nutricion: null }).some((e) => e.tipo === "cuidados"));
+  assert.equal(g.escenas[0].tipo, "cuidados", "los cuidados van primero");
+});
+
+test("desafíos: solo con la doble tarea activada y si no dijeron «Ahora no»", () => {
+  const g = GUIONES["GER-012"];
+  const desafios = (o: { dobleTarea?: boolean }, r = {}) => escenasVisibles(g, r, o).filter((e) => e.tipo === "reto" || e.doble).length;
+  assert.equal(desafios({ dobleTarea: false }), 0);
+  assert.equal(desafios({ dobleTarea: true }), 2);
+  assert.equal(desafios({ dobleTarea: true }, { _reto: "no" }), 0);
+});
+
+test("gerontogimnasia: consignas juntas, guía en el trabajo y sin «¿Cómo se siente?» aparte", () => {
+  for (const g of LISTA_GUIONES.filter((x) => x.codigo.startsWith("GER-") && x.ejercicio)) {
+    assert.ok(!g.escenas.some((e) => e.tipo === "sentir"), `${g.codigo}: sentir va en el cierre`);
+    assert.ok(!g.escenas.some((e) => e.tipo === "consigna"), `${g.codigo}: consignas en «Así se hace»`);
+    const trabajo = g.escenas.find((e) => e.tipo === "repeticiones" || e.tipo === "tiempo");
+    if (trabajo && (trabajo.tipo === "repeticiones" || trabajo.tipo === "tiempo")) assert.ok(trabajo.guia?.length, `${g.codigo}: guía a la vista`);
+  }
+});

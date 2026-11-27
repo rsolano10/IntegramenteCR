@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState, type CSSPropertie
 import type { ExtrasInteractiva } from "../../lib/actividades/contrato";
 import { cuandoParar } from "../../lib/bloquesGerontogimnasia";
 import { moduloLabel } from "../../lib/modulos";
-import { LIBRE, opcionDe, opcionesSegun, plantilla, puedeSeguir, valorLista, valorUno, type Escena, type Opcion } from "../../lib/sesiones";
+import { LIBRE, cuidadosQueAplican, esDesafio, opcionDe, opcionesSegun, plantilla, puedeSeguir, valorLista, valorUno, type Escena, type Opcion, type PasoGuia } from "../../lib/sesiones";
 import type { NombreIcono } from "../../lib/sesiones/iconos";
 import { Icono } from "./Icono";
 import { lecturaDisponible } from "../../lib/voz";
@@ -124,9 +124,10 @@ const SENALES: { icono: NombreIcono; texto: string }[] = [
 ];
 
 export function Seguridad() {
-  const { tema } = useSesion();
+  const { tema, guion } = useSesion();
   const t = useTam();
-  const [completo, setCompleto] = useState(toca);
+  // Ejercicio sentado y de bajo riesgo: siempre la versión corta.
+  const [completo, setCompleto] = useState(() => (guion.sentado ? false : toca()));
   return (
     <>
       <Ceja>Antes de empezar</Ceja>
@@ -164,13 +165,26 @@ export function Seguridad() {
 
 // ─── Preparar: tocar cada cosa cuando esté lista ───
 export function Preparar({ e }: { e: De<"preparar"> }) {
-  const { tema } = useSesion();
+  const { tema, saltarAlTrabajo } = useSesion();
   const t = useTam();
   const [listos, setListos] = useState<boolean[]>(() => e.items.map(() => false));
   const todos = listos.every(Boolean);
   const faltan = listos.filter((x) => !x).length;
   return (
     <>
+      {saltarAlTrabajo && (
+        <section className="ses-sube mb-5 rounded-[22px] border-[1.5px] border-verde-serenidad bg-verde-tenue px-4 py-4">
+          <p className={`m-0 font-semibold text-verde-profundo ${t.cuerpo}`}>Ya la hicieron antes</p>
+          <p className={`m-0 mt-1 text-tinta-suave ${t.chico}`}>Si ya tienen todo listo, pueden ir directo al ejercicio.</p>
+          <button
+            type="button"
+            onClick={saltarAlTrabajo}
+            className={`mt-3 min-h-12 px-5 rounded-full border-0 bg-verde-profundo text-white font-semibold cursor-pointer hover:bg-tinta ${t.chico}`}
+          >
+            Ir directo al ejercicio
+          </button>
+        </section>
+      )}
       <Titulo>{e.titulo}</Titulo>
       <Nota className="mt-2">{e.nota ?? "Marcá cada cosa cuando esté lista."}</Nota>
       <ul className="m-0 mt-5 p-0 list-none rounded-[22px] bg-white border border-borde divide-y divide-borde-suave overflow-hidden">
@@ -408,6 +422,10 @@ export function Lista({ e }: { e: De<"lista"> }) {
   const elegidos = valorLista(respuestas, e.clave);
   const opciones = opcionesSegun(e.sugerencias, e.segun, respuestas);
   const [libre, setLibre] = useState("");
+  // Primero que piense: las ideas, a un toque (el esfuerzo de recordar es
+  // parte del ejercicio). En nutrición son opciones prácticas: a la vista.
+  const { datos } = useSesion();
+  const [verIdeas, setVerIdeas] = useState(datos.modulo === "nutricion" || elegidos.length > 0);
   const alternar = (id: string) => responder(e.clave, elegidos.includes(id) ? elegidos.filter((x) => x !== id) : [...elegidos, id]);
   const agregar = () => {
     const v = libre.trim();
@@ -422,7 +440,7 @@ export function Lista({ e }: { e: De<"lista"> }) {
       {/* Lo que ya va: la «bolsa» que se llena. */}
       <div className="mt-5 rounded-[22px] border-2 border-dashed border-borde-campo bg-campo px-4 py-3 min-h-[64px]" aria-live="polite">
         {elegidos.length === 0 ? (
-          <p className={`m-0 py-2 text-tinta-tenue italic ${t.chico}`}>Todavía nada. Tocá lo que diga.</p>
+          <p className={`m-0 py-2 text-tinta-tenue italic ${t.chico}`}>{verIdeas ? "Todavía nada. Tocá lo que diga." : "Todavía nada. Escribí lo que diga o mostrá ideas."}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {elegidos.map((v) => {
@@ -444,7 +462,17 @@ export function Lista({ e }: { e: De<"lista"> }) {
           </div>
         )}
       </div>
-      {opciones.length > 0 && (
+      {opciones.length > 0 && !verIdeas && (
+        <button
+          type="button"
+          onClick={() => setVerIdeas(true)}
+          className={`mt-4 self-start inline-flex items-center gap-2 min-h-12 px-5 rounded-full border-[1.5px] border-borde bg-white font-semibold text-tinta cursor-pointer hover:border-verde-serenidad ${t.chico}`}
+        >
+          <Icono nombre="luz" className="w-6 h-6" relleno="#f4c372" />
+          {participante ? "Ver ideas" : "Mostrar ideas"}
+        </button>
+      )}
+      {opciones.length > 0 && verIdeas && (
         <Grilla n={opciones.length} className="mt-4">
           {opciones.map((o) => (
             <TarjetaOpcion key={o.id} o={o} chica elegida={elegidos.includes(o.id)} onClick={() => alternar(o.id)} />
@@ -789,6 +817,7 @@ export function Repeticiones({ e }: { e: De<"repeticiones"> }) {
       <Titulo>{e.titulo}</Titulo>
       <Nota className="mt-2">{e.nota}</Nota>
       <IndicacionEquipo />
+      <GuiaMovimiento guia={e.guia} />
       <div className="mt-6 flex flex-col items-center">
         {(e.lados || series > 1) && (
           <div className="mb-4 flex items-center gap-3" key={`lado-${lado}-${serie}`}>
@@ -831,6 +860,12 @@ export function Repeticiones({ e }: { e: De<"repeticiones"> }) {
               setHechas(0);
             }}
           />
+        )}
+        {/* Contar es opcional: sirve para el ritmo, no para cumplir. */}
+        {hechas < e.min && (
+          <button type="button" onClick={() => setHechas(e.min)} className={`mt-1 mb-1 min-h-11 px-4 rounded-full border-[1.5px] border-borde bg-white font-semibold text-tinta-suave cursor-pointer hover:border-verde-serenidad ${t.chico}`}>
+            {e.lados ? (lado === 0 ? "Hicimos este lado" : "Hicimos el otro lado") : series > 1 ? "Hicimos la serie" : "Ya las hicimos"}
+          </button>
         )}
         {hechas > 0 && !(falta && hechas >= e.min) && !(serieTerminada && serie < series) && (
           <button type="button" onClick={() => setHechas((h) => h - 1)} className={`mt-1 border-0 bg-transparent p-0 text-tinta-tenue underline decoration-dotted cursor-pointer ${t.chico}`}>
@@ -900,6 +935,7 @@ export function Tiempo({ e }: { e: De<"tiempo"> }) {
       <Titulo>{e.titulo}</Titulo>
       <Nota className="mt-2">{e.nota}</Nota>
       <IndicacionEquipo />
+      <GuiaMovimiento guia={e.guia} />
       <div className="mt-5 flex flex-col items-center">
         <div className="mb-3 flex items-center gap-3">
           {e.lados && <Lado key={lado} lado={lado} />}
@@ -1175,14 +1211,17 @@ export function Mision({ e }: { e: De<"mision"> }) {
 
 // ─── Cuidados ───
 export function Cuidados({ e }: { e: De<"cuidados"> }) {
-  const { tema } = useSesion();
+  const { tema, datos } = useSesion();
   const t = useTam();
+  // Con el perfil de nutrición cargado, solo lo que le aplica a la persona.
+  const conPerfil = datos.modulo === "nutricion" && !!datos.nutricion;
+  const items = conPerfil ? cuidadosQueAplican(e.items, datos.nutricion) : e.items;
   return (
     <>
       <Titulo>{e.titulo}</Titulo>
-      {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
+      {(conPerfil || e.nota) && <Nota className="mt-2">{conPerfil ? "Por lo que su equipo sabe de tu familiar:" : e.nota}</Nota>}
       <ul className="m-0 mt-5 p-0 list-none grid gap-2.5">
-        {e.items.map((it, i) => (
+        {items.map((it, i) => (
           <li key={it.texto} className="ses-sube flex items-center gap-4 rounded-[22px] bg-white border border-borde px-4 py-4" style={{ animationDelay: `${i * 70}ms` }}>
             <Icono nombre={it.icono} className="w-12 h-12 shrink-0 text-tinta" relleno={tema.relleno} />
             <p className={`m-0 leading-snug text-tinta ${t.cuerpo}`}>{it.texto}</p>
@@ -1293,7 +1332,8 @@ function Pregunta<T extends string>({
 const RAZONES = ["Me cansé", "No entendí", "No tenía ganas", "Me sentí mal"];
 
 export function Cierre({ e }: { e: De<"cierre"> }) {
-  const { datos, terminar, registro, participante, paradaAntes, respuestas, responder } = useSesion();
+  const { datos, terminar, registro, participante, paradaAntes, respuestas, responder, guion } = useSesion();
+  const sentir = valorUno(respuestas, "sentir") as "bien" | "cansado" | "molestia" | null;
   const t = useTam();
   const [v, setV] = useState<"done" | "partial" | "no" | null>(null);
   const [ayuda, setAyuda] = useState("");
@@ -1343,6 +1383,25 @@ export function Cierre({ e }: { e: De<"cierre"> }) {
       {/* Antes de terminar: lo que el equipo necesita saber, en la misma pantalla */}
       <section className="mt-7 w-full rounded-[24px] bg-white border border-borde px-4 py-5 grid gap-5 text-left">
         <p className={`m-0 font-serif text-tinta ${t.grande}`}>Antes de terminar</p>
+        {/* Ejercicio físico: cómo quedó el cuerpo (antes era otra pantalla). */}
+        {guion.ejercicio && (
+          <>
+            <Pregunta
+              titulo={participante ? "¿Cómo te sentís ahora?" : "¿Cómo se siente ahora?"}
+              opciones={[
+                { id: "bien", texto: "Bien" },
+                { id: "cansado", texto: "Con cansancio" },
+                { id: "molestia", texto: "Con molestia" },
+              ]}
+              valor={sentir}
+              onElegir={(x) => responder("sentir", x)}
+            />
+            {sentir === "cansado" && <p className={`ses-sube m-0 -mt-2 rounded-2xl bg-fila-fria px-4 py-3 leading-relaxed text-tinta ${t.chico}`}>Bien hecho. Por hoy alcanza; descansen un rato.</p>}
+            {sentir === "molestia" && (
+              <p className={`ses-sube m-0 -mt-2 rounded-2xl bg-alerta px-4 py-3 leading-relaxed text-alerta-texto ${t.chico}`}>Que descanse. Si la molestia sigue, contale a su equipo.</p>
+            )}
+          </>
+        )}
         {registro ? (
           <>
             <Pregunta
@@ -1414,8 +1473,107 @@ export function Cierre({ e }: { e: De<"cierre"> }) {
   );
 }
 
+// ─── Así se hace: las consignas juntas, en una pantalla ───
+export function Pasos({ e }: { e: De<"pasos"> }) {
+  const { tema, respuestas } = useSesion();
+  const t = useTam();
+  const pasos = e.pasos.filter((p) => !p.si || p.si.es.includes(valorUno(respuestas, p.si.clave) ?? ""));
+  return (
+    <>
+      <Titulo>{e.titulo}</Titulo>
+      {e.nota && <Nota className="mt-2">{e.nota}</Nota>}
+      <ol className="m-0 mt-5 p-0 list-none grid gap-3">
+        {pasos.map((p, i) => (
+          <li key={p.titulo} className="ses-sube flex items-center gap-4 rounded-[24px] bg-white border border-borde px-4 py-3.5" style={{ animationDelay: `${i * 90}ms` }}>
+            <span className="relative shrink-0 w-[76px] h-[76px] rounded-full flex items-center justify-center" style={{ background: `radial-gradient(circle at 35% 30%, #fff, ${tema.claro})` }}>
+              <Icono nombre={p.icono} className="w-12 h-12 text-tinta" relleno={tema.relleno} />
+              <span className="absolute -top-1 -left-1 w-7 h-7 rounded-full bg-verde-profundo text-white text-[14px] font-semibold flex items-center justify-center">{i + 1}</span>
+            </span>
+            <span className="min-w-0">
+              <span className={`block font-semibold text-tinta ${t.cuerpo}`}>{p.titulo}</span>
+              <span className={`block leading-snug text-tinta-suave ${t.chico}`}>{p.texto}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <Pie etiqueta="Empezar" />
+    </>
+  );
+}
+
+// Mientras se hace: los dibujos del movimiento y, si hay, el video en bucle.
+export function GuiaMovimiento({ guia }: { guia?: PasoGuia[] }) {
+  const { tema, datos, respuestas } = useSesion();
+  const t = useTam();
+  const [video, setVideo] = useState(false);
+  const pasos = (guia ?? []).filter((p) => !p.si || p.si.es.includes(valorUno(respuestas, p.si.clave) ?? ""));
+  if (pasos.length === 0 && !datos.videoUrl) return null;
+  return (
+    <div className="mt-4">
+      {pasos.length > 0 && (
+        <ol className="m-0 p-0 list-none flex justify-center gap-2" aria-label="Cómo se hace">
+          {pasos.map((p, i) => (
+            <li key={p.titulo} className="flex-1 max-w-[110px] flex flex-col items-center gap-1 text-center">
+              <span className="relative w-14 h-14 rounded-full flex items-center justify-center bg-white border border-borde">
+                <Icono nombre={p.icono} className="w-9 h-9 text-tinta" relleno={tema.relleno} />
+                <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-verde-profundo text-white text-[11px] font-semibold flex items-center justify-center">{i + 1}</span>
+              </span>
+              <span className="text-[12.5px] leading-tight font-semibold text-tinta-suave">{p.titulo}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {datos.videoUrl && (
+        <div className="mt-3 flex flex-col items-center">
+          {video ? (
+            <video src={datos.videoUrl} poster={datos.posterUrl} autoPlay loop muted playsInline className="w-full max-w-[280px] rounded-2xl bg-tinta" style={{ maxHeight: 220 }} />
+          ) : null}
+          <button type="button" onClick={() => setVideo((v) => !v)} className={`mt-2 border-0 bg-transparent p-0 font-semibold text-verde-profundo underline decoration-dotted cursor-pointer ${t.chico}`}>
+            {video ? "Ocultar el video" : "Ver el movimiento"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Antes de un desafío (doble tarea): se ofrece, no se impone.
+function OfertaDesafio() {
+  const { responder, participante } = useSesion();
+  const t = useTam();
+  return (
+    <>
+      <Ceja>Opcional</Ceja>
+      <Titulo>¿Quieren sumarle un reto?</Titulo>
+      <Nota className="mt-2">
+        {participante ? "Un reto para la mente mientras te movés. Solo si te sentís firme." : "Un reto para la mente mientras se mueve. Solo si ya domina el ejercicio y se siente firme."}
+      </Nota>
+      <div className="mt-6 grid gap-2.5">
+        <button
+          type="button"
+          onClick={() => responder("_reto", "si")}
+          className={`min-h-16 rounded-[22px] border-0 bg-verde-profundo text-white font-semibold cursor-pointer hover:bg-tinta ${t.cuerpo}`}
+        >
+          Sí, sumemos un reto
+        </button>
+        <button
+          type="button"
+          onClick={() => responder("_reto", "no")}
+          className={`min-h-16 rounded-[22px] border-[1.5px] border-borde bg-white text-tinta font-semibold cursor-pointer hover:border-verde-serenidad ${t.cuerpo}`}
+        >
+          Ahora no, terminar el ejercicio
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function VistaEscena({ e }: { e: Escena }) {
+  const { respuestas } = useSesion();
+  if (esDesafio(e) && !valorUno(respuestas, "_reto")) return <OfertaDesafio />;
   switch (e.tipo) {
+    case "pasos":
+      return <Pasos e={e} />;
     case "seguridad":
       return <Seguridad />;
     case "preparar":

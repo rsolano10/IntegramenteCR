@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import type { AdaptacionPorEtapa, NivelCognitivo, ResourceExtras } from "../../lib/mediaResources";
 import type { ResourceModulo } from "../../lib/modulos";
 import type { Guion, Respuestas } from "../../lib/sesiones";
+import type { NutricionFlags } from "../../lib/reglasRecursos";
 
 // Lo que la sesión necesita del recurso o de la tarea del plan.
 export interface DatosSesion {
@@ -19,6 +20,10 @@ export interface DatosSesion {
   ayuda?: string | null;
   adaptacion?: string | null;
   adaptacionPorEtapa?: AdaptacionPorEtapa | null;
+  // La clínica activó la doble tarea (el reto cognitivo) para esta actividad.
+  dobleTarea?: boolean;
+  // Perfil de nutrición de la persona: filtra los cuidados (null = sin datos).
+  nutricion?: NutricionFlags | null;
 }
 
 export interface Tema {
@@ -51,6 +56,9 @@ export interface CtxSesion {
   abrirParar: () => void;
   // Terminar por hoy: directo al cierre (como «Parar»).
   irAlCierre: () => void;
+  // Ya la hicieron antes: saltar preparar, video y consignas.
+  repetida: boolean;
+  saltarAlTrabajo: (() => void) | null;
   // Termina la sesión: guarda el avance y, si corresponde, el registro.
   terminar: (reg?: RegistroSesion) => Promise<void>;
   // Si al terminar se pregunta «¿Pudieron hacer la actividad?» (no, cuando

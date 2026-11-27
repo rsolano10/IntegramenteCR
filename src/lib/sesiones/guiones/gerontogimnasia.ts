@@ -9,6 +9,7 @@ import type { NombreIcono } from "../iconos";
 
 interface Ejercicio {
   codigo: string;
+  sentado?: boolean;
   frase: string;
   icono: NombreIcono;
   etiquetas: string[];
@@ -33,16 +34,18 @@ function ejercicio(e: Ejercicio): Guion {
     etiquetas: e.etiquetas,
     cuidado: e.cuidado,
     ejercicio: true,
+    ...(e.sentado ? { sentado: true } : {}),
     ayuda: [consejoBase, ...e.ayuda],
     escenas: [
       { tipo: "seguridad" },
       ...(e.antes ?? []),
       { tipo: "preparar", titulo: "Preparemos el lugar", nota: "Tocá cada cosa cuando esté lista.", items: e.preparar },
       { tipo: "video", titulo: "Mírenlo juntos", nota: "Pueden verlo las veces que quieran." },
-      ...e.consignas.map((c, i): Escena => ({ tipo: "consigna", paso: { n: i + 1, de: e.consignas.length }, ...c })),
-      e.trabajo,
+      // Las consignas juntas y, mientras se hace, sus dibujos a la vista.
+      { tipo: "pasos", titulo: "Así se hace", pasos: e.consignas },
+      e.trabajo.tipo === "repeticiones" || e.trabajo.tipo === "tiempo" ? { ...e.trabajo, guia: e.consignas } : e.trabajo,
       { tipo: "descanso", titulo: e.descanso >= 60 ? "Un minuto de descanso" : "Un descanso corto", segundos: e.descanso, texto: "Sentados, respirando tranquilos." },
-      { tipo: "sentir", titulo: "¿Cómo se siente ahora?" },
+      // «¿Cómo se siente?» va dentro del cierre.
       { tipo: "cierre", texto: e.cierre, dato: true },
     ],
   };
@@ -55,6 +58,7 @@ const respirar = "Respirá con normalidad.";
 
 export const ger001 = ejercicio({
   codigo: "GER-001",
+  sentado: true,
   frase: "Fuerza en los muslos, sentado y con calma.",
   icono: "figura-rodilla",
   etiquetas: ["5 por pierna", "Sentado", "Silla con respaldo"],
@@ -85,6 +89,7 @@ export const ger001 = ejercicio({
 
 export const ger002 = ejercicio({
   codigo: "GER-002",
+  sentado: true,
   frase: "Levantar la rodilla, como al empezar a caminar.",
   icono: "figura-rodilla-arriba",
   etiquetas: ["5 por lado", "Sentado", "Silla firme"],

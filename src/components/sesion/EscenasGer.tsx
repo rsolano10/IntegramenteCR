@@ -794,7 +794,7 @@ export function Reaccion({ e }: { e: De<"reaccion"> }) {
 }
 
 function Manos({ e }: { e: De<"reaccion"> }) {
-  const { tema, participante } = useSesion();
+  const { tema, participante, datos } = useSesion();
   const t = useTam();
   const [modo, setModo] = useState<ModoManos>("alternar");
   const [mano, setMano] = useState<Mano | null>(null);
@@ -830,7 +830,8 @@ function Manos({ e }: { e: De<"reaccion"> }) {
           [
             ["alternar", "Alternar"],
             ["azar", "Al azar"],
-            ["numeros", "Uno y dos"],
+            // «Uno y dos» es doble tarea: solo si la clínica la activó.
+            ...(datos.dobleTarea ? [["numeros", "Uno y dos"]] : []),
           ] as [ModoManos, string][]
         ).map(([m, l]) => (
           <Boton
@@ -902,7 +903,7 @@ function Manos({ e }: { e: De<"reaccion"> }) {
 }
 
 function Soltar({ e }: { e: De<"reaccion"> }) {
-  const { tema } = useSesion();
+  const { tema, datos } = useSesion();
   const t = useTam();
   const [aviso, setAviso] = useState(true);
   const [fase, setFase] = useState<"listo" | "cuenta" | "espera" | "ahora" | "anotar">("listo");
@@ -983,7 +984,7 @@ function Soltar({ e }: { e: De<"reaccion"> }) {
         <p className={`m-0 mt-5 text-tinta-suave ${t.chico}`} aria-live="polite">
           Serie {serie} de {e.series} · intento {Math.min(intentos + 1, e.max)} de {e.max} · atrapadas: {atrapadas}
         </p>
-        {e.contarDeDos && intentos > 0 && fase === "listo" && (
+        {e.contarDeDos && datos.dobleTarea && intentos > 0 && fase === "listo" && (
           <p className={`ses-sube m-0 mt-2 text-tinta ${t.chico}`}>
             Reto de dos en dos: que diga <strong>{intentos * 2}</strong>.
           </p>

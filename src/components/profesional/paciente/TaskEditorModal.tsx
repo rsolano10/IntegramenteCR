@@ -28,6 +28,8 @@ export interface DraftTask {
   modulo: ResourceModulo | null;
   // Dosis (GER) o porción del plan individual (PRE) para esta persona.
   indicacionIndividual?: string;
+  // Ofrecer el reto cognitivo (doble tarea) en la sesión. Por defecto, no.
+  dobleTarea?: boolean;
   // Dificultad de una actividad interactiva para esta persona (vacío = la del recurso).
   nivelInteractivo?: Nivel | null;
 }
@@ -83,6 +85,7 @@ export function TaskEditorModal({
   const [porQue, setPorQue] = useState(initial.mediaResourceId ? "" : (initial.porQue ?? ""));
   const [notaClinica, setNotaClinica] = useState(initial.notaClinica ?? "");
   const [indicacion, setIndicacion] = useState(initial.indicacionIndividual ?? "");
+  const [dobleTarea, setDobleTarea] = useState(!!initial.dobleTarea);
   const [nivel, setNivel] = useState<Nivel | null>(initial.nivelInteractivo ?? null);
   const [soloInteractivos, setSoloInteractivos] = useState(false);
   const { data: perfil } = usePerfilRecursos(patientId);
@@ -112,6 +115,8 @@ export function TaskEditorModal({
     if (!perfil) return { permitido: true };
     return evaluarAsignacion(r, perfil, { gruposSemana, conIndicacionIndividual: !!indicacion.trim() });
   }
+  // ¿Se puede ofrecer el reto a esta persona? (doble tarea: reglas de gerontogimnasia)
+  const dobleSeleccionado = selected?.permite_doble_tarea ? (perfil ? evaluarAsignacion(selected, perfil, { gruposSemana, conIndicacionIndividual: !!indicacion.trim(), dobleTarea: true }) : { permitido: true as const }) : null;
   const evaluacionSeleccionado = selected ? evaluar(selected) : null;
   const q = search.trim().toLowerCase();
   const filtered = (resources ?? []).filter(
@@ -147,6 +152,7 @@ export function TaskEditorModal({
         mediaResourceId: selected.id,
         modulo: selected.modulo,
         indicacionIndividual: indicacion.trim(),
+        dobleTarea: dobleTarea && !!dobleSeleccionado?.permitido,
         nivelInteractivo: selected.extras?.modo === "interactiva" ? (nivel ?? sugerido?.nivel ?? nivelDe(selected.extras)) : null,
       });
       return;
@@ -262,6 +268,25 @@ export function TaskEditorModal({
               <p role="alert" className="m-0 mt-2.5 text-[13.5px] leading-relaxed text-alerta-texto bg-alerta border border-alerta-borde rounded-xl px-3 py-2">
                 No se puede asignar: {evaluacionSeleccionado.motivo}
               </p>
+            )}
+            {dobleSeleccionado && (
+              <label className={`mt-3 flex items-start gap-2.5 rounded-xl border border-borde px-3 py-2.5 ${dobleSeleccionado.permitido ? "cursor-pointer" : "opacity-60"}`}>
+                <input
+                  type="checkbox"
+                  checked={dobleTarea && dobleSeleccionado.permitido}
+                  disabled={!dobleSeleccionado.permitido}
+                  onChange={(ev) => setDobleTarea(ev.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[#2f5d62]"
+                />
+                <span className="text-[13.5px] leading-snug text-tinta">
+                  <strong className="font-semibold">Ofrecer el reto cognitivo (doble tarea)</strong>
+                  <span className="block text-[12.5px] text-tinta-tenue">
+                    {dobleSeleccionado.permitido
+                      ? "Al final del ejercicio, la familia ve «¿Quieren sumarle un reto?». Sin marcar, no aparece."
+                      : `No disponible: ${dobleSeleccionado.motivo}`}
+                  </span>
+                </span>
+              </label>
             )}
             {(selected.modulo === "gerontogimnasia" || selected.modulo === "nutricion" || selected.requiere_plan_individual) && (
               <label className="grid gap-1.5 mt-3 text-[13px] font-semibold text-tinta-suave">

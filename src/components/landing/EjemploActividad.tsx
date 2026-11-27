@@ -78,6 +78,8 @@ export default function EjemploActividad({ codigo, onClose }: { codigo: string; 
           guion={guion}
           datos={datosDeTarea(task)}
           etapas={[]}
+          // El tablero ya presentó la actividad: la sesión arranca directo.
+          inicio={0}
           registro={false}
           conClara={false}
           onSalir={() => setFase("tablero")}

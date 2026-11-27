@@ -12,6 +12,8 @@ import type { Categoria, Escena, Guion, Item, Opcion } from "../tipos";
 
 interface Ejercicio {
   codigo: string;
+  // Sentado y de bajo riesgo: «Cuándo parar» corto.
+  sentado?: boolean;
   frase: string;
   icono: NombreIcono;
   etiquetas: string[];
@@ -29,9 +31,15 @@ interface Ejercicio {
 
 const consejoBase = "Hacé el movimiento vos primero y esperá. No hace falta que lo recuerde.";
 
+// El trabajo ya trae sus descansos (series o rondas): sin descanso final.
+const conDescansos = (x: Escena) =>
+  ((x.tipo === "repeticiones" || x.tipo === "tiempo") && (!!x.descansoEntre || ("series" in x && (x.series ?? 1) > 1))) ||
+  x.tipo === "reaccion" ||
+  x.tipo === "objetos" ||
+  x.tipo === "orientacion";
+
 function ejercicio(e: Ejercicio): Guion {
-  // Con consignas que dependen de la variante, sin «paso 1 de 3» (no siempre se ven todas).
-  const numerar = !e.consignas.some((c) => c.si);
+  const guia = e.consignas.filter((c) => !c.si);
   return {
     codigo: e.codigo,
     revisado: false,
@@ -40,17 +48,21 @@ function ejercicio(e: Ejercicio): Guion {
     etiquetas: e.etiquetas,
     cuidado: e.cuidado,
     ejercicio: true,
+    ...(e.sentado ? { sentado: true } : {}),
     ayuda: [consejoBase, ...e.ayuda],
     escenas: [
       { tipo: "seguridad" },
       ...(e.antes ?? []),
       { tipo: "preparar", titulo: "Preparemos el lugar", nota: "Tocá cada cosa cuando esté lista.", items: e.preparar },
       { tipo: "video", titulo: "Mírenlo juntos", nota: "Pueden verlo las veces que quieran." },
-      ...e.consignas.map(({ si, ...c }, i): Escena => ({ tipo: "consigna", ...(numerar ? { paso: { n: i + 1, de: e.consignas.length } } : {}), ...c, ...(si ? { si } : {}) })),
-      ...e.trabajo,
+      // Las consignas juntas y, mientras se hace, sus dibujos a la vista.
+      ...(e.consignas.length ? [{ tipo: "pasos", titulo: "Así se hace", pasos: e.consignas } as Escena] : []),
+      ...e.trabajo.map((x): Escena => (x.tipo === "repeticiones" || x.tipo === "tiempo" ? { ...x, guia } : x)),
       ...(e.reto ? [e.reto] : []),
-      { tipo: "descanso", titulo: e.descanso >= 60 ? "Un minuto de descanso" : "Un descanso corto", segundos: e.descanso, texto: "Sentados, respirando tranquilos." },
-      { tipo: "sentir", titulo: "¿Cómo se siente ahora?" },
+      ...(e.trabajo.some(conDescansos)
+        ? []
+        : [{ tipo: "descanso", titulo: e.descanso >= 60 ? "Un minuto de descanso" : "Un descanso corto", segundos: e.descanso, texto: "Sentados, respirando tranquilos." } as Escena]),
+      // «¿Cómo se siente?» va dentro del cierre.
       { tipo: "cierre", texto: e.cierre, dato: true },
     ],
   };
@@ -151,6 +163,7 @@ export const ger012 = ejercicio({
     },
     {
       tipo: "colores",
+      doble: true,
       titulo: "Desafío: una secuencia de colores",
       nota: "Si ya lo dominan: toquen las marcas en este orden, volviendo al centro cada vez.",
       colores: ["verde", "rojo", "naranja", "negro"],
@@ -331,6 +344,7 @@ export const ger017 = ejercicio({
 
 export const ger018 = ejercicio({
   codigo: "GER-018",
+  sentado: true,
   frase: "Pasar una pelota de una mano a la otra, sentado y con calma.",
   icono: "pelota",
   etiquetas: ["3 series", "30 a 45 segundos", "Sentado"],
@@ -362,6 +376,7 @@ export const ger018 = ejercicio({
 
 export const ger019 = ejercicio({
   codigo: "GER-019",
+  sentado: true,
   frase: "Pasar la pelota por debajo de las piernas, dibujando un ocho.",
   icono: "figura-rodilla-arriba",
   etiquetas: ["2 series", "6 a 8 por pierna", "Sentado"],
@@ -584,6 +599,7 @@ export const ger025 = ejercicio({
 
 export const ger026 = ejercicio({
   codigo: "GER-026",
+  sentado: true,
   frase: "Alcanzar objetos de colores desde la silla, siguiendo una secuencia.",
   icono: "figura-alcance",
   etiquetas: ["2 series", "4 alcances por mano", "Sentado"],
@@ -683,6 +699,7 @@ export const ger028 = ejercicio({
 
 export const ger029 = ejercicio({
   codigo: "GER-029",
+  sentado: true,
   frase: "Apretar un aro entre las rodillas para fortalecer el muslo.",
   icono: "aro",
   etiquetas: ["2 series", "8 a 10 veces", "3 segundos cada una"],
@@ -713,6 +730,7 @@ export const ger029 = ejercicio({
 
 export const ger030 = ejercicio({
   codigo: "GER-030",
+  sentado: true,
   frase: "Atrapar una pelota que se suelta sobre las manos, siempre sentado.",
   icono: "figura-atrapa",
   etiquetas: ["2 series", "8 a 10 intentos", "Con acompañante"],

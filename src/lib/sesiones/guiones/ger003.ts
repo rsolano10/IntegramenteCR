@@ -1,8 +1,14 @@
-import type { Guion } from "../tipos";
+import type { Guion, PasoGuia } from "../tipos";
 
 // GER-003 «Sentarse y levantarse de una silla». Fuente: ficha GER-003 del
 // manual de gerontogimnasia (Tu actividad, Dosis, Si necesita una
 // adaptación, Tené en cuenta, Para cerrar) y los bloques generales.
+const PASOS_003: PasoGuia[] = [
+  { titulo: "Sentarse bien", texto: "Sentate con los pies apoyados y un poco separados.", icono: "figura-sentada" },
+  { titulo: "Levantarse", texto: "Inclinate un poco hacia adelante y levantate con tus apoyos.", icono: "figura-inclinada" },
+  { titulo: "Volver a sentarse", texto: "Sentate despacio hasta tocar el asiento, sin dejarte caer.", icono: "figura-sentada" },
+];
+
 export const ger003: Guion = {
   codigo: "GER-003",
   revisado: true,
@@ -33,28 +39,13 @@ export const ger003: Guion = {
     },
     { tipo: "video", titulo: "Mírenlo juntos", nota: "Pueden verlo las veces que quieran." },
     {
-      tipo: "consigna",
-      paso: { n: 1, de: 3 },
-      titulo: "Sentarse bien",
-      texto: "Sentate con los pies apoyados y un poco separados.",
-      icono: "figura-sentada",
-    },
-    {
-      tipo: "consigna",
-      paso: { n: 2, de: 3 },
-      titulo: "Levantarse",
-      texto: "Inclinate un poco hacia adelante y levantate con tus apoyos.",
-      icono: "figura-inclinada",
-    },
-    {
-      tipo: "consigna",
-      paso: { n: 3, de: 3 },
-      titulo: "Volver a sentarse",
-      texto: "Sentate despacio hasta tocar el asiento, sin dejarte caer.",
-      icono: "figura-sentada",
+      tipo: "pasos",
+      titulo: "Así se hace",
+      pasos: PASOS_003,
     },
     {
       tipo: "repeticiones",
+      guia: PASOS_003,
       titulo: "Ahora, de 3 a 5 veces",
       nota: "Tocá el círculo cada vez que se levante y se siente.",
       min: 3,
@@ -62,7 +53,6 @@ export const ger003: Guion = {
       recordatorios: ["Despacio al sentarse.", "Los pies bien apoyados.", "Respirá con normalidad.", "Usá el apoyo cuando lo necesités.", "Si duele o marea, paramos."],
     },
     { tipo: "descanso", titulo: "Un minuto de descanso", segundos: 60, texto: "Sentados, respirando tranquilos." },
-    { tipo: "sentir", titulo: "¿Cómo se siente ahora?" },
     { tipo: "cierre", texto: "Levantarse y sentarse con control, con la ayuda de siempre.", dato: true },
   ],
 };

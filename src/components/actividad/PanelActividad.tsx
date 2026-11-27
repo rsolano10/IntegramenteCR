@@ -3,18 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { Modal } from "../ui/Modal";
 import { Icono } from "../sesion/Icono";
 import { MisionSemana } from "../sesion/ResumenSesion";
-import { CienciaActividad } from "./CienciaActividad";
 import { IconoActividad } from "./IconoActividad";
 import { CHIP_ESTADO, ETIQUETA_ESTADO } from "../../lib/estadoActividad";
 import { moduloTheme } from "../../lib/modulos";
 import { aTenerAMano, guionDe, resumenPasos, type PasoResumen, type Progreso } from "../../lib/sesiones";
+import { cuidadoAplica } from "../../lib/sesiones/cuidados";
+import { usePerfilRecursos } from "../../lib/usePerfilRecursos";
 import type { PlanDay, PlanTask } from "../../lib/mockData";
 import { cuandoEsElDia, diaConFecha } from "../../lib/planWeek";
 
-// La pantalla de una actividad antes de empezar, como un tablero: arriba,
-// qué es (con la imagen de su categoría); después, lo que mandó el
-// equipo, la ciencia de la actividad, qué tener a mano y cómo va a ser
-// (una línea de tiempo con cómo se hace cada paso); al final «Empezar».
+// La pantalla de una actividad antes de empezar: responde solo qué es,
+// cuánto dura y qué preparar (más el mensaje del equipo y un cuidado clave),
+// y «Empezar». Cómo va a ser queda plegado en una línea; la ciencia se
+// cuenta al final de la sesión, como premio. La sesión arranca directo,
+// sin otra portada.
 // Registrar se hace solo dentro de la actividad.
 // Una actividad ya registrada se puede repetir: se elige si el nuevo
 // registro reemplaza al anterior o si se hace sin registrar.
@@ -46,6 +48,8 @@ export function PanelActividad({
 }) {
   const navigate = useNavigate();
   const [preguntando, setPreguntando] = useState(false);
+  const [verPasos, setVerPasos] = useState(false);
+  const { data: perfil } = usePerfilRecursos();
   // La familia en celular tiene el menú inferior fijo; el botón va encima.
   const conMenuInferior = !demo && !large && typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
   const guion = guionDe(task.codigo);
@@ -57,16 +61,9 @@ export function PanelActividad({
   const pasos: PasoResumen[] = guion
     ? resumenPasos(guion, task.mediaKind === "video" && !!(task.storagePath || task.externalUrl))
     : (task.pasos ?? []).map((texto, i, todos) => ({ icono: i === todos.length - 1 ? ("estrella" as const) : ("lista" as const), texto }));
-  // La ciencia de la actividad: el texto de la ficha que explica por qué sirve.
-  const ciencia =
-    task.ciencia && (task.ciencia.gancho || task.ciencia.evidencia || task.ciencia.cierre)
-      ? task.ciencia
-      : task.sabiasQue
-        ? { gancho: task.sabiasQue }
-        : task.porQue
-          ? { gancho: task.porQue }
-          : null;
   const aMano = guion ? aTenerAMano(guion) : [];
+  // Un solo cuidado clave; en nutrición, solo si le aplica a la persona.
+  const cuidado = guion?.cuidado && (task.modulo !== "nutricion" || cuidadoAplica(guion.cuidado, perfil?.nutricion)) ? guion.cuidado : null;
   const frase = guion?.frase ?? task.intro ?? task.detalle ?? "";
   const t = {
     titulo: large ? "text-[32px]" : "text-[28px]",
@@ -74,7 +71,8 @@ export function PanelActividad({
     seccion: large ? "text-[15px]" : "text-[14px]",
   };
 
-  const ir = (modo: ModoInicio) => navigate(modo === "normal" ? rutaPasos : `${rutaPasos}?modo=${modo}`);
+  // `desdeTablero`: la sesión no repite la portada (este tablero ya la presentó).
+  const ir = (modo: ModoInicio) => navigate(modo === "normal" ? rutaPasos : `${rutaPasos}?modo=${modo}`, { state: { desdeTablero: true } });
 
   // Qué dice el botón y qué hace, según el estado de la actividad.
   const accion = demo
@@ -118,6 +116,12 @@ export function PanelActividad({
         </span>
         <h1 className={`m-0 font-serif font-normal leading-tight text-tinta ${t.titulo}`}>{task.titulo}</h1>
         {frase && <p className={`m-0 mt-2 max-w-xl leading-relaxed text-tinta/80 ${t.cuerpo}`}>{frase}</p>}
+        {task.duracion && (
+          <span className={`mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 font-semibold text-tinta ${large ? "text-[17px]" : "text-[14px]"}`}>
+            <Icono nombre="reloj" className="w-5 h-5" relleno={`${tema.to}80`} />
+            {task.duracion}
+          </span>
+        )}
         <span className="block clear-both" aria-hidden="true" />
       </section>
 
@@ -159,8 +163,32 @@ export function PanelActividad({
         </section>
       )}
 
-      {/* Cómo va a ser: una línea de tiempo hacia abajo, con cómo se hace cada paso */}
-      {pasos.length > 0 && (
+      {/* El cuidado clave, antes de empezar */}
+      {cuidado && (
+        <p className={`m-0 flex items-start gap-2.5 rounded-2xl bg-aviso border border-[#ecd9ae] px-4 py-3 leading-snug text-aviso-texto ${large ? "text-[17px]" : "text-[14.5px]"}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 mt-0.5" aria-hidden="true">
+            <path d="M12 3l10 18H2L12 3zM12 10v5M12 18v.5" />
+          </svg>
+          {cuidado}
+        </p>
+      )}
+
+      {/* Cómo va a ser: plegado en una línea; al abrirlo, la línea de tiempo. */}
+      {pasos.length > 0 && !verPasos && (
+        <button
+          type="button"
+          onClick={() => setVerPasos(true)}
+          aria-expanded={false}
+          className={`flex items-center justify-between gap-3 rounded-[22px] bg-white border border-borde px-4 py-3.5 text-left cursor-pointer hover:border-verde-serenidad ${large ? "text-[18px]" : "text-[15.5px]"}`}
+        >
+          <span className="text-tinta">
+            <strong className="font-semibold">{pasos.length} pasos</strong>
+            <span className="text-tinta-suave">, de a uno, con la app guiando</span>
+          </span>
+          <span className="shrink-0 font-semibold text-verde-profundo">Ver los pasos</span>
+        </button>
+      )}
+      {pasos.length > 0 && verPasos && (
         <section className="rounded-[22px] bg-white border border-borde px-4 pt-4 pb-2">
           <p className={`m-0 mb-4 tracking-[0.12em] uppercase font-semibold text-tinta-tenue ${t.seccion}`}>Así va a ser</p>
           <ol className="m-0 p-0 list-none">
@@ -196,8 +224,6 @@ export function PanelActividad({
         </section>
       )}
 
-      {/* La ciencia, después de cómo se hace: resumida, con «Leer más». */}
-      {ciencia && <CienciaActividad ciencia={ciencia} large={large} compacta />}
 
       {/* La acción, siempre a mano: fija abajo (sobre el menú inferior en
           celular) mientras se lee la actividad. */}

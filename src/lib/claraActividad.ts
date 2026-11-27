@@ -33,6 +33,8 @@ export function describirEscena(e: Escena, g: Guion, r: Respuestas = {}): string
       return `Ver el video de cómo se hace el ejercicio.${nota}`;
     case "consigna":
       return `${e.paso ? `Consigna ${e.paso.n} de ${e.paso.de}` : "Consigna"}: ${p(e.titulo)} ${tx(e.texto)}${nota}`;
+    case "pasos":
+      return `${p(e.titulo)} Las consignas del ejercicio, juntas: ${e.pasos.map((x, i) => `${i + 1}. ${tx(x.texto)}`).join(" ")}${nota}`;
     case "decir": {
       const otras = e.otras?.length ? ` Otras frases posibles: ${e.otras.map((f) => `«${f}»`).join(", ")}.` : "";
       const pista = e.pista ? ` Pista: ${tx(e.pista)}` : "";

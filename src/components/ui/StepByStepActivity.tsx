@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useVolver } from "../../lib/useVolver";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { usePlan, useMarkRegistro, useGuardarProgreso } from "../../lib/usePlan";
@@ -44,6 +44,7 @@ export function StepByStepActivity({
   tarea?: PlanTask | null;
 }) {
   const navigate = useNavigate();
+  const desdeTablero = !!(useLocation().state as { desdeTablero?: boolean } | null)?.desdeTablero;
   // Cerrar (×) vuelve a la pantalla de la que se vino: la actividad, Hoy o
   // Mi semana. Al terminar de registrar, a la lista (backTo).
   const volver = useVolver(backTo);
@@ -120,8 +121,11 @@ export function StepByStepActivity({
     return (
       <SesionGuiada
         guion={guion}
-        datos={datosDeTarea(task)}
+        datos={{ ...datosDeTarea(task), nutricion: perfil?.nutricion ?? null }}
         etapas={perfil?.etapas ?? []}
+        // Desde el tablero de la actividad, sin repetir la portada; desde un
+        // enlace directo (WhatsApp), con portada.
+        inicio={desdeTablero ? 0 : -1}
         size={size}
         participante={large}
         progreso={task.progreso}

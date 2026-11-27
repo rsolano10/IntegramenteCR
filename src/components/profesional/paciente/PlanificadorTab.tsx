@@ -347,6 +347,7 @@ export function PlanificadorTab({
       if (t.notaClinica.trim()) task.nota_clinica = t.notaClinica.trim();
       if (t.mediaResourceId) task.media_resource_id = t.mediaResourceId;
       if (t.indicacionIndividual?.trim()) task.indicacion_individual = t.indicacionIndividual.trim();
+      if (t.dobleTarea) task.doble_tarea = true;
       if (t.nivelInteractivo) task.nivel_interactivo = t.nivelInteractivo;
       return task;
     });

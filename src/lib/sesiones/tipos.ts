@@ -31,6 +31,17 @@ export interface Si {
 
 interface Base {
   si?: Si;
+  // Desafío opcional (doble tarea): solo si la clínica lo activó para esta
+  // actividad, y después de ofrecerlo («¿Quieren sumarle un reto?»).
+  doble?: boolean;
+}
+
+// Un paso de «Así se hace» (las consignas, juntas en una pantalla).
+export interface PasoGuia {
+  titulo: string;
+  texto: string;
+  icono: NombreIcono;
+  si?: Si;
 }
 
 export type Escena = Base &
@@ -39,6 +50,8 @@ export type Escena = Base &
     | { tipo: "preparar"; titulo: string; nota?: string; items: Item[] }
     | { tipo: "video"; titulo: string; nota?: string }
     | { tipo: "consigna"; titulo: string; texto: string; icono?: NombreIcono; nota?: string; paso?: { n: number; de: number } }
+    // Todas las consignas de un ejercicio en una sola pantalla.
+    | { tipo: "pasos"; titulo: string; nota?: string; pasos: PasoGuia[] }
     | {
         tipo: "decir";
         titulo: string;
@@ -97,7 +110,8 @@ export type Escena = Base &
     | { tipo: "ritmo"; titulo: string; nota?: string; patrones: string[]; pulso?: boolean }
     // `series`: cuántas veces se repite todo (con los dos lados), con un
     // descanso de `descansoEntre` segundos entre una y otra.
-    | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[]; lados?: boolean; series?: number; descansoEntre?: number }
+    // `guia`: los dibujos del movimiento, a la vista mientras se hace.
+    | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[]; lados?: boolean; series?: number; descansoEntre?: number; guia?: PasoGuia[] }
     // Sostener una posición unos segundos (cuenta regresiva) o hacer un
     // recorrido (cuenta hacia arriba, con un mínimo).
     | {
@@ -112,6 +126,7 @@ export type Escena = Base &
         recordatorios: string[];
         // Descanso guiado entre un intento y el siguiente (series).
         descansoEntre?: number;
+        guia?: PasoGuia[];
       }
     | { tipo: "descanso"; titulo: string; segundos: number; texto: string }
     // ─── Gerontogimnasia 11 a 30: doble tarea y retos en pantalla ───
@@ -182,6 +197,8 @@ export interface Guion {
   cuidado?: string;
   // Ejercicio físico: botón «Parar» siempre a mano y escena de seguridad.
   ejercicio?: boolean;
+  // Sentado y de bajo riesgo: «Cuándo parar» en su versión corta.
+  sentado?: boolean;
   // «Necesita ayuda»: consejos generales y, si hay, por etapa.
   ayuda: string[];
   ayudaPorEtapa?: Partial<Record<NivelCognitivo, string>>;
