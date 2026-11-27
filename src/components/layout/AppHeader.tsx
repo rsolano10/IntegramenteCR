@@ -16,7 +16,6 @@ import { CalendarModal } from "../ui/CalendarSyncCard";
 import { Logo, LogoEnCasa } from "../ui/Logo";
 import { ROL_ETIQUETA } from "../../lib/areasSalud";
 import { SelectorFamiliar } from "./SelectorFamiliar";
-import { useAgregarFamiliar } from "../../lib/pacienteActivo";
 import { SumarAcompanante } from "../familiar/SumarAcompanante";
 import { PestanasFamilia } from "./FamiliarNav";
 
@@ -80,7 +79,6 @@ export function AppHeader() {
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
-  const agregarFamiliar = useAgregarFamiliar();
   // Otras pantallas (los botones de Clara en Ayuda) pueden pedir abrir una
   // ventana del menú de la cuenta.
   useEffect(() => {
@@ -132,31 +130,19 @@ export function AppHeader() {
           }
           // Agrupado: lo de la cuenta de quien entra, lo de la persona del
           // programa, y al final contacto y salir.
+          // Solo lo de quien entra. Lo de la persona del programa va en su
+          // propio menú (el botón con su nombre, SelectorFamiliar). Para la
+          // cuenta de la propia persona, todo en un solo menú.
           items={[
-            { seccion: "Tu cuenta", label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
-            { seccion: "Tu cuenta", label: "Mis datos y permisos", onClick: () => navigate("/app/mis-datos") },
-            ...(myPatient && myPatient.plan_status !== "pendiente"
-              ? [{ seccion: "Tu cuenta", label: "Avisos en tu teléfono", onClick: () => setModal("calendario") }]
-              : []),
-            ...(myPatient
+            { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
+            { label: "Mis datos y permisos", onClick: () => navigate("/app/mis-datos") },
+            ...(myPatient && role === "paciente"
               ? [
-                  {
-                    seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0],
-                    label: role === "paciente" ? "Mi perfil" : "Perfil",
-                    onClick: () => navigate("/app/perfil/resumen"),
-                  },
+                  { label: "Mi perfil", onClick: () => navigate("/app/perfil/resumen") },
+                  { label: "Resumen para el médico", onClick: () => navigate("/app/resumen-medico") },
+                  { label: "Quiénes me acompañan", onClick: () => setModal("acompanante") },
                 ]
               : []),
-            ...(myPatient && role === "familiar" ? [{ seccion: myPatient.nombre.split(" ")[0], label: "Programa", onClick: () => setModal("mi-programa") }] : []),
-            ...(myPatient
-              ? [{ seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0], label: "Resumen para el médico", onClick: () => navigate("/app/resumen-medico") }]
-              : []),
-            // Sumar a otro familiar o acompañante a esta persona (sin cuestionario).
-            ...(myPatient
-              ? [{ seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0], label: "Sumar a alguien que acompaña", onClick: () => setModal("acompanante") }]
-              : []),
-            // Inscribir a otra persona al programa (eso sí lleva su cuestionario).
-            ...(myPatient && role === "familiar" ? [{ seccion: "Otra persona", label: "Inscribir a otra persona", onClick: agregarFamiliar }] : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}

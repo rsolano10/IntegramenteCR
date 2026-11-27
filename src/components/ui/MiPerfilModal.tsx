@@ -14,6 +14,8 @@ import { Button } from "./Button";
 import { BotonWhatsApp } from "./BotonWhatsApp";
 import { waEquipo } from "../../lib/whatsapp";
 import { PasswordInput } from "./PasswordInput";
+import { CalendarSyncActions } from "./CalendarSyncCard";
+import { marcarCalendarioSuscrito } from "../../lib/calendarPrompt";
 import { PasswordRequirements } from "./PasswordRequirements";
 
 type Authed = Extract<SessionState, { status: "authed" }>;
@@ -305,12 +307,24 @@ function MiPerfilContent({
           </div>
         )}
 
-        {tab === "avisos" && <AvisosTab
-            userId={user.id}
-            hasPhone={!!profile.whatsapp_phone}
-            initialWhatsapp={profile.whatsapp_notifications_enabled}
-            initialRiesgoAuto={profile.avisar_riesgo_auto}
-          />}
+        {tab === "avisos" && (
+          <div className="grid gap-6">
+            <AvisosTab
+              userId={user.id}
+              hasPhone={!!profile.whatsapp_phone}
+              initialWhatsapp={profile.whatsapp_notifications_enabled}
+              initialRiesgoAuto={profile.avisar_riesgo_auto}
+            />
+            {/* Las actividades en el calendario del teléfono (antes, «Avisos en tu teléfono» en el menú). */}
+            {myPatient && myPatient.plan_status !== "pendiente" && (
+              <section className="grid gap-2 border-t border-borde-suave pt-5">
+                <p className="m-0 text-[15px] font-semibold text-tinta">Las actividades en tu calendario</p>
+                <p className="m-0 text-[14px] leading-relaxed text-tinta-tenue">Agregalo una sola vez: cada semana nueva aparece sola, con un aviso en tu teléfono a la hora de cada actividad.</p>
+                <CalendarSyncActions patientId={myPatient.id} onAdded={() => marcarCalendarioSuscrito(user.id)} />
+              </section>
+            )}
+          </div>
+        )}
 
         {tab === "seguridad" && (
           <SeguridadTab email={email} lastSignIn={user.last_sign_in_at} createdAt={user.created_at} onLogoutAll={onLogoutAll} />

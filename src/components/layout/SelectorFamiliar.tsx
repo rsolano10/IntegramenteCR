@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
@@ -6,9 +6,10 @@ import { elegirPacienteActivo, empezarNuevoFamiliar, useMisPacientes } from "../
 import { useAppStore } from "../../lib/store";
 import { abrirVentanaCuenta } from "../../lib/abrirCuenta";
 
-// Para el familiar que acompaña a más de una persona: con quién está ahora
-// (siempre a la vista, arriba) y cambiar en un toque. También el camino para
-// registrar a otro familiar.
+// El menú de la persona que acompaña la familia: un botón con su nombre,
+// siempre arriba. Todo lo que es de ella (perfil, programa, resumen para el
+// médico, quiénes la acompañan) y, si acompaña a más de una, cambiar de
+// persona. El menú de la cuenta queda solo con lo de quien entra.
 export function SelectorFamiliar() {
   const session = useSession();
   const navigate = useNavigate();
@@ -29,9 +30,14 @@ export function SelectorFamiliar() {
     };
   }, [abierto]);
 
-  if (session.status !== "authed" || session.profile.role !== "familiar" || !activo || !pacientes || pacientes.length < 2) return null;
+  if (session.status !== "authed" || session.profile.role !== "familiar" || !activo) return null;
   const uid = session.session.user.id;
   const primer = (n: string) => n.split(" ")[0];
+  const otras = (pacientes ?? []).filter((p) => p.id !== activo.id);
+  const hacer = (f: () => void) => () => {
+    setAbierto(false);
+    f();
+  };
 
   return (
     <div ref={caja} className="relative">
@@ -40,7 +46,7 @@ export function SelectorFamiliar() {
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
         aria-haspopup="menu"
-        aria-label={`Acompañando a ${activo.nombre}. Cambiar de familiar`}
+        aria-label={`Menú de ${activo.nombre}`}
         className="inline-flex items-center gap-2 min-h-10 max-w-[170px] pl-1.5 pr-3 rounded-full border-[1.5px] border-verde-serenidad/60 bg-verde-tenue text-verde-profundo font-sans text-[14px] font-semibold cursor-pointer hover:border-verde-profundo"
       >
         <span className="shrink-0 w-7 h-7 rounded-full bg-verde-profundo text-white text-[12px] font-bold inline-flex items-center justify-center">{activo.nombre.charAt(0).toUpperCase()}</span>
@@ -50,65 +56,46 @@ export function SelectorFamiliar() {
         </svg>
       </button>
       {abierto && (
-        <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-30 w-[260px] rounded-[20px] border border-borde bg-white p-2 shadow-elevada">
-          <p className="m-0 px-3 pt-1.5 pb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-tinta-tenue">Tus familiares</p>
-          {pacientes.map((p) => {
-            const actual = p.id === activo.id;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                role="menuitemradio"
-                aria-checked={actual}
-                onClick={() => {
-                  setAbierto(false);
-                  if (!actual) {
+        <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-30 w-[270px] rounded-[20px] border border-borde bg-white p-2 shadow-elevada">
+          <p className="m-0 px-3 pt-1.5 pb-1 text-[15px] font-semibold text-tinta truncate">{activo.nombre}</p>
+          <Item onClick={hacer(() => navigate("/app/perfil/resumen"))}>Su perfil</Item>
+          <Item onClick={hacer(() => abrirVentanaCuenta("mi-programa"))}>Su programa</Item>
+          <Item onClick={hacer(() => navigate("/app/resumen-medico"))}>Resumen para el médico</Item>
+          <Item onClick={hacer(() => abrirVentanaCuenta("acompanante"))}>Quiénes acompañan a {primer(activo.nombre)}</Item>
+
+          <div className="my-1.5 h-px bg-borde-suave" />
+          {otras.length > 0 && (
+            <>
+              <p className="m-0 px-3 pt-1 pb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-tinta-tenue">Cambiar a</p>
+              {otras.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="menuitem"
+                  onClick={hacer(() => {
                     elegirPacienteActivo(uid, p.id);
                     navigate("/app/hoy");
-                  }
-                }}
-                className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 border-0 text-left font-sans cursor-pointer ${actual ? "bg-verde-tenue" : "bg-transparent hover:bg-campo"}`}
-              >
-                <span className={`shrink-0 w-9 h-9 rounded-full text-[14px] font-bold inline-flex items-center justify-center ${actual ? "bg-verde-profundo text-white" : "bg-beige-serenidad text-tinta"}`}>
-                  {p.nombre.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-semibold text-tinta">{p.nombre}</span>
-                  {actual && <span className="block text-[12.5px] text-verde-profundo">Lo que ves ahora</span>}
-                </span>
-                {actual && (
-                  <svg width="16" height="16" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0 text-verde-profundo">
-                    <path d="M2.5 6.2l2.2 2.2 4.8-4.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-            );
-          })}
-          <div className="my-1.5 h-px bg-borde-suave" />
+                  })}
+                  className="w-full flex items-center gap-3 rounded-2xl px-3 py-2 border-0 bg-transparent text-left font-sans cursor-pointer hover:bg-campo"
+                >
+                  <span className="shrink-0 w-8 h-8 rounded-full bg-beige-serenidad text-tinta text-[13px] font-bold inline-flex items-center justify-center">{p.nombre.charAt(0).toUpperCase()}</span>
+                  <span className="min-w-0 truncate text-[15px] font-semibold text-tinta">{p.nombre}</span>
+                </button>
+              ))}
+            </>
+          )}
           <button
             type="button"
             role="menuitem"
-            onClick={() => {
-              setAbierto(false);
-              abrirVentanaCuenta("acompanante");
-            }}
-            className="w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 border-0 bg-transparent text-left font-sans text-[15px] font-semibold text-verde-profundo cursor-pointer hover:bg-campo"
-          >
-            <span className="shrink-0 w-9 h-9 rounded-full border-[1.5px] border-dashed border-verde-serenidad inline-flex items-center justify-center text-[18px]">+</span>
-            Sumar a alguien que acompaña a {primer(activo.nombre)}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setAbierto(false);
+            onClick={hacer(() => {
               empezarNuevoFamiliar();
               resetOnboardingForNewAccount(uid);
               navigate("/app/perfil/bienvenida");
-            }}
-            className="w-full rounded-2xl px-3 py-2 border-0 bg-transparent text-left font-sans text-[13.5px] font-semibold text-tinta-suave cursor-pointer hover:bg-campo"
+            })}
+            className="w-full flex items-center gap-3 rounded-2xl px-3 py-2 border-0 bg-transparent text-left font-sans text-[14.5px] font-semibold text-verde-profundo cursor-pointer hover:bg-campo"
           >
-            Inscribir a otra persona al programa
+            <span className="shrink-0 w-8 h-8 rounded-full border-[1.5px] border-dashed border-verde-serenidad inline-flex items-center justify-center text-[17px]">+</span>
+            Inscribir a otra persona
           </button>
         </div>
       )}
@@ -116,3 +103,10 @@ export function SelectorFamiliar() {
   );
 }
 
+function Item({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button type="button" role="menuitem" onClick={onClick} className="w-full rounded-2xl px-3 py-2.5 border-0 bg-transparent text-left font-sans text-[15px] text-tinta cursor-pointer hover:bg-campo">
+      {children}
+    </button>
+  );
+}
