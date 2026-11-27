@@ -83,6 +83,7 @@ export function CuentasTab({
           <span className="block text-[13px] text-tinta-suave truncate">
             {a.email}
             {a.especialidad && !admins.has(a.id) ? ` · ${a.especialidad}` : ""}
+            {!esEquipo(a.role) && a.links.length === 0 ? (a.role === "paciente" ? " · Participante: falta completar su registro" : " · Familiar: falta registrar a su familiar") : ""}
           </span>
           </span>
         </button>
@@ -117,11 +118,11 @@ export function CuentasTab({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <p className="m-0 text-[14px] text-tinta-suave max-w-[60ch]">
           {seccion === "sin_paciente"
-            ? "Cuentas de familia invitadas o registradas que todavía no están vinculadas a ningún paciente. Abrí una para vincularla."
+            ? "Cuentas que todavía no terminaron el registro: el familiar aún no registró a su familiar, o el participante no completó su cuestionario. Si la clínica ya tiene el registro del paciente, abrí la cuenta para vincularla."
             : "Clínica / Coordinación ve y atiende a las familias; el equipo clínico revisa lo que le asignan; los referidores ven a quién refirieron. El administrador además ve la administración del programa."}
         </p>
         <Button variant="secondary" size="sm" onClick={() => setCreateFor(seccion === "sin_paciente" ? "familiar_admin" : "profesional")} className="shrink-0">
-          {seccion === "sin_paciente" ? "+ Invitar cuenta" : "+ Agregar cuenta"}
+          {seccion === "sin_paciente" ? "+ Crear cuenta" : "+ Agregar cuenta"}
         </Button>
       </div>
       {isLoading && <p className="m-0 text-sm text-tinta-suave">Cargando…</p>}
@@ -210,7 +211,7 @@ function CreateAccountModal({
   const [accountType, setAccountType] = useState<TipoCuenta>(initialAccountType ?? "familiar_admin");
   const [institucion, setInstitucion] = useState("");
   const [metodo, setMetodo] = useState<"invite" | "generic">("invite");
-  const [patientMode, setPatientMode] = useState<"none" | "new" | "existing">(existingPatients.length > 0 ? "existing" : "none");
+  const [patientMode, setPatientMode] = useState<"none" | "new" | "existing">(initialAccountType === "participante" ? "new" : existingPatients.length > 0 ? "existing" : "new");
   const [patientId, setPatientId] = useState(existingPatients[0]?.id ?? "");
   const [patientNombre, setPatientNombre] = useState("");
   const [patientEdad, setPatientEdad] = useState("");
@@ -223,11 +224,34 @@ function CreateAccountModal({
 
   const isStaff = accountType === "profesional" || accountType === "equipo" || accountType === "referidor";
 
-  const patientModeOptions: { value: typeof patientMode; label: string }[] = [
-    { value: "none", label: "Sin paciente" },
-    { value: "new", label: "Paciente nuevo" },
-    ...(existingPatients.length > 0 ? [{ value: "existing" as const, label: "Existente" }] : []),
-  ];
+  // Un familiar siempre va con un paciente (uno nuevo, uno existente, o el
+  // que registre la familia al completar el cuestionario). Una cuenta de
+  // participante ES el paciente: su propio registro, o el que su familia ya
+  // creó; nunca «sin paciente».
+  const esParticipante = accountType === "participante";
+  const patientModeOptions: { value: typeof patientMode; label: string }[] = esParticipante
+    ? [
+        { value: "new", label: "Es su propio registro" },
+        ...(existingPatients.length > 0 ? [{ value: "existing" as const, label: "Ya está registrado" }] : []),
+        { value: "none", label: "Lo completa la persona" },
+      ]
+    : [
+        { value: "new", label: "Paciente nuevo" },
+        ...(existingPatients.length > 0 ? [{ value: "existing" as const, label: "Paciente existente" }] : []),
+        { value: "none", label: "Lo registra la familia" },
+      ];
+  const ayudaPaciente =
+    patientMode === "none"
+      ? esParticipante
+        ? "La persona completa el cuestionario al entrar y ahí se crea su registro de paciente."
+        : "La familia completa el cuestionario al entrar y ahí registra a su familiar."
+      : patientMode === "existing"
+        ? esParticipante
+          ? "Para cuando la familia ya registró a la persona y ahora ella tiene su propia cuenta."
+          : "La cuenta se suma a un paciente que ya está en el programa."
+        : esParticipante
+          ? "La cuenta es de la propia persona: se crea su registro de paciente con su nombre."
+          : "Se crea el registro de la persona que va a hacer el programa.";
 
   async function submit() {
     setLocalError("");
@@ -235,7 +259,7 @@ function CreateAccountModal({
       setLocalError("Completá el nombre y el correo de la persona.");
       return;
     }
-    if (!isStaff && patientMode === "new" && !patientNombre.trim()) {
+    if (!isStaff && patientMode === "new" && !esParticipante && !patientNombre.trim()) {
       setLocalError("Completá el nombre del paciente.");
       return;
     }
@@ -259,7 +283,8 @@ function CreateAccountModal({
           ? { accountType, especialidad: especialidad.trim(), ...(accountType === "referidor" ? { institucion: institucion.trim() } : {}) }
           : {
               relation: accountType,
-              ...(patientMode === "existing" ? { patientId } : patientMode === "new" ? { patientNombre: patientNombre.trim(), patientEdad: patientEdad.trim() } : {}),
+              // Participante con su propio registro: el paciente es la persona.
+              ...(patientMode === "existing" ? { patientId } : patientMode === "new" ? { patientNombre: (esParticipante ? nombre : patientNombre).trim(), patientEdad: patientEdad.trim() } : {}),
             }),
       });
       const successMsg =
@@ -291,7 +316,12 @@ function CreateAccountModal({
           <p className="m-0 mb-2 text-[15px] font-semibold text-tinta-suave">Tipo de cuenta</p>
           <PillToggle
             value={accountType}
-            onChange={setAccountType}
+            onChange={(t) => {
+              setAccountType(t);
+              // El participante, por defecto, es su propio registro.
+              if (t === "participante") setPatientMode("new");
+              else if (t === "familiar_admin") setPatientMode(existingPatients.length > 0 ? "existing" : "new");
+            }}
             options={[
               { value: "familiar_admin", label: "Familiar" },
               { value: "participante", label: "Paciente" },
@@ -345,8 +375,9 @@ function CreateAccountModal({
         ) : (
           <>
             <div>
-              <p className="m-0 mb-2 text-[15px] font-semibold text-tinta-suave">Paciente</p>
+              <p className="m-0 mb-2 text-[15px] font-semibold text-tinta-suave">{esParticipante ? "Su registro de paciente" : "Paciente"}</p>
               <PillToggle value={patientMode} onChange={setPatientMode} options={patientModeOptions} />
+              <p className="m-0 mt-2 text-[13px] leading-snug text-tinta-tenue">{ayudaPaciente}</p>
             </div>
 
             {patientMode === "existing" && (
@@ -365,12 +396,17 @@ function CreateAccountModal({
                 </select>
               </label>
             )}
-            {patientMode === "new" && (
-              <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
-                <FormField label="Nombre del paciente" type="text" value={patientNombre} onChange={(e) => setPatientNombre(e.target.value)} />
-                <FormField label="Edad" type="text" value={patientEdad} onChange={(e) => setPatientEdad(e.target.value)} />
-              </div>
-            )}
+            {patientMode === "new" &&
+              (esParticipante ? (
+                <div className="max-w-[180px]">
+                  <FormField label="Edad" type="text" value={patientEdad} onChange={(e) => setPatientEdad(e.target.value)} />
+                </div>
+              ) : (
+                <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3">
+                  <FormField label="Nombre del paciente" type="text" value={patientNombre} onChange={(e) => setPatientNombre(e.target.value)} />
+                  <FormField label="Edad" type="text" value={patientEdad} onChange={(e) => setPatientEdad(e.target.value)} />
+                </div>
+              ))}
           </>
         )}
 

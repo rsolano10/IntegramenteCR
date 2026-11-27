@@ -166,7 +166,8 @@ export function Paciente() {
         titulo={patient.nombre}
         descripcion={[
           patient.edad ? `${patient.edad} años` : null,
-          familiar ? `Familiar: ${familiar.nombre}` : "Sin familiar vinculado",
+          // Con cuenta propia no hace falta un familiar: la persona es el paciente.
+          familiar ? `Familiar: ${familiar.nombre}` : patient.links.some((l) => l.relation === "participante") ? "Con cuenta propia" : "Sin cuenta vinculada",
           rol ? `Respondió ${respondenteLabel[rol] ?? rol}` : null,
           `Registrado el ${new Date(patient.created_at).toLocaleDateString("es-CR", { day: "numeric", month: "long" })}`,
         ]

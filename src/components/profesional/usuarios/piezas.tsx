@@ -81,8 +81,9 @@ const ANILLO: Record<EstadoFamiliar, string> = { confirmada: "#4c7a4c", pendient
 
 export function FamiliaAvatares({ p, cuentas }: { p: PatientRow; cuentas: Map<string, ManagedAccount> }) {
   const fam = p.links.filter((l) => l.relation !== "profesional_asignado");
-  if (!fam.length) return <span className="text-[13px] text-tinta-suave">Sin familiar vinculado</span>;
-  const texto = fam.length === 1 ? (fam[0].relation === "participante" ? `${fam[0].nombre.split(" ")[0]} (participante)` : fam[0].nombre.split(" ")[0]) : fam.map((l) => l.nombre.split(" ")[0]).join(" y ");
+  if (!fam.length) return <span className="text-[13px] text-tinta-suave">Sin cuenta vinculada</span>;
+  // Solo la cuenta de la propia persona: no le falta nada (no necesita familiar).
+  const texto = fam.length === 1 ? (fam[0].relation === "participante" ? "Cuenta propia" : fam[0].nombre.split(" ")[0]) : fam.map((l) => l.nombre.split(" ")[0]).join(" y ");
   return (
     <span className="flex items-center gap-2 min-w-0">
       <span className="flex shrink-0">

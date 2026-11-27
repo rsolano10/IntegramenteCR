@@ -76,7 +76,7 @@ export function Usuarios() {
   const existingPatients = (patients ?? []).map((p) => ({ id: p.id, nombre: p.nombre }));
   const pestanas: PestanaCaja<Pestana>[] = [
     { id: "familias", label: "Familias", n: resumen.total },
-    { id: "sin_paciente", label: "Cuentas sin paciente", n: resumen.sueltas, aviso: resumen.sueltas > 0 },
+    { id: "sin_paciente", label: "Registro sin terminar", n: resumen.sueltas, aviso: resumen.sueltas > 0 },
     { id: "equipo", label: "Equipo y referidores", n: resumen.equipo },
   ];
 
