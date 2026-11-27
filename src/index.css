@@ -533,6 +533,8 @@
     visibility: visible;
   }
   body:has(.resumen-doc) .resumen-doc {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
     position: absolute;
     left: 0;
     top: 0;

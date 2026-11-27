@@ -19,7 +19,8 @@ interface Acompanante {
   soy_yo: boolean;
 }
 
-const campo = "w-full min-w-0 min-h-12 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[16px] text-tinta focus:border-verde-serenidad focus:outline-none";
+const TONOS = ["bg-verde-profundo text-white", "bg-mostaza-vital text-tinta", "bg-verde-serenidad text-white", "bg-beige-serenidad text-tinta"];
+const campo = "w-full min-w-0 min-h-12 px-4 rounded-xl border-[1.5px] border-borde-campo bg-white font-sans text-[16px] text-tinta focus:border-verde-serenidad focus:outline-none";
 
 // En su propia ventana (cuenta del participante).
 export function SumarAcompanante({ onClose }: { onClose: () => void }) {
@@ -77,70 +78,103 @@ export function AcompanantesContenido({ onListo }: { onListo?: () => void }) {
   });
 
   return (
-    <>
-      <p className="m-0 mb-5 text-[15px] leading-relaxed text-tinta-suave">
-        Un hijo o hija, la pareja, quien le ayuda en el día a día. Va a ver las actividades de la semana y podrá registrar cómo les fue.
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
+      <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">
+        Un hijo o hija, la pareja, quien le ayuda en el día a día. Ven las actividades de la semana y pueden registrar cómo les fue.
       </p>
 
       {acompanan && acompanan.length > 0 && (
-        <div className="mb-5">
-          <p className="m-0 mb-2 text-[13px] font-semibold uppercase tracking-[0.1em] text-tinta-tenue">Ya acompañan{quien ? ` a ${quien}` : ""}</p>
-          <ul className="m-0 p-0 list-none flex flex-wrap gap-2">
-            {acompanan.map((a) => (
-              <li key={a.profile_id} className="inline-flex items-center gap-2 rounded-full bg-campo border border-borde-suave pl-1.5 pr-3 py-1 text-[14px] text-tinta">
-                <span className="w-7 h-7 rounded-full bg-beige-serenidad text-[12px] font-bold inline-flex items-center justify-center">{a.nombre.charAt(0).toUpperCase()}</span>
-                {a.soy_yo ? "Vos" : a.nombre.split(" ")[0]}
-                {a.relation === "participante" && <span className="text-tinta-tenue">(su cuenta)</span>}
-                {!a.confirmada && <span className="text-tinta-tenue">· invitación pendiente</span>}
-              </li>
-            ))}
+        <section>
+          <p className="m-0 mb-2.5 text-[12px] font-semibold uppercase tracking-[0.16em] text-verde-serenidad">
+            Ya acompañan{quien ? ` a ${quien}` : ""} · {acompanan.length}
+          </p>
+          <ul className="m-0 p-0 list-none grid gap-2.5 sm:grid-cols-2">
+            {acompanan.map((a, i) => {
+              const tono = TONOS[i % TONOS.length];
+              const etiqueta = a.soy_yo ? "Vos" : a.relation === "participante" ? "Su propia cuenta" : "Familia";
+              return (
+                <li key={a.profile_id} className="flex items-center gap-3 min-w-0 rounded-[18px] bg-white border border-borde px-3.5 py-3">
+                  <span aria-hidden="true" className={`w-11 h-11 shrink-0 rounded-full font-serif text-[19px] inline-flex items-center justify-center ${tono}`}>
+                    {a.nombre.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[15.5px] font-semibold text-tinta">{a.nombre}</span>
+                    <span className="mt-0.5 flex flex-wrap gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${a.soy_yo ? "bg-verde-profundo text-white" : "bg-verde-tenue text-verde-profundo"}`}>{etiqueta}</span>
+                      {!a.confirmada && <span className="rounded-full bg-mostaza-vital/45 px-2 py-0.5 text-[12px] font-semibold text-[#6e521c]">Invitación pendiente</span>}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
-        </div>
+        </section>
       )}
 
-      {listo ? (
-        <div className="grid gap-4">
-          <p className="m-0 rounded-2xl bg-verde-tenue border border-verde-serenidad/50 px-4 py-3.5 text-[15.5px] leading-relaxed text-tinta">{listo}</p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setListo(null);
-                setNombre("");
-                setEmail("");
-                setWhatsapp("");
-              }}
-            >
-              Sumar a otra persona
-            </Button>
-            {onListo && (
-              <Button variant="principal" onClick={onListo}>
-                Listo
-              </Button>
-            )}
+      <section className="relative overflow-hidden rounded-[24px] bg-beige-serenidad/55 px-5 py-5 sm:px-6">
+        <div aria-hidden="true" className="absolute -right-10 -top-12 w-32 h-32 rounded-full bg-mostaza-vital/30" />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-4">
+            <span aria-hidden="true" className="w-10 h-10 shrink-0 rounded-full bg-verde-profundo text-mostaza-vital inline-flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="8" r="3.5" />
+                <path d="M2.5 20c.8-3.4 3.4-5.5 6.5-5.5s5.7 2.1 6.5 5.5M19 8v6M16 11h6" />
+              </svg>
+            </span>
+            <span className="min-w-0">
+              <span className="block font-serif text-[20px] leading-tight text-tinta">{listo ? "Invitación enviada" : `Sumar a alguien${quien ? ` que acompaña a ${quien}` : ""}`}</span>
+              {!listo && <span className="block text-[13.5px] text-tinta-suave">Le llega un correo para crear su contraseña.</span>}
+            </span>
           </div>
+
+          {listo ? (
+            <div className="grid gap-4">
+              <p className="m-0 rounded-2xl bg-white px-4 py-3.5 text-[15.5px] leading-relaxed text-tinta">{listo}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setListo(null);
+                    setNombre("");
+                    setEmail("");
+                    setWhatsapp("");
+                  }}
+                >
+                  Sumar a otra persona
+                </Button>
+                {onListo && (
+                  <Button variant="principal" onClick={onListo}>
+                    Listo
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              <label className="grid gap-1.5 text-[15px] font-semibold text-tinta">
+                Nombre
+                <input value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="off" className={campo} />
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="grid gap-1.5 min-w-0 text-[15px] font-semibold text-tinta">
+                  Correo
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nombre@correo.com" autoComplete="off" className={campo} />
+                </label>
+                <label className="grid gap-1.5 min-w-0 text-[15px] font-semibold text-tinta">
+                  <span>
+                    WhatsApp <span className="font-normal text-tinta-tenue">(opcional)</span>
+                  </span>
+                  <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} inputMode="tel" placeholder="8888 8888" className={campo} />
+                </label>
+              </div>
+              {sumar.isError && <p className="m-0 text-[14.5px] text-alerta-texto">{(sumar.error as Error).message}</p>}
+              <Button variant="principal" onClick={() => sumar.mutate()} disabled={sumar.isPending || !persona}>
+                {sumar.isPending ? "Enviando…" : "Enviar invitación"}
+              </Button>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid gap-4">
-          <label className="grid gap-1.5 text-[15px] font-semibold text-tinta">
-            Nombre
-            <input value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="off" className={campo} />
-          </label>
-          <label className="grid gap-1.5 text-[15px] font-semibold text-tinta">
-            Correo
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nombre@correo.com" autoComplete="off" className={campo} />
-            <span className="text-[13px] font-normal text-tinta-tenue">Le llega un correo para crear su contraseña.</span>
-          </label>
-          <label className="grid gap-1.5 text-[15px] font-semibold text-tinta">
-            WhatsApp (opcional)
-            <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} inputMode="tel" placeholder="8888 8888" className={campo} />
-          </label>
-          {sumar.isError && <p className="m-0 text-[14.5px] text-alerta-texto">{(sumar.error as Error).message}</p>}
-          <Button variant="principal" onClick={() => sumar.mutate()} disabled={sumar.isPending || !persona}>
-            {sumar.isPending ? "Enviando…" : "Enviar invitación"}
-          </Button>
-        </div>
-      )}
-    </>
+      </section>
+    </div>
   );
 }

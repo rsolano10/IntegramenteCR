@@ -4,9 +4,16 @@ import type { ResumenDatos } from "../components/resumen/ResumenSeguimiento";
 
 // Resumen de seguimiento (RPC resumen_seguimiento). Sin paciente: el de la
 // cuenta que mira (familia o participante).
+//
+// Con paciente, además se pide al servidor que ponga al día «En pocas
+// palabras» (función resumen-medico-ia): solo se rehace si los datos
+// cambiaron; si se rehizo, se vuelve a leer el resumen. Así el enlace público
+// también lo trae (lee lo guardado).
 export function useResumen(patientId?: string | null, enabled = true) {
-  return useQuery({
-    queryKey: ["resumen-seguimiento", patientId ?? "propio"],
+  const qc = useQueryClient();
+  const key = ["resumen-seguimiento", patientId ?? "propio"];
+  const q = useQuery({
+    queryKey: key,
     enabled,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("resumen_seguimiento", patientId ? { p_patient: patientId } : {});
@@ -14,6 +21,18 @@ export function useResumen(patientId?: string | null, enabled = true) {
       return data as ResumenDatos;
     },
   });
+  useQuery({
+    queryKey: ["resumen-ia", patientId],
+    enabled: enabled && !!patientId && q.isSuccess,
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: async () => {
+      const { data } = await supabase.functions.invoke("resumen-medico-ia", { body: { patientId } });
+      if ((data as { actualizado?: boolean } | null)?.actualizado) await qc.invalidateQueries({ queryKey: key });
+      return true;
+    },
+  });
+  return q;
 }
 
 export interface EnlaceResumen {

@@ -101,7 +101,8 @@ function Contenido({ persona, onClose }: { persona: MyPatient; onClose: () => vo
       {tab === "programa" && <ContenidoPrograma patient={persona} nombreCuenta={nombreCuenta} onClose={onClose} sinEncabezado />}
       {tab === "acompanan" && (
         <div className="px-6 sm:px-8 py-7">
-          <p className="m-0 mb-1 font-serif text-[24px] leading-tight text-tinta">Quiénes acompañan a {primer}</p>
+          <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-verde-serenidad">Su red de apoyo</p>
+          <p className="m-0 mt-0.5 mb-2 font-serif text-[24px] leading-tight text-tinta">Quiénes acompañan a {primer}</p>
           <AcompanantesContenido />
         </div>
       )}
