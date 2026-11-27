@@ -305,12 +305,41 @@ Deno.serve(async (req) => {
     if (payload.action === "permanently_delete_user") return await handlePermanentlyDeleteUser(admin, user.id, payload);
     if (payload.action === "reject_patient") return await handleRejectPatient(admin, payload);
     if (payload.action === "notify_plan_assigned") return await handleNotifyPlanAssigned(admin, payload);
+    if (payload.action === "avisar_tarea_equipo") return await handleAvisarTareaEquipo(admin, payload);
     return json({ error: "Acción desconocida." }, 400);
   } catch (err) {
     console.error(err);
     return json({ error: err instanceof Error ? err.message : "Error inesperado." }, 500);
   }
 });
+
+// Aviso a quien revisa: la coordinación le pidió una revisión. Un correo
+// por pedido (nunca por cada comentario). Es interno del equipo: sale aunque
+// los correos a las familias estén apagados.
+async function handleAvisarTareaEquipo(admin: ReturnType<typeof createClient>, payload: Record<string, unknown>) {
+  const userId = String(payload.asignadaA ?? "");
+  const titulo = String(payload.titulo ?? "").trim();
+  if (!userId || !titulo) return json({ error: "Faltan datos." }, 400);
+  const [{ data: u }, { data: p }] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("profiles").select("nombre, role").eq("id", userId).maybeSingle(),
+  ]);
+  const email = u?.user?.email;
+  if (!email || !p) return json({ ok: true, enviado: false });
+  const vence = payload.vence ? new Date(`${payload.vence}T12:00:00`).toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long" }) : null;
+  const destino = p.role === "equipo" ? `${SITE_URL}/app/equipo` : `${SITE_URL}/app/profesional/tareas`;
+  const err = await sendMail(
+    email,
+    `Te pidieron una revisión: ${titulo}`,
+    brandedEmail(
+      "Tenés una revisión nueva",
+      `<p>Hola ${escapeHtml(String(p.nombre ?? "").split(" ")[0])}:</p><p>La coordinación te pidió: <strong>${escapeHtml(titulo)}</strong>${vence ? `, para el ${vence}` : ""}.</p><p>Se abre en el mismo calendario que usa la clínica: tocá una actividad para sugerir un cambio o comentar.</p>`,
+      { label: "Abrir la revisión", url: destino },
+    ),
+    true,
+  );
+  return json({ ok: true, enviado: !err });
+}
 
 async function handleInvite(admin: ReturnType<typeof createClient>, profesionalId: string, payload: Record<string, unknown>) {
   const email = String(payload.email ?? "").trim().toLowerCase();

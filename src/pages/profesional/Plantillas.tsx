@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { moduloLabel, type MediaResource } from "../../lib/mediaResources";
@@ -16,6 +17,10 @@ import { ResourceEditor } from "../../components/profesional/ResourceEditor";
 import { RowMenu } from "../../components/ui/RowMenu";
 import { NuevaTareaModal } from "../../components/profesional/tareas/NuevaTareaModal";
 import { Caja, CajaAviso, CajaBarra, CajaCuerpo, CajaPestanas, Pagina } from "../../components/profesional/Caja";
+import { PanelRevision } from "../../components/revision/PanelRevision";
+import { EstadoRevisionChip } from "../../components/revision/EstadoRevision";
+import { agregadosEn, areasDeModulos, claveAct, decidirVarios, describirCambio, marcasPorActividad, useEstadoRevision, useEstadosRevision, useItemsRevision, type EstadoRev, type ItemRevision } from "../../lib/revisiones";
+import { aplicarEnPlantilla } from "../../lib/aplicarRevision";
 
 // Plantillas de semana (Fase 4.4) y recursos automáticos (antes «de bienvenida»).
 // Una plantilla es una semana tipo (recursos por día, de domingo a sábado) para
@@ -35,6 +40,25 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
   const [editandoTarea, setEditandoTarea] = useState<TareaPlantilla | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  // Revisión: estado, sugerencias y las aceptadas que se registran al guardar.
+  const idPlantilla = inicial?.id ?? null;
+  const { data: estadoRev } = useEstadoRevision("plantilla", idPlantilla);
+  const { data: itemsRev } = useItemsRevision("plantilla", idPlantilla);
+  const [aceptadas, setAceptadas] = useState<Record<string, true>>({});
+  const [pedirRevision, setPedirRevision] = useState(false);
+  const [avisoRev, setAvisoRev] = useState<string | null>(null);
+  const tareasRef = useRef(tareas);
+  tareasRef.current = tareas;
+  const marcas = marcasPorActividad((itemsRev ?? []).filter((i) => !aceptadas[i.id]));
+  async function aceptarSugerencia(i: ItemRevision): Promise<string | null> {
+    if (!i.cambio) return "Esta sugerencia no tiene un cambio para aplicar.";
+    const r = await aplicarEnPlantilla(tareasRef.current, i.cambio);
+    if ("error" in r) return r.error;
+    tareasRef.current = r.ok;
+    setTareas(r.ok);
+    setAceptadas((a) => ({ ...a, [i.id]: true }));
+    return null;
+  }
 
   function agregar(dia: number, hora: string, r: MediaResource) {
     const nueva: TareaPlantilla = { key: nuevaKey(), dia_idx: dia, hora, media_resource_id: r.id, titulo: r.titulo, codigo: r.codigo, modulo: r.modulo, nivel_interactivo: null, extras: r.extras ?? null };
@@ -84,8 +108,16 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
         );
       if (eIns) return fallo(eIns.message);
     }
+    const ids = Object.keys(aceptadas);
+    if (ids.length) {
+      try {
+        await decidirVarios(ids, "aceptada");
+      } catch {
+        // La plantilla ya se guardó; las sugerencias quedan abiertas para decidir de nuevo.
+      }
+    }
     setGuardando(false);
-    queryClient.invalidateQueries({ queryKey: ["plantillas-semana"] });
+    for (const k of ["plantillas-semana", "revision-items", "estado-revision", "estados-revision"]) queryClient.invalidateQueries({ queryKey: [k] });
     onCerrar();
   }
   function fallo(m: string) {
@@ -94,8 +126,22 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
   }
 
   const campo = "min-h-11 px-3.5 rounded-xl border-[1.5px] border-borde-campo bg-white font-sans text-[15px] text-tinta w-full";
+  const nAceptadas = Object.keys(aceptadas).length;
   return (
     <div className="grid gap-5">
+      {idPlantilla && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] bg-campo/70 border border-borde-suave px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[13px] font-semibold text-tinta-suave">Revisión</span>
+            <EstadoRevisionChip estado={estadoRev} />
+            {nAceptadas > 0 && <span className="text-[13px] font-semibold text-[#6e521c]">{nAceptadas} {nAceptadas === 1 ? "sugerencia aceptada" : "sugerencias aceptadas"}: se aplican al guardar</span>}
+            {avisoRev && <span className="text-[13px] text-verde-profundo">{avisoRev}</span>}
+          </div>
+          <Button dense variant="secondary" onClick={() => setPedirRevision(true)}>
+            Pedir revisión
+          </Button>
+        </div>
+      )}
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1.5 text-[13.5px] font-semibold text-tinta-suave">
           Nombre
@@ -111,8 +157,9 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
         </label>
       </div>
       {/* Mismo calendario que el planificador del paciente, con una semana
-          genérica de domingo a sábado (sin fechas). */}
-      <div className="rounded-[22px] border border-borde overflow-hidden">
+          genérica de domingo a sábado (sin fechas). Al lado, la revisión. */}
+      <div className={idPlantilla ? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start" : "grid"}>
+      <div className="rounded-[22px] border border-borde overflow-hidden min-w-0">
         <p className="m-0 px-5 py-3 bg-[#fcfbf6] border-b border-borde-suave text-[14px] text-tinta-suave">
           <strong className="text-tinta">{tareas.length}</strong> {tareas.length === 1 ? "actividad" : "actividades"} ·{" "}
           <strong className="text-tinta">{7 - diasVacios.length}</strong> de 7 días con actividades · Tocá una celda para agregar un recurso.
@@ -123,17 +170,26 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
           onAgregar={(col, fila) => setAgregarEn({ dia: Number(col), hora: fila === null ? "" : `${String(fila).padStart(2, "0")}:00` })}
           celda={(col, fila) => {
             const items = tareas.filter((t) => t.dia_idx === Number(col) && enFila(t.hora, fila));
+            const fantasmas = agregadosEn((itemsRev ?? []).filter((i) => !aceptadas[i.id]), Number(col), (h) => enFila(h, fila));
             return {
-              vacia: items.length === 0,
-              contenido: items.map((t) => (
+              vacia: items.length + fantasmas.length === 0,
+              contenido: [
+              ...items.map((t) => {
+                const m = marcas.get(claveAct(t.dia_idx, t.hora, t.media_resource_id));
+                const d = m?.cambio ? describirCambio(m.cambio) : null;
+                return (
                 <button
                   key={t.key}
                   type="button"
                   onClick={() => setEditandoTarea(t)}
-                  className="text-left rounded-lg bg-verde-profundo text-white px-2 py-1.5 text-[12px] leading-tight cursor-pointer border-none hover:bg-tinta font-sans"
+                  className={`relative text-left rounded-lg px-2 py-1.5 text-[12px] leading-tight cursor-pointer font-sans ${m?.sug ? "bg-mostaza-vital/30 text-tinta border-[1.5px] border-dashed border-[#c99a45]" : "bg-verde-profundo text-white border-none hover:bg-tinta"}`}
                 >
+                  {m && m.sug + m.com > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-verde-serenidad text-white text-[10.5px] font-bold inline-flex items-center justify-center">{m.sug + m.com}</span>
+                  )}
                   {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
                   <span className="font-semibold">{t.titulo}</span>
+                  {d && <span className="block text-[11px] font-semibold text-[#6e521c]">→ {d.despues}</span>}
                   {esInteractivo(t.extras) ? (
                     <span className="flex items-center gap-1 text-[10.5px] opacity-90">
                       <IconoInteractivo /> Juego · {t.nivel_interactivo ? nivelLabel[t.nivel_interactivo] : "según el perfil"}
@@ -145,7 +201,15 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
                     </span>
                   )}
                 </button>
+                );
+              }),
+              ...fantasmas.map((i) => (
+                <span key={i.id} className="rounded-lg border-[1.5px] border-dashed border-[#c99a45] bg-mostaza-vital/20 px-2 py-1.5 text-[12px] leading-tight text-[#6e521c]">
+                  <span className="block text-[10.5px] font-bold uppercase tracking-wide">Sugerencia</span>
+                  <span className="font-semibold">+ {i.cambio?.op === "agregar" ? i.cambio.hacia.titulo : ""}</span>
+                </span>
               )),
+              ],
             };
           }}
         />
@@ -154,6 +218,12 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
             <strong>Días sin actividades:</strong> {diasVacios.join(", ")}.
           </p>
         )}
+      </div>
+      {idPlantilla && (
+        <div className="rounded-[22px] border border-borde bg-white p-4 xl:sticky xl:top-4">
+          <PanelRevision objeto="plantilla" objetoId={idPlantilla} modo="duena" onAceptar={aceptarSugerencia} marcadas={aceptadas} />
+        </div>
+      )}
       </div>
       {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
       <div className="flex gap-2">
@@ -164,6 +234,17 @@ function EditorPlantilla({ inicial, onCerrar }: { inicial: Plantilla | null; onC
           Cancelar
         </Button>
       </div>
+      {pedirRevision && idPlantilla && (
+        <NuevaTareaModal
+          contexto={{ tipo: "revisar_plantilla", plantillaId: idPlantilla, plantillaNombre: nombre, areas: areasDeModulos(tareas.map((t) => t.modulo)) }}
+          onClose={() => setPedirRevision(false)}
+          onCreada={(m) => {
+            setPedirRevision(false);
+            setAvisoRev(m);
+            queryClient.invalidateQueries({ queryKey: ["estado-revision"] });
+          }}
+        />
+      )}
       {agregarEn !== null && (
         <SelectorRecurso
           titulo={`Agregar el ${DIAS[agregarEn.dia].toLowerCase()}${agregarEn.hora ? ` a las ${formatHora(agregarEn.hora)}` : ""}`}
@@ -285,6 +366,9 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
   const queryClient = useQueryClient();
   const { data: plantillas, isLoading } = usePlantillas();
   const [revisar, setRevisar] = useState<Plantilla | null>(null);
+  const [filtroRev, setFiltroRev] = useState<EstadoRev | "todas">("todas");
+  const { data: estados } = useEstadosRevision("plantilla", (plantillas ?? []).map((p) => p.id));
+  const estadoDe = (id: string): EstadoRev => estados?.get(id)?.estado ?? "sin_revisar";
 
   async function duplicar(p: Plantilla) {
     const { error: e } = await supabase.rpc("duplicar_plantilla", { p_id: p.id });
@@ -307,8 +391,40 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
   }
 
   const q = busqueda.trim().toLowerCase();
-  const visibles = (plantillas ?? []).filter((p) => p.archivada === verArchivadas && (!q || `${p.nombre} ${p.perfil_objetivo ?? ""} ${p.descripcion ?? ""}`.toLowerCase().includes(q)));
+  const delGrupo = (plantillas ?? []).filter((p) => p.archivada === verArchivadas && (!q || `${p.nombre} ${p.perfil_objetivo ?? ""} ${p.descripcion ?? ""}`.toLowerCase().includes(q)));
+  const visibles = delGrupo.filter((p) => filtroRev === "todas" || estadoDe(p.id) === filtroRev);
+  const cuenta = (e: EstadoRev) => delGrupo.filter((p) => estadoDe(p.id) === e).length;
+  const FILTROS: [EstadoRev | "todas", string][] = [
+    ["todas", `Todas · ${delGrupo.length}`],
+    ["sin_revisar", `Sin revisar · ${cuenta("sin_revisar")}`],
+    ["en_revision", `En revisión · ${cuenta("en_revision")}`],
+    ["sugerencias", `Con sugerencias · ${cuenta("sugerencias")}`],
+    ["revisada", `Revisadas · ${cuenta("revisada")}`],
+    ["desactualizada", `Revisadas antes de cambios · ${cuenta("desactualizada")}`],
+  ];
+  const filtros = (
+    <div role="group" aria-label="Filtrar por revisión" className="flex flex-wrap gap-1.5 mb-3.5">
+      {FILTROS.filter(([id]) => id === "todas" || id === filtroRev || cuenta(id as EstadoRev) > 0).map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          aria-pressed={filtroRev === id}
+          onClick={() => setFiltroRev(id)}
+          className={`min-h-9 px-3.5 rounded-full border-[1.5px] font-sans text-[13px] font-semibold cursor-pointer ${filtroRev === id ? "bg-tinta text-white border-tinta" : "bg-white text-tinta-suave border-borde hover:border-verde-serenidad"}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
   if (isLoading) return <p className="m-0 text-sm text-tinta-tenue">Cargando…</p>;
+  if (visibles.length === 0 && filtroRev !== "todas")
+    return (
+      <>
+        {filtros}
+        <p className="m-0 text-[15px] text-tinta-suave">Ninguna plantilla en ese estado.</p>
+      </>
+    );
   if (visibles.length === 0)
     return (
       <div className="rounded-[22px] border-[1.5px] border-dashed border-borde-campo bg-campo/50 py-12 px-6 text-center">
@@ -324,6 +440,8 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
       </div>
     );
   return (
+    <>
+    {filtros}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
       {visibles.map((p) => {
         const dias = new Set(p.tareas.map((t) => t.dia_idx)).size;
@@ -362,15 +480,9 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
             <div className="flex flex-col flex-1 gap-2 p-4.5">
               <h3 className="m-0 text-[17px] font-bold leading-snug text-tinta group-hover:text-verde-profundo">{p.nombre}</h3>
               {p.perfil_objetivo && <p className="m-0 text-[13.5px] font-semibold text-verde-profundo">{p.perfil_objetivo}</p>}
-              {p.revisor && p.revisada_en && (
-                <p className="m-0 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#22663f]">
-                  <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                    <path d="M2.5 6.2l2.2 2.2 4.8-4.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Revisada por {p.revisor.nombre}
-                  {p.revisor.especialidad ? ` (${p.revisor.especialidad})` : ""}
-                </p>
-              )}
+              <div>
+                <EstadoRevisionChip estado={estados?.get(p.id)} compacto />
+              </div>
               {p.descripcion && <p className="m-0 text-[14px] leading-relaxed text-tinta-suave line-clamp-3">{p.descripcion}</p>}
               <div className="mt-auto pt-2 flex flex-wrap gap-1.5">
                 <span className="inline-flex items-center h-6 px-2.5 rounded-full bg-campo border border-borde-suave text-[12px] font-bold text-tinta-suave">
@@ -389,15 +501,17 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
       })}
       {revisar && (
         <NuevaTareaModal
-          contexto={{ tipo: "revisar_plantilla", plantillaId: revisar.id, plantillaNombre: revisar.nombre }}
+          contexto={{ tipo: "revisar_plantilla", plantillaId: revisar.id, plantillaNombre: revisar.nombre, areas: areasDeModulos(revisar.tareas.map((t) => t.modulo)) }}
           onClose={() => setRevisar(null)}
           onCreada={(m) => {
             setRevisar(null);
             onAviso(m);
+            queryClient.invalidateQueries({ queryKey: ["estados-revision"] });
           }}
         />
       )}
     </div>
+    </>
   );
 }
 
@@ -661,10 +775,18 @@ type PestanaPlantillas = "plantillas" | "automaticos";
 export function Plantillas() {
   const [tab, setTab] = useState<PestanaPlantillas>("plantillas");
   const [editando, setEditando] = useState<Plantilla | "nueva" | null>(null);
+  // Desde una revisión: /app/profesional/plantillas?editar=<id>.
+  const [params, setParams] = useSearchParams();
+  const editarId = params.get("editar");
   const [verArchivadas, setVerArchivadas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [aviso, setAviso] = useState<{ texto: string; error?: boolean } | null>(null);
   const { data: plantillas } = usePlantillas();
+  if (editarId && !editando && plantillas) {
+    const p = plantillas.find((x) => x.id === editarId);
+    if (p) setEditando(p);
+    setParams({}, { replace: true });
+  }
   const activas = (plantillas ?? []).filter((p) => !p.archivada).length;
   const archivadas = (plantillas ?? []).length - activas;
 

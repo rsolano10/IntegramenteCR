@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { RowMenu } from "../../components/ui/RowMenu";
 import { NuevaTareaModal } from "../../components/profesional/tareas/NuevaTareaModal";
 import { TareaFila } from "../../components/profesional/tareas/TareaFila";
-import { useEquipoClinico, useResponderTarea, useTareasEquipo } from "../../lib/tareasEquipo";
+import { dondeVive, useEquipoClinico, useResponderTarea, useTareasEquipo } from "../../lib/tareasEquipo";
 import { ROL_ETIQUETA } from "../../lib/areasSalud";
 
 // Tareas del equipo (clínica y coordinación): las revisiones pedidas al
@@ -96,9 +96,10 @@ export function TareasEquipo() {
                         t={t}
                         acciones={
                           <span className="flex items-center gap-2">
-                            {t.patient_id && (
-                              <Link to={`/app/profesional/paciente/${t.patient_id}`} className="text-[13px] font-semibold text-verde-profundo">
-                                Ver paciente
+                            {t.aportes > 0 && <span className="text-[12.5px] font-semibold text-[#6e521c]">{t.aportes} {t.aportes === 1 ? "aporte" : "aportes"}</span>}
+                            {dondeVive(t) && (
+                              <Link to={dondeVive(t)!} className="text-[13px] font-semibold text-verde-profundo">
+                                Abrir
                               </Link>
                             )}
                             {(t.estado === "pendiente" || t.estado === "en_curso") && (

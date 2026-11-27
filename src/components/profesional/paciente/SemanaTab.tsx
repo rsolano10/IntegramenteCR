@@ -5,6 +5,9 @@ import { supabase } from "../../../lib/supabase";
 import { DIAS, formatHora, semanaTerminada, weekDays } from "../../../lib/planWeek";
 import { Button } from "../../ui/Button";
 import { NuevaTareaModal } from "../tareas/NuevaTareaModal";
+import { EstadoRevisionChip } from "../../revision/EstadoRevision";
+import { Tarjeta } from "../../revision/PanelRevision";
+import { useDecidirItem, useEstadoRevision, useItemsRevision } from "../../../lib/revisiones";
 import { estadoMeta, moodMeta, weekStats, type PlanSummary, type TaskRow } from "../../../lib/seguimiento";
 
 export type { PlanSummary, TaskRow };
@@ -204,6 +207,7 @@ function RevisionClinica({
         Pedir revisión de esta semana al equipo
       </button>
       {pedido && <p className="m-0 mt-1.5 text-[12.5px] text-[#22663f]">{pedido}</p>}
+      <DelEquipo planId={plan.id} />
       {pedir && (
         <NuevaTareaModal
           contexto={{ tipo: "revisar_semana", patientId, patientNombre, planId: plan.id }}
@@ -215,5 +219,40 @@ function RevisionClinica({
         />
       )}
     </section>
+  );
+}
+
+// Lo que dejó el equipo sobre esta semana: comentarios sobre los registros y
+// sugerencias para la próxima (esas esperan en el próximo borrador).
+function DelEquipo({ planId }: { planId: string }) {
+  const { data: estado } = useEstadoRevision("plan", planId);
+  const { data: items } = useItemsRevision("plan", planId);
+  const decidir = useDecidirItem();
+  const abiertos = (items ?? []).filter((i) => i.estado === "abierta");
+  if (!estado || (estado.estado === "sin_revisar" && abiertos.length === 0)) return null;
+  const sugerencias = abiertos.filter((i) => i.clase === "sugerencia").length;
+  return (
+    <div className="mt-4 pt-3 border-t border-borde-suave grid gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 text-[11.5px] tracking-[0.14em] uppercase text-tinta-tenue font-semibold">Del equipo</p>
+        <EstadoRevisionChip estado={estado} compacto />
+      </div>
+      {sugerencias > 0 && <p className="m-0 text-[12.5px] text-[#6e521c]">{sugerencias} {sugerencias === 1 ? "sugerencia te espera" : "sugerencias te esperan"} al armar la próxima semana.</p>}
+      <ul className="m-0 p-0 list-none grid gap-2">
+        {abiertos
+          .filter((i) => i.clase === "comentario")
+          .map((i) => (
+            <Tarjeta
+              key={i.id}
+              i={i}
+              acciones={
+                <button type="button" onClick={() => decidir.mutate({ id: i.id, estado: "resuelta" })} className="inline-flex items-center min-h-8 px-3 rounded-full border-[1.5px] border-borde bg-white text-[12.5px] font-semibold text-tinta cursor-pointer font-sans">
+                  Marcar resuelto
+                </button>
+              }
+            />
+          ))}
+      </ul>
+    </div>
   );
 }

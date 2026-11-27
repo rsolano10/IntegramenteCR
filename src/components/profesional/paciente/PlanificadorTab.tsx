@@ -27,6 +27,13 @@ import { IconoInteractivo } from "../NivelInteractivo";
 import type { PlanSummary } from "./SemanaTab";
 import { DesdePlantilla, type CargaPlantilla } from "./DesdePlantilla";
 import type { CambioVisible } from "../../../lib/plantillas";
+import { PanelRevision } from "../../revision/PanelRevision";
+import { EstadoRevisionChip } from "../../revision/EstadoRevision";
+import { NuevaTareaModal } from "../tareas/NuevaTareaModal";
+import { agregadosEn, areasDeModulos, claveAct, describirCambio, marcasPorActividad, useDecidirItem, useEstadoRevision, useItemsRevision, type ItemRevision } from "../../../lib/revisiones";
+import { aplicarEnBorrador } from "../../../lib/aplicarRevision";
+import { usePerfilRecursos } from "../../../lib/usePerfilRecursos";
+import { evaluarAsignacion, gruposDeLaSemana } from "../../../lib/reglasRecursos";
 
 interface ExistingTask {
   id: string;
@@ -149,6 +156,50 @@ export function PlanificadorTab({
     }, 600);
     return () => window.clearTimeout(t);
   }, [drafts, borrador, patientId]);
+
+  // Revisión del borrador por el equipo: estado, sugerencias y comentarios
+  // (también los que quedaron «para la próxima semana» en el seguimiento).
+  const { data: estadoRev } = useEstadoRevision("borrador", patientId);
+  const { data: itemsRev } = useItemsRevision("borrador", patientId);
+  const { data: estadoPlantilla } = useEstadoRevision("plantilla", borrador?.plantillaId ?? null);
+  const decidirItem = useDecidirItem();
+  const { data: perfilRec } = usePerfilRecursos(patientId);
+  const [pedirRevision, setPedirRevision] = useState(false);
+  const [avisoRev, setAvisoRev] = useState<string | null>(null);
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
+  const marcasRev = marcasPorActividad(itemsRev);
+  const abiertasRev = (itemsRev ?? []).filter((i) => i.clase === "sugerencia" && i.estado === "abierta").length;
+  // El borrador se guarda en semanas_borrador: hace falta para que el equipo lo vea.
+  async function asegurarBorrador() {
+    const b = borrador ?? { cambios: [], aviso: null, plantillaId: null, iaId: null };
+    if (!borrador) setBorrador(b);
+    await supabase.from("semanas_borrador").upsert({ patient_id: patientId, tareas: draftsRef.current, cambios: b.cambios, aviso: b.aviso, plantilla_id: b.plantillaId, ia_id: b.iaId, updated_at: new Date().toISOString() });
+  }
+  async function aceptarSugerencia(i: ItemRevision): Promise<string | null> {
+    if (!i.cambio) return "Esta sugerencia no tiene un cambio para aplicar.";
+    const recursosSemana = draftsRef.current.map((d) => d.mediaResourceId).filter((x): x is string => !!x);
+    const r = await aplicarEnBorrador(draftsRef.current, i.cambio, {
+      diasSemana: days.map((d) => d.dia),
+      flexible: i.para_proxima,
+      validar: (rec) => {
+        if (!perfilRec) return null;
+        const ev = evaluarAsignacion(rec, perfilRec, { gruposSemana: gruposDeLaSemana((catalogo ?? []).filter((c) => recursosSemana.includes(c.id))) });
+        return ev.permitido ? null : (ev.motivo ?? "no está permitido para esta persona.");
+      },
+      nivelPara: (rec) => (rec.extras?.modo === "interactiva" ? nivelPara(rec.id, nivelDe(rec.extras)).nivel : null),
+    });
+    if ("error" in r) return r.error;
+    draftsRef.current = r.ok;
+    setDrafts(r.ok);
+    if (!borrador) setBorrador({ cambios: [], aviso: null, plantillaId: null, iaId: null });
+    try {
+      await decidirItem.mutateAsync({ id: i.id, estado: "aceptada" });
+    } catch (e) {
+      return (e as Error).message;
+    }
+    return null;
+  }
 
   function cargarPlantilla(c: CargaPlantilla) {
     if (drafts.length > 0 && !window.confirm("Esto reemplaza las actividades nuevas que ya pusiste en el borrador. ¿Seguimos?")) return;
@@ -441,40 +492,81 @@ export function PlanificadorTab({
         onAplicar={aplicarSugerencia}
       />
 
-      {borrador && (
-        <section className="rounded-3xl bg-white border-[1.5px] border-verde-serenidad p-5 sm:p-6 grid gap-3">
+      {(borrador || (itemsRev ?? []).length > 0 || (estadoRev && estadoRev.estado !== "sin_revisar")) && (
+        <section className="rounded-3xl bg-white border-[1.5px] border-verde-serenidad p-5 sm:p-6 grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="m-0 text-[12px] tracking-[0.14em] uppercase font-semibold text-verde-profundo">Borrador · sin publicar</p>
               <h3 className="m-0 mt-0.5 text-[17px] font-bold">
-                {borrador.iaId ? (borrador.cambios.length ? `La IA propuso ${borrador.cambios.length} ${borrador.cambios.length === 1 ? "cambio" : "cambios"}` : "La IA no propuso cambios") : "Copiado de la plantilla"}
+                {borrador?.iaId
+                  ? borrador.cambios.length
+                    ? `La IA propuso ${borrador.cambios.length} ${borrador.cambios.length === 1 ? "cambio" : "cambios"}`
+                    : "La IA no propuso cambios"
+                  : borrador?.plantillaId
+                    ? "Copiado de la plantilla"
+                    : "Semana en preparación"}
               </h3>
             </div>
-            <button type="button" onClick={descartarBorrador} className="min-h-9 px-3 bg-transparent border-0 text-[13.5px] text-alerta-texto cursor-pointer">
-              Descartar borrador
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <EstadoRevisionChip estado={estadoRev} />
+              <Button
+                dense
+                variant="secondary"
+                onClick={async () => {
+                  await asegurarBorrador();
+                  setPedirRevision(true);
+                }}
+              >
+                Pedir revisión
+              </Button>
+              {borrador && (
+                <button type="button" onClick={descartarBorrador} className="min-h-9 px-3 bg-transparent border-0 text-[13.5px] text-alerta-texto cursor-pointer">
+                  Descartar borrador
+                </button>
+              )}
+            </div>
           </div>
-          {borrador.aviso && <p className="m-0 rounded-2xl bg-aviso/70 px-4 py-2.5 text-[14px] text-aviso-texto">{borrador.aviso}</p>}
-          {borrador.cambios.length > 0 && (
-            <ul className="list-none m-0 p-0 grid gap-2">
-              {borrador.cambios.map((c, i) => (
-                <li key={i} className="rounded-2xl bg-campo px-4 py-3 text-[14px] leading-relaxed">
-                  {c.tipo === "reemplazar" ? (
-                    <>
-                      <span className="text-alerta-texto line-through">{c.quitado}</span> → <strong className="text-semaforo-verde-texto">{c.puesto}</strong>{" "}
-                      <span className="text-tinta-tenue">({nombreDia(c.diaA)})</span>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{c.quitado}</strong>: {nombreDia(c.diaDe)} → {nombreDia(c.diaA)}
-                    </>
-                  )}
-                  {c.obligatorio && <span className="ml-2 rounded-full bg-riesgo px-2 py-0.5 text-[11.5px] font-semibold text-riesgo-texto">por seguridad</span>}
-                  <span className="block text-[13px] text-tinta-suave">Por qué: {c.justificacion}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          {borrador?.aviso && <p className="m-0 rounded-2xl bg-aviso/70 px-4 py-2.5 text-[14px] text-aviso-texto">{borrador.aviso}</p>}
+          {avisoRev && <p className="m-0 rounded-2xl bg-verde-tenue px-4 py-2.5 text-[14px] text-verde-profundo">{avisoRev}</p>}
+          <PanelRevision
+            objeto="borrador"
+            objetoId={patientId}
+            modo="duena"
+            onAceptar={aceptarSugerencia}
+            arriba={
+              borrador && borrador.cambios.length > 0 ? (
+                <div className="grid gap-2">
+                  <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.12em] text-tinta-tenue">Cambios de la IA · ya aplicados</p>
+                  <ul className="list-none m-0 p-0 grid gap-2">
+                    {borrador.cambios.map((c, i) => (
+                      <li key={i} className="rounded-2xl border border-borde bg-white px-3 py-2.5 text-[13.5px] leading-relaxed">
+                        <span className="flex items-center gap-2 text-[12.5px] text-tinta-tenue">
+                          <span aria-hidden="true" className="w-6 h-6 rounded-full bg-verde-serenidad text-white text-[10.5px] font-bold inline-flex items-center justify-center">IA</span>
+                          Sugerencia de la IA
+                          {c.obligatorio && <span className="rounded-full bg-riesgo px-2 py-0.5 text-[11px] font-semibold text-riesgo-texto">por seguridad</span>}
+                        </span>
+                        <span className="mt-1.5 grid gap-0.5 rounded-xl bg-campo px-2.5 py-2">
+                          {c.tipo === "reemplazar" ? (
+                            <>
+                              <span className="text-tinta-tenue line-through">{c.quitado}</span>
+                              <span className="font-semibold text-tinta">
+                                {c.puesto} ({nombreDia(c.diaA)})
+                              </span>
+                            </>
+                          ) : (
+                            <span className="font-semibold text-tinta">
+                              {c.quitado}: {nombreDia(c.diaDe)} → {nombreDia(c.diaA)}
+                            </span>
+                          )}
+                        </span>
+                        <span className="block mt-1 text-tinta-suave">{c.justificacion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : undefined
+            }
+          />
           <p className="m-0 text-[13px] text-tinta-tenue">Revisá y ajustá en el calendario. Nada llega a la familia hasta que publiques.</p>
         </section>
       )}
@@ -584,10 +676,17 @@ export function PlanificadorTab({
           onAgregar={(dia, hour) => setEditor({ mode: "new", dia, hora: hour === null ? "" : `${String(hour).padStart(2, "0")}:00` })}
           celda={(dia, hour) => {
             const items = cellItems(dia, hour);
+            const fantasmas = agregadosEn(itemsRev, DIAS.indexOf(dia), (h) => enFila(h, hour));
             return {
-              vacia: items.existing.length + items.drafts.length === 0,
+              vacia: items.existing.length + items.drafts.length + fantasmas.length === 0,
               contenido: (
                 <>
+                  {fantasmas.map((i) => (
+                    <span key={i.id} className="rounded-lg border-[1.5px] border-dashed border-[#c99a45] bg-mostaza-vital/20 px-2 py-1.5 text-[12px] leading-tight text-[#6e521c]">
+                      <span className="block text-[10.5px] font-bold uppercase tracking-wide">Sugerencia</span>
+                      <span className="font-semibold">+ {i.cambio?.op === "agregar" ? i.cambio.hacia.titulo : ""}</span>
+                    </span>
+                  ))}
                   {items.existing.map((t) => {
                     const editable = t.estado === "pendiente" || t.estado === "futuro";
                     return (
@@ -613,8 +712,15 @@ export function PlanificadorTab({
                   })}
                   {items.drafts.map((t) => {
                     const juego = !!t.mediaResourceId && interactivos.has(t.mediaResourceId);
+                    const m = marcasRev.get(claveAct(DIAS.indexOf(t.dia), t.hora, t.mediaResourceId));
+                    const d = m?.cambio ? describirCambio(m.cambio) : null;
                     return (
-                      <div key={t.key} className="rounded-lg bg-verde-profundo text-white overflow-hidden">
+                      <div key={t.key} className={`relative rounded-lg overflow-visible ${m?.sug ? "bg-[#8a6a2a] text-white outline-[1.5px] outline-dashed outline-[#c99a45] outline-offset-1" : "bg-verde-profundo text-white"}`}>
+                        {m && m.sug + m.com > 0 && (
+                          <span title={d ? `Sugerencia: ${d.despues}` : "Comentarios"} className="absolute -top-1.5 -right-1.5 z-[1] min-w-[18px] h-[18px] px-1 rounded-full bg-mostaza-vital text-tinta text-[10.5px] font-bold inline-flex items-center justify-center">
+                            {m.sug + m.com}
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => setEditor({ mode: "edit", task: t })}
@@ -622,6 +728,7 @@ export function PlanificadorTab({
                         >
                           {t.hora && <span className="block text-[10.5px] opacity-80">{formatHora(t.hora)}</span>}
                           <span className="font-semibold">{t.titulo}</span>
+                          {d && <span className="block text-[10.5px] font-semibold text-mostaza-vital">→ {d.despues}</span>}
                           {!juego && t.modulo && <span className="block text-[10.5px] opacity-80">{moduloLabel[t.modulo]}</span>}
                         </button>
                         {juego && t.nivelInteractivo && (
@@ -729,6 +836,22 @@ export function PlanificadorTab({
           )}
         </div>
         <div className="grid gap-2.5">
+          {(estadoRev?.tareas.length || estadoPlantilla?.estado === "revisada" || abiertasRev > 0) ? (
+            <div className="rounded-2xl bg-campo border border-borde-suave px-3.5 py-3 grid gap-1.5 text-[13px]">
+              <p className="m-0 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-tinta-tenue">Revisión</p>
+              {estadoPlantilla?.estado === "revisada" && <p className="m-0 text-tinta">✓ Plantilla revisada</p>}
+              {(estadoRev?.tareas ?? []).map((t) => (
+                <p key={t.id} className="m-0 flex justify-between gap-2 text-tinta">
+                  <span className="min-w-0 truncate">{t.area ?? t.revisor}</span>
+                  <span className={t.resultado === "aprobado" && !t.desactualizada ? "font-semibold text-verde-profundo" : "text-tinta-tenue"}>
+                    {t.estado === "resuelta" ? (t.resultado === "aprobado" ? (t.desactualizada ? "aprobó antes de cambios" : "✓ aprobó") : "respondió") : "pendiente"}
+                  </span>
+                </p>
+              ))}
+              {abiertasRev > 0 && <p className="m-0 font-semibold text-[#6e521c]">{abiertasRev} {abiertasRev === 1 ? "sugerencia sin decidir" : "sugerencias sin decidir"}</p>}
+              <p className="m-0 text-[12px] text-tinta-tenue">Podés publicar igual.</p>
+            </div>
+          ) : null}
           {error && <p className="m-0 text-[14px] text-alerta-texto">{error}</p>}
           <Button variant="ink" fullWidth onClick={publish} disabled={saving || !aprobada || draftsInWeek.length === 0}>
             {saving ? "Publicando…" : isFirstAssignment ? "Aprobar y publicar plan" : target.kind === "plan" ? "Agregar a esta semana" : "Publicar semana"}
@@ -739,6 +862,17 @@ export function PlanificadorTab({
         </div>
       </section>
 
+      {pedirRevision && (
+        <NuevaTareaModal
+          contexto={{ tipo: "revisar_borrador", patientId, patientNombre, areas: areasDeModulos(drafts.map((d) => d.modulo)) }}
+          onClose={() => setPedirRevision(false)}
+          onCreada={(m) => {
+            setPedirRevision(false);
+            setAvisoRev(m);
+            queryClient.invalidateQueries({ queryKey: ["estado-revision"] });
+          }}
+        />
+      )}
       {editor && (
         <TaskEditorModal
           days={days}

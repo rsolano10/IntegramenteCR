@@ -7,6 +7,8 @@ import { ROL_ETIQUETA } from "../../../lib/areasSalud";
 import { TIPO_TAREA, useEquipoClinico, type TipoTarea } from "../../../lib/tareasEquipo";
 import { Modal } from "../../ui/Modal";
 import { Button } from "../../ui/Button";
+import { callAdminAccounts } from "../../../lib/adminAccounts";
+import { EJES, ejeLabel, type Eje } from "../../../lib/revisiones";
 
 // «Pedir revisión al equipo»: la coordinación le asigna una tarea a alguien
 // del equipo clínico. Desde un paciente, una semana o una plantilla, llega
@@ -18,6 +20,9 @@ export interface ContextoTarea {
   planId?: string | null;
   plantillaId?: string | null;
   plantillaNombre?: string;
+  eje?: Eje | null;
+  // Áreas que conviene que revisen (se ordenan primero y se elige la primera).
+  areas?: string[];
 }
 
 const tituloSugerido = (tipo: TipoTarea, c: ContextoTarea) => {
@@ -26,6 +31,8 @@ const tituloSugerido = (tipo: TipoTarea, c: ContextoTarea) => {
   if (tipo === "revisar_semana") return quien ? `Revisar la semana de ${quien}` : "Revisar una semana";
   if (tipo === "armar_semana") return quien ? `Proponer la próxima semana de ${quien}` : "Proponer una semana";
   if (tipo === "revisar_plantilla") return c.plantillaNombre ? `Revisar la plantilla «${c.plantillaNombre}»` : "Revisar una plantilla";
+  if (tipo === "revisar_borrador") return quien ? `Revisar la semana de ${quien} antes de publicar` : "Revisar una semana antes de publicar";
+  if (tipo === "valorar_paciente") return `${c.eje ? `Valorar ${c.eje === "etapa" ? "la etapa" : `el eje ${ejeLabel(c.eje).toLowerCase()}`}` : "Valorar"}${quien ? ` de ${quien}` : ""}`;
   return "Consulta al equipo";
 };
 
@@ -37,12 +44,18 @@ export function NuevaTareaModal({ contexto = {}, onClose, onCreada }: { contexto
   const [titulo, setTitulo] = useState(() => tituloSugerido(contexto.tipo ?? (contexto.plantillaId ? "revisar_plantilla" : contexto.planId ? "revisar_semana" : "revisar_paciente"), contexto));
   const [tituloEditado, setTituloEditado] = useState(false);
   const [asignada, setAsignada] = useState("");
+  const [eje, setEje] = useState<Eje>(contexto.eje ?? "cognitivo");
   const [patientId, setPatientId] = useState(contexto.patientId ?? "");
   const [planId, setPlanId] = useState(contexto.planId ?? "");
   const [plantillaId, setPlantillaId] = useState(contexto.plantillaId ?? "");
   const [vence, setVence] = useState("");
   const [detalle, setDetalle] = useState("");
-  const { data: equipo } = useEquipoClinico();
+  const { data: equipoTodo } = useEquipoClinico();
+  const areasSugeridas = contexto.areas ?? (tipo === "valorar_paciente" ? (EJES.find((e) => e.id === eje)?.area ?? []) : []);
+  const sugerido = (m: { especialidad: string | null }) => !!m.especialidad && areasSugeridas.includes(m.especialidad);
+  const equipo = equipoTodo ? [...equipoTodo].sort((a, b) => Number(sugerido(b)) - Number(sugerido(a)) || a.pendientes - b.pendientes) : undefined;
+  const primeroSugerido = equipo?.find(sugerido)?.profile_id;
+  if (!asignada && primeroSugerido) setAsignada(primeroSugerido);
   const { data: patients } = usePatients();
   const conPaciente = tipo !== "revisar_plantilla" && tipo !== "otra";
   const { data: planes } = useQuery({
@@ -86,8 +99,11 @@ export function NuevaTareaModal({ contexto = {}, onClose, onCreada }: { contexto
         p_plan: tipo === "revisar_semana" ? planId : null,
         p_plantilla: tipo === "revisar_plantilla" ? plantillaId : null,
         p_vence: vence || null,
+        p_eje: tipo === "valorar_paciente" ? eje : null,
       });
       if (error) throw error;
+      // Aviso por correo a quien revisa (si falla, la tarea igual quedó).
+      callAdminAccounts("avisar_tarea_equipo", { asignadaA: asignada, titulo: titulo.trim(), vence: vence || null }).catch(() => {});
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tareas-equipo"] });
@@ -118,12 +134,27 @@ export function NuevaTareaModal({ contexto = {}, onClose, onCreada }: { contexto
             <option value="">Elegí a alguien del equipo…</option>
             {(equipo ?? []).map((m) => (
               <option key={m.profile_id} value={m.profile_id}>
-                {m.nombre} · {m.especialidad ?? ROL_ETIQUETA[m.rol]}
+                {sugerido(m) ? "★ " : ""}{m.nombre} · {m.especialidad ?? ROL_ETIQUETA[m.rol]}
                 {m.pendientes ? ` · ${m.pendientes} pendiente${m.pendientes === 1 ? "" : "s"}` : ""}
               </option>
             ))}
           </select>
         </label>
+        {tipo === "valorar_paciente" && (
+          <label className="grid gap-1.5 text-[14px] font-semibold text-tinta">
+            Qué valorar
+            <select value={eje} onChange={(e) => setEje(e.target.value as Eje)} className={campo}>
+              {EJES.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {areasSugeridas.length > 0 && (
+          <p className="m-0 -mt-2 text-[13px] text-tinta-tenue">★ Sugerido por área: {areasSugeridas.join(", ")}.</p>
+        )}
         {conPaciente && !contexto.patientId && (
           <label className="grid gap-1.5 text-[14px] font-semibold text-tinta">
             Paciente

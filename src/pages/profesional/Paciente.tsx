@@ -27,6 +27,7 @@ import { PerfilRecursosCard } from "../../components/profesional/paciente/Perfil
 import { ReferidoPor } from "../../components/profesional/ReferidoPor";
 import { ResumenModal } from "../../components/resumen/ResumenModal";
 import { NuevaTareaModal } from "../../components/profesional/tareas/NuevaTareaModal";
+import { ValoracionCard } from "../../components/revision/ValoracionCard";
 import { PermisosPaciente } from "../../components/profesional/paciente/PermisosPaciente";
 
 type Tab = "evaluacion" | "semana" | "planificar" | "asistente" | "cuentas";
@@ -121,7 +122,7 @@ export function Paciente() {
         { id: "semana", label: "Seguimiento", dot: patient.needs_review },
         { id: "planificar", label: "Planificar", dot: patient.needs_assignment },
         { id: "asistente", label: "Asistente", dot: asistentePendiente },
-        { id: "evaluacion", label: "Perfil inicial" },
+        { id: "evaluacion", label: "Valoración y perfil" },
         { id: "cuentas", label: "Cuentas" },
       ];
   const requested = searchParams.get("tab") as Tab | null;
@@ -219,6 +220,9 @@ export function Paciente() {
       )}
 
       <div className="grid gap-6 min-w-0">
+      {tab === "evaluacion" && (
+        <ValoracionCard patientId={patient.id} patientNombre={patient.nombre} modo="duena" onAviso={(m, e) => changed(m, e)} />
+      )}
       {tab === "evaluacion" &&
         (pendiente ? (
           <EvaluacionTab

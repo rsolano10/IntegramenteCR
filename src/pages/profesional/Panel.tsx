@@ -13,6 +13,7 @@ import type { ManagedAccount } from "../../lib/adminAccounts";
 import { motivoLabel, usePendientesAsistente, type PendienteRevision } from "../../lib/asistenteRevision";
 import type { Semaforo } from "../../lib/mockData";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
+import { EjesRojosSinRevisar } from "../../components/revision/EjesRojosSinRevisar";
 import { AccountDetailModal } from "../../components/profesional/AccountDetailModal";
 import { Avatar, BotonPaso } from "../../components/profesional/usuarios/piezas";
 import { useFamiliaAcciones } from "../../components/profesional/usuarios/useFamiliaAcciones";
@@ -239,6 +240,7 @@ export function Panel() {
   return (
     <Pagina>
       <AlertasRiesgoBanner />
+      <EjesRojosSinRevisar />
 
       <Caja
         id="pendientes"
