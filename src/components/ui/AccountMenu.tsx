@@ -90,15 +90,15 @@ export function AccountMenu({
                   type="button"
                   onClick={() => setCambiando((v) => !v)}
                   aria-expanded={cambiando}
+                  aria-label={`${subtitle}. ${cambio!.opciones.length > 0 ? "Cambiar de persona" : "Inscribir a otra persona"}`}
                   className="w-full flex items-center justify-between gap-2 px-4 py-3.5 border-0 bg-transparent text-left cursor-pointer hover:bg-borde-suave/50 font-sans"
                 >
                   <span className="min-w-0">
                     <span className="block text-[14px] font-semibold text-tinta">{name}</span>
                     <span className="block text-[12px] text-tinta-tenue">{subtitle}</span>
                   </span>
-                  <span className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-verde-profundo">
-                    {cambio!.opciones.length > 0 ? "Cambiar" : "Otra persona"}
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className={`transition-transform ${cambiando ? "rotate-180" : ""}`}>
+                  <span aria-hidden="true" className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full text-verde-profundo">
+                    <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true" className={`transition-transform ${cambiando ? "rotate-180" : ""}`}>
                       <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
