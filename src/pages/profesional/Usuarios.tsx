@@ -67,8 +67,9 @@ export function Usuarios() {
   const resumen = useMemo(() => {
     const total = patients?.length ?? 0;
     const pendientes = (patients ?? []).filter((p) => siguientePaso(p, cuentas.get(p.id)) !== null).length;
-    const sueltas = (accounts ?? []).filter((a) => a.role !== "profesional" && a.links.length === 0).length;
-    const equipo = (accounts ?? []).filter((a) => a.role === "profesional").length;
+    const delEquipo = (r: string) => r === "profesional" || r === "equipo" || r === "referidor";
+    const sueltas = (accounts ?? []).filter((a) => !delEquipo(a.role) && a.links.length === 0).length;
+    const equipo = (accounts ?? []).filter((a) => delEquipo(a.role)).length;
     return { total, pendientes, sueltas, equipo };
   }, [patients, cuentas, accounts]);
 
@@ -76,7 +77,7 @@ export function Usuarios() {
   const pestanas: PestanaCaja<Pestana>[] = [
     { id: "familias", label: "Familias", n: resumen.total },
     { id: "sin_paciente", label: "Cuentas sin paciente", n: resumen.sueltas, aviso: resumen.sueltas > 0 },
-    { id: "equipo", label: "Equipo de la clínica", n: resumen.equipo },
+    { id: "equipo", label: "Equipo y referidores", n: resumen.equipo },
   ];
 
   return (

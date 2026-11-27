@@ -4,6 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 import { App } from "./App.tsx";
+import { guardarReferidoDeUrl } from "./lib/referidos";
+
+// El enlace de un profesional referidor (?ref=CODIGO): se recuerda para
+// aplicarlo cuando la familia termine el registro.
+guardarReferidoDeUrl();
 
 const queryClient = new QueryClient();
 

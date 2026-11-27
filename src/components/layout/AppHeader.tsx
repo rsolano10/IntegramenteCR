@@ -14,6 +14,7 @@ import { MiProgramaModal } from "../ui/MiProgramaModal";
 import { ContactanosModal } from "../ui/ContactanosModal";
 import { CalendarModal } from "../ui/CalendarSyncCard";
 import { Logo, LogoEnCasa } from "../ui/Logo";
+import { ROL_ETIQUETA } from "../../lib/areasSalud";
 import { PestanasFamilia } from "./FamiliarNav";
 
 const crumbs: [string, string][] = [
@@ -27,7 +28,11 @@ const crumbs: [string, string][] = [
   ["/app/hoy", "Hoy"],
   ["/app/plan", "Mi semana"],
   ["/app/revision", "Evaluación semanal"],
+  ["/app/resumen-medico", "Resumen para el médico"],
   ["/app/resumen", "Resumen de la semana"],
+  ["/app/equipo", "Equipo clínico"],
+  ["/app/referidor", "Profesional referidor"],
+  ["/app/profesional/tareas", "Tareas del equipo"],
   ["/app/participante/hoy", "Hoy"],
   ["/app/participante/actividad", "Actividad"],
   ["/app/participante/ayuda", "Pidió ayuda"],
@@ -51,7 +56,7 @@ const crumbs: [string, string][] = [
 ];
 
 // Las pantallas de la app de la familia (con su propio encabezado).
-const RUTAS_FAMILIA = ["/app/hoy", "/app/plan", "/app/historial", "/app/ayuda", "/app/emergencia", "/app/revision", "/app/resumen"];
+const RUTAS_FAMILIA = ["/app/hoy", "/app/plan", "/app/historial", "/app/ayuda", "/app/emergencia", "/app/revision", "/app/resumen", "/app/resumen-medico"];
 
 function crumbFor(pathname: string): string {
   const hit = crumbs.find(([prefix]) => pathname.startsWith(prefix));
@@ -139,6 +144,9 @@ export function AppHeader() {
                 ]
               : []),
             ...(myPatient && role === "familiar" ? [{ seccion: myPatient.nombre.split(" ")[0], label: "Programa", onClick: () => setModal("mi-programa") }] : []),
+            ...(myPatient
+              ? [{ seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0], label: "Resumen para el médico", onClick: () => navigate("/app/resumen-medico") }]
+              : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
@@ -257,6 +265,26 @@ export function AppHeader() {
           items={[
             { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
             { label: "Historial de auditoría", onClick: () => setModal("auditoria") },
+            { label: "Condiciones y privacidad", onClick: () => window.open("/legal/privacidad", "_blank") },
+            { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
+          ]}
+        />
+      )}
+
+      {(role === "equipo" || role === "referidor") && (
+        <AccountMenu
+          initials={
+            nombre
+              .split(" ")
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase() || "P"
+          }
+          name={nombre}
+          subtitle={[ROL_ETIQUETA[role], especialidad].filter(Boolean).join(" · ")}
+          items={[
+            { label: "Mi cuenta", onClick: () => setModal("mi-perfil") },
             { label: "Condiciones y privacidad", onClick: () => window.open("/legal/privacidad", "_blank") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}

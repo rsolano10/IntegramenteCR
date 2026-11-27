@@ -14,6 +14,7 @@ import { CalendarioSemana } from "../../components/profesional/CalendarioSemana"
 import { Modal } from "../../components/ui/Modal";
 import { ResourceEditor } from "../../components/profesional/ResourceEditor";
 import { RowMenu } from "../../components/ui/RowMenu";
+import { NuevaTareaModal } from "../../components/profesional/tareas/NuevaTareaModal";
 import { Caja, CajaAviso, CajaBarra, CajaCuerpo, CajaPestanas, Pagina } from "../../components/profesional/Caja";
 
 // Plantillas de semana (Fase 4.4) y recursos automáticos (antes «de bienvenida»).
@@ -283,6 +284,7 @@ function SemanaMini({ p }: { p: Plantilla }) {
 function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verArchivadas: boolean; busqueda: string; onEditar: (p: Plantilla | "nueva") => void; onAviso: (texto: string, error?: boolean) => void }) {
   const queryClient = useQueryClient();
   const { data: plantillas, isLoading } = usePlantillas();
+  const [revisar, setRevisar] = useState<Plantilla | null>(null);
 
   async function duplicar(p: Plantilla) {
     const { error: e } = await supabase.rpc("duplicar_plantilla", { p_id: p.id });
@@ -350,6 +352,7 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
                   items={[
                     { label: "Editar", onClick: () => onEditar(p) },
                     { label: "Duplicar", onClick: () => duplicar(p) },
+                    { label: "Pedir revisión al equipo", onClick: () => setRevisar(p) },
                     { label: p.archivada ? "Restaurar" : "Archivar", onClick: () => archivar(p, !p.archivada) },
                     { label: "Borrar", danger: true, onClick: () => borrar(p) },
                   ]}
@@ -359,6 +362,15 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
             <div className="flex flex-col flex-1 gap-2 p-4.5">
               <h3 className="m-0 text-[17px] font-bold leading-snug text-tinta group-hover:text-verde-profundo">{p.nombre}</h3>
               {p.perfil_objetivo && <p className="m-0 text-[13.5px] font-semibold text-verde-profundo">{p.perfil_objetivo}</p>}
+              {p.revisor && p.revisada_en && (
+                <p className="m-0 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#22663f]">
+                  <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="M2.5 6.2l2.2 2.2 4.8-4.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Revisada por {p.revisor.nombre}
+                  {p.revisor.especialidad ? ` (${p.revisor.especialidad})` : ""}
+                </p>
+              )}
               {p.descripcion && <p className="m-0 text-[14px] leading-relaxed text-tinta-suave line-clamp-3">{p.descripcion}</p>}
               <div className="mt-auto pt-2 flex flex-wrap gap-1.5">
                 <span className="inline-flex items-center h-6 px-2.5 rounded-full bg-campo border border-borde-suave text-[12px] font-bold text-tinta-suave">
@@ -375,6 +387,16 @@ function ListaPlantillas({ verArchivadas, busqueda, onEditar, onAviso }: { verAr
           </article>
         );
       })}
+      {revisar && (
+        <NuevaTareaModal
+          contexto={{ tipo: "revisar_plantilla", plantillaId: revisar.id, plantillaNombre: revisar.nombre }}
+          onClose={() => setRevisar(null)}
+          onCreada={(m) => {
+            setRevisar(null);
+            onAviso(m);
+          }}
+        />
+      )}
     </div>
   );
 }

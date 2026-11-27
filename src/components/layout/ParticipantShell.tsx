@@ -15,6 +15,7 @@ import { participanteTourSteps } from "../../lib/tourSteps";
 import { useProductTour } from "../../lib/useProductTour";
 import { CalendarSyncCard } from "../ui/CalendarSyncCard";
 import { BigActionButton } from "../ui/BigActionButton";
+import { useAplicarReferido } from "../../lib/referidos";
 import { Logo } from "../ui/Logo";
 
 const bigInputClass = "w-full rounded-2xl border-[1.5px] border-borde-campo bg-campo px-5 py-4 font-sans text-[20px] text-tinta";
@@ -39,6 +40,7 @@ function AvatarMenu() {
   const navigate = useNavigate();
   const session = useSession();
   const { data: myPatient } = useMyPatient();
+  useAplicarReferido(myPatient?.id);
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const [open, setOpen] = useState(false);
   const [screen, setScreen] = useState<"menu" | "calendar" | "nombre" | "password">("menu");

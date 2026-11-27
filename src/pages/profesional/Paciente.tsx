@@ -24,6 +24,9 @@ import { Avatar } from "../../components/profesional/usuarios/piezas";
 import { AlertasRiesgoBanner } from "../../components/profesional/AlertasRiesgoBanner";
 import { PedidosAyudaPaciente } from "../../components/profesional/PedidosAyudaPaciente";
 import { PerfilRecursosCard } from "../../components/profesional/paciente/PerfilRecursosCard";
+import { ReferidoPor } from "../../components/profesional/ReferidoPor";
+import { ResumenModal } from "../../components/resumen/ResumenModal";
+import { NuevaTareaModal } from "../../components/profesional/tareas/NuevaTareaModal";
 import { PermisosPaciente } from "../../components/profesional/paciente/PermisosPaciente";
 
 type Tab = "evaluacion" | "semana" | "planificar" | "asistente" | "cuentas";
@@ -50,6 +53,7 @@ export function Paciente() {
   const myUserId = session.status === "authed" ? session.session.user.id : null;
   const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
   const [statusMsg, setStatusMsg] = useState<{ text: string; error?: boolean } | null>(null);
+  const [ventana, setVentana] = useState<null | "resumen" | "tarea">(null);
 
   const { data: patients, isLoading: loadingPatients } = usePatients();
   const { data: pendientesAsistente } = usePendientesAsistente();
@@ -177,6 +181,13 @@ export function Paciente() {
                 {attentionMeta[attention].label}
               </span>
             )}
+            <ReferidoPor patientId={patient.id} onCambio={changed} />
+            <button type="button" onClick={() => setVentana("resumen")} className="min-h-10 px-4 rounded-full border-[1.5px] border-borde bg-white text-[14px] font-semibold text-tinta cursor-pointer hover:border-verde-serenidad">
+              Resumen para el médico
+            </button>
+            <button type="button" onClick={() => setVentana("tarea")} className="min-h-10 px-4 rounded-full border-[1.5px] border-borde bg-white text-[14px] font-semibold text-tinta cursor-pointer hover:border-verde-serenidad">
+              Pedir revisión al equipo
+            </button>
             <ProgramaSelector
               patientId={patient.id}
               modalidad={patient.modalidad}
@@ -193,6 +204,18 @@ export function Paciente() {
       >
         {statusMsg ? <CajaAviso texto={statusMsg.text} error={statusMsg.error} onCerrar={() => setStatusMsg(null)} /> : undefined}
       </Caja>
+
+      {ventana === "resumen" && <ResumenModal patientId={patient.id} nombre={patient.nombre} onClose={() => setVentana(null)} />}
+      {ventana === "tarea" && (
+        <NuevaTareaModal
+          contexto={{ patientId: patient.id, patientNombre: patient.nombre }}
+          onClose={() => setVentana(null)}
+          onCreada={(m) => {
+            setVentana(null);
+            changed(m);
+          }}
+        />
+      )}
 
       <div className="grid gap-6 min-w-0">
       {tab === "evaluacion" &&

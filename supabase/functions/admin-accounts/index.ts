@@ -169,6 +169,36 @@ function generateProvisionalPassword(): string {
   return `Im${random}25`;
 }
 
+// El trigger de registro solo crea familia o participante (los metadatos
+// los puede mandar cualquiera). El rol del equipo, la especialidad y los
+// datos de referidor se fijan acá, con la clave de servicio.
+async function fijarRol(admin: ReturnType<typeof createClient>, id: string, metadata: Record<string, unknown>) {
+  const cambios: Record<string, unknown> = { role: metadata.role ?? "familiar" };
+  if (metadata.especialidad !== undefined) cambios.especialidad = metadata.especialidad;
+  if (metadata.institucion !== undefined) cambios.institucion = metadata.institucion;
+  if (metadata.codigo_referido !== undefined) cambios.codigo_referido = metadata.codigo_referido;
+  await admin.from("profiles").update(cambios).eq("id", id);
+}
+
+// Código del enlace de un referidor: el primer nombre sin tildes y 4 cifras.
+async function codigoReferidoLibre(admin: ReturnType<typeof createClient>, nombre: string): Promise<string> {
+  const base =
+    nombre
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/^(dra?|lic|msc|mdr?)\.?\s+/i, "")
+      .split(/\s+/)[0]
+      .replace(/[^A-Za-z]/g, "")
+      .toUpperCase()
+      .slice(0, 12) || "REF";
+  for (let i = 0; i < 20; i++) {
+    const codigo = `${base}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const { data } = await admin.from("profiles").select("id").ilike("codigo_referido", codigo).maybeSingle();
+    if (!data) return codigo;
+  }
+  return `${base}-${Date.now().toString().slice(-6)}`;
+}
+
 async function createAccount(
   admin: ReturnType<typeof createClient>,
   email: string,
@@ -177,11 +207,13 @@ async function createAccount(
 ): Promise<{ user: { id: string } | null; error: { message: string } | null; warning?: string; provisionalPassword?: string }> {
   if (!genericPassword) {
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: metadata, redirectTo: `${SITE_URL}/completar-cuenta` });
+    if (data?.user) await fijarRol(admin, data.user.id, metadata);
     return { user: data?.user ?? null, error };
   }
   const provisionalPassword = generateProvisionalPassword();
   const { data, error } = await admin.auth.admin.createUser({ email, password: provisionalPassword, email_confirm: false, user_metadata: metadata });
   if (error) return { user: null, error };
+  await fijarRol(admin, data.user.id, metadata);
   await admin.from("profiles").update({ must_change_password: true }).eq("id", data.user.id);
   const { error: resendError } = await admin.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${SITE_URL}/confirmar-correo` } });
   return {
@@ -273,13 +305,17 @@ async function handleInvite(admin: ReturnType<typeof createClient>, profesionalI
   const whatsappPhone = String(payload.whatsappPhone ?? "").trim() || null;
   if (!email || !nombre) return json({ error: "Faltan datos: correo y nombre son obligatorios." }, 400);
 
-  // Clinic staff accounts aren't linked to any patient at all.
-  if (payload.accountType === "profesional") {
+  // Cuentas del equipo (clínica/coordinación, equipo clínico, referidores):
+  // sin paciente. El rol lo fija el servidor (fijarRol), nunca el registro.
+  if (payload.accountType === "profesional" || payload.accountType === "equipo" || payload.accountType === "referidor") {
+    const rol = payload.accountType as "profesional" | "equipo" | "referidor";
     const especialidad = String(payload.especialidad ?? "").trim() || null;
+    const institucion = rol === "referidor" ? String(payload.institucion ?? "").trim() || null : undefined;
+    const codigo_referido = rol === "referidor" ? await codigoReferidoLibre(admin, nombre) : undefined;
     const { user: invitedUser, error, warning, provisionalPassword } = await createAccount(
       admin,
       email,
-      { role: "profesional", nombre, especialidad, whatsapp_phone: whatsappPhone },
+      { role: rol, nombre, especialidad, whatsapp_phone: whatsappPhone, ...(institucion !== undefined ? { institucion } : {}), ...(codigo_referido ? { codigo_referido } : {}) },
       genericPassword,
     );
     if (error || !invitedUser) return json({ error: error?.message ?? "No pudimos crear la cuenta." }, 400);
@@ -411,7 +447,7 @@ async function handleUpdateEmail(admin: ReturnType<typeof createClient>, payload
 async function handleUpdateRole(admin: ReturnType<typeof createClient>, callerId: string, payload: Record<string, unknown>) {
   const userId = String(payload.userId ?? "");
   const role = payload.role as AppRole;
-  if (!userId || !["familiar", "paciente", "profesional"].includes(role)) {
+  if (!userId || !["familiar", "paciente", "profesional", "equipo", "referidor"].includes(role)) {
     return json({ error: "Datos inválidos." }, 400);
   }
   // Blocks self-demotion, which would otherwise be able to lock the

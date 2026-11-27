@@ -522,3 +522,23 @@
 .ses-carta-dorso {
   transform: rotateY(180deg);
 }
+
+/* Resumen de seguimiento: al imprimir, solo el documento. */
+@media print {
+  body:has(.resumen-doc) * {
+    visibility: hidden;
+  }
+  body:has(.resumen-doc) .resumen-doc,
+  body:has(.resumen-doc) .resumen-doc * {
+    visibility: visible;
+  }
+  body:has(.resumen-doc) .resumen-doc {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  body {
+    background: #fff;
+  }
+}

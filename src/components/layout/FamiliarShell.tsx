@@ -19,6 +19,8 @@ import { semanaNuevaPendiente } from "../../lib/calendarPrompt";
 import { waEquipo } from "../../lib/whatsapp";
 import { BotonWhatsApp } from "../ui/BotonWhatsApp";
 import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
+import { AvisoReferidor } from "../familiar/AvisoReferidor";
+import { useAplicarReferido } from "../../lib/referidos";
 import { useAlturaChat } from "../../lib/useAlturaChat";
 
 const pasosRevision = [
@@ -159,6 +161,7 @@ export function FamiliarShell() {
   const { data: planMeta } = useCurrentPlanMeta(!pendiente ? myPatient?.id : undefined);
   const { data: planDias } = usePlan(!pendiente ? myPatient?.id : undefined);
   const [semanaCerrada, setSemanaCerrada] = useState<string | null>(null);
+  useAplicarReferido(myPatient?.id);
 
   // PerfilResumen / "editar módulo" still only read/write the local
   // onboarding2 copy — this is what makes them show the account's real
@@ -223,6 +226,7 @@ export function FamiliarShell() {
         ) : (
           <>
             {pathname === "/app/hoy" && <SaludoDelDia nombre={nombreFamiliar} paciente={myPatient?.nombre?.split(" ")[0] ?? null} />}
+            {pathname === "/app/hoy" && myPatient && session.status === "authed" && (session.profile.role === "familiar" || session.profile.role === "paciente") && <AvisoReferidor rol={session.profile.role} />}
             {myPatient && conAvisoCuenta && <AvisoEstadoCuenta patient={myPatient} nombreCuenta={session.status === "authed" ? session.profile.nombre : ""} />}
             <Outlet />
           </>

@@ -13,6 +13,9 @@ import { EstadoChip } from "./CuentaSeguimiento";
 import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
 import { Avatar } from "./usuarios/piezas";
 import { BadgeRol } from "../ui/AccountMenu";
+import { AREAS_SALUD, ESPECIALIDADES_REFERIDOR, ROL_ETIQUETA } from "../../lib/areasSalud";
+
+type TipoCuenta = "familiar_admin" | "participante" | "profesional" | "equipo" | "referidor";
 import { useIdsAdministradores } from "../../lib/useEsAdmin";
 
 // Las otras dos pestañas de Usuarios: cuentas de familia invitadas pero
@@ -57,9 +60,14 @@ export function CuentasTab({
     onError: (err: Error) => onChanged(err.message, true),
   });
 
-  const orphans = (accounts ?? []).filter((a) => a.role !== "profesional" && a.links.length === 0);
-  // El administrador primero; después el resto del equipo.
-  const staff = (accounts ?? []).filter((a) => a.role === "profesional").sort((x, y) => Number(admins.has(y.id)) - Number(admins.has(x.id)));
+  const esEquipo = (r: string) => r === "profesional" || r === "equipo" || r === "referidor";
+  const orphans = (accounts ?? []).filter((a) => !esEquipo(a.role) && a.links.length === 0);
+  // El administrador primero; después la clínica/coordinación, el equipo
+  // clínico y los referidores.
+  const orden: Record<string, number> = { profesional: 0, equipo: 1, referidor: 2 };
+  const staff = (accounts ?? [])
+    .filter((a) => esEquipo(a.role))
+    .sort((x, y) => Number(admins.has(y.id)) - Number(admins.has(x.id)) || (orden[x.role] ?? 9) - (orden[y.role] ?? 9) || x.nombre.localeCompare(y.nombre));
 
   function AccountRow({ a }: { a: ManagedAccount }) {
     const confirmed = !!a.email_confirmed_at;
@@ -70,7 +78,7 @@ export function CuentasTab({
           <span className="min-w-0">
           <span className="flex items-center gap-2 min-w-0">
             <span className="font-bold text-tinta truncate">{a.nombre}</span>
-            {admins.has(a.id) && <BadgeRol texto="Administrador" />}
+            {admins.has(a.id) ? <BadgeRol texto="Administrador" /> : esEquipo(a.role) && <BadgeRol texto={ROL_ETIQUETA[a.role] ?? a.role} />}
           </span>
           <span className="block text-[13px] text-tinta-suave truncate">
             {a.email}
@@ -79,7 +87,7 @@ export function CuentasTab({
           </span>
         </button>
         <div className="flex items-center gap-2 shrink-0">
-          {a.role !== "profesional" && a.is_active && <EstadoChip estado={porCuenta.get(a.id)?.estado ?? null} />}
+          {!esEquipo(a.role) && a.is_active && <EstadoChip estado={porCuenta.get(a.id)?.estado ?? null} />}
           {!a.is_active ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-white text-tinta-tenue">Desactivada</span>
           ) : confirmed ? (
@@ -110,7 +118,7 @@ export function CuentasTab({
         <p className="m-0 text-[14px] text-tinta-suave max-w-[60ch]">
           {seccion === "sin_paciente"
             ? "Cuentas de familia invitadas o registradas que todavía no están vinculadas a ningún paciente. Abrí una para vincularla."
-            : "Las cuentas de la clínica. Todas ven y atienden a las familias; el administrador además ve las métricas generales del programa."}
+            : "Clínica / Coordinación ve y atiende a las familias; el equipo clínico revisa lo que le asignan; los referidores ven a quién refirieron. El administrador además ve la administración del programa."}
         </p>
         <Button variant="secondary" size="sm" onClick={() => setCreateFor(seccion === "sin_paciente" ? "familiar_admin" : "profesional")} className="shrink-0">
           {seccion === "sin_paciente" ? "+ Invitar cuenta" : "+ Agregar cuenta"}
@@ -193,13 +201,14 @@ function CreateAccountModal({
   onCreated,
   onError,
 }: {
-  initialAccountType?: "familiar_admin" | "participante" | "profesional";
+  initialAccountType?: TipoCuenta;
   existingPatients: { id: string; nombre: string }[];
   onClose: () => void;
   onCreated: (msg?: string) => void;
   onError: (msg: string) => void;
 }) {
-  const [accountType, setAccountType] = useState<"familiar_admin" | "participante" | "profesional">(initialAccountType ?? "familiar_admin");
+  const [accountType, setAccountType] = useState<TipoCuenta>(initialAccountType ?? "familiar_admin");
+  const [institucion, setInstitucion] = useState("");
   const [metodo, setMetodo] = useState<"invite" | "generic">("invite");
   const [patientMode, setPatientMode] = useState<"none" | "new" | "existing">(existingPatients.length > 0 ? "existing" : "none");
   const [patientId, setPatientId] = useState(existingPatients[0]?.id ?? "");
@@ -212,7 +221,7 @@ function CreateAccountModal({
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState("");
 
-  const isStaff = accountType === "profesional";
+  const isStaff = accountType === "profesional" || accountType === "equipo" || accountType === "referidor";
 
   const patientModeOptions: { value: typeof patientMode; label: string }[] = [
     { value: "none", label: "Sin paciente" },
@@ -247,7 +256,7 @@ function CreateAccountModal({
         genericPassword: metodo === "generic",
         ...(normalizedPhone ? { whatsappPhone: normalizedPhone } : {}),
         ...(isStaff
-          ? { accountType: "profesional", especialidad: especialidad.trim() }
+          ? { accountType, especialidad: especialidad.trim(), ...(accountType === "referidor" ? { institucion: institucion.trim() } : {}) }
           : {
               relation: accountType,
               ...(patientMode === "existing" ? { patientId } : patientMode === "new" ? { patientNombre: patientNombre.trim(), patientEdad: patientEdad.trim() } : {}),
@@ -286,9 +295,20 @@ function CreateAccountModal({
             options={[
               { value: "familiar_admin", label: "Familiar" },
               { value: "participante", label: "Paciente" },
-              { value: "profesional", label: "Equipo clínico" },
+              { value: "profesional", label: "Clínica / Coordinación" },
+              { value: "equipo", label: "Equipo clínico" },
+              { value: "referidor", label: "Referidor" },
             ]}
           />
+          {isStaff && (
+            <p className="m-0 mt-2 text-[13px] leading-snug text-tinta-tenue">
+              {accountType === "profesional"
+                ? "Ve y hace todo: pacientes, semanas, plantillas y tareas del equipo. La clínica y la coordinación tienen los mismos permisos."
+                : accountType === "equipo"
+                  ? "Trabaja por tareas: revisa los pacientes, semanas y plantillas que le pide la coordinación."
+                  : "Profesional externo que refiere personas: ve a quién refirió y, con permiso de la familia, su seguimiento."}
+            </p>
+          )}
         </div>
 
         <div>
@@ -304,7 +324,24 @@ function CreateAccountModal({
         </div>
 
         {isStaff ? (
-          <FormField label="Especialidad" type="text" value={especialidad} onChange={(e) => setEspecialidad(e.target.value)} />
+          <>
+            <label className="grid grid-cols-1 gap-2 text-[15px] font-semibold text-tinta-suave">
+              {accountType === "referidor" ? "Especialidad" : "Área de salud"}
+              <select
+                value={especialidad}
+                onChange={(e) => setEspecialidad(e.target.value)}
+                className="w-full min-w-0 min-h-13 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[17px] text-tinta"
+              >
+                <option value="">Elegí…</option>
+                {(accountType === "referidor" ? ESPECIALIDADES_REFERIDOR : AREAS_SALUD).map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {accountType === "referidor" && <FormField label="Consultorio o institución (opcional)" type="text" value={institucion} onChange={(e) => setInstitucion(e.target.value)} />}
+          </>
         ) : (
           <>
             <div>

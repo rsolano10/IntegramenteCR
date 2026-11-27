@@ -10,6 +10,8 @@ const roleOptions: { value: AppRole; label: string }[] = [
   { value: "familiar", label: roleLabel.familiar },
   { value: "paciente", label: roleLabel.paciente },
   { value: "profesional", label: roleLabel.profesional },
+  { value: "equipo", label: roleLabel.equipo },
+  { value: "referidor", label: roleLabel.referidor },
 ];
 
 export function AccountDetailModal({
@@ -37,7 +39,7 @@ export function AccountDetailModal({
   // Una cuenta profesional no se "vincula a un paciente" desde acá — su
   // relación (profesional_asignado) es un concepto distinto, ya cubierto
   // por el roster de Pacientes.
-  const showLinkSection = account.role !== "profesional" && !hasPatientLink;
+  const showLinkSection = !["profesional", "equipo", "referidor"].includes(account.role) && !hasPatientLink;
 
   const { data: patients } = useQuery({
     queryKey: ["patients"],
@@ -88,7 +90,7 @@ export function AccountDetailModal({
       const result = await callAdminAccounts("update_role", {
         userId: account.id,
         role,
-        ...(role === "profesional" ? { especialidad: especialidad.trim() } : {}),
+        ...(role === "profesional" || role === "equipo" || role === "referidor" ? { especialidad: especialidad.trim() } : {}),
       });
       onChanged(result?.warning ?? "Rol actualizado.", !!result?.warning);
       onClose();
@@ -141,12 +143,12 @@ export function AccountDetailModal({
         <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Rol</p>
         <div className="grid grid-cols-1 gap-3">
           <PillToggle value={role} onChange={setRole} options={roleOptions} />
-          {role === "profesional" && (
+          {(role === "profesional" || role === "equipo" || role === "referidor") && (
             <input
               type="text"
               value={especialidad}
               onChange={(e) => setEspecialidad(e.target.value)}
-              placeholder="Especialidad"
+              placeholder="Área de salud o especialidad"
               className="w-full min-w-0 min-h-12 px-4 rounded-xl border-[1.5px] border-borde-campo bg-campo font-sans text-[15px] text-tinta"
             />
           )}

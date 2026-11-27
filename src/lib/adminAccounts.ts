@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export type AppRole = "familiar" | "paciente" | "profesional";
+export type AppRole = "familiar" | "paciente" | "profesional" | "equipo" | "referidor";
 
 export interface AccountLink {
   patient_id: string;
@@ -28,13 +28,17 @@ export interface ManagedAccount {
 export const roleLabel: Record<AppRole, string> = {
   familiar: "Familiar",
   paciente: "Paciente",
-  profesional: "Clínica",
+  profesional: "Clínica / Coordinación",
+  equipo: "Equipo clínico",
+  referidor: "Referidor",
 };
 
 export const roleBadgeClass: Record<AppRole, string> = {
   familiar: "bg-verde-serenidad/15 text-verde-profundo",
   paciente: "bg-[#e7edf3] text-tinta-suave",
   profesional: "bg-tinta text-white",
+  equipo: "bg-verde-profundo text-white",
+  referidor: "bg-mostaza-vital text-tinta",
 };
 
 export const relationLabel: Record<string, string> = {

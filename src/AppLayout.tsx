@@ -29,6 +29,7 @@ import { Plan } from "./pages/familiar/Plan";
 import { HistorialSemanas } from "./pages/familiar/HistorialSemanas";
 import { Revision } from "./pages/familiar/Revision";
 import { Resumen } from "./pages/familiar/Resumen";
+import { ResumenMedico } from "./pages/familiar/ResumenMedico";
 import { Emergencia } from "./pages/familiar/Emergencia";
 import { Ayuda as AyudaFamiliar } from "./pages/familiar/Ayuda";
 
@@ -49,6 +50,12 @@ import { faltaAceptar, useMisConsentimientos } from "./lib/consentimientos";
 import { Biblioteca } from "./pages/profesional/Biblioteca";
 import { Paciente } from "./pages/profesional/Paciente";
 import { Plantillas } from "./pages/profesional/Plantillas";
+import { TareasEquipo } from "./pages/profesional/TareasEquipo";
+import { EquipoInicio } from "./pages/equipo/EquipoInicio";
+import { EquipoTarea } from "./pages/equipo/EquipoTarea";
+import { ReferidorInicio } from "./pages/referidor/ReferidorInicio";
+import { ReferidorPersona } from "./pages/referidor/ReferidorPersona";
+import { RolShell } from "./components/layout/RolShell";
 
 import { Ideacion } from "./pages/alertas/Ideacion";
 import { Maltrato } from "./pages/alertas/Maltrato";
@@ -153,7 +160,7 @@ function RouteGuard({ children }: { children: ReactNode }) {
   // Aceptación de las condiciones y consentimientos por separado. Va antes
   // que todo lo demás (también antes del cuestionario) y aplica a todos los
   // roles: al subir VERSION_LEGAL, cada cuenta vuelve a pasar por acá.
-  if (role === "familiar" || role === "paciente" || role === "profesional") {
+  {
     if (consentLoading) return <div className="min-h-[40vh]" />;
     const falta = faltaAceptar(role, consentimientos ?? []);
     const enConsentimiento = pathname === "/app/consentimiento";
@@ -223,6 +230,12 @@ function RouteGuard({ children }: { children: ReactNode }) {
   if (pathname.startsWith("/app/profesional") && role !== "profesional") {
     return <Navigate to="/app/login" replace />;
   }
+  // Cada rol nuevo, solo en lo suyo.
+  if (pathname.startsWith("/app/equipo") && role !== "equipo") return <Navigate to="/app/login" replace />;
+  if (pathname.startsWith("/app/referidor") && role !== "referidor") return <Navigate to="/app/login" replace />;
+  if ((role === "equipo" || role === "referidor") && !pathname.startsWith(`/app/${role}`) && !["/app/consentimiento", "/app/cambiar-password", "/app/login"].includes(pathname)) {
+    return <Navigate to={roleHome(role)} replace />;
+  }
   return <>{children}</>;
 }
 
@@ -274,6 +287,7 @@ export default function AppLayout() {
           <Route path="mensajes" element={<Navigate to="/app/ayuda" replace />} />
           <Route path="revision" element={<Revision />} />
           <Route path="resumen" element={<Resumen />} />
+          <Route path="resumen-medico" element={<ResumenMedico />} />
         </Route>
 
         <Route path="participante" element={<ParticipantShell />}>
@@ -289,6 +303,7 @@ export default function AppLayout() {
           {/* El seguimiento de cuentas vive ahora en Usuarios. */}
           <Route path="seguimiento" element={<Navigate to="/app/profesional/usuarios" replace />} />
           <Route path="plantillas" element={<Plantillas />} />
+          <Route path="tareas" element={<TareasEquipo />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="admin" element={<Administracion />} />
           <Route path="biblioteca" element={<Biblioteca />} />
@@ -306,6 +321,17 @@ export default function AppLayout() {
         <Route path="plan/actividad/:taskId/pasos" element={<ActividadPasos />} />
         <Route path="hoy/extras/:resourceId/pasos" element={<SugeridaPasos />} />
         <Route path="participante/actividad/:taskId/pasos" element={<ParticipanteActividadPasos />} />
+
+        {/* Equipo clínico: sus tareas de revisión. */}
+        <Route path="equipo" element={<RolShell />}>
+          <Route index element={<EquipoInicio />} />
+          <Route path="tarea/:id" element={<EquipoTarea />} />
+        </Route>
+        {/* Profesionales referidores: sus personas, referir y el programa. */}
+        <Route path="referidor" element={<RolShell />}>
+          <Route index element={<ReferidorInicio />} />
+          <Route path="persona/:id" element={<ReferidorPersona />} />
+        </Route>
 
         <Route path="alerta/ideacion" element={<Ideacion />} />
         <Route path="alerta/maltrato" element={<Maltrato />} />

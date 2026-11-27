@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
-export type AppRole = "familiar" | "paciente" | "profesional";
+// profesional = Clínica / Coordinación; equipo = equipo clínico (por tareas);
+// referidor = profesional externo que refiere personas.
+export type AppRole = "familiar" | "paciente" | "profesional" | "equipo" | "referidor";
 
 export interface SessionProfile {
   role: AppRole;
@@ -74,5 +76,7 @@ export function useSession(): SessionState {
 export function roleHome(role: AppRole): string {
   if (role === "familiar") return "/app/hoy";
   if (role === "paciente") return "/app/participante/hoy";
+  if (role === "equipo") return "/app/equipo";
+  if (role === "referidor") return "/app/referidor";
   return "/app/profesional/panel";
 }

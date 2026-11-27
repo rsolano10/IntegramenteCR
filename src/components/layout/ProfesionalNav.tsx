@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { usePatients } from "../../lib/patients";
 import { useCuentaPorPaciente } from "../../lib/usePanelCuentas";
 import { siguientePaso } from "../../lib/siguientePaso";
+import { useTareasEquipo } from "../../lib/tareasEquipo";
 import { useEsAdmin } from "../../lib/useEsAdmin";
 
 // Cuántas familias necesitan algo (el mismo «siguiente paso» del Panel y
@@ -31,6 +32,8 @@ interface NavItem {
   match: (pathname: string) => boolean;
   icon: (active: boolean) => React.ReactNode;
   conPendientes?: boolean;
+  // Tareas del equipo abiertas (pendientes o en curso).
+  conTareas?: boolean;
 }
 
 const iconProps = { width: 20, height: 20, viewBox: "0 0 20 20", fill: "none" as const, "aria-hidden": true };
@@ -88,6 +91,18 @@ const items: NavItem[] = [
     ),
   },
   {
+    label: "Tareas del equipo",
+    conTareas: true,
+    to: "/app/profesional/tareas",
+    match: (p) => p.startsWith("/app/profesional/tareas"),
+    icon: (active) => (
+      <svg {...iconProps}>
+        <rect x="3.5" y="3" width="13" height="14.5" rx="2" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} />
+        <path d="M6.5 7.5l1.3 1.3 2.4-2.6M6.5 12.5l1.3 1.3 2.4-2.6M12 7.5h2M12 12.5h2" stroke="currentColor" strokeWidth={active ? 1.9 : 1.5} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     label: "Plantillas",
     to: "/app/profesional/plantillas",
     match: (p) => p.startsWith("/app/profesional/plantillas"),
@@ -104,6 +119,9 @@ export function ProfesionalNav() {
   const { pathname } = useLocation();
   const pendientes = usePendientes();
   const esAdmin = useEsAdmin();
+  const { data: tareas } = useTareasEquipo();
+  const tareasAbiertas = (tareas ?? []).filter((t) => t.estado === "pendiente" || t.estado === "en_curso").length;
+  const cuenta = (item: NavItem) => (item.conPendientes ? pendientes : item.conTareas ? tareasAbiertas : 0);
   const menu = esAdmin ? [itemAdministracion, ...items] : items;
 
   return (
@@ -122,7 +140,7 @@ export function ProfesionalNav() {
             >
               {item.icon(active)}
               {item.label}
-              {item.conPendientes && <Contador n={pendientes} activo={active} />}
+              {(item.conPendientes || item.conTareas) && <Contador n={cuenta(item)} activo={active} />}
             </Link>
           );
         })}
@@ -142,8 +160,8 @@ export function ProfesionalNav() {
             >
               {item.icon(active)}
               {item.label}
-              {item.conPendientes && pendientes > 0 && (
-                <span className={`min-w-[20px] h-5 px-1 rounded-full inline-flex items-center justify-center text-[11.5px] font-bold ${active ? "bg-white text-tinta" : "bg-mostaza-vital text-tinta"}`}>{pendientes}</span>
+              {cuenta(item) > 0 && (
+                <span className={`min-w-[20px] h-5 px-1 rounded-full inline-flex items-center justify-center text-[11.5px] font-bold ${active ? "bg-white text-tinta" : "bg-mostaza-vital text-tinta"}`}>{cuenta(item)}</span>
               )}
             </Link>
           );

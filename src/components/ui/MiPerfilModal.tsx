@@ -26,7 +26,7 @@ type Tab = "perfil" | "familiar" | "avisos" | "seguridad";
 export function MiPerfilModal({ onClose, isSelf = false, onLogoutAll }: { onClose: () => void; isSelf?: boolean; onLogoutAll?: () => void }) {
   const session = useSession();
   const { data: myPatient, isPending } = useMyPatient();
-  const ready = session.status === "authed" && (session.profile.role === "profesional" || !isPending);
+  const ready = session.status === "authed" && (["profesional", "equipo", "referidor"].includes(session.profile.role) || !isPending);
 
   return (
     <Modal onClose={onClose} bare>
@@ -60,7 +60,8 @@ function MiPerfilContent({
   const { profile } = session;
   const user = session.session.user;
   const email = user.email ?? "";
-  const isProfesional = profile.role === "profesional";
+  // Cuentas del equipo (sin paciente propio): clínica, equipo clínico y referidores.
+  const isProfesional = profile.role === "profesional" || profile.role === "equipo" || profile.role === "referidor";
 
   const [tab, setTab] = useState<Tab>("perfil");
   const [fotoUrl, setFotoUrl] = useState(profile.foto_url);

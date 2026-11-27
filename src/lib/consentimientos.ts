@@ -22,9 +22,10 @@ export type TipoConsentimiento =
   | "ia_clara"
   | "ia_equipo"
   | "voz"
-  | "whatsapp";
+  | "whatsapp"
+  | "compartir_referidor";
 
-export type RolCuenta = "familiar" | "paciente" | "profesional";
+export type RolCuenta = "familiar" | "paciente" | "profesional" | "equipo" | "referidor";
 
 export interface DefConsentimiento {
   tipo: TipoConsentimiento;
@@ -32,6 +33,8 @@ export interface DefConsentimiento {
   obligatorio: boolean;
   roles: RolCuenta[];
   texto: (rol: RolCuenta) => string;
+  // Solo para quien llegó referido por un profesional.
+  soloConReferidor?: boolean;
 }
 
 const deQuien = (rol: RolCuenta) => (rol === "paciente" ? "mis datos" : "mis datos y los de la persona participante");
@@ -41,7 +44,7 @@ export const CONSENTIMIENTOS: DefConsentimiento[] = [
     tipo: "terminos",
     titulo: "Condiciones y privacidad",
     obligatorio: true,
-    roles: ["familiar", "paciente", "profesional"],
+    roles: ["familiar", "paciente", "profesional", "equipo", "referidor"],
     texto: () =>
       "Leí y acepto las Condiciones de uso y la Política de privacidad de IntegraMente en Casa. Entiendo que es un programa de estimulación con acompañamiento profesional, que no es un diagnóstico, que no reemplaza la atención médica y que ante una urgencia debo llamar al 9-1-1.",
   },
@@ -73,7 +76,7 @@ export const CONSENTIMIENTOS: DefConsentimiento[] = [
     tipo: "confidencialidad",
     titulo: "Confidencialidad profesional",
     obligatorio: true,
-    roles: ["profesional"],
+    roles: ["profesional", "equipo", "referidor"],
     texto: () =>
       "Me comprometo a usar la información de las personas participantes y sus familias solo para la atención dentro del programa, bajo secreto profesional; a no copiarla ni compartirla fuera de la plataforma; a no compartir mi acceso; a validar todo lo que genere la inteligencia artificial antes de usarlo; y a avisar de inmediato a la administración ante cualquier acceso indebido o pérdida de datos.",
   },
@@ -109,10 +112,19 @@ export const CONSENTIMIENTOS: DefConsentimiento[] = [
     texto: () =>
       "Quiero recibir recordatorios de las actividades y avisos del programa por WhatsApp, enviados mediante la plataforma de Meta (Estados Unidos). Los mensajes incluyen el nombre de la persona participante y el de la actividad. Puedo dejar de recibirlos cuando quiera.",
   },
+  {
+    tipo: "compartir_referidor",
+    titulo: "Compartir el avance con quien te refirió",
+    obligatorio: false,
+    roles: ["familiar", "paciente"],
+    soloConReferidor: true,
+    texto: (rol) =>
+      `Autorizo que el profesional de salud que me refirió al programa vea el resumen de seguimiento de ${rol === "paciente" ? "mis actividades" : "las actividades de la persona participante"}: qué actividades se hicieron en casa, cómo nos fue en cada semana y lo que contamos al equipo. No ve los mensajes ni el cuestionario. Puedo retirar este permiso cuando quiera.`,
+  },
 ];
 
-export function consentimientosDeRol(rol: RolCuenta) {
-  return CONSENTIMIENTOS.filter((c) => c.roles.includes(rol));
+export function consentimientosDeRol(rol: RolCuenta, { conReferidor = false }: { conReferidor?: boolean } = {}) {
+  return CONSENTIMIENTOS.filter((c) => c.roles.includes(rol) && (!c.soloConReferidor || conReferidor));
 }
 
 export interface ConsentimientoGuardado {
@@ -158,7 +170,7 @@ export function useRegistrarConsentimientos() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ rol, decisiones }: { rol: RolCuenta; decisiones: Partial<Record<TipoConsentimiento, boolean>> }) => {
-      const items = consentimientosDeRol(rol)
+      const items = consentimientosDeRol(rol, { conReferidor: true })
         .filter((c) => c.tipo in decisiones)
         .map((c) => ({ tipo: c.tipo, otorgado: !!decisiones[c.tipo], texto: c.texto(rol) }));
       const { error } = await supabase.rpc("registrar_consentimientos", {

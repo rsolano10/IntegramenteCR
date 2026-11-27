@@ -20,6 +20,7 @@ import { AjustesCuentasModal } from "../../components/profesional/CuentaSeguimie
 import { SolicitudesDatos } from "../../components/profesional/SolicitudesDatos";
 import { Indicador, Seccion } from "../../components/profesional/admin/Piezas";
 import { Gastos } from "../../components/profesional/admin/Gastos";
+import { Referidos } from "../../components/profesional/admin/Referidos";
 
 // Administración: la vista de negocio del administrador (una persona de
 // administración, no de salud). Ve todo lo de la clínica y además:
@@ -31,7 +32,7 @@ import { Gastos } from "../../components/profesional/admin/Gastos";
 //   Configuración  semana gratis, inactividad, IA, horarios de WhatsApp
 //   Cumplimiento   permisos (Ley 8968) y solicitudes de datos
 
-type Pestana = "resumen" | "cobros" | "gastos" | "equipo" | "configuracion" | "cumplimiento";
+type Pestana = "resumen" | "cobros" | "gastos" | "referidos" | "equipo" | "configuracion" | "cumplimiento";
 
 interface EstadoCobro {
   patient_id: string;
@@ -123,6 +124,7 @@ export function Administracion() {
     { id: "resumen", label: "Resumen" },
     { id: "cobros", label: "Cobros" },
     { id: "gastos", label: "Gastos" },
+    { id: "referidos", label: "Referidos" },
     { id: "equipo", label: "Equipo" },
     { id: "configuracion", label: "Configuración" },
     { id: "cumplimiento", label: "Cumplimiento" },
@@ -145,6 +147,7 @@ export function Administracion() {
           {pestana === "resumen" && <Resumen onIr={setPestana} />}
           {pestana === "cobros" && <Cobros onAviso={(text, error) => setAviso({ text, error })} />}
           {pestana === "gastos" && <Gastos onAviso={(text, error) => setAviso({ text, error })} />}
+          {pestana === "referidos" && <Referidos onAviso={(text, error) => setAviso({ text, error })} />}
           {pestana === "equipo" && <Equipo />}
           {pestana === "configuracion" && <Configuracion />}
           {pestana === "cumplimiento" && <Cumplimiento />}

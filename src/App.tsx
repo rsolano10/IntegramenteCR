@@ -1,5 +1,6 @@
 import { lazy, Suspense, useLayoutEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { ResumenPublico } from "./pages/ResumenPublico";
 import { Landing } from "./pages/Landing";
 
 // El home se carga de inmediato; el resto (la app, el registro, las páginas
@@ -76,6 +77,7 @@ export function App() {
       <Route path="/medicos/referir" element={<ReferirPaciente />} />
       {/* La guía provisional para profesionales se reemplazó por /medicos. */}
       <Route path="/guia-profesionales" element={<Navigate to="/medicos" replace />} />
+      <Route path="/resumen/:token" element={<ResumenPublico />} />
       <Route path="/app/*" element={<AppLayout />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

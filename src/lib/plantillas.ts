@@ -30,6 +30,9 @@ export interface Plantilla {
   perfil_objetivo: string | null;
   archivada: boolean;
   updated_at: string;
+  // Revisada y aprobada por alguien del equipo clínico (tarea de revisión).
+  revisada_en?: string | null;
+  revisor?: { nombre: string; especialidad: string | null } | null;
   tareas: TareaPlantilla[];
 }
 
@@ -52,11 +55,12 @@ export function usePlantillas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("plantillas_semana")
-        .select("id, nombre, descripcion, perfil_objetivo, archivada, updated_at, plantilla_tareas(id, dia_idx, hora, media_resource_id, orden, nivel_interactivo, media_resources(titulo, codigo, modulo, extras))")
+        .select("id, nombre, descripcion, perfil_objetivo, archivada, updated_at, revisada_en, revisor:profiles!plantillas_semana_revisada_por_fkey(nombre, especialidad), plantilla_tareas(id, dia_idx, hora, media_resource_id, orden, nivel_interactivo, media_resources(titulo, codigo, modulo, extras))")
         .order("nombre");
       if (error) throw error;
       return (data ?? []).map((p) => ({
         ...p,
+        revisor: uno(p.revisor as { nombre: string; especialidad: string | null } | { nombre: string; especialidad: string | null }[] | null),
         tareas: ((p.plantilla_tareas ?? []) as FilaTarea[])
           .sort((a, b) => a.dia_idx - b.dia_idx || a.orden - b.orden)
           .map((t) => {

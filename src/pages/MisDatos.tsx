@@ -6,6 +6,7 @@ import { useSession } from "../lib/useSession";
 import { CheckRow } from "../components/ui/CheckRow";
 import { Button } from "../components/ui/Button";
 import { BotonVolver } from "../components/ui/BotonVolver";
+import { useMiReferidor } from "../lib/referidos";
 import { CONSENTIMIENTOS, consentimientosDeRol, useMisConsentimientos, useRegistrarConsentimientos, type RolCuenta } from "../lib/consentimientos";
 
 // Mis datos y permisos: los derechos de la Ley 8968 en un solo lugar.
@@ -50,6 +51,7 @@ const fecha = (iso: string) => new Date(iso.length === 10 ? `${iso}T12:00:00` : 
 export function MisDatos() {
   const session = useSession();
   const rol = (session.status === "authed" ? session.profile.role : null) as RolCuenta | null;
+  const { data: referidor } = useMiReferidor(rol === "familiar" || rol === "paciente");
   const uid = session.status === "authed" ? session.session.user.id : null;
   const { data: guardados } = useMisConsentimientos(!!rol);
   const registrar = useRegistrarConsentimientos();
@@ -105,7 +107,7 @@ export function MisDatos() {
   });
 
   if (!rol) return null;
-  const opcionales = consentimientosDeRol(rol).filter((c) => !c.obligatorio);
+  const opcionales = consentimientosDeRol(rol, { conReferidor: !!referidor }).filter((c) => !c.obligatorio);
   const tituloDe = (t: string) => CONSENTIMIENTOS.find((c) => c.tipo === t)?.titulo ?? t;
 
   return (

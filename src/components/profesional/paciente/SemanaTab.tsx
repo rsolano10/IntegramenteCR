@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 import { DIAS, formatHora, semanaTerminada, weekDays } from "../../../lib/planWeek";
 import { Button } from "../../ui/Button";
+import { NuevaTareaModal } from "../tareas/NuevaTareaModal";
 import { estadoMeta, moodMeta, weekStats, type PlanSummary, type TaskRow } from "../../../lib/seguimiento";
 
 export type { PlanSummary, TaskRow };
@@ -138,6 +139,8 @@ function RevisionClinica({
   const [feedback, setFeedback] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [pedir, setPedir] = useState(false);
+  const [pedido, setPedido] = useState("");
 
   const sugerido = useMemo(() => {
     const nombre = patientNombre.split(" ")[0];
@@ -195,6 +198,21 @@ function RevisionClinica({
             {saving ? "Guardando…" : "Marcar como revisada"}
           </Button>
         </div>
+      )}
+      {/* Pedirle a alguien del equipo clínico que mire esta semana. */}
+      <button type="button" onClick={() => setPedir(true)} className="mt-3 border-0 bg-transparent p-0 text-[13px] font-semibold text-verde-profundo cursor-pointer underline decoration-dotted">
+        Pedir revisión de esta semana al equipo
+      </button>
+      {pedido && <p className="m-0 mt-1.5 text-[12.5px] text-[#22663f]">{pedido}</p>}
+      {pedir && (
+        <NuevaTareaModal
+          contexto={{ tipo: "revisar_semana", patientId, patientNombre, planId: plan.id }}
+          onClose={() => setPedir(false)}
+          onCreada={(m) => {
+            setPedir(false);
+            setPedido(m);
+          }}
+        />
       )}
     </section>
   );
