@@ -49,7 +49,7 @@ interface MediaResourceJoin {
   external_url: string | null;
   materiales: string | null;
   adaptacion: string | null;
-  ciencia: { gancho: string; evidencia: string; cierre: string } | null;
+  ciencia: { gancho: string; evidencia: string; cierre: string; url?: string } | null;
   extras: ResourceExtras | null;
   codigo: string | null;
   poster_path: string | null;
@@ -63,6 +63,7 @@ interface MediaResourceJoin {
   ayuda: string | null;
   ten_en_cuenta: string | null;
   para_cerrar: string | null;
+  reto_cognitivo: string | null;
 }
 
 function joinedResource(value: PlanTaskRow["media_resources"]): MediaResourceJoin | null {
@@ -123,6 +124,7 @@ function toPlanTask(row: PlanTaskRow): PlanTask {
     ayuda: resource?.ayuda ?? null,
     tenEnCuenta: resource?.ten_en_cuenta ?? null,
     paraCerrar: resource?.para_cerrar ?? null,
+    retoCognitivo: resource?.reto_cognitivo ?? null,
     modulo: resource?.modulo ?? null,
   };
 }
@@ -168,6 +170,7 @@ export function tareaDeRecurso(r: MediaResource): PlanTask {
       ayuda: r.ayuda,
       ten_en_cuenta: r.ten_en_cuenta,
       para_cerrar: r.para_cerrar,
+      reto_cognitivo: r.reto_cognitivo ?? null,
     },
   });
 }
@@ -231,7 +234,7 @@ export function usePlan(patientId: string | undefined) {
       const { data: tasks, error: tasksError } = await supabase
         .from("plan_tasks")
         .select(
-          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, nivel_interactivo, progreso, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar)",
+          "id, dia, hora, titulo, tipo, estado, duracion, detalle, precaucion, pasos, por_que, comentario, nota_clinica, indicacion_individual, nivel_interactivo, progreso, media_resource_id, sort_order, media_resources(media_kind, storage_path, external_url, materiales, adaptacion, ciencia, extras, modulo, codigo, poster_path, detalle, perfil, sabias_que, actividad, dosis, requiere_plan_individual, adaptacion_por_etapa, ayuda, ten_en_cuenta, para_cerrar, reto_cognitivo)",
         )
         .eq("plan_id", plan.id)
         .order("sort_order", { ascending: true });

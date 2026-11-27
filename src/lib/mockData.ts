@@ -118,7 +118,7 @@ export interface PlanTask {
   externalUrl?: string | null;
   materiales?: string | null;
   adaptacion?: string | null;
-  ciencia?: { gancho: string; evidencia: string; cierre: string } | null;
+  ciencia?: { gancho: string; evidencia: string; cierre: string; url?: string } | null;
   extras?: ResourceExtras | null;
   modulo?: ResourceModulo | null;
   // Campos públicos del recurso de origen (fichas GER/PRE y cognitivos).
@@ -135,6 +135,7 @@ export interface PlanTask {
   ayuda?: string | null;
   tenEnCuenta?: string | null;
   paraCerrar?: string | null;
+  retoCognitivo?: string | null;
   // Sesión guiada: respuestas y misión de la semana (plan_tasks.progreso).
   progreso?: Progreso | null;
 }

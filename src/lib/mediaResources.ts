@@ -14,6 +14,8 @@ export interface ResourceCiencia {
   gancho: string;
   evidencia: string;
   cierre: string;
+  // Enlace al estudio («Consultar estudio científico»).
+  url?: string;
 }
 
 // Material de apoyo estructurado del manual: "tabla" = ejemplos para el
@@ -63,6 +65,7 @@ export interface MediaResource {
   dosis: string | null;
   ten_en_cuenta: string | null;
   para_cerrar: string | null;
+  reto_cognitivo: string | null;
   ayuda: string | null;
   adaptacion_por_etapa: AdaptacionPorEtapa | null;
   poster_path: string | null;

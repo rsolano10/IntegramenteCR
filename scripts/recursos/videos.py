@@ -3,11 +3,14 @@
 Uso (desde la raíz del repo):
   python3 -I scripts/recursos/videos.py                # asocia y transcodifica
   python3 -I scripts/recursos/videos.py --subir        # además sube al bucket
+  python3 -I scripts/recursos/videos.py --desde 11 --subir   # solo del 11 en adelante
 
 Originales en assets/video-resources/ con el mismo nombre que en Drive (no se
 renombran; assets/ está en .gitignore). Salida en assets/video-out/ con
-nombres seguros: ger-0NN.mp4 y ger-0NN-poster.jpg. Se detiene si un archivo
-no se puede asociar o si algún código queda sin video.
+nombres seguros: ger-0NN.mp4 y ger-0NN-poster.jpg. Del 1 al 10 se llaman
+«GER-0NN …»; del 11 al 30, «Video 0NN - …». Se detiene si dos archivos
+apuntan al mismo código o si algún código queda sin video; los demás videos
+de la carpeta (intro-app, promoción…) se ignoran.
 """
 import re
 import subprocess
@@ -21,13 +24,13 @@ DESTINO = RAIZ / "assets" / "video-out"
 SWIFT = RAIZ / "scripts" / "recursos" / "transcodificar.swift"
 BUCKET = "media-resources"
 CARPETA = "gerontogimnasia"
-CODIGOS = [f"GER-{n:03d}" for n in range(1, 11)]
+CODIGOS = [f"GER-{n:03d}" for n in range(1, 31)]
 INTRO = unicodedata.normalize("NFC", "Introducción Gerontogimnasia")
 
 
 def codigo_de(nombre: str):
     n = unicodedata.normalize("NFC", nombre).strip()
-    m = re.match(r"^GER-(\d{3})", n)
+    m = re.match(r"^GER-(\d{3})", n) or re.match(r"^Video (\d{3})\b", n)
     if m:
         return f"GER-{m.group(1)}"
     if Path(n).stem.strip() == INTRO:
@@ -37,10 +40,13 @@ def codigo_de(nombre: str):
 
 def main():
     subir = "--subir" in sys.argv
+    desde = int(sys.argv[sys.argv.index("--desde") + 1]) if "--desde" in sys.argv else 1
     asociados, sueltos = {}, []
     for f in sorted(ORIGEN.glob("*.mp4")):
         c = codigo_de(f.name)
-        if c is None or c not in CODIGOS:
+        if c is None:
+            continue  # otros videos de la carpeta
+        if c not in CODIGOS:
             sueltos.append(f.name)
         elif c in asociados:
             sueltos.append(f"{f.name} (código repetido {c})")
@@ -52,7 +58,7 @@ def main():
         sys.exit(1)
 
     DESTINO.mkdir(parents=True, exist_ok=True)
-    for c in CODIGOS:
+    for c in CODIGOS[desde - 1 :]:
         base = c.lower()
         mp4, jpg = DESTINO / f"{base}.mp4", DESTINO / f"{base}-poster.jpg"
         if not mp4.exists():

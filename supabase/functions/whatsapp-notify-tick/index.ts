@@ -91,7 +91,9 @@ function materialesSimples(lista: string[]): string {
   const cortos = [
     ...new Set(
       lista
-        .map((m) => m.split(/[:(.\n]/)[0].trim().replace(/;$/, ""))
+        // Un material por línea (gerontogimnasia 11 a 30): cada línea cuenta.
+        .flatMap((m) => m.split("\n"))
+        .map((m) => m.split(/[:(.]/)[0].trim().replace(/;$/, ""))
         .flatMap((m) => m.split(/;\s*/))
         .map((m) => m.trim())
         .filter((m) => m.length > 0)

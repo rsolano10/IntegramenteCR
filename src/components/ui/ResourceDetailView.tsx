@@ -29,7 +29,9 @@ export interface ResourceContent {
   ayuda?: string | null;
   tenEnCuenta?: string | null;
   paraCerrar?: string | null;
-  ciencia?: { gancho: string; evidencia: string; cierre: string } | null;
+  // «¡Sumale un reto cognitivo!» (gerontogimnasia 11 a 30).
+  retoCognitivo?: string | null;
+  ciencia?: { gancho: string; evidencia: string; cierre: string; url?: string } | null;
   porQue?: string | null;
   pasos?: string[];
   extras?: ResourceExtras | null;
@@ -329,8 +331,13 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
           </p>
           <div className={`grid gap-2 leading-relaxed text-tinta-suave ${large ? "text-[17px]" : "text-[14px]"}`}>
             {content.ciencia.gancho && <p className="m-0">{content.ciencia.gancho}</p>}
-            {content.ciencia.evidencia && <p className="m-0">{content.ciencia.evidencia}</p>}
+            {content.ciencia.evidencia && <p className="m-0 whitespace-pre-line">{content.ciencia.evidencia}</p>}
             {content.ciencia.cierre && <p className="m-0 font-semibold text-tinta">{content.ciencia.cierre}</p>}
+            {content.ciencia.url && (
+              <a href={content.ciencia.url} target="_blank" rel="noreferrer" className="justify-self-start font-semibold text-verde-profundo underline underline-offset-4">
+                Consultar estudio científico ↗
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -338,7 +345,7 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
       {content.materiales && (
         <div className={large ? "text-[18px]" : "text-[15px]"}>
           <p className={`m-0 mb-1.5 tracking-[0.1em] uppercase text-tinta-tenue ${large ? "text-[13px]" : "text-[12px]"}`}>Qué vas a necesitar</p>
-          <p className="m-0 leading-relaxed text-tinta-suave">{content.materiales}</p>
+          <p className="m-0 leading-relaxed text-tinta-suave whitespace-pre-line">{content.materiales}</p>
         </div>
       )}
 
@@ -395,9 +402,15 @@ export function ResourceDetailView({ content, size = "compact" }: { content: Res
         </div>
       )}
 
+      {content.retoCognitivo && (
+        <Seccion titulo="¡Sumale un reto cognitivo!" tono="caja" large={large}>
+          <p className={`${texto} whitespace-pre-line`}>{content.retoCognitivo}</p>
+        </Seccion>
+      )}
+
       {content.tenEnCuenta && (
         <Seccion titulo="Tené en cuenta" tono="aviso" large={large}>
-          <p className={`m-0 leading-relaxed text-tinta ${large ? "text-[18px]" : "text-[15.5px]"}`}>{content.tenEnCuenta}</p>
+          <p className={`m-0 leading-relaxed text-tinta whitespace-pre-line ${large ? "text-[18px]" : "text-[15.5px]"}`}>{content.tenEnCuenta}</p>
         </Seccion>
       )}
 
