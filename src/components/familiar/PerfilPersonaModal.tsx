@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { useSession } from "../../lib/useSession";
 import { useMyPatient, type MyPatient } from "../../lib/useMyPatient";
-import { empezarNuevoFamiliar } from "../../lib/pacienteActivo";
 import { useAppStore } from "../../lib/store";
 import { planTiers } from "../../lib/mockData";
 import { describeAnswer, groupAnswerableByModule, resolveText } from "../../lib/onboardingSchema";
@@ -47,9 +46,7 @@ export function PerfilPersonaModal({ onClose }: { onClose: () => void }) {
 }
 
 function Contenido({ persona, onClose }: { persona: MyPatient; onClose: () => void }) {
-  const navigate = useNavigate();
   const session = useSession();
-  const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
   const [tab, setTab] = useState<Tab>("datos");
   const primer = persona.nombre.split(" ")[0];
   const programa = planTiers.find((t) => t.id === persona.modalidad)?.nombre ?? persona.modalidad;
@@ -110,24 +107,6 @@ function Contenido({ persona, onClose }: { persona: MyPatient; onClose: () => vo
       )}
       {tab === "resumen" && <TabResumen persona={persona} />}
 
-      {/* Otra persona del programa */}
-      <div className="px-6 sm:px-8 py-4 border-t border-borde-suave bg-campo flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[14px] text-tinta-suave">¿Acompañás a otra persona?</span>
-        <button
-          type="button"
-          onClick={() => {
-            if (session.status !== "authed") return;
-            empezarNuevoFamiliar();
-            resetOnboardingForNewAccount(session.session.user.id);
-            onClose();
-            navigate("/app/perfil/bienvenida");
-          }}
-          className="inline-flex items-center gap-2 min-h-10 px-4 rounded-full border-[1.5px] border-verde-serenidad/60 bg-white text-[14px] font-semibold text-verde-profundo cursor-pointer hover:border-verde-profundo"
-        >
-          <span aria-hidden="true" className="text-[17px] leading-none">+</span>
-          Inscribirla al programa
-        </button>
-      </div>
     </div>
   );
 }

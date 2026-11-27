@@ -27,11 +27,11 @@ export function AccountMenu({
   /** Si viene, el botón muestra solo el avatar y esta etiqueta (la familia: el nombre de la persona del programa). */
   etiqueta?: string;
   /** Cambiar de persona (familiar con varias): el encabezado del menú se vuelve un selector. */
-  cambio?: { opciones: { id: string; texto: string }[]; onElegir: (id: string) => void };
+  cambio?: { opciones: { id: string; texto: string }[]; onElegir: (id: string) => void; onNuevo?: () => void };
 }) {
   const [open, setOpen] = useState(false);
   const [cambiando, setCambiando] = useState(false);
-  const puedeCambiar = !!cambio && cambio.opciones.length > 0;
+  const puedeCambiar = !!cambio && (cambio.opciones.length > 0 || !!cambio.onNuevo);
 
   useEffect(() => {
     if (!open) return;
@@ -97,7 +97,7 @@ export function AccountMenu({
                     <span className="block text-[12px] text-tinta-tenue">{subtitle}</span>
                   </span>
                   <span className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-verde-profundo">
-                    Cambiar
+                    {cambio!.opciones.length > 0 ? "Cambiar" : "Otra persona"}
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className={`transition-transform ${cambiando ? "rotate-180" : ""}`}>
                       <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -121,6 +121,21 @@ export function AccountMenu({
                         <span className="min-w-0 truncate">Familiar de {o.texto}</span>
                       </button>
                     ))}
+                    {cambio!.onNuevo && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setOpen(false);
+                          setCambiando(false);
+                          cambio!.onNuevo!();
+                        }}
+                        className="flex items-center gap-2.5 px-4 py-2 border-0 bg-transparent text-left text-[14px] font-semibold text-verde-profundo cursor-pointer hover:bg-white font-sans"
+                      >
+                        <span className="w-7 h-7 shrink-0 rounded-full border-[1.5px] border-dashed border-verde-serenidad inline-flex items-center justify-center text-[15px]">+</span>
+                        Inscribir a otra persona
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

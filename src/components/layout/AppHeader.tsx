@@ -17,7 +17,7 @@ import { Logo, LogoEnCasa } from "../ui/Logo";
 import { ROL_ETIQUETA } from "../../lib/areasSalud";
 import { SumarAcompanante } from "../familiar/SumarAcompanante";
 import { PerfilPersonaModal } from "../familiar/PerfilPersonaModal";
-import { elegirPacienteActivo, useMisPacientes } from "../../lib/pacienteActivo";
+import { elegirPacienteActivo, empezarNuevoFamiliar, useMisPacientes } from "../../lib/pacienteActivo";
 import { PestanasFamilia } from "./FamiliarNav";
 
 const crumbs: [string, string][] = [
@@ -81,6 +81,7 @@ export function AppHeader() {
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
   const { data: misPacientes } = useMisPacientes();
+  const resetOnboardingForNewAccount = useAppStore((s) => s.resetOnboardingForNewAccount);
   // Otras pantallas (los botones de Clara en Ayuda) pueden pedir abrir una
   // ventana del menú de la cuenta.
   useEffect(() => {
@@ -141,6 +142,13 @@ export function AppHeader() {
                     if (session.status !== "authed") return;
                     elegirPacienteActivo(session.session.user.id, id);
                     navigate("/app/hoy");
+                  },
+                  // Inscribir a otra persona al programa (su cuestionario).
+                  onNuevo: () => {
+                    if (session.status !== "authed") return;
+                    empezarNuevoFamiliar();
+                    resetOnboardingForNewAccount(session.session.user.id);
+                    navigate("/app/perfil/bienvenida");
                   },
                 }
               : undefined
