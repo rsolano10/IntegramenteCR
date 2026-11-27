@@ -11,9 +11,11 @@ import type { Escena, Guion, Respuestas } from "./sesiones/tipos";
 import { opcionDe, opcionesSegun, plantilla, valorLista, valorUno, type PasoResumen } from "./sesiones";
 import { cuandoParar } from "./bloquesGerontogimnasia";
 import { moduloLabel, type ResourceModulo } from "./modulos";
+import { COLORES, type ColorId } from "./sesiones/ger";
 
 const limpio = (t: string | null | undefined) => (t ?? "").replace(/\s+/g, " ").trim();
 const lista = (xs: string[]) => xs.filter(Boolean).join(", ");
+const colorNombre = (c: ColorId) => COLORES[c].nombre.toLowerCase();
 // «Título.» sin duplicar el signo: «¿Lo ves?» queda igual.
 const p = (t: string) => (/[.?!:…»]$/.test(t.trim()) ? t.trim() : `${t.trim()}.`);
 
@@ -72,6 +74,22 @@ export function describirEscena(e: Escena, g: Guion, r: Respuestas = {}): string
       return `${e.titulo}: ${lista(e.items.map((i) => i.texto))}.${nota}`;
     case "cierre":
       return "Pantalla final: cuentan si pudieron hacerla y si fue fácil de seguir.";
+    case "reto": {
+      const que = e.categorias?.length
+        ? `nombrar cosas de una categoría (${lista(e.categorias.map((c) => c.texto.toLowerCase()))}), una ${e.cada}`
+        : `decir en orden ${lista((e.secuencia ?? []).slice(0, 4))}…, uno ${e.cada}`;
+      return `${p(e.titulo)} Reto cognitivo opcional mientras se mueve: ${que}. Si le quita estabilidad, se deja el reto.${nota}`;
+    }
+    case "colores":
+      return `${p(e.titulo)} Secuencia de colores en pantalla (${lista(e.colores.map(colorNombre))}): ${tx(e.accion)}${e.memorizar ? " Se muestra unos segundos y se tapa, para recordarla." : ""}${nota}`;
+    case "orientacion":
+      return `${p(e.titulo)} ${e.sentado ? "Sentado, con marcas de colores en la mesa: mira hacia un lado y dice qué color estaba ahí." : "De pie entre cuatro marcas de colores: las observa, se tapan, gira con pasos cortos y, ya quieto, dice qué color quedó al frente."} Responde solo cuando esté quieto y estable.${nota}`;
+    case "objetos":
+      return `${p(e.titulo)} Memoria de objetos: observan ${e.cuantos} objetos en la mesa, se da vuelta y hace ${e.repeticiones} extensiones de brazos mientras el acompañante saca o cambia uno; después dice qué cambió.${nota}`;
+    case "reaccion":
+      return e.modo === "manos"
+        ? `${p(e.titulo)} Pases con el globo: la pantalla le indica al acompañante con qué mano devolver cada pase (derecha o izquierda, o «uno» y «dos»).${nota}`
+        : `${p(e.titulo)} Atrapar la pelota sentado: la pantalla le indica al acompañante cuándo soltarla (con aviso o sin aviso), y llevan la cuenta de los intentos.${nota}`;
     case "juego":
       return "Un juego en pantalla de «Un día en el pueblo»: siguen la consigna del juego, ejercicio por ejercicio, con una pista después de dos intentos. Al terminar se puede jugar otra vez o seguir.";
   }

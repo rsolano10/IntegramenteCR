@@ -44,6 +44,18 @@ export const NOMBRES_ICONOS = [
   "pelota",
   "marcas",
   "volumen",
+  // Gerontogimnasia 11 a 30
+  "globo",
+  "aro",
+  "cono",
+  "mano",
+  "pesa",
+  "mesa",
+  "escalerilla",
+  "balancin",
+  "figura-gira",
+  "figura-alcance",
+  "figura-atrapa",
   // Salidas
   "casa",
   "parque",

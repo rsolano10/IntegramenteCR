@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GUIONES, LISTA_GUIONES, textosDeVoz, ayudaDeEtapa, escenasVisibles, guionDe, opcionDe, opcionesSegun, palabras, plantilla, puedeSeguir, textoPrincipal, LIBRE } from "./index.ts";
 import { NOMBRES_ICONOS } from "./iconos.ts";
+import { COLORES, cambioAlAzar, girar, giroAlAzar, mesaDespues, secuenciaAlAzar, siguienteMano } from "./ger.ts";
 import type { Escena, Guion } from "./tipos.ts";
 
 const guiones = Object.entries(GUIONES);
@@ -27,6 +28,8 @@ function iconos(g: Guion): string[] {
     if ("items" in e) out.push(...(Array.isArray(e.items) ? e.items : Object.values(e.items).flat()).map((i) => i.icono));
     if ("opciones" in e) out.push(...e.opciones.map((o) => o.icono));
     if ("sugerencias" in e) out.push(...(Array.isArray(e.sugerencias) ? e.sugerencias : Object.values(e.sugerencias).flat()).map((o) => o.icono));
+    if (e.tipo === "reto") out.push(...(e.categorias ?? []).map((c) => c.icono));
+    if (e.tipo === "objetos") out.push(...e.objetos.map((o) => o.icono));
   }
   return out;
 }
@@ -179,4 +182,70 @@ test("sesiones: lo que se lee en voz alta está completo", () => {
       assert.doesNotMatch(t, /[{}]/, `${g.codigo}: «${t}»`);
       assert.ok(t.length <= 900, `${g.codigo}: texto demasiado largo para la voz`);
     }
+});
+
+// ─── Gerontogimnasia 11 a 30 ───
+
+const fijo = (...xs: number[]) => {
+  let i = 0;
+  return () => xs[i++ % xs.length];
+};
+
+test("ger: secuencias de colores sin repetir seguido", () => {
+  for (let k = 0; k < 50; k++) {
+    const s = secuenciaAlAzar(["rojo", "verde"], 6);
+    assert.equal(s.length, 6);
+    for (let i = 1; i < s.length; i++) assert.notEqual(s[i], s[i - 1]);
+  }
+  assert.deepEqual(secuenciaAlAzar(["rojo", "verde", "azul"], 3, fijo(0, 0, 0.99)), ["rojo", "verde", "azul"]);
+});
+
+test("ger: los giros cambian qué marca queda al frente", () => {
+  // 0 frente, 1 derecha, 2 atrás, 3 izquierda.
+  assert.equal(girar(0, "derecha"), 1);
+  assert.equal(girar(0, "izquierda"), 3);
+  assert.equal(girar(0, "media"), 2);
+  assert.equal(girar(girar(0, "derecha"), "derecha"), 2);
+  assert.equal(girar(girar(0, "izquierda"), "derecha"), 0);
+  for (let k = 0; k < 30; k++) assert.notEqual(giroAlAzar("media"), "media");
+});
+
+test("ger: el cambio de objetos se puede adivinar", () => {
+  const mesa = ["cuchara", "peine", "llaves"];
+  const falta = cambioAlAzar(mesa, false, fijo(0.5));
+  assert.deepEqual(falta, { tipo: "falta", objeto: "peine" });
+  assert.deepEqual(mesaDespues(mesa, falta), ["cuchara", "llaves"]);
+  for (let k = 0; k < 30; k++) {
+    const c = cambioAlAzar(mesa, true);
+    assert.equal(c.tipo, "cambio");
+    if (c.tipo !== "cambio") continue;
+    assert.notEqual(c.a, c.b, "intercambia dos distintos");
+    const d = mesaDespues(mesa, c);
+    assert.equal(d.length, 3);
+    assert.notDeepEqual(d, mesa);
+  }
+});
+
+test("ger: las manos se alternan", () => {
+  assert.equal(siguienteMano("alternar", null), "derecha");
+  assert.equal(siguienteMano("alternar", "derecha"), "izquierda");
+  assert.equal(siguienteMano("azar", null, () => 0.9), "izquierda");
+});
+
+test("ger: escenas nuevas bien armadas", () => {
+  for (const g of LISTA_GUIONES)
+    for (const e of g.escenas) {
+      if (e.tipo === "reto") assert.ok((e.categorias?.length ?? 0) > 0 || (e.secuencia?.length ?? 0) > 0, `${g.codigo}: reto vacío`);
+      if (e.tipo === "colores") {
+        for (const c of e.colores) assert.ok(c in COLORES, `${g.codigo}: color ${c}`);
+        assert.ok(e.largo <= e.colores.length * 3 && e.largo >= 2);
+        for (const f of e.fijas ?? []) for (const c of f.colores) assert.ok(e.colores.includes(c), `${g.codigo}: color fijo fuera de la lista`);
+      }
+      if (e.tipo === "orientacion") assert.equal(e.colores.length, e.sentado ? 3 : 4, `${g.codigo}: marcas`);
+      if (e.tipo === "objetos") assert.ok(e.objetos.length >= e.cuantos && e.cuantos >= 2);
+      if (e.tipo === "reaccion") assert.ok(e.min <= e.max && e.series >= 1);
+      if (e.tipo === "repeticiones" && e.series) assert.ok(e.series >= 1 && e.series <= 4);
+    }
+  // Los 20 recursos nuevos tienen sesión propia.
+  for (let n = 11; n <= 30; n++) assert.ok(guionDe(`GER-0${n}`), `GER-0${n}`);
 });

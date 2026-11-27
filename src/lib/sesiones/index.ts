@@ -4,6 +4,7 @@ import { cog005 } from "./guiones/cog005";
 import { COGNICION } from "./guiones/cognicion";
 import { ger003 } from "./guiones/ger003";
 import { ger001, ger002, ger004, ger005, ger006, ger007, ger008, ger009, ger010 } from "./guiones/gerontogimnasia";
+import { GERONTOGIMNASIA_2 } from "./guiones/gerontogimnasia2";
 import { pre005 } from "./guiones/pre005";
 import { NUTRICION } from "./guiones/nutricion";
 import { VIVENCIAS } from "./guiones/vivencias";
@@ -25,6 +26,7 @@ export const LISTA_GUIONES: Guion[] = [
   ger008,
   ger009,
   ger010,
+  ...GERONTOGIMNASIA_2,
   // Reminiscencia y cognición
   cog005,
   ...COGNICION,
@@ -249,6 +251,21 @@ export function resumenPasos(g: Guion, conVideo: boolean): PasoResumen[] {
         break;
       case "ritmo":
         out.push({ icono: "palmas", texto: e.titulo, detalle: e.nota });
+        break;
+      case "reto":
+        out.push({ icono: e.categorias?.[0]?.icono ?? "conversar", texto: e.titulo, detalle: e.nota ?? `Un reto para decir en voz alta, ${e.cada}.` });
+        break;
+      case "colores":
+        out.push({ icono: "marcas", texto: e.titulo, detalle: e.nota ?? "Una secuencia de colores en pantalla." });
+        break;
+      case "orientacion":
+        out.push({ icono: "marcas", texto: e.titulo, detalle: e.nota ?? "Recordar los colores y orientarse al girar." });
+        break;
+      case "objetos":
+        out.push({ icono: "mesa", texto: e.titulo, detalle: e.nota ?? "Recordar los objetos de la mesa y descubrir qué cambió." });
+        break;
+      case "reaccion":
+        out.push({ icono: e.modo === "manos" ? "globo" : "pelota", texto: e.titulo, detalle: e.nota });
         break;
       case "juego":
         out.push({ icono: "estrella", texto: "Jugar en pantalla", detalle: "Ejercicio por ejercicio, a su ritmo." });

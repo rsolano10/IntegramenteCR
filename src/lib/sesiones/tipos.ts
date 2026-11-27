@@ -8,6 +8,7 @@
 
 import type { NivelCognitivo } from "../mediaResources";
 import type { NombreIcono } from "./iconos";
+import type { ColorId } from "./ger";
 
 export interface Opcion {
   id: string;
@@ -94,7 +95,9 @@ export type Escena = Base &
     // espacios: «x» golpe, «-» pausa, «A» y «B» dos sonidos distintos.
     // Con `pulso`, un pulso parejo y lento para acompañar.
     | { tipo: "ritmo"; titulo: string; nota?: string; patrones: string[]; pulso?: boolean }
-    | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[]; lados?: boolean }
+    // `series`: cuántas veces se repite todo (con los dos lados), con un
+    // descanso de `descansoEntre` segundos entre una y otra.
+    | { tipo: "repeticiones"; titulo: string; nota: string; min: number; max: number; recordatorios: string[]; lados?: boolean; series?: number; descansoEntre?: number }
     // Sostener una posición unos segundos (cuenta regresiva) o hacer un
     // recorrido (cuenta hacia arriba, con un mínimo).
     | {
@@ -107,8 +110,47 @@ export type Escena = Base &
         intentos: number;
         lados?: boolean;
         recordatorios: string[];
+        // Descanso guiado entre un intento y el siguiente (series).
+        descansoEntre?: number;
       }
     | { tipo: "descanso"; titulo: string; segundos: number; texto: string }
+    // ─── Gerontogimnasia 11 a 30: doble tarea y retos en pantalla ───
+    // Un reto cognitivo mientras se mueve: nombrar cosas de una categoría
+    // o decir una secuencia (días, meses, de dos en dos), uno por movimiento.
+    | {
+        tipo: "reto";
+        titulo: string;
+        nota?: string;
+        // «con cada giro», «cada vez que vuelve a subir»…
+        cada: string;
+        categorias?: Categoria[];
+        secuencia?: string[];
+      }
+    // Una secuencia de colores para tocar o pisar (al azar o fijas), y si
+    // `memorizar`, se muestra unos segundos y se tapa.
+    | {
+        tipo: "colores";
+        titulo: string;
+        nota?: string;
+        colores: ColorId[];
+        largo: number;
+        maxLargo?: number;
+        fijas?: { etiqueta: string; colores: ColorId[] }[];
+        memorizar?: boolean;
+        // Qué se hace con cada color: «Tocalo con la punta del pie».
+        accion: string;
+        meta?: number;
+      }
+    // Orientación espacial (GER-025): marcas alrededor, giros y «¿qué color
+    // quedó al frente?». Sentado: tres marcas en la mesa y mirar hacia una.
+    | { tipo: "orientacion"; titulo: string; nota?: string; colores: ColorId[]; sentado?: boolean; cambios: number }
+    // Memoria de objetos (GER-024): elegirlos, observarlos, darse vuelta y
+    // hacer el movimiento mientras el acompañante cambia algo; ¿qué cambió?
+    | { tipo: "objetos"; titulo: string; nota?: string; objetos: Opcion[]; cuantos: number; repeticiones: number; observar: number; rondas: number }
+    // Reacción: qué mano devuelve el globo (GER-027) o cuándo soltar la
+    // pelota (GER-030), para que el acompañante lo indique.
+    // `min`/`max`: segundos por serie (manos) o intentos por serie (soltar).
+    | { tipo: "reaccion"; titulo: string; nota?: string; modo: "manos" | "soltar"; series: number; min: number; max: number; contarDeDos?: boolean }
     | { tipo: "sentir"; titulo: string }
     | { tipo: "repaso"; titulo: string; nota?: string; partes: { etiqueta: string; clave: string }[] }
     // `icono`: el dibujo de cada marca; sin él, el de lo elegido antes.
@@ -118,6 +160,14 @@ export type Escena = Base &
     // Un juego en pantalla («Un día en el pueblo»), con su propio cuadro.
     | { tipo: "juego" }
   );
+
+export interface Categoria {
+  id: string;
+  texto: string;
+  icono: NombreIcono;
+  // Para ayudar si se traba (se muestran de a una).
+  ejemplos: string[];
+}
 
 export type TipoEscena = Escena["tipo"];
 

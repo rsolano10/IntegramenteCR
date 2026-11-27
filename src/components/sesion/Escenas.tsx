@@ -10,6 +10,7 @@ import { MaterialDeApoyo } from "../ui/ResourceDetailView";
 import { Ceja, Marca, Nota, Pie, Titulo } from "./comun";
 import { IconoActividad } from "../actividad/IconoActividad";
 import { LEER_CADA_PANTALLA, useSesion, useTam } from "./contexto";
+import { Colores, DescansoEntre, Objetos, Orientacion, Reaccion, Reto } from "./EscenasGer";
 
 type De<T extends Escena["tipo"]> = Extract<Escena, { tipo: T }>;
 
@@ -762,10 +763,12 @@ function IndicacionEquipo() {
 }
 
 export function Repeticiones({ e }: { e: De<"repeticiones"> }) {
-  const { datos } = useSesion();
+  const { datos, tema } = useSesion();
   const t = useTam();
   const [lado, setLado] = useState(0);
   const [hechas, setHechas] = useState(0);
+  const [serie, setSerie] = useState(1);
+  const series = e.series ?? 1;
   const tope = datos.indicacionIndividual ? 99 : e.max;
   const falta = e.lados && lado === 0;
   const recordatorio = e.recordatorios[hechas % e.recordatorios.length];
@@ -773,23 +776,36 @@ export function Repeticiones({ e }: { e: De<"repeticiones"> }) {
     hechas >= e.max
       ? falta
         ? "¡Listo este lado!"
-        : "¡Serie completa!"
+        : serie < series
+          ? `¡Serie ${serie} lista!`
+          : "¡Serie completa!"
       : hechas >= e.min
         ? `Ya van ${hechas}. Pueden seguir hasta ${e.max} si se siente bien.`
         : recordatorio;
-  const terminado = !falta && hechas >= e.min;
+  const serieTerminada = !falta && hechas >= e.min;
+  const terminado = serieTerminada && serie >= series;
   return (
     <>
       <Titulo>{e.titulo}</Titulo>
       <Nota className="mt-2">{e.nota}</Nota>
       <IndicacionEquipo />
       <div className="mt-6 flex flex-col items-center">
-        {e.lados && (
-          <div className="mb-4" key={`lado-${lado}`}>
-            <Lado lado={lado} />
+        {(e.lados || series > 1) && (
+          <div className="mb-4 flex items-center gap-3" key={`lado-${lado}-${serie}`}>
+            {series > 1 && (
+              <span className={`inline-flex items-center gap-2 font-semibold text-tinta-suave ${t.chico}`}>
+                Serie {serie} de {series}
+                <span className="inline-flex gap-1.5" aria-hidden="true">
+                  {Array.from({ length: series }, (_, i) => (
+                    <span key={i} className="w-3 h-3 rounded-full" style={{ background: i < serie - (serieTerminada ? 0 : 1) ? tema.fuerte : "#e4dfc7" }} />
+                  ))}
+                </span>
+              </span>
+            )}
+            {e.lados && <Lado lado={lado} />}
           </div>
         )}
-        <Anillo key={`anillo-${lado}`} hechas={hechas} min={e.min} max={e.max} onTocar={() => setHechas((h) => Math.min(h + 1, tope))} />
+        <Anillo key={`anillo-${lado}-${serie}`} hechas={hechas} min={e.min} max={e.max} onTocar={() => setHechas((h) => Math.min(h + 1, tope))} />
         <p key={mensaje} className={`ses-sube m-0 mt-5 min-h-[2.8em] max-w-sm text-center font-semibold leading-snug text-tinta ${t.cuerpo}`} aria-live="polite">
           {mensaje}
         </p>
@@ -805,7 +821,18 @@ export function Repeticiones({ e }: { e: De<"repeticiones"> }) {
             Pasar al otro lado
           </button>
         )}
-        {hechas > 0 && !(falta && hechas >= e.min) && (
+        {serieTerminada && serie < series && (
+          <DescansoEntre
+            segundos={e.descansoEntre ?? 45}
+            siguiente={`Serie ${serie + 1}`}
+            onSeguir={() => {
+              setSerie((x) => x + 1);
+              setLado(0);
+              setHechas(0);
+            }}
+          />
+        )}
+        {hechas > 0 && !(falta && hechas >= e.min) && !(serieTerminada && serie < series) && (
           <button type="button" onClick={() => setHechas((h) => h - 1)} className={`mt-1 border-0 bg-transparent p-0 text-tinta-tenue underline decoration-dotted cursor-pointer ${t.chico}`}>
             Me equivoqué, restar una
           </button>
@@ -924,6 +951,9 @@ export function Tiempo({ e }: { e: De<"tiempo"> }) {
         <p key={mensaje} className={`ses-sube m-0 mt-5 min-h-[2.8em] max-w-sm text-center font-semibold leading-snug text-tinta ${t.cuerpo}`} aria-live="polite">
           {mensaje}
         </p>
+        {e.descansoEntre && !corriendo && intento > 0 && !ladoListo && (
+          <DescansoEntre key={`d-${lado}-${intento}`} segundos={e.descansoEntre} siguiente="Empezar" onSeguir={empezar} />
+        )}
         {ladoListo && !todo && (
           <button
             type="button"
@@ -1424,6 +1454,16 @@ export function VistaEscena({ e }: { e: Escena }) {
       return <Cuidados e={e} />;
     case "cierre":
       return <Cierre e={e} />;
+    case "reto":
+      return <Reto e={e} />;
+    case "colores":
+      return <Colores e={e} />;
+    case "orientacion":
+      return <Orientacion e={e} />;
+    case "objetos":
+      return <Objetos e={e} />;
+    case "reaccion":
+      return <Reaccion e={e} />;
     case "juego":
       return <EscenaJuego />;
   }

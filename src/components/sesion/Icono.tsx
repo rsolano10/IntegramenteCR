@@ -252,6 +252,89 @@ const D: Record<NombreIcono, ReactNode> = {
       <path d="M17 24c0-4 3-6 7-6s7 2 7 6-3 6-7 6-7-2-7-6z" opacity=".25" />
     </>
   ),
+  globo: (
+    <>
+      <ellipse cx="24" cy="19" rx="12" ry="14" fill={R} />
+      <path d="M22 33h4l-2 3z" fill={R} />
+      <path d="M24 36c-3 3 3 5 0 8" />
+      <path d="M18 13c1-2 3-3 5-3" stroke={B} />
+    </>
+  ),
+  aro: (
+    <>
+      <circle cx="24" cy="24" r="15" stroke="#c0664f" strokeWidth="5" />
+      <path d="M11 20h4M33 28h4" opacity=".5" />
+    </>
+  ),
+  cono: (
+    <>
+      <path d="M17 38l7-28 7 28z" fill={R} />
+      <path d="M19.5 28h9M21.5 20h5" stroke={B} strokeWidth="3" />
+      <path d="M10 38h28" />
+    </>
+  ),
+  mano: (
+    <>
+      <path d="M16 26V14a2.5 2.5 0 0 1 5 0v8-11a2.5 2.5 0 0 1 5 0v11-9a2.5 2.5 0 0 1 5 0v11-6a2.5 2.5 0 0 1 5 0v10c0 8-5 13-12 13-5 0-8-3-11-7l-4-6a2.5 2.5 0 0 1 4-3z" fill={R} />
+    </>
+  ),
+  pesa: (
+    <>
+      <rect x="6" y="16" width="8" height="16" rx="2.5" fill={R} />
+      <rect x="34" y="16" width="8" height="16" rx="2.5" fill={R} />
+      <path d="M14 24h20" strokeWidth="3.4" />
+    </>
+  ),
+  mesa: (
+    <>
+      <rect x="6" y="16" width="36" height="5" rx="2" fill={R} />
+      <path d="M10 21v19M38 21v19" />
+      <circle cx="16" cy="12" r="3" opacity=".6" />
+      <path d="M24 13h6M33 10v5" opacity=".6" />
+    </>
+  ),
+  escalerilla: (
+    <>
+      <path d="M14 6l-6 36M34 6l6 36" />
+      <path d="M13 13h22M12 21h25M10.5 29h27M9.5 37h29" stroke="#c0664f" />
+    </>
+  ),
+  balancin: (
+    <>
+      <ellipse cx="24" cy="30" rx="17" ry="7" fill={R} />
+      <path d="M7 30c0 4 8 7 17 7s17-3 17-7" />
+      <path d="M17 29l1 1M23 31l1 1M29 29l1 1" opacity=".55" />
+      <path d="M16 18l3 4M24 15v6M32 18l-3 4" opacity=".5" />
+    </>
+  ),
+  "figura-gira": (
+    <>
+      <circle cx="24" cy="34" r="8" fill={R} />
+      <circle cx="24" cy="8" r="4" fill={R} />
+      <path d="M24 12v14M14 18h20" />
+      <path d="M10 14c-2 3-2 6 0 9M38 14c2 3 2 6 0 9" opacity=".6" />
+      <path d="M8 21l2 2 2-2M36 21l2 2 2-2" opacity=".6" />
+    </>
+  ),
+  "figura-alcance": (
+    <>
+      <path d="M6 26h12v14M6 12v28" opacity=".55" />
+      <circle cx="21" cy="11" r="4" fill={R} />
+      <path d="M19 15l-1 11h10v13M28 39h3" />
+      <path d="M20 18l12 9" />
+      <path d="M36 40l2.5-9 2.5 9z" fill={R} />
+    </>
+  ),
+  "figura-atrapa": (
+    <>
+      <path d="M6 26h12v14M6 12v28" opacity=".55" />
+      <circle cx="19" cy="11" r="4" fill={R} />
+      <path d="M19 15v11h11v13M30 39h3" />
+      <path d="M19 19l10-2M19 22l10 1" />
+      <circle cx="33" cy="9" r="4.5" fill={R} />
+      <path d="M33 16v3M33 20l-1.5-1.5M33 20l1.5-1.5" opacity=".6" />
+    </>
+  ),
   pelota: (
     <>
       <circle cx="24" cy="24" r="15" fill={R} />
