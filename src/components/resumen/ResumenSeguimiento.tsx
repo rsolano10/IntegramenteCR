@@ -43,7 +43,7 @@ export function ResumenSeguimiento({ datos, para = "medico" }: { datos: ResumenD
   const conVoz = datos.semanas.filter((s) => s.lo_que_mas_gusto || s.preocupacion);
 
   return (
-    <article className="resumen-doc bg-white text-tinta rounded-[24px] border border-borde px-5 py-6 sm:px-8 sm:py-8 print:border-0 print:rounded-none print:p-0 print:shadow-none">
+    <article className="resumen-doc min-w-0 bg-white text-tinta rounded-[24px] border border-borde px-5 py-6 sm:px-8 sm:py-8 print:border-0 print:rounded-none print:p-0 print:shadow-none">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-borde-suave pb-5">
         <div>
           <p className="m-0 tracking-[0.14em] uppercase text-[12px] font-semibold text-tinta-tenue">Resumen de seguimiento en casa</p>

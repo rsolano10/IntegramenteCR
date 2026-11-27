@@ -177,7 +177,7 @@ export function AppHeader() {
       {modal === "mi-programa" && <MiProgramaModal onClose={() => setModal(null)} nombreCuenta={nombre} />}
       {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
       {modal === "acompanante" && <SumarAcompanante onClose={() => setModal(null)} />}
-      {modal === "perfil-persona" && <PerfilPersonaModal onClose={() => setModal(null)} onVerProgramas={() => setModal("mi-programa")} />}
+      {modal === "perfil-persona" && <PerfilPersonaModal onClose={() => setModal(null)} />}
       {modal === "calendario" && myPatient && session.status === "authed" && (
         <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />
       )}

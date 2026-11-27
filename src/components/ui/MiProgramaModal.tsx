@@ -28,7 +28,7 @@ export function MiProgramaModal({ onClose, nombreCuenta }: { onClose: () => void
   return (
     <Modal onClose={onClose} bare size="lg">
       {patient ? (
-        <Contenido patient={patient} nombreCuenta={nombreCuenta} onClose={onClose} />
+        <ContenidoPrograma patient={patient} nombreCuenta={nombreCuenta} onClose={onClose} />
       ) : (
         <div className="p-10 flex justify-center">
           <span className="inline-block w-7 h-7 rounded-full border-[3px] border-beige-serenidad border-t-verde-serenidad animate-spin" />
@@ -38,7 +38,9 @@ export function MiProgramaModal({ onClose, nombreCuenta }: { onClose: () => void
   );
 }
 
-function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nombreCuenta: string; onClose: () => void }) {
+// El contenido de «El programa de …». `sinEncabezado`: dentro de «Perfil de
+// …», que ya tiene el suyo (pestaña Programa).
+export function ContenidoPrograma({ patient, nombreCuenta, onClose, sinEncabezado = false }: { patient: MyPatient; nombreCuenta: string; onClose: () => void; sinEncabezado?: boolean }) {
   const navigate = useNavigate();
   const [abriendo, setAbriendo] = useState(false);
   const nombre = patient.nombre.split(" ")[0];
@@ -74,6 +76,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
   return (
     <div>
       {/* Encabezado: el programa de un vistazo */}
+      {!sinEncabezado && (
       <div className="relative bg-verde-profundo text-white px-6 sm:px-8 pt-7 pb-7 overflow-hidden">
         <div aria-hidden="true" className="absolute -right-16 -top-20 w-56 h-56 rounded-full bg-verde-serenidad/40" />
         <div aria-hidden="true" className="absolute right-16 -bottom-28 w-44 h-44 rounded-full bg-mostaza-vital/25" />
@@ -86,6 +89,7 @@ function Contenido({ patient, nombreCuenta, onClose }: { patient: MyPatient; nom
           </span>
         </div>
       </div>
+      )}
 
       <div className="px-6 sm:px-8 py-7 grid gap-8">
         {/* Los dos programas, uno al lado del otro, para ver cuál les queda mejor */}
