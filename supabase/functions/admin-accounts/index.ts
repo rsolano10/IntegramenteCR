@@ -279,6 +279,20 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Sumar a otro familiar o acompañante a una persona ya inscrita: solo sus
+  // datos básicos; queda vinculado a la misma persona (sin cuestionario).
+  if (payload.action === "sumar_acompanante") {
+    if (callerProfile?.role !== "familiar" && callerProfile?.role !== "paciente") {
+      return json({ error: "No autorizado." }, 403);
+    }
+    try {
+      return await handleSumarAcompanante(admin, user.id, payload);
+    } catch (err) {
+      console.error(err);
+      return json({ error: err instanceof Error ? err.message : "Error inesperado." }, 500);
+    }
+  }
+
   if (callerProfile?.role !== "profesional") return json({ error: "Solo el equipo clínico puede hacer esto." }, 403);
 
   try {
@@ -835,4 +849,56 @@ async function handleInviteCounterpart(
   if (linkError) return json({ error: linkError.message }, 400);
 
   return json({ ok: true });
+}
+
+// Sumar a otro familiar o acompañante a la persona del programa. Lo puede
+// hacer cualquier cuenta vinculada a ella (familiar o la propia persona).
+// Si el correo ya tiene una cuenta de familiar, se vincula; si no, se invita
+// por correo para que cree su contraseña. Entra como familiar de esa persona.
+async function handleSumarAcompanante(admin: ReturnType<typeof createClient>, callerId: string, payload: Record<string, unknown>) {
+  const patientId = String(payload.patientId ?? "");
+  const email = String(payload.email ?? "").trim().toLowerCase();
+  const nombre = String(payload.nombre ?? "").trim();
+  const whatsappPhone = String(payload.whatsappPhone ?? "").trim() || null;
+  if (!patientId || !email || !nombre) return json({ error: "Faltan el nombre o el correo." }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "El correo no parece válido." }, 400);
+
+  const { data: callerLink } = await admin
+    .from("patient_links")
+    .select("patient_id")
+    .eq("patient_id", patientId)
+    .eq("profile_id", callerId)
+    .in("relation", ["familiar_admin", "participante"])
+    .limit(1)
+    .maybeSingle();
+  if (!callerLink) return json({ error: "No autorizado para esta persona." }, 403);
+
+  // ¿Ya tiene cuenta?
+  const { data: existente } = await admin.from("profiles").select("id, role, nombre").eq("id", (await idPorCorreo(admin, email)) ?? "00000000-0000-0000-0000-000000000000").maybeSingle();
+  let perfilId: string;
+  let invitado = false;
+  if (existente) {
+    if (existente.role !== "familiar") return json({ error: "Ese correo ya tiene una cuenta que no es de familiar. Escribinos por WhatsApp y lo resolvemos." }, 400);
+    perfilId = existente.id;
+  } else {
+    const { data: inv, error } = await admin.auth.admin.inviteUserByEmail(email, {
+      data: { role: "familiar", nombre, ...(whatsappPhone ? { whatsapp_phone: whatsappPhone } : {}) },
+      redirectTo: `${SITE_URL}/completar-cuenta`,
+    });
+    if (error || !inv?.user) return json({ error: error?.message ?? "No pudimos enviar la invitación." }, 400);
+    perfilId = inv.user.id;
+    invitado = true;
+  }
+
+  const { data: yaVinculado } = await admin.from("patient_links").select("profile_id").eq("patient_id", patientId).eq("profile_id", perfilId).limit(1).maybeSingle();
+  if (yaVinculado) return json({ error: `${nombre.split(" ")[0]} ya acompaña a esta persona.` }, 400);
+  const { error: linkError } = await admin.from("patient_links").insert({ patient_id: patientId, profile_id: perfilId, relation: "familiar_admin" });
+  if (linkError) return json({ error: linkError.message }, 400);
+  await admin.from("audit_log").insert({ patient_id: patientId, entidad: "acompanante", accion: invitado ? "invitar" : "vincular", autor_id: callerId });
+  return json({ ok: true, invitado });
+}
+
+async function idPorCorreo(admin: ReturnType<typeof createClient>, email: string): Promise<string | null> {
+  const { data } = await admin.rpc("perfil_id_por_correo", { p_email: email });
+  return (data as string | null) ?? null;
 }

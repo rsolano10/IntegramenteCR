@@ -4,6 +4,7 @@ import { useSession } from "../../lib/useSession";
 import { useMyPatient } from "../../lib/useMyPatient";
 import { elegirPacienteActivo, empezarNuevoFamiliar, useMisPacientes } from "../../lib/pacienteActivo";
 import { useAppStore } from "../../lib/store";
+import { abrirVentanaCuenta } from "../../lib/abrirCuenta";
 
 // Para el familiar que acompaña a más de una persona: con quién está ahora
 // (siempre a la vista, arriba) y cambiar en un toque. También el camino para
@@ -89,14 +90,25 @@ export function SelectorFamiliar() {
             role="menuitem"
             onClick={() => {
               setAbierto(false);
-              empezarNuevoFamiliar();
-              resetOnboardingForNewAccount(uid);
-              navigate("/app/perfil/bienvenida");
+              abrirVentanaCuenta("acompanante");
             }}
             className="w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 border-0 bg-transparent text-left font-sans text-[15px] font-semibold text-verde-profundo cursor-pointer hover:bg-campo"
           >
             <span className="shrink-0 w-9 h-9 rounded-full border-[1.5px] border-dashed border-verde-serenidad inline-flex items-center justify-center text-[18px]">+</span>
-            Agregar otro familiar
+            Sumar a alguien que acompaña a {primer(activo.nombre)}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setAbierto(false);
+              empezarNuevoFamiliar();
+              resetOnboardingForNewAccount(uid);
+              navigate("/app/perfil/bienvenida");
+            }}
+            className="w-full rounded-2xl px-3 py-2 border-0 bg-transparent text-left font-sans text-[13.5px] font-semibold text-tinta-suave cursor-pointer hover:bg-campo"
+          >
+            Inscribir a otra persona al programa
           </button>
         </div>
       )}

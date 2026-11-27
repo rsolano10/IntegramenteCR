@@ -17,6 +17,7 @@ import { Logo, LogoEnCasa } from "../ui/Logo";
 import { ROL_ETIQUETA } from "../../lib/areasSalud";
 import { SelectorFamiliar } from "./SelectorFamiliar";
 import { useAgregarFamiliar } from "../../lib/pacienteActivo";
+import { SumarAcompanante } from "../familiar/SumarAcompanante";
 import { PestanasFamilia } from "./FamiliarNav";
 
 const crumbs: [string, string][] = [
@@ -65,7 +66,7 @@ function crumbFor(pathname: string): string {
   return hit ? hit[1] : "";
 }
 
-type OpenModal = "mi-perfil" | "mi-programa" | "contacto" | "calendario" | "auditoria" | null;
+type OpenModal = "mi-perfil" | "mi-programa" | "contacto" | "calendario" | "auditoria" | "acompanante" | null;
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -150,7 +151,12 @@ export function AppHeader() {
             ...(myPatient
               ? [{ seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0], label: "Resumen para el médico", onClick: () => navigate("/app/resumen-medico") }]
               : []),
-            ...(myPatient && role === "familiar" ? [{ seccion: "Tus familiares", label: "Agregar otro familiar", onClick: agregarFamiliar }] : []),
+            // Sumar a otro familiar o acompañante a esta persona (sin cuestionario).
+            ...(myPatient
+              ? [{ seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0], label: "Sumar a alguien que acompaña", onClick: () => setModal("acompanante") }]
+              : []),
+            // Inscribir a otra persona al programa (eso sí lleva su cuestionario).
+            ...(myPatient && role === "familiar" ? [{ seccion: "Otra persona", label: "Inscribir a otra persona", onClick: agregarFamiliar }] : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
@@ -167,6 +173,7 @@ export function AppHeader() {
 
       {modal === "mi-programa" && <MiProgramaModal onClose={() => setModal(null)} nombreCuenta={nombre} />}
       {modal === "contacto" && <ContactanosModal onClose={() => setModal(null)} />}
+      {modal === "acompanante" && <SumarAcompanante onClose={() => setModal(null)} />}
       {modal === "calendario" && myPatient && session.status === "authed" && (
         <CalendarModal patientId={myPatient.id} userId={session.session.user.id} onClose={() => setModal(null)} />
       )}
