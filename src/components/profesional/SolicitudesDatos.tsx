@@ -4,10 +4,11 @@ import { supabase } from "../../lib/supabase";
 import { useEsAdmin } from "../../lib/useEsAdmin";
 import { Caja, CajaAviso, CajaCuerpo } from "./Caja";
 
-// Solicitudes de derechos (Ley 8968: acceso, rectificación, eliminación,
-// oposición). Solo la ve la administración y solo si hay alguna. Plazo de
-// respuesta: 5 días hábiles (vence_el). En una eliminación u oposición se
-// puede borrar lo no clínico de la cuenta con resolver_solicitud_datos.
+// Solicitudes de derechos (Ley 8968). Desde 2026-11-28 las familias las
+// resuelven solas en Mis datos y permisos (informe al instante, eliminación
+// programada a 7 días que se ejecuta sola): acá quedan como constancia, sin
+// nada que contestar. Las manuales anteriores (sin «automatica») siguen
+// resolviéndose con resolver_solicitud_datos.
 
 interface Solicitud {
   id: string;
@@ -18,6 +19,8 @@ interface Solicitud {
   respuesta: string | null;
   vence_el: string;
   created_at: string;
+  automatica: boolean;
+  ejecutar_el: string | null;
 }
 
 const TIPO: Record<Solicitud["tipo"], string> = {
@@ -35,21 +38,21 @@ export function SolicitudesDatos() {
     queryKey: ["solicitudes-datos"],
     enabled: esAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase.from("solicitudes_datos").select("id, nombre, tipo, detalle, estado, respuesta, vence_el, created_at").order("created_at", { ascending: false }).limit(50);
+      const { data, error } = await supabase.from("solicitudes_datos").select("id, nombre, tipo, detalle, estado, respuesta, vence_el, created_at, automatica, ejecutar_el").order("created_at", { ascending: false }).limit(50);
       if (error) throw error;
       return (data ?? []) as Solicitud[];
     },
   });
   const [aviso, setAviso] = useState<string | null>(null);
   if (!esAdmin || !data || data.length === 0) return null;
-  const pendientes = data.filter((s) => s.estado === "pendiente");
+  const pendientes = data.filter((s) => s.estado === "pendiente" && !s.automatica);
 
   return (
     <Caja
       nivel={2}
       eyebrow="Ley 8968"
       titulo="Solicitudes sobre datos personales"
-      descripcion="Respondé dentro de los 5 días hábiles. El expediente de salud se conserva; en una eliminación se borra lo demás."
+      descripcion="Las familias las resuelven solas desde Mis datos y permisos; acá queda la constancia. Solo las manuales anteriores necesitan respuesta (5 días hábiles)."
       acciones={pendientes.length > 0 ? <span className="text-[14px] font-semibold text-alerta-texto">{pendientes.length} en trámite</span> : undefined}
     >
       {aviso && <CajaAviso texto={aviso} onCerrar={() => setAviso(null)} />}
@@ -79,6 +82,21 @@ function Fila({ s, onListo }: { s: Solicitud; onListo: (t: string) => void }) {
       qc.invalidateQueries({ queryKey: ["solicitudes-datos"] });
     },
   });
+
+  if (s.automatica) {
+    return (
+      <li className="rounded-2xl border border-borde bg-white px-4 py-3 grid gap-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="m-0 text-[15px] font-semibold text-tinta">
+            {TIPO[s.tipo]} · {s.nombre ?? "Cuenta"} <span className="ml-1 rounded-full bg-verde-tenue px-2 py-0.5 text-[12px] font-semibold text-verde-profundo">Automática</span>
+          </p>
+          <p className="m-0 text-[13.5px] text-tinta-tenue">
+            {s.estado === "pendiente" && s.ejecutar_el ? `Se ejecuta sola el ${fecha(s.ejecutar_el)}` : s.estado === "cancelada" ? "Cancelada por la persona" : "Hecha"} · {fecha(s.created_at)}
+          </p>
+        </div>
+      </li>
+    );
+  }
 
   return (
     <li className="rounded-2xl border border-borde bg-white px-4 py-3.5 grid gap-2">

@@ -1,68 +1,62 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useSession } from "../lib/useSession";
+import { useMyPatient } from "../lib/useMyPatient";
 import { CheckRow } from "../components/ui/CheckRow";
-import { Button } from "../components/ui/Button";
 import { BotonVolver } from "../components/ui/BotonVolver";
 import { useMiReferidor } from "../lib/referidos";
+import { abrirVentanaCuenta } from "../lib/abrirCuenta";
+import { waEquipo } from "../lib/whatsapp";
+import { useAccionEliminacion, useEliminacionProgramada } from "../lib/misDatos";
 import { CONSENTIMIENTOS, consentimientosDeRol, useMisConsentimientos, useRegistrarConsentimientos, type RolCuenta } from "../lib/consentimientos";
 
-// Mis datos y permisos: los derechos de la Ley 8968 en un solo lugar.
-//   - Permisos opcionales (Clara, IA del equipo, voz, WhatsApp): se
-//     guardan al tocar, cada cambio queda en el historial.
-//   - Descargar mis datos (JSON, exportar_mis_datos).
-//   - Solicitudes de acceso, rectificación, eliminación u oposición, con
-//     respuesta en 5 días hábiles (solicitar_derecho).
-//   - Historial de consentimientos.
+// Mis datos y permisos: los derechos de la Ley 8968 en autoservicio, sin
+// solicitudes que el equipo tenga que contestar a mano.
+//   - Acceso: el informe legible, al instante (/app/mis-datos/informe).
+//   - Rectificación: se corrige en la app (Mi cuenta, Perfil de …).
+//   - Oposición: los permisos, que se aplican al tocar.
+//   - Eliminación: se programa y se ejecuta sola a los 7 días, salvo que se
+//     cancele (función derechos-datos, con correo de constancia).
+//   - Historial de autorizaciones y de lo pedido.
 
-type TipoSolicitud = "acceso" | "rectificacion" | "eliminacion" | "oposicion";
-
-const SOLICITUDES: { tipo: TipoSolicitud; titulo: string; ayuda: string }[] = [
-  { tipo: "acceso", titulo: "Ver todo lo que tienen sobre mí", ayuda: "Incluye el expediente que lleva el equipo, que no aparece en la descarga." },
-  { tipo: "rectificacion", titulo: "Corregir un dato", ayuda: "Contanos qué dato está mal y cuál es el correcto." },
-  { tipo: "eliminacion", titulo: "Eliminar mis datos", ayuda: "Borramos lo que no es parte del expediente de salud y cerramos la cuenta si lo pedís. El expediente se conserva el plazo que exige la ley." },
-  { tipo: "oposicion", titulo: "Oponerme a un uso", ayuda: "Contanos qué uso de tus datos no querés que hagamos." },
-];
-
-const ESTADO: Record<string, string> = { pendiente: "En trámite", resuelta: "Resuelta", rechazada: "No procede" };
+const SOLICITUD: Record<string, string> = { acceso: "Ver mis datos", rectificacion: "Corregir un dato", eliminacion: "Eliminar mis datos", oposicion: "Oponerme a un uso" };
+const ESTADO: Record<string, string> = { pendiente: "Programada", resuelta: "Hecha", rechazada: "No procede", cancelada: "Cancelada" };
 
 interface Solicitud {
   id: string;
-  tipo: TipoSolicitud;
-  detalle: string | null;
+  tipo: string;
   estado: string;
   respuesta: string | null;
-  vence_el: string;
   created_at: string;
 }
-
 interface Registro {
   id: string;
   tipo: string;
   otorgado: boolean;
-  version: string;
   created_at: string;
 }
 
-const fecha = (iso: string) => new Date(iso.length === 10 ? `${iso}T12:00:00` : iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+const fecha = (iso: string) => new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+const fechaLarga = (iso: string) => new Date(iso).toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long" });
 
 export function MisDatos() {
   const session = useSession();
   const rol = (session.status === "authed" ? session.profile.role : null) as RolCuenta | null;
-  const { data: referidor } = useMiReferidor(rol === "familiar" || rol === "paciente");
+  const esFamilia = rol === "familiar" || rol === "paciente";
+  const { data: referidor } = useMiReferidor(esFamilia);
+  const { data: persona } = useMyPatient();
   const uid = session.status === "authed" ? session.session.user.id : null;
   const { data: guardados } = useMisConsentimientos(!!rol);
   const registrar = useRegistrarConsentimientos();
-  const qc = useQueryClient();
   const [aviso, setAviso] = useState<string | null>(null);
 
   const { data: solicitudes } = useQuery({
     queryKey: ["mis-solicitudes-datos", uid],
     enabled: !!uid,
     queryFn: async () => {
-      const { data, error } = await supabase.from("solicitudes_datos").select("id, tipo, detalle, estado, respuesta, vence_el, created_at").eq("profile_id", uid!).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("solicitudes_datos").select("id, tipo, estado, respuesta, created_at").eq("profile_id", uid!).order("created_at", { ascending: false }).limit(30);
       if (error) throw error;
       return (data ?? []) as Solicitud[];
     },
@@ -71,69 +65,75 @@ export function MisDatos() {
     queryKey: ["historial-consentimientos", uid, guardados],
     enabled: !!uid,
     queryFn: async () => {
-      const { data, error } = await supabase.from("consentimientos").select("id, tipo, otorgado, version, created_at").eq("profile_id", uid!).order("created_at", { ascending: false }).limit(60);
+      const { data, error } = await supabase.from("consentimientos").select("id, tipo, otorgado, created_at").eq("profile_id", uid!).order("created_at", { ascending: false }).limit(60);
       if (error) throw error;
       return (data ?? []) as Registro[];
-    },
-  });
-
-  const descargar = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.rpc("exportar_mis_datos");
-      if (error) throw error;
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `integramente-mis-datos-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    },
-  });
-
-  const [tipo, setTipo] = useState<TipoSolicitud | null>(null);
-  const [detalle, setDetalle] = useState("");
-  const solicitar = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("solicitar_derecho", { p_tipo: tipo, p_detalle: detalle });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setTipo(null);
-      setDetalle("");
-      setAviso("Recibimos tu solicitud. Te respondemos en un máximo de 5 días hábiles.");
-      qc.invalidateQueries({ queryKey: ["mis-solicitudes-datos"] });
     },
   });
 
   if (!rol) return null;
   const opcionales = consentimientosDeRol(rol, { conReferidor: !!referidor }).filter((c) => !c.obligatorio);
   const tituloDe = (t: string) => CONSENTIMIENTOS.find((c) => c.tipo === t)?.titulo ?? t;
+  const primer = persona?.nombre.split(" ")[0];
 
   return (
-    <div className="im-in max-w-[720px] mx-auto px-5 py-8 pb-20 sm:px-8 grid gap-10">
-      <div>
-        <BotonVolver respaldo="/app/login" />
-        <h1 className="m-0 mt-4 mb-2 font-serif font-normal text-[30px] sm:text-[36px] leading-tight">Mis datos y permisos</h1>
-        <p className="m-0 text-[16px] leading-relaxed text-tinta-suave">
-          Acá decidís qué usos permitís, descargás tu información y ejercés tus derechos. Más detalle en la{" "}
-          <Link to="/legal/privacidad" className="text-verde-profundo font-semibold">
-            Política de privacidad
-          </Link>
-          .
-        </p>
-      </div>
+    <div className="im-in max-w-[760px] mx-auto px-4 py-8 pb-20 sm:px-8 grid grid-cols-[minmax(0,1fr)] gap-8">
+      <BotonVolver respaldo="/app/login" />
+
+      {/* Encabezado de marca */}
+      <header className="relative overflow-hidden rounded-[28px] bg-verde-profundo text-white px-6 sm:px-8 pt-7 pb-7 -mt-3">
+        <div aria-hidden="true" className="absolute -right-16 -top-24 w-60 h-60 rounded-full bg-verde-serenidad/45" />
+        <div aria-hidden="true" className="absolute right-20 -bottom-36 w-52 h-52 rounded-full bg-mostaza-vital/20" />
+        <div className="relative">
+          <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#cfe2e2]">Tu privacidad</p>
+          <h1 className="m-0 mt-1.5 font-serif font-normal text-[30px] sm:text-[36px] leading-tight">Mis datos y permisos</h1>
+          <p className="m-0 mt-2 max-w-[520px] text-[15px] leading-relaxed text-[#e1ecec]">
+            Todo se hace acá, al instante: ver tus datos, corregirlos, decidir qué usos permitís o eliminarlos. Más detalle en la{" "}
+            <Link to="/legal/privacidad" className="text-mostaza-vital font-semibold">
+              Política de privacidad
+            </Link>
+            .
+          </p>
+        </div>
+      </header>
 
       {aviso && (
-        <p role="status" className="m-0 -mb-4 rounded-2xl bg-verde-tenue border border-verde-serenidad px-4 py-3 text-[15px] text-tinta">
+        <p role="status" className="m-0 -my-3 rounded-2xl bg-verde-tenue border border-verde-serenidad px-4 py-3 text-[15px] text-tinta">
           {aviso}
         </p>
       )}
 
+      {/* Ver y corregir */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Tarjeta
+          icono={<IconoDoc />}
+          titulo="Ver todo lo que tenemos"
+          texto="Un informe para leer, imprimir o guardar como PDF. Incluye las notas del equipo."
+        >
+          <Link
+            to="/app/mis-datos/informe"
+            className="inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-verde-profundo text-white text-[15px] font-semibold no-underline hover:bg-tinta"
+          >
+            Ver mis datos
+          </Link>
+        </Tarjeta>
+        <Tarjeta icono={<IconoLapiz />} titulo="Corregir un dato" texto="Cambialo vos mismo: se guarda al momento.">
+          <div className="flex flex-wrap gap-2">
+            <BotonSuave onClick={() => abrirVentanaCuenta("mi-perfil")}>Mis datos</BotonSuave>
+            {rol === "familiar" && persona && <BotonSuave onClick={() => abrirVentanaCuenta("perfil-persona")}>Datos de {primer}</BotonSuave>}
+          </div>
+          <a href={waEquipo("Quiero corregir un dato que no puedo cambiar en la app.")} target="_blank" rel="noreferrer" className="text-[13.5px] font-semibold text-verde-profundo">
+            ¿Algo que no podés cambiar? Escribinos
+          </a>
+        </Tarjeta>
+      </div>
+
+      {/* Permisos: oponerse a un uso */}
       {opcionales.length > 0 && (
         <section>
-          <h2 className="m-0 mb-1.5 font-serif font-normal text-[23px]">Permisos</h2>
-          <p className="m-0 mb-3 text-[15px] text-tinta-suave">Se guardan al tocar. El programa sigue funcionando aunque los desactives.</p>
+          <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-verde-serenidad">Permisos</p>
+          <h2 className="m-0 mt-0.5 mb-1 font-serif font-normal text-[24px] leading-tight">Qué usos permitís</h2>
+          <p className="m-0 mb-4 text-[15px] text-tinta-suave">Se aplican al tocar. El programa sigue funcionando aunque los desactives.</p>
           <div className="grid gap-3">
             {opcionales.map((d) => {
               const activo = !!guardados?.find((g) => g.tipo === d.tipo)?.otorgado;
@@ -143,10 +143,7 @@ export function MisDatos() {
                   checked={activo}
                   disabled={registrar.isPending}
                   onToggle={() =>
-                    registrar.mutate(
-                      { rol, decisiones: { [d.tipo]: !activo } },
-                      { onSuccess: () => setAviso(`${d.titulo}: ${activo ? "desactivado" : "activado"}.`) },
-                    )
+                    registrar.mutate({ rol, decisiones: { [d.tipo]: !activo } }, { onSuccess: () => setAviso(`${d.titulo}: ${activo ? "desactivado" : "activado"}.`) })
                   }
                 >
                   <strong className="block mb-1 text-tinta">{d.titulo}</strong>
@@ -159,91 +156,194 @@ export function MisDatos() {
         </section>
       )}
 
-      <section>
-        <h2 className="m-0 mb-1.5 font-serif font-normal text-[23px]">Descargar mis datos</h2>
-        <p className="m-0 mb-3 text-[15px] leading-relaxed text-tinta-suave">
-          Un archivo con tu cuenta, tus permisos, el cuestionario, los planes y registros, los mensajes y las conversaciones con Clara.
-        </p>
-        <Button variant="secondary" onClick={() => descargar.mutate()} disabled={descargar.isPending}>
-          {descargar.isPending ? "Preparando…" : "Descargar mis datos"}
-        </Button>
-        {descargar.isError && <p className="m-0 mt-2 text-[14.5px] text-alerta-texto">No pudimos preparar el archivo. Probá de nuevo.</p>}
-      </section>
+      {esFamilia && <Eliminar uid={uid} />}
 
-      <section>
-        <h2 className="m-0 mb-1.5 font-serif font-normal text-[23px]">Tus derechos</h2>
-        <p className="m-0 mb-3 text-[15px] leading-relaxed text-tinta-suave">
-          Respondemos en un máximo de 5 días hábiles. También podés escribir a{" "}
-          <a href="mailto:programas.integramente@gmail.com" className="text-verde-profundo font-semibold">
-            programas.integramente@gmail.com
-          </a>
-          .
-        </p>
-        <div className="grid gap-2.5">
-          {SOLICITUDES.map((s) => (
-            <CheckRow key={s.tipo} checked={tipo === s.tipo} onToggle={() => setTipo(tipo === s.tipo ? null : s.tipo)}>
-              <strong className="block mb-0.5 text-tinta">{s.titulo}</strong>
-              <span className="text-[14.5px] text-tinta-suave">{s.ayuda}</span>
-            </CheckRow>
-          ))}
+      {/* Historial */}
+      <section className="grid gap-3">
+        <div>
+          <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-verde-serenidad">Constancias</p>
+          <h2 className="m-0 mt-0.5 font-serif font-normal text-[24px] leading-tight">Historial</h2>
         </div>
-        {tipo && (
-          <div className="mt-3 grid gap-3">
-            <label className="grid gap-1.5 text-[15px] font-semibold text-tinta">
-              Contanos más (opcional)
-              <textarea
-                value={detalle}
-                onChange={(e) => setDetalle(e.target.value)}
-                rows={3}
-                maxLength={2000}
-                className="px-3.5 py-3 rounded-2xl border-[1.5px] border-borde-campo bg-white font-sans text-[15.5px] text-tinta"
-              />
-            </label>
-            <Button variant="principal" onClick={() => solicitar.mutate()} disabled={solicitar.isPending}>
-              {solicitar.isPending ? "Enviando…" : "Enviar solicitud"}
-            </Button>
-            {solicitar.isError && (
-              <p className="m-0 text-[14.5px] text-alerta-texto">
-                {(solicitar.error as Error)?.message?.includes("en trámite") ? "Ya tenés una solicitud de este tipo en trámite." : "No pudimos enviarla. Probá de nuevo."}
-              </p>
-            )}
-          </div>
-        )}
+        <details className="rounded-[20px] border border-borde bg-white px-4 py-3 group">
+          <summary className="cursor-pointer text-[15px] font-semibold text-tinta">Autorizaciones ({historial?.length ?? 0})</summary>
+          {(historial ?? []).length === 0 ? (
+            <p className="m-0 mt-2 text-[14.5px] text-tinta-suave">Todavía no hay registros.</p>
+          ) : (
+            <ul className="m-0 mt-2 p-0 list-none grid">
+              {historial!.map((h) => (
+                <li key={h.id} className="flex flex-wrap justify-between gap-x-4 text-[14px] text-tinta-suave border-t border-borde-suave py-2">
+                  <span>
+                    <strong className="text-tinta font-semibold">{tituloDe(h.tipo)}</strong>: {h.otorgado ? "autorizado" : "no autorizado"}
+                  </span>
+                  <span className="text-tinta-tenue">{fecha(h.created_at)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </details>
         {(solicitudes ?? []).length > 0 && (
-          <ul className="m-0 mt-5 p-0 list-none grid gap-2.5">
-            {solicitudes!.map((s) => (
-              <li key={s.id} className="rounded-2xl border border-borde bg-white px-4 py-3">
-                <p className="m-0 text-[15px] font-semibold text-tinta">
-                  {SOLICITUDES.find((x) => x.tipo === s.tipo)?.titulo} · {ESTADO[s.estado] ?? s.estado}
-                </p>
-                <p className="m-0 mt-0.5 text-[14px] text-tinta-tenue">
-                  Enviada el {fecha(s.created_at)}
-                  {s.estado === "pendiente" ? ` · respuesta a más tardar el ${fecha(s.vence_el)}` : ""}
-                </p>
-                {s.respuesta && <p className="m-0 mt-2 text-[15px] leading-relaxed text-tinta-suave">{s.respuesta}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h2 className="m-0 mb-3 font-serif font-normal text-[23px]">Historial de autorizaciones</h2>
-        {(historial ?? []).length === 0 ? (
-          <p className="m-0 text-[15px] text-tinta-suave">Todavía no hay registros.</p>
-        ) : (
-          <ul className="m-0 p-0 list-none grid gap-1.5">
-            {historial!.map((h) => (
-              <li key={h.id} className="flex flex-wrap justify-between gap-x-4 text-[14.5px] text-tinta-suave border-b border-borde-suave py-2">
-                <span>
-                  <strong className="text-tinta font-semibold">{tituloDe(h.tipo)}</strong>: {h.otorgado ? "autorizado" : "no autorizado"}
-                </span>
-                <span className="text-tinta-tenue">{fecha(h.created_at)}</span>
-              </li>
-            ))}
-          </ul>
+          <details className="rounded-[20px] border border-borde bg-white px-4 py-3">
+            <summary className="cursor-pointer text-[15px] font-semibold text-tinta">Lo que pediste ({solicitudes!.length})</summary>
+            <ul className="m-0 mt-2 p-0 list-none grid">
+              {solicitudes!.map((s) => (
+                <li key={s.id} className="border-t border-borde-suave py-2 text-[14px] text-tinta-suave">
+                  <span className="flex flex-wrap justify-between gap-x-4">
+                    <strong className="text-tinta font-semibold">
+                      {SOLICITUD[s.tipo] ?? s.tipo} · {ESTADO[s.estado] ?? s.estado}
+                    </strong>
+                    <span className="text-tinta-tenue">{fecha(s.created_at)}</span>
+                  </span>
+                  {s.respuesta && <span className="block mt-0.5">{s.respuesta}</span>}
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </section>
     </div>
+  );
+}
+
+function Eliminar({ uid }: { uid: string | null }) {
+  const { data: programada } = useEliminacionProgramada(uid);
+  const accion = useAccionEliminacion();
+  const [abierto, setAbierto] = useState(false);
+  const [entiendo, setEntiendo] = useState(false);
+
+  if (programada) {
+    return (
+      <section className="rounded-[24px] bg-mostaza-vital/35 border border-mostaza-vital px-5 sm:px-6 py-5 grid gap-3">
+        <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#6e521c]">Eliminación programada</p>
+        <p className="m-0 font-serif text-[22px] leading-snug text-tinta">Tus datos se eliminan el {fechaLarga(programada)}</p>
+        <p className="m-0 text-[15px] leading-relaxed text-tinta-suave">Hasta ese día todo sigue igual. Si cambiaste de idea, cancelalo y no se borra nada.</p>
+        <div>
+          <button
+            type="button"
+            onClick={() => accion.mutate("cancelar")}
+            disabled={accion.isPending}
+            className="inline-flex items-center min-h-11 px-5 rounded-full border-0 bg-verde-profundo text-white text-[15px] font-semibold cursor-pointer hover:bg-tinta disabled:opacity-60 font-sans"
+          >
+            {accion.isPending ? "Cancelando…" : "Cancelar la eliminación"}
+          </button>
+        </div>
+        {accion.isError && <p className="m-0 text-[14.5px] text-alerta-texto">{(accion.error as Error).message}</p>}
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-[24px] border border-borde bg-white px-5 sm:px-6 py-5 grid gap-3">
+      <div className="flex items-start gap-3">
+        <span aria-hidden="true" className="w-10 h-10 shrink-0 rounded-full bg-alerta text-alerta-texto inline-flex items-center justify-center">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <p className="m-0 font-serif text-[21px] leading-tight text-tinta">Eliminar mis datos y cerrar la cuenta</p>
+          <p className="m-0 mt-1 text-[14.5px] leading-relaxed text-tinta-suave">Se hace 7 días después de pedirlo, así tenés tiempo de arrepentirte.</p>
+        </div>
+      </div>
+      {!abierto ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setAbierto(true)}
+            className="inline-flex items-center min-h-11 px-5 rounded-full border-[1.5px] border-alerta-borde bg-white text-alerta-texto text-[15px] font-semibold cursor-pointer hover:bg-alerta font-sans"
+          >
+            Quiero eliminar mis datos
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="rounded-2xl bg-alerta/60 px-4 py-3 text-[14px] leading-relaxed text-tinta">
+              <p className="m-0 mb-1 font-semibold">Se borra</p>
+              Tus conversaciones y lo que recuerdan Clara y el asistente, tu WhatsApp y los avisos. Se retiran los permisos opcionales y se cierra tu cuenta.
+            </div>
+            <div className="rounded-2xl bg-fondo-papel px-4 py-3 text-[14px] leading-relaxed text-tinta">
+              <p className="m-0 mb-1 font-semibold">Se conserva</p>
+              El expediente de salud (cuestionario, planes, registros y notas del equipo), bloqueado el plazo que exige la ley; después se elimina.
+            </div>
+          </div>
+          <p className="m-0 text-[14px] text-tinta-suave">
+            Antes, podés{" "}
+            <Link to="/app/mis-datos/informe" className="font-semibold text-verde-profundo">
+              guardar una copia de tus datos
+            </Link>
+            .
+          </p>
+          <label className="flex items-start gap-2.5 text-[14.5px] text-tinta">
+            <input type="checkbox" checked={entiendo} onChange={(e) => setEntiendo(e.target.checked)} className="mt-1 w-4 h-4 accent-[#8c3f2a]" />
+            Entiendo que, pasados los 7 días, no se puede deshacer.
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => accion.mutate("programar")}
+              disabled={!entiendo || accion.isPending}
+              className="inline-flex items-center min-h-11 px-5 rounded-full border-0 bg-alerta-texto text-white text-[15px] font-semibold cursor-pointer disabled:opacity-50 font-sans"
+            >
+              {accion.isPending ? "Programando…" : "Programar la eliminación"}
+            </button>
+            <BotonSuave
+              onClick={() => {
+                setAbierto(false);
+                setEntiendo(false);
+              }}
+            >
+              Mejor no
+            </BotonSuave>
+          </div>
+          {accion.isError && <p className="m-0 text-[14.5px] text-alerta-texto">{(accion.error as Error).message}</p>}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Tarjeta({ icono, titulo, texto, children }: { icono: ReactNode; titulo: string; texto: string; children: ReactNode }) {
+  return (
+    <section className="relative overflow-hidden rounded-[24px] bg-beige-serenidad/55 px-5 py-5 grid gap-3 content-start">
+      <div aria-hidden="true" className="absolute -right-10 -top-12 w-28 h-28 rounded-full bg-mostaza-vital/30" />
+      <span aria-hidden="true" className="relative w-10 h-10 rounded-full bg-verde-profundo text-mostaza-vital inline-flex items-center justify-center">
+        {icono}
+      </span>
+      <div className="relative">
+        <p className="m-0 font-serif text-[21px] leading-tight text-tinta">{titulo}</p>
+        <p className="m-0 mt-1 text-[14.5px] leading-relaxed text-tinta-suave">{texto}</p>
+      </div>
+      <div className="relative grid gap-2.5 justify-items-start">{children}</div>
+    </section>
+  );
+}
+
+function BotonSuave({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center min-h-11 px-4.5 rounded-full border-[1.5px] border-borde bg-white text-tinta text-[14.5px] font-semibold cursor-pointer hover:border-verde-serenidad font-sans"
+    >
+      {children}
+    </button>
+  );
+}
+
+function IconoDoc() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5M9 13h6M9 17h4" />
+    </svg>
+  );
+}
+
+function IconoLapiz() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="M13.5 6.5l4 4" />
+    </svg>
   );
 }

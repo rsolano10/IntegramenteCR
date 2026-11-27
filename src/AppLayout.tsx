@@ -46,6 +46,7 @@ import { Usuarios } from "./pages/profesional/Usuarios";
 import { Administracion } from "./pages/profesional/Administracion";
 import { Consentimiento } from "./pages/Consentimiento";
 import { MisDatos } from "./pages/MisDatos";
+import { InformeDatosPage } from "./pages/InformeDatos";
 import { faltaAceptar, useMisConsentimientos } from "./lib/consentimientos";
 import { Biblioteca } from "./pages/profesional/Biblioteca";
 import { Paciente } from "./pages/profesional/Paciente";
@@ -259,6 +260,7 @@ export default function AppLayout() {
         <Route path="consent" element={<Consent />} />
         <Route path="consentimiento" element={<Consentimiento />} />
         <Route path="mis-datos" element={<MisDatos />} />
+        <Route path="mis-datos/informe" element={<InformeDatosPage />} />
         <Route path="perfil/resumen" element={<PerfilResumen />} />
         <Route path="perfil/final" element={<ResumenFinal />} />
         <Route path="perfil/invitar" element={<InvitarContraparte />} />
