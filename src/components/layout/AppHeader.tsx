@@ -15,6 +15,8 @@ import { ContactanosModal } from "../ui/ContactanosModal";
 import { CalendarModal } from "../ui/CalendarSyncCard";
 import { Logo, LogoEnCasa } from "../ui/Logo";
 import { ROL_ETIQUETA } from "../../lib/areasSalud";
+import { SelectorFamiliar } from "./SelectorFamiliar";
+import { useAgregarFamiliar } from "../../lib/pacienteActivo";
 import { PestanasFamilia } from "./FamiliarNav";
 
 const crumbs: [string, string][] = [
@@ -77,6 +79,7 @@ export function AppHeader() {
   const resetSessionState = useAppStore((s) => s.resetSessionState);
   const auditLog = useAppStore((s) => s.auditLog);
   const [modal, setModal] = useState<OpenModal>(null);
+  const agregarFamiliar = useAgregarFamiliar();
   // Otras pantallas (los botones de Clara en Ayuda) pueden pedir abrir una
   // ventana del menú de la cuenta.
   useEffect(() => {
@@ -147,6 +150,7 @@ export function AppHeader() {
             ...(myPatient
               ? [{ seccion: role === "paciente" ? "Tu programa" : myPatient.nombre.split(" ")[0], label: "Resumen para el médico", onClick: () => navigate("/app/resumen-medico") }]
               : []),
+            ...(myPatient && role === "familiar" ? [{ seccion: "Tus familiares", label: "Agregar otro familiar", onClick: agregarFamiliar }] : []),
             { label: "Contactanos", onClick: () => setModal("contacto") },
             { label: "Cerrar sesión", onClick: () => doLogout(), danger: true },
           ]}
@@ -217,8 +221,12 @@ export function AppHeader() {
               <PestanasFamilia />
             </div>
           )}
-          {/* El botón dice quién entró (no la persona del programa). */}
-          <div className="shrink-0">{menuCuenta(nombre.split(" ")[0] || "Mi cuenta")}</div>
+          {/* Con varios familiares: a quién acompaña ahora, y cambiar.
+              El botón de la cuenta dice quién entró. */}
+          <div className="shrink-0 flex items-center gap-2">
+            <SelectorFamiliar />
+            {menuCuenta(nombre.split(" ")[0] || "Mi cuenta")}
+          </div>
         </div>
         {ventanas}
       </header>

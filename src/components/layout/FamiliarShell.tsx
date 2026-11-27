@@ -21,6 +21,7 @@ import { BotonWhatsApp } from "../ui/BotonWhatsApp";
 import { AvisoEstadoCuenta, CuentaRechazada } from "./EstadoCuentaAviso";
 import { AvisoReferidor } from "../familiar/AvisoReferidor";
 import { useAplicarReferido } from "../../lib/referidos";
+import { terminarNuevoFamiliar } from "../../lib/pacienteActivo";
 import { useAlturaChat } from "../../lib/useAlturaChat";
 
 const pasosRevision = [
@@ -162,6 +163,8 @@ export function FamiliarShell() {
   const { data: planDias } = usePlan(!pendiente ? myPatient?.id : undefined);
   const [semanaCerrada, setSemanaCerrada] = useState<string | null>(null);
   useAplicarReferido(myPatient?.id);
+  // Si empezó a registrar a otro familiar y volvió sin terminar, se cancela.
+  useEffect(() => terminarNuevoFamiliar(), []);
 
   // PerfilResumen / "editar módulo" still only read/write the local
   // onboarding2 copy — this is what makes them show the account's real

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabase";
+import { useMyPatient } from "./useMyPatient";
 
 // Profesionales referidores: el enlace con su código y lo que ven.
 const CLAVE_REF = "ref-referido";
@@ -72,12 +73,13 @@ export function useMisReferidos() {
 }
 
 export function useMiReferidor(enabled = true) {
+  const { data: myPatient } = useMyPatient();
   return useQuery({
-    queryKey: ["mi-referidor"],
-    enabled,
+    queryKey: ["mi-referidor", myPatient?.id ?? null],
+    enabled: enabled && !!myPatient,
     staleTime: 10 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("mi_referidor");
+      const { data, error } = await supabase.rpc("mi_referidor", { p_patient: myPatient!.id });
       if (error) throw error;
       return (data ?? null) as { nombre: string; especialidad: string | null; institucion: string | null } | null;
     },

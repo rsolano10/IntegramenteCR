@@ -12,6 +12,7 @@ import { roleHome, useSession } from "../../lib/useSession";
 import { Button } from "../../components/ui/Button";
 import { WhatsAppIcon } from "../../components/ui/WhatsAppIcon";
 import { IconoCategoria } from "../../components/onboarding/IconoCategoria";
+import { useMyPatient } from "../../lib/useMyPatient";
 import { supabase } from "../../lib/supabase";
 
 // §13 RES-00/RES-01 + página de resultados (Fase 2.2).
@@ -70,6 +71,7 @@ function interesesElegidos(answers: Record<string, string | string[]>): string[]
 export function ResumenFinal() {
   const navigate = useNavigate();
   const session = useSession();
+  const { data: myPatient } = useMyPatient();
   const queryClient = useQueryClient();
   const answers = useAppStore((s) => s.onboarding2);
   const [fraseIdx, setFraseIdx] = useState(0);
@@ -134,7 +136,7 @@ export function ResumenFinal() {
     if (session.status !== "authed") return;
     setError("");
     setActivando(true);
-    const { error: e } = await supabase.rpc("solicitar_semana_gratis");
+    const { error: e } = await supabase.rpc("solicitar_semana_gratis", { p_patient: myPatient?.id ?? null });
     setActivando(false);
     if (e) {
       setError("No pudimos activarla. Probá de nuevo o escribinos por WhatsApp.");

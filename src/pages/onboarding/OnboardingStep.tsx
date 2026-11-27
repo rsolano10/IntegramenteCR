@@ -11,6 +11,7 @@ import { applicableQuestions, questions, resolveOptions, resolveText } from "../
 import { normalizeCrPhone } from "../../lib/phone";
 import { Button } from "../../components/ui/Button";
 import { IconoCategoria } from "../../components/onboarding/IconoCategoria";
+import { agregandoFamiliar, elegirPacienteActivo, terminarNuevoFamiliar } from "../../lib/pacienteActivo";
 import { categoriaDe, mensajeDeAnimo } from "../../lib/categoriasCuestionario";
 
 function hasAnswer(value: string | string[] | undefined): boolean {
@@ -221,7 +222,11 @@ export function OnboardingStep() {
   const [duplicateCandidate, setDuplicateCandidate] = useState<{ id: string; nombre: string } | null>(null);
   const [duplicateResolved, setDuplicateResolved] = useState<"same" | "different" | null>(null);
   const session = useSession();
-  const { data: myPatient } = useMyPatient();
+  const { data: myPatientActual } = useMyPatient();
+  // «Agregar otro familiar»: el cuestionario registra a una persona nueva,
+  // aunque la cuenta ya acompañe a otra.
+  const nuevoFamiliar = session.status === "authed" && session.profile.role === "familiar" && agregandoFamiliar();
+  const myPatient = nuevoFamiliar ? null : myPatientActual;
   const queryClient = useQueryClient();
 
   const applicable = applicableQuestions(answers);
@@ -439,12 +444,13 @@ export function OnboardingStep() {
     // Fase 11: myPatient already existing here means this is a forced
     // re-registration (schema_version < 2), not a first-time signup —
     // self_onboard would reject it ("Ya tenés un perfil creado").
-    const { error } = myPatient
+    const { data: creado, error } = myPatient
       ? await supabase.rpc("reregister_onboarding", {
           p_nombre: nombre,
           p_edad: edad || null,
           p_answers: answers,
           p_whatsapp_phone: whatsappPhone,
+          p_patient: myPatient.id,
         })
       : await supabase.rpc("self_onboard", {
           p_nombre: nombre,
@@ -459,7 +465,12 @@ export function OnboardingStep() {
       return;
     }
     completeOnboarding();
+    // Un familiar más: queda como el activo para seguir con su registro.
+    const nuevoId = !myPatient ? (creado as { id?: string } | null)?.id : null;
+    if (nuevoId) elegirPacienteActivo(session.session.user.id, nuevoId);
+    terminarNuevoFamiliar();
     queryClient.invalidateQueries({ queryKey: ["my-patient", session.session.user.id] });
+    queryClient.invalidateQueries({ queryKey: ["my-patients"] });
     navigate("/app/perfil/final");
   }
   function goBack() {

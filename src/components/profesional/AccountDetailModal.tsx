@@ -39,7 +39,9 @@ export function AccountDetailModal({
   // Una cuenta profesional no se "vincula a un paciente" desde acá — su
   // relación (profesional_asignado) es un concepto distinto, ya cubierto
   // por el roster de Pacientes.
-  const showLinkSection = !["profesional", "equipo", "referidor"].includes(account.role) && !hasPatientLink;
+  // Un familiar puede acompañar a varias personas (siempre se puede sumar
+  // otra); una cuenta de participante es una sola persona.
+  const showLinkSection = account.role === "familiar" || (account.role === "paciente" && !hasPatientLink);
 
   const { data: patients } = useQuery({
     queryKey: ["patients"],
@@ -187,16 +189,16 @@ export function AccountDetailModal({
 
       {showLinkSection && (
         <div className="pt-5 mt-5 border-t border-borde-suave">
-          <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">Vincular a paciente</p>
+          <p className="m-0 mb-3 text-[13px] tracking-[0.1em] uppercase text-tinta-tenue">{hasPatientLink ? "Acompaña a otra persona" : "Vincular a paciente"}</p>
           {!linkPickerOpen ? (
             <Button variant="secondary" dense onClick={() => setLinkPickerOpen(true)}>
-              Vincular a un paciente
+              {hasPatientLink ? "Vincular a otro paciente" : "Vincular a un paciente"}
             </Button>
           ) : (
             <LinkPatientPicker
               profileId={account.id}
               defaultRelation={account.role === "familiar" ? "familiar_admin" : "participante"}
-              patients={patients ?? []}
+              patients={(patients ?? []).filter((pt) => !account.links.some((l) => l.patient_id === pt.id))}
               onLinked={(msg) => {
                 setLinkPickerOpen(false);
                 onChanged(msg);

@@ -5,6 +5,7 @@ import type { PlanDay, PlanTask, PlanDayStatus } from "./mockData";
 import type { AdaptacionPorEtapa, MediaResource, ResourceExtras } from "./mediaResources";
 import type { ResourceModulo } from "./modulos";
 import type { Progreso } from "./sesiones/tipos";
+import { useMyPatient } from "./useMyPatient";
 import { hoyEnCostaRica, semanaTerminada, weekDays } from "./planWeek";
 
 const DIAS_BY_WEEKDAY = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -183,10 +184,13 @@ export const RUTA_EXTRAS = "/app/hoy/extras";
 // Las actividades sugeridas según el perfil (fuera del plan). La misma
 // consulta que la lista de Mi semana, así no se pide dos veces.
 export function useActividadesSugeridas() {
+  const { data: myPatient } = useMyPatient();
   return useQuery({
-    queryKey: ["actividades-sugeridas"],
+    // Las del familiar activo.
+    queryKey: ["actividades-sugeridas", myPatient?.id ?? null],
+    enabled: !!myPatient,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("actividades_sugeridas");
+      const { data, error } = await supabase.rpc("actividades_sugeridas", { p_patient: myPatient!.id });
       if (error) throw error;
       return data as MediaResource[];
     },

@@ -42,7 +42,7 @@ export function ElegirPrograma() {
     if (!seleccion) return;
     setError("");
     setGuardando(true);
-    const { error: rpcError } = await supabase.rpc("elegir_programa", { p_modalidad: seleccion });
+    const { error: rpcError } = await supabase.rpc("elegir_programa", { p_modalidad: seleccion, p_patient: myPatient?.id ?? null });
     setGuardando(false);
     if (rpcError) {
       setError(rpcError.code === "42501" ? rpcError.message : "No pudimos guardar tu elección. Probá de nuevo.");

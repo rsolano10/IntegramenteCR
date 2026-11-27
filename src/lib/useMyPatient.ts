@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import { useSession } from "./useSession";
+import { elegirPacienteActivo, usePacienteActivoId } from "./pacienteActivo";
 
 export interface MyPatient {
   id: string;
@@ -47,10 +48,18 @@ export function useMyPatient() {
   const session = useSession();
   const userId = session.status === "authed" ? session.session.user.id : null;
 
+  // El familiar activo (si acompaña a más de una persona).
+  const activo = usePacienteActivoId();
+
   return useQuery({
-    queryKey: ["my-patient", userId],
+    queryKey: ["my-patient", userId, activo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("my_patient");
+      let { data, error } = await supabase.rpc("my_patient", activo ? { p_patient: activo } : {});
+      // Ya no está vinculada a ese paciente: volver al primero.
+      if (activo && (error || !(Array.isArray(data) ? data[0] : data))) {
+        if (userId) elegirPacienteActivo(userId, null);
+        ({ data, error } = await supabase.rpc("my_patient"));
+      }
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
       if (!row) return null;

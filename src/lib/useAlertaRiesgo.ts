@@ -40,7 +40,7 @@ export function useAlertaRiesgo(tipo: TipoAlerta) {
   });
 
   async function enviar(automatica = false): Promise<boolean> {
-    const { data, error } = await supabase.rpc("enviar_alerta_riesgo", { p_tipo: tipo, p_automatica: automatica });
+    const { data, error } = await supabase.rpc("enviar_alerta_riesgo", { p_tipo: tipo, p_automatica: automatica, p_patient: myPatient?.id ?? null });
     if (error) return false;
     const row = (Array.isArray(data) ? data[0] : data) as { id: string; nueva: boolean } | undefined;
     if (row?.nueva) {

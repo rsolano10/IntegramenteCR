@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
+import { useMyPatient } from "./useMyPatient";
 import type { NivelCognitivo } from "./mediaResources";
 import type { NutricionFlags, Ruta, Supervision } from "./reglasRecursos";
 
@@ -16,10 +17,13 @@ export interface PerfilRecursosRpc {
 // Perfil para recursos (RPC perfil_recursos). Sin paciente: el de la cuenta
 // que mira (familia o participante), que solo trae la etapa cognitiva.
 export function usePerfilRecursos(patientId?: string | null) {
+  // Sin paciente (familia o participante): el del familiar activo.
+  const { data: myPatient } = useMyPatient();
+  const id = patientId ?? myPatient?.id ?? null;
   return useQuery({
-    queryKey: ["perfil-recursos", patientId ?? "propio"],
+    queryKey: ["perfil-recursos", id ?? "propio"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("perfil_recursos", patientId ? { p_patient_id: patientId } : {});
+      const { data, error } = await supabase.rpc("perfil_recursos", id ? { p_patient_id: id } : {});
       if (error) throw error;
       return (data ?? null) as PerfilRecursosRpc | null;
     },
